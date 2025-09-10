@@ -1,20 +1,32 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, 
-    QLabel, QSlider, QGroupBox, QCheckBox, QPushButton,
-    QMessageBox, QApplication, QFrame, QComboBox,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QSlider,
+    QGroupBox,
+    QCheckBox,
+    QPushButton,
+    QMessageBox,
+    QApplication,
+    QComboBox,
 )
 from PyQt6.QtGui import QPixmap, QIcon
 import yaml
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 import os
 import ctypes
 
 from src.updater import Updater
 from src.common import (
-    APP_FULLNAME, APP_NAME, APP_VERSION,
-    get_appdata_path, get_asset_path, get_desktop_path,
-    ICON_PATH, 
+    APP_FULLNAME,
+    APP_NAME,
+    APP_VERSION,
+    get_appdata_path,
+    get_asset_path,
+    get_desktop_path,
+    ICON_PATH,
 )
 from src.logger import info, warning, error
 from src.config import Config
@@ -39,7 +51,13 @@ class SettingsWindow(QWidget):
     update_overlay_ui_state_signal = pyqtSignal(OverlayUIState)
     update_map_overlay_ui_state_signal = pyqtSignal(MapOverlayUIState)
 
-    def __init__(self, overlay: OverlayWidget, map_overlay: MapOverlayWidget, updater: Updater, input: InputWorker):
+    def __init__(
+        self,
+        overlay: OverlayWidget,
+        map_overlay: MapOverlayWidget,
+        updater: Updater,
+        input: InputWorker,
+    ):
         super().__init__()
         config = Config.get()
         self.overlay = overlay
@@ -50,7 +68,9 @@ class SettingsWindow(QWidget):
 
         self.setWindowIcon(QIcon(ICON_PATH))
         try:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f'{APP_NAME}.{APP_VERSION}')
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                f"{APP_NAME}.{APP_VERSION}"
+            )
         except Exception as e:
             warning(f"Failed to set AppUserModelID: {e}")
 
@@ -70,7 +90,7 @@ class SettingsWindow(QWidget):
         self.size_slider.valueChanged.connect(self.change_overlay_size)
         size_layout.addWidget(self.size_slider)
         self.appearance_layout.addLayout(size_layout)
-        
+
         opacity_layout = QHBoxLayout()
         opacity_layout.addWidget(QLabel("透明度"))
         self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
@@ -94,7 +114,9 @@ class SettingsWindow(QWidget):
         self.appearance_layout.addLayout(hide_text_layout)
 
         self.appearance_layout.addWidget(QLabel("提示：现在可以用鼠标左键拖动调整位置"))
-        self.appearance_layout.addWidget(QLabel("⚠️请使用无边框窗口模式启动游戏\n⚠️独占全屏模式下无法使用"))
+        self.appearance_layout.addWidget(
+            QLabel("⚠️请使用无边框窗口模式启动游戏\n⚠️独占全屏模式下无法使用")
+        )
 
         # 输入设置
         self.input_group = QGroupBox("计时快捷键")
@@ -103,33 +125,42 @@ class SettingsWindow(QWidget):
         day_input_layout = QHBoxLayout()
         day_input_layout.addWidget(QLabel("重置缩圈"))
         self.day_input_setting_widget = InputSettingWidget(self.input)
-        self.day_input_setting_widget.input_triggered.connect(self.updater.start_day_by_shortcut)
+        self.day_input_setting_widget.input_triggered.connect(
+            self.updater.start_day_by_shortcut
+        )
         day_input_layout.addWidget(self.day_input_setting_widget)
         self.input_layout.addLayout(day_input_layout)
 
         forward_day_input_layout = QHBoxLayout()
-        forward_day_input_layout.addWidget(QLabel(f"快进缩圈{config.foward_day_seconds}秒"))
+        forward_day_input_layout.addWidget(
+            QLabel(f"快进缩圈{config.foward_day_seconds}秒")
+        )
         self.forward_day_input_setting_widget = InputSettingWidget(self.input)
-        self.forward_day_input_setting_widget.input_triggered.connect(self.updater.foward_day_by_shortcut)
+        self.forward_day_input_setting_widget.input_triggered.connect(
+            self.updater.foward_day_by_shortcut
+        )
         forward_day_input_layout.addWidget(self.forward_day_input_setting_widget)
         self.input_layout.addLayout(forward_day_input_layout)
 
         back_day_input_layout = QHBoxLayout()
         back_day_input_layout.addWidget(QLabel(f"倒退缩圈{config.back_day_seconds}秒"))
         self.back_day_input_setting_widget = InputSettingWidget(self.input)
-        self.back_day_input_setting_widget.input_triggered.connect(self.updater.back_day_by_shortcut)
+        self.back_day_input_setting_widget.input_triggered.connect(
+            self.updater.back_day_by_shortcut
+        )
         back_day_input_layout.addWidget(self.back_day_input_setting_widget)
         self.input_layout.addLayout(back_day_input_layout)
 
         in_rain_input_layout = QHBoxLayout()
         in_rain_input_layout.addWidget(QLabel("开始雨中冒险"))
         self.in_rain_input_setting_widget = InputSettingWidget(self.input)
-        self.in_rain_input_setting_widget.input_triggered.connect(self.updater.start_in_rain_by_shortcut)
+        self.in_rain_input_setting_widget.input_triggered.connect(
+            self.updater.start_in_rain_by_shortcut
+        )
         in_rain_input_layout.addWidget(self.in_rain_input_setting_widget)
         self.input_layout.addLayout(in_rain_input_layout)
 
         self.input_layout.addWidget(QLabel("点击按钮修改，支持键盘或手柄组合键"))
-
 
         # 性能设置
         self.performance_group = QGroupBox("性能")
@@ -141,19 +172,24 @@ class SettingsWindow(QWidget):
         for k in config.detect_intervals.keys():
             self.detect_interval_combobox.addItem(k)
         self.detect_interval_combobox.setCurrentText("高")
-        self.detect_interval_combobox.currentTextChanged.connect(self.update_detect_interval)
+        self.detect_interval_combobox.currentTextChanged.connect(
+            self.update_detect_interval
+        )
         detect_interval_layout.addWidget(self.detect_interval_combobox)
         self.performance_layout.addLayout(detect_interval_layout)
 
         only_show_when_game_foreground_layout = QHBoxLayout()
         self.only_show_when_game_foreground_checkbox = QCheckBox("仅在游戏时显示和检测")
         self.only_show_when_game_foreground_checkbox.setChecked(False)
-        self.only_show_when_game_foreground_checkbox.stateChanged.connect(self.update_only_show_when_game_foreground)
-        only_show_when_game_foreground_layout.addWidget(self.only_show_when_game_foreground_checkbox)
+        self.only_show_when_game_foreground_checkbox.stateChanged.connect(
+            self.update_only_show_when_game_foreground
+        )
+        only_show_when_game_foreground_layout.addWidget(
+            self.only_show_when_game_foreground_checkbox
+        )
         self.performance_layout.addLayout(only_show_when_game_foreground_layout)
 
         self.performance_layout.addWidget(QLabel("⚠️目前所有功能仅支持在主屏幕检测"))
-
 
         # 自动计时设置
         self.auto_timer_group = QGroupBox("自动计时")
@@ -169,13 +205,17 @@ class SettingsWindow(QWidget):
         auto_timer_enable_layout = QHBoxLayout()
         dayx_detect_enable_layout = QHBoxLayout()
         self.dayx_detect_enable_checkbox = QCheckBox("缩圈自动计时")
-        self.dayx_detect_enable_checkbox.stateChanged.connect(self.update_dayx_detect_enable)
+        self.dayx_detect_enable_checkbox.stateChanged.connect(
+            self.update_dayx_detect_enable
+        )
         dayx_detect_enable_layout.addWidget(self.dayx_detect_enable_checkbox)
         dayx_detect_enable_layout.addStretch()
         auto_timer_enable_layout.addLayout(dayx_detect_enable_layout)
         in_rain_detect_enable_layout = QHBoxLayout()
         self.in_rain_detect_enable_checkbox = QCheckBox("雨中冒险自动计时")
-        self.in_rain_detect_enable_checkbox.stateChanged.connect(self.update_in_rain_detect_enable)
+        self.in_rain_detect_enable_checkbox.stateChanged.connect(
+            self.update_in_rain_detect_enable
+        )
         in_rain_detect_enable_layout.addWidget(self.in_rain_detect_enable_checkbox)
         in_rain_detect_enable_layout.addStretch()
         auto_timer_enable_layout.addLayout(in_rain_detect_enable_layout)
@@ -184,7 +224,9 @@ class SettingsWindow(QWidget):
         screenshot_region_layout = QHBoxLayout()
         screenshot_region_layout.addWidget(QLabel("截取检测区域快捷键"))
         self.capture_dayx_hpbar_region_input_widget = InputSettingWidget(self.input)
-        self.capture_dayx_hpbar_region_input_widget.input_triggered.connect(self.capture_day1_hpbar_region)
+        self.capture_dayx_hpbar_region_input_widget.input_triggered.connect(
+            self.capture_day1_hpbar_region
+        )
         screenshot_region_layout.addWidget(self.capture_dayx_hpbar_region_input_widget)
         self.auto_timer_layout.addLayout(screenshot_region_layout)
 
@@ -193,7 +235,9 @@ class SettingsWindow(QWidget):
         lang_layout.addWidget(QLabel("游戏语言"))
         self.lang_combobox = QComboBox()
         self.lang_combobox.addItems(config.dayx_detect_langs.values())
-        self.lang_combobox.setCurrentText(config.dayx_detect_langs[self.dayx_detect_lang])
+        self.lang_combobox.setCurrentText(
+            config.dayx_detect_langs[self.dayx_detect_lang]
+        )
         self.lang_combobox.currentTextChanged.connect(self.update_detect_lang)
         lang_layout.addWidget(self.lang_combobox)
         self.auto_timer_layout.addLayout(lang_layout)
@@ -216,10 +260,14 @@ class SettingsWindow(QWidget):
         align_to_detect_hp_color_layout = QHBoxLayout()
         align_to_detect_hp_color_layout.addWidget(QLabel("校准血条颜色快捷键"))
         self.align_to_detect_hp_color_input_widget = InputSettingWidget(self.input)
-        self.align_to_detect_hp_color_input_widget.input_triggered.connect(self.capture_hp_color)
-        align_to_detect_hp_color_layout.addWidget(self.align_to_detect_hp_color_input_widget)
+        self.align_to_detect_hp_color_input_widget.input_triggered.connect(
+            self.capture_hp_color
+        )
+        align_to_detect_hp_color_layout.addWidget(
+            self.align_to_detect_hp_color_input_widget
+        )
         self.auto_timer_layout.addLayout(align_to_detect_hp_color_layout)
-        
+
         self.not_in_rain_hls = None
         self.in_rain_hls = None
         hp_color_layout = QHBoxLayout()
@@ -253,7 +301,9 @@ class SettingsWindow(QWidget):
 
         map_detect_enable_layout = QHBoxLayout()
         self.map_detect_enable_checkbox = QCheckBox("启用地图识别")
-        self.map_detect_enable_checkbox.stateChanged.connect(self.update_map_detect_enable)
+        self.map_detect_enable_checkbox.stateChanged.connect(
+            self.update_map_detect_enable
+        )
         map_detect_enable_layout.addWidget(self.map_detect_enable_checkbox)
         map_detect_enable_layout.addStretch()
         self.map_detect_layout.addLayout(map_detect_enable_layout)
@@ -261,8 +311,12 @@ class SettingsWindow(QWidget):
         capture_map_region_input_setting_layout = QHBoxLayout()
         capture_map_region_input_setting_layout.addWidget(QLabel("截取地图区域快捷键"))
         self.capture_map_region_input_widget = InputSettingWidget(self.input)
-        self.capture_map_region_input_widget.input_triggered.connect(self.capture_map_region)
-        capture_map_region_input_setting_layout.addWidget(self.capture_map_region_input_widget)
+        self.capture_map_region_input_widget.input_triggered.connect(
+            self.capture_map_region
+        )
+        capture_map_region_input_setting_layout.addWidget(
+            self.capture_map_region_input_widget
+        )
         self.map_detect_layout.addLayout(capture_map_region_input_setting_layout)
 
         self.map_region = None
@@ -272,15 +326,23 @@ class SettingsWindow(QWidget):
         set_to_detect_map_input_setting_layout = QHBoxLayout()
         set_to_detect_map_input_setting_layout.addWidget(QLabel("识别地图快捷键"))
         self.set_to_detect_map_input_setting_widget = InputSettingWidget(self.input)
-        self.set_to_detect_map_input_setting_widget.input_triggered.connect(self.updater.set_to_detect_map_pattern_once)
-        set_to_detect_map_input_setting_layout.addWidget(self.set_to_detect_map_input_setting_widget)
+        self.set_to_detect_map_input_setting_widget.input_triggered.connect(
+            self.updater.set_to_detect_map_pattern_once
+        )
+        set_to_detect_map_input_setting_layout.addWidget(
+            self.set_to_detect_map_input_setting_widget
+        )
         self.map_detect_layout.addLayout(set_to_detect_map_input_setting_layout)
 
         show_map_overlay_input_setting_layout = QHBoxLayout()
         show_map_overlay_input_setting_layout.addWidget(QLabel("显示/隐藏信息快捷键"))
         self.show_map_overlay_input_setting_widget = InputSettingWidget(self.input)
-        self.show_map_overlay_input_setting_widget.input_triggered.connect(updater.show_or_hide_map_overlay_by_shortcut)
-        show_map_overlay_input_setting_layout.addWidget(self.show_map_overlay_input_setting_widget)
+        self.show_map_overlay_input_setting_widget.input_triggered.connect(
+            updater.show_or_hide_map_overlay_by_shortcut
+        )
+        show_map_overlay_input_setting_layout.addWidget(
+            self.show_map_overlay_input_setting_widget
+        )
         self.map_detect_layout.addLayout(show_map_overlay_input_setting_layout)
 
         # 其他设置
@@ -302,7 +364,7 @@ class SettingsWindow(QWidget):
         abouts_button.clicked.connect(self.open_about_dialog)
         self.other_layout.addWidget(abouts_button)
 
-        # Layouts   
+        # Layouts
         self.left_layout = QVBoxLayout()
         self.left_layout.addWidget(self.appearance_group)
         self.left_layout.addWidget(self.input_group)
@@ -327,15 +389,17 @@ class SettingsWindow(QWidget):
         # 加载设置
         self.load_settings()
 
-
     def load_settings(self):
         try:
+
             def load_checkbox_state(checkbox: QCheckBox, state: bool):
                 checkbox.setChecked(not state)
                 checkbox.setChecked(state)
+
             def load_slider_value(slider: QSlider, value: int):
                 slider.setValue(value - 1)
                 slider.setValue(value)
+
             def load_combobox_value(combobox: QComboBox, value: str):
                 combobox.setCurrentText(None)
                 combobox.setCurrentText(value)
@@ -349,43 +413,85 @@ class SettingsWindow(QWidget):
                 info(f"Loaded settings from {SETTINGS_SAVE_PATH}")
             else:
                 data = {}
-                warning(f"Settings file not found: {SETTINGS_SAVE_PATH}, using defaults")
+                warning(
+                    f"Settings file not found: {SETTINGS_SAVE_PATH}, using defaults"
+                )
             # 外观
             load_slider_value(self.size_slider, data.get("size", 200))
             load_slider_value(self.opacity_slider, data.get("opacity", 60))
-            self.update_overlay_ui_state_signal.emit(OverlayUIState(
-                x=data.get("x"),
-                y=data.get("y"),
-            ))
+            self.update_overlay_ui_state_signal.emit(
+                OverlayUIState(
+                    x=data.get("x"),
+                    y=data.get("y"),
+                )
+            )
             load_checkbox_state(self.hide_text_checkbox, data.get("hide_text", False))
             # 快捷键
-            self.day_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("day_input_setting")))
-            self.forward_day_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("forward_day_input_setting")))
-            self.back_day_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("back_day_input_setting")))
-            self.in_rain_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("in_rain_input_setting")))
+            self.day_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("day_input_setting"))
+            )
+            self.forward_day_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("forward_day_input_setting"))
+            )
+            self.back_day_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("back_day_input_setting"))
+            )
+            self.in_rain_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("in_rain_input_setting"))
+            )
             # 性能
-            load_checkbox_state(self.only_show_when_game_foreground_checkbox, data.get("only_show_when_game_foreground", False))
-            load_combobox_value(self.detect_interval_combobox, data.get("detect_interval", "高"))
+            load_checkbox_state(
+                self.only_show_when_game_foreground_checkbox,
+                data.get("only_show_when_game_foreground", False),
+            )
+            load_combobox_value(
+                self.detect_interval_combobox, data.get("detect_interval", "高")
+            )
             # 自动计时
-            load_checkbox_state(self.dayx_detect_enable_checkbox, data.get("dayx_detect_enabled", True))
-            load_checkbox_state(self.in_rain_detect_enable_checkbox, data.get("in_rain_detect_enabled", True))
-            self.capture_dayx_hpbar_region_input_widget.set_setting(InputSetting.load_from_dict(data.get("capture_dayx_hpbar_region_input_setting")))
+            load_checkbox_state(
+                self.dayx_detect_enable_checkbox, data.get("dayx_detect_enabled", True)
+            )
+            load_checkbox_state(
+                self.in_rain_detect_enable_checkbox,
+                data.get("in_rain_detect_enabled", True),
+            )
+            self.capture_dayx_hpbar_region_input_widget.set_setting(
+                InputSetting.load_from_dict(
+                    data.get("capture_dayx_hpbar_region_input_setting")
+                )
+            )
             self.dayx_detect_lang = data.get("dayx_detect_lang", "chs")
-            load_combobox_value(self.lang_combobox, config.dayx_detect_langs[self.dayx_detect_lang])
+            load_combobox_value(
+                self.lang_combobox, config.dayx_detect_langs[self.dayx_detect_lang]
+            )
             self.day1_detect_region = data.get("day1_detect_region", None)
             self.hp_bar_detect_region = data.get("hp_bar_detect_region", None)
             self.update_day1_hpbar_regions()
-            self.align_to_detect_hp_color_input_widget.set_setting(InputSetting.load_from_dict(data.get("align_to_detect_hp_color_input_setting")))
+            self.align_to_detect_hp_color_input_widget.set_setting(
+                InputSetting.load_from_dict(
+                    data.get("align_to_detect_hp_color_input_setting")
+                )
+            )
             self.not_in_rain_hls = data.get("not_in_rain_hls", None)
             self.in_rain_hls = data.get("in_rain_hls", None)
             self.update_hp_color()
             # 地图识别
-            load_checkbox_state(self.map_detect_enable_checkbox, data.get("map_detect_enabled", True))
-            self.capture_map_region_input_widget.set_setting(InputSetting.load_from_dict(data.get("capture_map_region_input_setting")))
+            load_checkbox_state(
+                self.map_detect_enable_checkbox, data.get("map_detect_enabled", True)
+            )
+            self.capture_map_region_input_widget.set_setting(
+                InputSetting.load_from_dict(
+                    data.get("capture_map_region_input_setting")
+                )
+            )
             self.map_region = data.get("map_region", None)
             self.update_map_region()
-            self.set_to_detect_map_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("set_to_detect_map_input_setting")))
-            self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
+            self.set_to_detect_map_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("set_to_detect_map_input_setting"))
+            )
+            self.show_map_overlay_input_setting_widget.set_setting(
+                InputSetting.load_from_dict(data.get("show_map_overlay_input_setting"))
+            )
             info("Settings loaded successfully")
         except Exception as e:
             error(f"Failed to load settings: {e}")
@@ -394,63 +500,91 @@ class SettingsWindow(QWidget):
     def save_settings(self):
         try:
             with open(SETTINGS_SAVE_PATH, "w") as f:
-                yaml.safe_dump({
-                    # 外观
-                    "size": self.size_slider.value(),
-                    "opacity": self.opacity_slider.value(),
-                    "x": self.overlay.x(),
-                    "y": self.overlay.y(),
-                    "hide_text": self.hide_text_checkbox.isChecked(),
-                    # 快捷键
-                    "day_input_setting": asdict(self.day_input_setting_widget.get_setting()),
-                    "forward_day_input_setting": asdict(self.forward_day_input_setting_widget.get_setting()),
-                    "back_day_input_setting": asdict(self.back_day_input_setting_widget.get_setting()),
-                    "in_rain_input_setting": asdict(self.in_rain_input_setting_widget.get_setting()),
-                    # 性能
-                    "only_show_when_game_foreground": self.only_show_when_game_foreground_checkbox.isChecked(),
-                    "detect_interval": self.detect_interval_combobox.currentText(),
-                    # 自动计时
-                    "dayx_detect_enabled": self.dayx_detect_enable_checkbox.isChecked(),
-                    "in_rain_detect_enabled": self.in_rain_detect_enable_checkbox.isChecked(),
-                    "capture_dayx_hpbar_region_input_setting": asdict(self.capture_dayx_hpbar_region_input_widget.get_setting()),
-                    "dayx_detect_lang": self.dayx_detect_lang,
-                    "day1_detect_region": self.day1_detect_region,
-                    "hp_bar_detect_region": self.hp_bar_detect_region,
-                    "align_to_detect_hp_color_input_setting": asdict(self.align_to_detect_hp_color_input_widget.get_setting()),
-                    "not_in_rain_hls": self.not_in_rain_hls,
-                    "in_rain_hls": self.in_rain_hls,
-                    # 地图识别
-                    "map_detect_enabled": self.map_detect_enable_checkbox.isChecked(),
-                    "capture_map_region_input_setting": asdict(self.capture_map_region_input_widget.get_setting()),
-                    "map_region": self.map_region,
-                    "set_to_detect_map_input_setting": asdict(self.set_to_detect_map_input_setting_widget.get_setting()),
-                    "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
-                }, f)
+                yaml.safe_dump(
+                    {
+                        # 外观
+                        "size": self.size_slider.value(),
+                        "opacity": self.opacity_slider.value(),
+                        "x": self.overlay.x(),
+                        "y": self.overlay.y(),
+                        "hide_text": self.hide_text_checkbox.isChecked(),
+                        # 快捷键
+                        "day_input_setting": asdict(
+                            self.day_input_setting_widget.get_setting()
+                        ),
+                        "forward_day_input_setting": asdict(
+                            self.forward_day_input_setting_widget.get_setting()
+                        ),
+                        "back_day_input_setting": asdict(
+                            self.back_day_input_setting_widget.get_setting()
+                        ),
+                        "in_rain_input_setting": asdict(
+                            self.in_rain_input_setting_widget.get_setting()
+                        ),
+                        # 性能
+                        "only_show_when_game_foreground": self.only_show_when_game_foreground_checkbox.isChecked(),
+                        "detect_interval": self.detect_interval_combobox.currentText(),
+                        # 自动计时
+                        "dayx_detect_enabled": self.dayx_detect_enable_checkbox.isChecked(),
+                        "in_rain_detect_enabled": self.in_rain_detect_enable_checkbox.isChecked(),
+                        "capture_dayx_hpbar_region_input_setting": asdict(
+                            self.capture_dayx_hpbar_region_input_widget.get_setting()
+                        ),
+                        "dayx_detect_lang": self.dayx_detect_lang,
+                        "day1_detect_region": self.day1_detect_region,
+                        "hp_bar_detect_region": self.hp_bar_detect_region,
+                        "align_to_detect_hp_color_input_setting": asdict(
+                            self.align_to_detect_hp_color_input_widget.get_setting()
+                        ),
+                        "not_in_rain_hls": self.not_in_rain_hls,
+                        "in_rain_hls": self.in_rain_hls,
+                        # 地图识别
+                        "map_detect_enabled": self.map_detect_enable_checkbox.isChecked(),
+                        "capture_map_region_input_setting": asdict(
+                            self.capture_map_region_input_widget.get_setting()
+                        ),
+                        "map_region": self.map_region,
+                        "set_to_detect_map_input_setting": asdict(
+                            self.set_to_detect_map_input_setting_widget.get_setting()
+                        ),
+                        "show_map_overlay_input_setting": asdict(
+                            self.show_map_overlay_input_setting_widget.get_setting()
+                        ),
+                    },
+                    f,
+                )
             info(f"Saved settings to {SETTINGS_SAVE_PATH}")
         except Exception as e:
             error(f"Failed to save settings: {e}")
 
-
     def showEvent(self, event):
-        self.update_overlay_ui_state_signal.emit(OverlayUIState(
-            draggable=True,
-            is_setting_opened=True,
-        ))
-        self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-            is_setting_opened=True,
-        ))
+        self.update_overlay_ui_state_signal.emit(
+            OverlayUIState(
+                draggable=True,
+                is_setting_opened=True,
+            )
+        )
+        self.update_map_overlay_ui_state_signal.emit(
+            MapOverlayUIState(
+                is_setting_opened=True,
+            )
+        )
         # self.load_settings()
         super().showEvent(event)
         info("Settings window opened")
 
     def closeEvent(self, event):
-        self.update_overlay_ui_state_signal.emit(OverlayUIState(
-            draggable=False,
-            is_setting_opened=False,
-        ))
-        self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-            is_setting_opened=False,
-        ))
+        self.update_overlay_ui_state_signal.emit(
+            OverlayUIState(
+                draggable=False,
+                is_setting_opened=False,
+            )
+        )
+        self.update_map_overlay_ui_state_signal.emit(
+            MapOverlayUIState(
+                is_setting_opened=False,
+            )
+        )
         self.save_settings()
         super().closeEvent(event)
         info("Settings window closed")
@@ -486,14 +620,34 @@ class SettingsWindow(QWidget):
         COLOR_HP_BAR = "#a84747"
         COLOR_DAY_I = "#686435"
         SCREENSHOT_WINDOW_CONFIG = {
-            'annotation_buttons': [
-                {'pos': (int(sw * 0.8), int(sh * 0.1)), 'size': 32, 'color': COLOR_HP_BAR, 'text': '点我并框出 血条 的区域'},
-                {'pos': (int(sw * 0.8), int(sh * 0.2)), 'size': 32, 'color': COLOR_DAY_I, 'text': '点我并框出 DAY I 图标 的区域'},
+            "annotation_buttons": [
+                {
+                    "pos": (int(sw * 0.8), int(sh * 0.1)),
+                    "size": 32,
+                    "color": COLOR_HP_BAR,
+                    "text": "点我并框出 血条 的区域",
+                },
+                {
+                    "pos": (int(sw * 0.8), int(sh * 0.2)),
+                    "size": 32,
+                    "color": COLOR_DAY_I,
+                    "text": "点我并框出 DAY I 图标 的区域",
+                },
             ],
-            'control_buttons': {
-                'cancel':   {'pos': (int(sw * 0.8), int(sh * 0.5)), 'size': 50, 'color': "#b3b3b3", 'text': '取消'},
-                'save':     {'pos': (int(sw * 0.8), int(sh * 0.6)), 'size': 50, 'color': "#ffffff", 'text': '保存'},
-            }
+            "control_buttons": {
+                "cancel": {
+                    "pos": (int(sw * 0.8), int(sh * 0.5)),
+                    "size": 50,
+                    "color": "#b3b3b3",
+                    "text": "取消",
+                },
+                "save": {
+                    "pos": (int(sw * 0.8), int(sh * 0.6)),
+                    "size": 50,
+                    "color": "#ffffff",
+                    "text": "保存",
+                },
+            },
         }
         window = ScreenShotWindow(SCREENSHOT_WINDOW_CONFIG, self.input)
         region_result = window.capture_and_show()
@@ -505,28 +659,37 @@ class SettingsWindow(QWidget):
                 save_path = get_appdata_path("detect_region_screenshot.jpg")
                 screenshot.save(save_path)
             for item in region_result:
-                if item['color'] == COLOR_HP_BAR:
-                    self.hp_bar_detect_region = list(item['rect'])
-                elif item['color'] == COLOR_DAY_I:
-                    self.day1_detect_region = list(item['rect'])
+                if item["color"] == COLOR_HP_BAR:
+                    self.hp_bar_detect_region = list(item["rect"])
+                elif item["color"] == COLOR_DAY_I:
+                    self.day1_detect_region = list(item["rect"])
             self.update_day1_hpbar_regions()
             self.save_settings()
 
     def clear_day1_hpbar_region(self):
-        reply = QMessageBox.question(self, '确认', '确定要清空已设置的检测区域吗？',
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                                     QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            "确认",
+            "确定要清空已设置的检测区域吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
         if reply == QMessageBox.StandardButton.Yes:
             self.day1_detect_region = None
             self.hp_bar_detect_region = None
             self.update_day1_hpbar_regions()
 
     def show_capture_day1_hpbar_region_tutorial(self):
-        tutorial_imgs = [QPixmap(str(DETECT_REGION_TUTORIAL_IMG_PATH).format(i=i)) for i in range(1, 8)]
+        tutorial_imgs = [
+            QPixmap(str(DETECT_REGION_TUTORIAL_IMG_PATH).format(i=i))
+            for i in range(1, 8)
+        ]
         img_widgets: list[QLabel] = []
         for img in tutorial_imgs:
             img_widget = QLabel()
-            img = img.scaledToHeight(min(100, img.height()), Qt.TransformationMode.SmoothTransformation)
+            img = img.scaledToHeight(
+                min(100, img.height()), Qt.TransformationMode.SmoothTransformation
+            )
             img_widget.setPixmap(img)
             img_widget.setStyleSheet("border: 1px solid #ccc;")
             img_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -535,32 +698,64 @@ class SettingsWindow(QWidget):
         msg.setMaximumWidth(400)
         msg.setWindowTitle("自动计时帮助")
         layout: QVBoxLayout = QVBoxLayout()
-        layout.addWidget(QLabel("自动计时原理为通过定时截图分析画面内容，因此需要先框选检测区域，请按照以下步骤操作："))
-        layout.addWidget(QLabel("1. 首先在设置界面调整\"截取检测区域快捷键\""))
+        layout.addWidget(
+            QLabel(
+                "自动计时原理为通过定时截图分析画面内容，因此需要先框选检测区域，请按照以下步骤操作："
+            )
+        )
+        layout.addWidget(QLabel('1. 首先在设置界面调整"截取检测区域快捷键"'))
         layout.addWidget(img_widgets[0])
-        layout.addWidget(QLabel("2. 开始一局单人游戏，在游戏第一天开始，出现\"DAY I\"图标时，按下设置的快捷键\n"
-                                "画面会定格，并出现几个按钮（如果此时鼠标被锁定在屏幕中间，点一下左键即可）"))
+        layout.addWidget(
+            QLabel(
+                '2. 开始一局单人游戏，在游戏第一天开始，出现"DAY I"图标时，按下设置的快捷键\n'
+                "画面会定格，并出现几个按钮（如果此时鼠标被锁定在屏幕中间，点一下左键即可）"
+            )
+        )
         hlayout = QHBoxLayout()
         hlayout.addWidget(img_widgets[1])
         hlayout.addWidget(img_widgets[2])
         layout.addLayout(hlayout)
-        layout.addWidget(QLabel("3. 点击\"点我并框出 血条 的区域\"按钮，然后用鼠标框选屏幕上的血条区域\n"
-                                "框选的区域如下图所示，需要把血条的纯色内部框进去，尽量不要框到边框\n"
-                                "⚠️即使你画面里的血条可能更长，但也只需要框【最左边的一小段】！"))
+        layout.addWidget(
+            QLabel(
+                '3. 点击"点我并框出 血条 的区域"按钮，然后用鼠标框选屏幕上的血条区域\n'
+                "框选的区域如下图所示，需要把血条的纯色内部框进去，尽量不要框到边框\n"
+                "⚠️即使你画面里的血条可能更长，但也只需要框【最左边的一小段】！"
+            )
+        )
         layout.addWidget(img_widgets[3])
-        layout.addWidget(QLabel("4. 点击\"点我并框出 DAY I 图标 的区域\"按钮，然后用鼠标框选屏幕上的 DAY I 图标\n"
-                                "框选的区域如下图所示，需要把最左边的D和最右边的I的突出部分也要框进去\n"
-                                "⚠️尽量严丝合缝，上下不要留有空隙"))
+        layout.addWidget(
+            QLabel(
+                '4. 点击"点我并框出 DAY I 图标 的区域"按钮，然后用鼠标框选屏幕上的 DAY I 图标\n'
+                "框选的区域如下图所示，需要把最左边的D和最右边的I的突出部分也要框进去\n"
+                "⚠️尽量严丝合缝，上下不要留有空隙"
+            )
+        )
         layout.addWidget(img_widgets[4])
-        layout.addWidget(QLabel("5. 最后点击\"保存\"按钮完成设置，在设置界面查看是否显示\"已设置\""))
+        layout.addWidget(
+            QLabel('5. 最后点击"保存"按钮完成设置，在设置界面查看是否显示"已设置"')
+        )
         layout.addWidget(img_widgets[5])
-        layout.addWidget(QLabel("6. 之后正常游玩即可自动计时，若修改游戏分辨率则需要重新框选"))
-        layout.addWidget(QLabel("ℹ️ 缩圈自动计时可能失效的场景：DAY X图标出现时正在浏览背包和地图\n"
-                                "ℹ️ 雨中冒险计时可能失效的场景：丝血 / 开启HDR / 开启画面滤镜"))
+        layout.addWidget(
+            QLabel("6. 之后正常游玩即可自动计时，若修改游戏分辨率则需要重新框选")
+        )
+        layout.addWidget(
+            QLabel(
+                "ℹ️ 缩圈自动计时可能失效的场景：DAY X图标出现时正在浏览背包和地图\n"
+                "ℹ️ 雨中冒险计时可能失效的场景：丝血 / 开启HDR / 开启画面滤镜"
+            )
+        )
         layout.addWidget(QLabel("⚠️ 即使开启了自动检测，仍然推荐设置快捷键作为备用"))
-        layout.addWidget(QLabel("7. 如果缩圈检测失效，可能是因为游戏语言不同，可以调整设置里的\"游戏语言\""))
+        layout.addWidget(
+            QLabel(
+                '7. 如果缩圈检测失效，可能是因为游戏语言不同，可以调整设置里的"游戏语言"'
+            )
+        )
         layout.addWidget(img_widgets[6])
-        layout.addWidget(QLabel("8. 如果雨中冒险检测失效，可能是因为色差，可以尝试设置里的\"校准血条颜色\""))
+        layout.addWidget(
+            QLabel(
+                '8. 如果雨中冒险检测失效，可能是因为色差，可以尝试设置里的"校准血条颜色"'
+            )
+        )
         msg.layout().addLayout(layout, 0, 0)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
@@ -568,15 +763,21 @@ class SettingsWindow(QWidget):
     def update_day1_hpbar_regions(self):
         self.updater.day1_detect_region = self.day1_detect_region
         self.updater.hp_bar_detect_region = self.hp_bar_detect_region
-        info(f"Updated detect regions: day1={self.day1_detect_region}, hp_bar={self.hp_bar_detect_region}")
+        info(
+            f"Updated detect regions: day1={self.day1_detect_region}, hp_bar={self.hp_bar_detect_region}"
+        )
         if self.day1_detect_region is None:
             self.day1_detect_region_label.setText("❌未设置缩圈检测区域")
         else:
-            self.day1_detect_region_label.setText(f"✔️已设置缩圈检测区域： {self.day1_detect_region}")
+            self.day1_detect_region_label.setText(
+                f"✔️已设置缩圈检测区域： {self.day1_detect_region}"
+            )
         if self.hp_bar_detect_region is None:
             self.hp_bar_detect_region_label.setText("❌未设置雨中冒险检测区域")
         else:
-            self.hp_bar_detect_region_label.setText(f"✔️已设置雨中冒险检测区域： {self.hp_bar_detect_region}")
+            self.hp_bar_detect_region_label.setText(
+                f"✔️已设置雨中冒险检测区域： {self.hp_bar_detect_region}"
+            )
 
     def update_detect_lang(self):
         config = Config.get()
@@ -601,14 +802,34 @@ class SettingsWindow(QWidget):
         COLOR_NOT_IN_RAIN = "#b83232"
         COLOR_IN_RAIN = "#c03184"
         SCREENSHOT_WINDOW_CONFIG = {
-            'annotation_buttons': [
-                {'pos': (int(sw * 0.8), int(sh * 0.1)), 'size': 32, 'color': COLOR_NOT_IN_RAIN, 'text': '点我并框出 正常颜色血条 的区域'},
-                {'pos': (int(sw * 0.8), int(sh * 0.2)), 'size': 32, 'color': COLOR_IN_RAIN,     'text': '点我并框出 雨中颜色血条 的区域'},
+            "annotation_buttons": [
+                {
+                    "pos": (int(sw * 0.8), int(sh * 0.1)),
+                    "size": 32,
+                    "color": COLOR_NOT_IN_RAIN,
+                    "text": "点我并框出 正常颜色血条 的区域",
+                },
+                {
+                    "pos": (int(sw * 0.8), int(sh * 0.2)),
+                    "size": 32,
+                    "color": COLOR_IN_RAIN,
+                    "text": "点我并框出 雨中颜色血条 的区域",
+                },
             ],
-            'control_buttons': {
-                'cancel':   {'pos': (int(sw * 0.8), int(sh * 0.5)), 'size': 50, 'color': "#b3b3b3", 'text': '取消'},
-                'save':     {'pos': (int(sw * 0.8), int(sh * 0.6)), 'size': 50, 'color': "#ffffff", 'text': '保存'},
-            }
+            "control_buttons": {
+                "cancel": {
+                    "pos": (int(sw * 0.8), int(sh * 0.5)),
+                    "size": 50,
+                    "color": "#b3b3b3",
+                    "text": "取消",
+                },
+                "save": {
+                    "pos": (int(sw * 0.8), int(sh * 0.6)),
+                    "size": 50,
+                    "color": "#ffffff",
+                    "text": "保存",
+                },
+            },
         }
         window = ScreenShotWindow(SCREENSHOT_WINDOW_CONFIG, self.input)
         region_result = window.capture_and_show()
@@ -617,17 +838,25 @@ class SettingsWindow(QWidget):
             return
         else:
             for item in region_result:
-                if item['color'] == COLOR_NOT_IN_RAIN:
-                    self.not_in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
-                elif item['color'] == COLOR_IN_RAIN:
-                    self.in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                if item["color"] == COLOR_NOT_IN_RAIN:
+                    self.not_in_rain_hls = RainDetector.get_to_detect_hp_hls(
+                        window.screenshot_pixmap, item["rect"]
+                    )
+                elif item["color"] == COLOR_IN_RAIN:
+                    self.in_rain_hls = RainDetector.get_to_detect_hp_hls(
+                        window.screenshot_pixmap, item["rect"]
+                    )
             self.update_hp_color()
             self.save_settings()
 
     def clear_hp_color(self):
-        reply = QMessageBox.question(self, '确认', '确定要重置血条颜色设置为默认吗？', 
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                                     QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            "确认",
+            "确定要重置血条颜色设置为默认吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
         if reply == QMessageBox.StandardButton.Yes:
             self.not_in_rain_hls = None
             self.in_rain_hls = None
@@ -636,26 +865,36 @@ class SettingsWindow(QWidget):
     def update_hp_color(self):
         self.updater.not_in_rain_hls = self.not_in_rain_hls
         self.updater.in_rain_hls = self.in_rain_hls
-        info(f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}")
+        info(
+            f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}"
+        )
         if self.not_in_rain_hls is None:
-            self.not_in_rain_label.setText(f"默认")
-            self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            self.not_in_rain_label.setText("默认")
+            self.not_in_rain_label.setStyleSheet("background-color: #fff; color: black")
         else:
-            self.not_in_rain_label.setText(f"已设置")
-            self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white")
+            self.not_in_rain_label.setText("已设置")
+            self.not_in_rain_label.setStyleSheet(
+                f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white"
+            )
         if self.in_rain_hls is None:
-            self.in_rain_label.setText(f"默认")
-            self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            self.in_rain_label.setText("默认")
+            self.in_rain_label.setStyleSheet("background-color: #fff; color: black")
         else:
-            self.in_rain_label.setText(f"已设置")
-            self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white")
+            self.in_rain_label.setText("已设置")
+            self.in_rain_label.setStyleSheet(
+                f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white"
+            )
 
     def show_capture_hp_color_help(self):
-        tutorial_imgs = [QPixmap(str(COLOR_ALIGN_TUTORIAL_IMG_PATH).format(i=i)) for i in range(1, 4)]
+        tutorial_imgs = [
+            QPixmap(str(COLOR_ALIGN_TUTORIAL_IMG_PATH).format(i=i)) for i in range(1, 4)
+        ]
         img_widgets: list[QLabel] = []
         for img in tutorial_imgs:
             img_widget = QLabel()
-            img = img.scaledToHeight(min(100, img.height()), Qt.TransformationMode.SmoothTransformation)
+            img = img.scaledToHeight(
+                min(100, img.height()), Qt.TransformationMode.SmoothTransformation
+            )
             img_widget.setPixmap(img)
             img_widget.setStyleSheet("border: 1px solid #ccc;")
             img_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -665,16 +904,36 @@ class SettingsWindow(QWidget):
         msg.setWindowTitle("校准血条颜色帮助")
         layout: QVBoxLayout = QVBoxLayout()
         layout.addWidget(QLabel("ℹ️ 如果你设置完检测区域后能正常计时，则不需要进行校准"))
-        layout.addWidget(QLabel("雨中冒险自动计时原理为检测血条颜色，有可能因为色差而失效，则需要使用校准步骤："))
-        layout.addWidget(QLabel("1. 首先在设置界面调整\"校准血条颜色快捷键\""))
-        layout.addWidget(QLabel("2. 开始一局单人游戏，在画面中有血条时按下设置的快捷键\n"
-                                "画面定格并显示出按钮"))
+        layout.addWidget(
+            QLabel(
+                "雨中冒险自动计时原理为检测血条颜色，有可能因为色差而失效，则需要使用校准步骤："
+            )
+        )
+        layout.addWidget(QLabel('1. 首先在设置界面调整"校准血条颜色快捷键"'))
+        layout.addWidget(
+            QLabel(
+                "2. 开始一局单人游戏，在画面中有血条时按下设置的快捷键\n"
+                "画面定格并显示出按钮"
+            )
+        )
         layout.addWidget(img_widgets[0])
-        layout.addWidget(QLabel("3. 如果画面中有正常血条，则点击\"点我框选 正常颜色血条 的区域\"按钮\n"
-                                "然后拖动鼠标框出血条中的纯色部分，点击保存按钮"))
+        layout.addWidget(
+            QLabel(
+                '3. 如果画面中有正常血条，则点击"点我框选 正常颜色血条 的区域"按钮\n'
+                "然后拖动鼠标框出血条中的纯色部分，点击保存按钮"
+            )
+        )
         layout.addWidget(img_widgets[1])
-        layout.addWidget(QLabel("4. 以相同的步骤对在雨里的血条也框选一次（推荐单人去roll在圈外的出生点）"))
-        layout.addWidget(QLabel("5. 设置界面看到两个颜色显示已设置即可，重置按钮可以退回到程序内置的默认颜色"))
+        layout.addWidget(
+            QLabel(
+                "4. 以相同的步骤对在雨里的血条也框选一次（推荐单人去roll在圈外的出生点）"
+            )
+        )
+        layout.addWidget(
+            QLabel(
+                "5. 设置界面看到两个颜色显示已设置即可，重置按钮可以退回到程序内置的默认颜色"
+            )
+        )
         layout.addWidget(img_widgets[2])
 
         msg.layout().addLayout(layout, 0, 0)
@@ -692,20 +951,26 @@ class SettingsWindow(QWidget):
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Icon.Warning)
         msg.setWindowTitle("注意事项")
-        msg.setText("""
+        msg.setText(
+            """
 该功能通过解包数据展示详细的地图剧透信息，建议在休闲游戏时避免使用。
 请确保在不会影响到你以及你的队友的游戏体验的前提下使用该功能。
 对于使用该功能对游戏体验产生的破坏，工具作者不承担任何责任。
 （感谢来自 Fuwish@bilibili 的地图解包数据）
-""".strip())
+""".strip()
+        )
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
 
-        tutorial_imgs = [QPixmap(str(MAP_DETECT_TUTORIAL_IMG_PATH).format(i=i)) for i in range(1, 4)]
+        tutorial_imgs = [
+            QPixmap(str(MAP_DETECT_TUTORIAL_IMG_PATH).format(i=i)) for i in range(1, 4)
+        ]
         img_widgets: list[QLabel] = []
         for img in tutorial_imgs:
             img_widget = QLabel()
-            img = img.scaledToHeight(min(100, img.height()), Qt.TransformationMode.SmoothTransformation)
+            img = img.scaledToHeight(
+                min(100, img.height()), Qt.TransformationMode.SmoothTransformation
+            )
             img_widget.setPixmap(img)
             img_widget.setStyleSheet("border: 1px solid #ccc;")
             img_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -714,22 +979,34 @@ class SettingsWindow(QWidget):
         msg.setMaximumWidth(400)
         msg.setWindowTitle("识别地图帮助")
         layout: QVBoxLayout = QVBoxLayout()
-        layout.addWidget(QLabel("1. 首先在设置界面调整\"截取地图区域快捷键\""))
+        layout.addWidget(QLabel('1. 首先在设置界面调整"截取地图区域快捷键"'))
         layout.addWidget(img_widgets[0])
-        layout.addWidget(QLabel("2. 在任意有地图的游戏画面下按下设置的快捷键，并框选地图的区域\n"
-                                "⚠️框的区域需要和地图的边框完全贴合"))
+        layout.addWidget(
+            QLabel(
+                "2. 在任意有地图的游戏画面下按下设置的快捷键，并框选地图的区域\n"
+                "⚠️框的区域需要和地图的边框完全贴合"
+            )
+        )
         layout.addWidget(img_widgets[1])
-        layout.addWidget(QLabel("3. 回到设置界面看到\"已设置\"即可"))
+        layout.addWidget(QLabel('3. 回到设置界面看到"已设置"即可'))
         layout.addWidget(img_widgets[2])
         layout.addWidget(QLabel("4. 识别地图功能触发机制："))
         layout.addWidget(QLabel("ℹ️ 地图必须要完整展示（缩放到最小）时才能正常识别"))
         layout.addWidget(QLabel("ℹ️ 自动识别触发："))
-        layout.addWidget(QLabel("       每次缩圈Day1计时开始后（无论是自动计时还是手动开始），第一次检测到完整地图时，\n"
-                                "       会触发一次自动识别，直到下一次Day1计时开始前不会再次触发"))
+        layout.addWidget(
+            QLabel(
+                "       每次缩圈Day1计时开始后（无论是自动计时还是手动开始），第一次检测到完整地图时，\n"
+                "       会触发一次自动识别，直到下一次Day1计时开始前不会再次触发"
+            )
+        )
         layout.addWidget(QLabel("ℹ️ 手动识别触发："))
         layout.addWidget(QLabel("       可以用“识别地图快捷键”手动触发识别"))
-        layout.addWidget(QLabel("5. 识别成功后，地图在缩放到最小的状态时，信息会悬浮显示在地图上（暂时不支持跟随缩放）\n"
-                                "可以用“显示/隐藏信息快捷键”切换显示\n"))
+        layout.addWidget(
+            QLabel(
+                "5. 识别成功后，地图在缩放到最小的状态时，信息会悬浮显示在地图上（暂时不支持跟随缩放）\n"
+                "可以用“显示/隐藏信息快捷键”切换显示\n"
+            )
+        )
         layout.addWidget(QLabel("⚠️某些地图的数据可能有错误，发现错误可截图反馈给作者"))
         msg.layout().addLayout(layout, 0, 0)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -740,13 +1017,28 @@ class SettingsWindow(QWidget):
         sw, sh = screen_size.width(), screen_size.height()
         COLOR_MAP_REGION = "#4384b9"
         SCREENSHOT_WINDOW_CONFIG = {
-            'annotation_buttons': [
-                {'pos': (int(sw * 0.5), int(sh * 0.1)), 'size': 32, 'color': COLOR_MAP_REGION, 'text': '点我并框出 地图 的区域'},
+            "annotation_buttons": [
+                {
+                    "pos": (int(sw * 0.5), int(sh * 0.1)),
+                    "size": 32,
+                    "color": COLOR_MAP_REGION,
+                    "text": "点我并框出 地图 的区域",
+                },
             ],
-            'control_buttons': {
-                'cancel':   {'pos': (int(sw * 0.5), int(sh * 0.5)), 'size': 50, 'color': "#b3b3b3", 'text': '取消'},
-                'save':     {'pos': (int(sw * 0.5), int(sh * 0.6)), 'size': 50, 'color': "#ffffff", 'text': '保存'},
-            }
+            "control_buttons": {
+                "cancel": {
+                    "pos": (int(sw * 0.5), int(sh * 0.5)),
+                    "size": 50,
+                    "color": "#b3b3b3",
+                    "text": "取消",
+                },
+                "save": {
+                    "pos": (int(sw * 0.5), int(sh * 0.6)),
+                    "size": 50,
+                    "color": "#ffffff",
+                    "text": "保存",
+                },
+            },
         }
         window = ScreenShotWindow(SCREENSHOT_WINDOW_CONFIG, self.input)
         region_result = window.capture_and_show()
@@ -758,9 +1050,9 @@ class SettingsWindow(QWidget):
                 save_path = get_appdata_path("map_region_screenshot.jpg")
                 screenshot.save(save_path)
             for item in region_result:
-                if item['color'] == COLOR_MAP_REGION:
+                if item["color"] == COLOR_MAP_REGION:
                     # 保持正方形
-                    x, y, w, h = item['rect']
+                    x, y, w, h = item["rect"]
                     self.map_region = list((x, y, min(w, h), min(w, h)))
                 self.update_map_region()
             self.save_settings()
@@ -785,13 +1077,17 @@ class SettingsWindow(QWidget):
 
     def update_only_show_when_game_foreground(self, state):
         enabled = self.only_show_when_game_foreground_checkbox.isChecked()
-        self.update_overlay_ui_state_signal.emit(OverlayUIState(only_show_when_game_foreground=enabled))
-        self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(only_show_when_game_foreground=enabled))
+        self.update_overlay_ui_state_signal.emit(
+            OverlayUIState(only_show_when_game_foreground=enabled)
+        )
+        self.update_map_overlay_ui_state_signal.emit(
+            MapOverlayUIState(only_show_when_game_foreground=enabled)
+        )
         self.updater.only_detect_when_game_foreground = enabled
         info(f"Overlay only show when game foreground: {enabled}")
 
     # =========================== Other =========================== #
-    
+
     def open_log_directory(self):
         log_dir = get_appdata_path("")
         os.startfile(log_dir)
@@ -805,7 +1101,7 @@ class SettingsWindow(QWidget):
         msg.setText(about_text)
         msg.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg.exec()
-    
+
     def open_bug_report_window(self):
         w = BugReportWindow(
             log_dir=get_appdata_path(""),

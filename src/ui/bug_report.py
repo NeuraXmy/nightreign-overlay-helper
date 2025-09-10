@@ -1,4 +1,3 @@
-
 import sys
 import os
 import zipfile
@@ -25,7 +24,7 @@ from PIL import Image
 class BugReportWindow(QMainWindow):
     def __init__(
         self,
-        log_dir: str,   
+        log_dir: str,
         export_dir: str,
         mail_address: str,
         max_screenshots: int = 5,
@@ -62,7 +61,9 @@ class BugReportWindow(QMainWindow):
 
         self.submit_button = QPushButton("提交")
         self.submit_button.clicked.connect(self.submit_feedback)
-        self.layout.addWidget(self.submit_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.layout.addWidget(
+            self.submit_button, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         self.selected_screenshots = []
 
@@ -74,7 +75,9 @@ class BugReportWindow(QMainWindow):
     def add_screenshots(self):
         """打开文件对话框以选择截图"""
         if len(self.selected_screenshots) >= self.max_screenshots:
-            QMessageBox.warning(self, "警告", f"您最多只能选择{self.max_screenshots}张截图。")
+            QMessageBox.warning(
+                self, "警告", f"您最多只能选择{self.max_screenshots}张截图。"
+            )
             return
 
         files, _ = QFileDialog.getOpenFileNames(
@@ -129,9 +132,7 @@ class BugReportWindow(QMainWindow):
             os.makedirs(self.export_directory, exist_ok=True)
             zip_filepath = os.path.join(self.export_directory, zip_filename)
 
-            with zipfile.ZipFile(
-                zip_filepath, "w", zipfile.ZIP_DEFLATED
-            ) as zipf:
+            with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # 1. 添加日志目录
                 for root, _, files in os.walk(self.log_directory):
                     for file in files:
@@ -150,14 +151,16 @@ class BugReportWindow(QMainWindow):
                             # 转换为RGB以保存为JPG
                             if img.mode in ("RGBA", "P"):
                                 img = img.convert("RGB")
-                            
+
                             # 在内存中保存为JPG
                             jpg_buffer = io.BytesIO()
                             img.save(jpg_buffer, format="JPEG", quality=85)
                             jpg_buffer.seek(0)
-                            
+
                             # 写入zip文件
-                            zipf.writestr(f"screenshot_{i+1}.jpg", jpg_buffer.getvalue())
+                            zipf.writestr(
+                                f"screenshot_{i + 1}.jpg", jpg_buffer.getvalue()
+                            )
                     except Exception as e:
                         print(f"无法处理截图 {filepath}: {e}")
 
@@ -170,7 +173,9 @@ class BugReportWindow(QMainWindow):
                 f"邮箱无法发送zip文件可修改后缀为txt"
             )
             # 关键代码：设置文本可由鼠标选择
-            msg_box.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            msg_box.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
             msg_box.exec()
 
             # 打开zip文件所在位置
@@ -191,7 +196,7 @@ if __name__ == "__main__":
     window = BugReportWindow(
         log_dir="sandbox/test",
         export_dir="sandbox/export",
-        mail_address="test@example.com"
-    )   
+        mail_address="test@example.com",
+    )
     window.show()
     sys.exit(app.exec())

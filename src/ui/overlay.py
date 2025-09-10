@@ -1,15 +1,20 @@
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QSizePolicy
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QProgressBar,
+    QLabel,
+    QHBoxLayout,
 )
-from PyQt6.QtGui import QMouseEvent, QKeySequence, QKeyEvent
-from dataclasses import dataclass, field
+from PyQt6.QtGui import QMouseEvent
+from dataclasses import dataclass
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 from PyQt6.QtGui import QColor
 
 from src.common import APP_FULLNAME, APP_AUTHER
 from src.config import Config
-from src.logger import info, warning, error
+from src.logger import info
 from src.ui.utils import set_widget_always_on_top
 
 
@@ -47,14 +52,14 @@ class OverlayWidget(QWidget):
         super().__init__()
 
         self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool 
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         set_widget_always_on_top(self)
         self.startTimer(50)
-        
+
         self.layout: QVBoxLayout = QVBoxLayout(self)
 
         self.progress_bar_layout = QHBoxLayout()
@@ -77,8 +82,8 @@ class OverlayWidget(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         shadow_effect = QGraphicsDropShadowEffect()
         shadow_effect.setBlurRadius(10)
-        shadow_effect.setColor(QColor(0, 0, 0, 150)) 
-        shadow_effect.setOffset(0, 0) 
+        shadow_effect.setColor(QColor(0, 0, 0, 150))
+        shadow_effect.setOffset(0, 0)
         self.label.setGraphicsEffect(shadow_effect)
         self.layout.addWidget(self.label)
 
@@ -91,13 +96,13 @@ class OverlayWidget(QWidget):
         self.label2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         shadow_effect = QGraphicsDropShadowEffect()
         shadow_effect.setBlurRadius(10)
-        shadow_effect.setColor(QColor(0, 0, 0, 150)) 
-        shadow_effect.setOffset(0, 0) 
+        shadow_effect.setColor(QColor(0, 0, 0, 150))
+        shadow_effect.setOffset(0, 0)
         self.label2.setGraphicsEffect(shadow_effect)
         self.layout.addWidget(self.label2)
 
         self.layout.addStretch()
-        
+
         self.drag_position = QPoint()
         self.draggable = False
 
@@ -113,25 +118,29 @@ class OverlayWidget(QWidget):
         self.is_setting_opened = False
 
         self.progress2_visible = False
-        self.hide_text = False 
-       
-        self.update_ui_state(OverlayUIState(
-            scale=1.0,
-            opacity=0.6,
-            draggable=False,
-            progress=0,
-            text=INITIAL_TEXT,
-            map_pattern_match_text="",
-            visible=True,
-            progress2=0,
-            text2="",
-            progress2_visible=False,
-            hide_text=False,
-        ))
+        self.hide_text = False
+
+        self.update_ui_state(
+            OverlayUIState(
+                scale=1.0,
+                opacity=0.6,
+                draggable=False,
+                progress=0,
+                text=INITIAL_TEXT,
+                map_pattern_match_text="",
+                visible=True,
+                progress2=0,
+                text2="",
+                progress2_visible=False,
+                hide_text=False,
+            )
+        )
 
     def mousePressEvent(self, event: QMouseEvent):
         if self.draggable and event.button() == Qt.MouseButton.LeftButton:
-            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.drag_position = (
+                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            )
             event.accept()
         if event.button() == Qt.MouseButton.RightButton:
             self.right_click_signal.emit()
@@ -146,7 +155,7 @@ class OverlayWidget(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.double_click_signal.emit()
             event.accept()
-    
+
     def _set_draggable(self, draggable: bool):
         self.draggable = draggable
         if draggable:
@@ -170,10 +179,14 @@ class OverlayWidget(QWidget):
 
         for i in range(4):
             self.progress_bars[i].setFixedHeight(pb_height)
-            self.progress_bars[i].setStyleSheet(self.progress_css.replace("{border_radius}", str(pb_border_radius)))
+            self.progress_bars[i].setStyleSheet(
+                self.progress_css.replace("{border_radius}", str(pb_border_radius))
+            )
 
         self.progress_bar2.setFixedHeight(pb_height)
-        self.progress_bar2.setStyleSheet(self.progress2_css.replace("{border_radius}", str(pb_border_radius)))
+        self.progress_bar2.setStyleSheet(
+            self.progress2_css.replace("{border_radius}", str(pb_border_radius))
+        )
 
     def update_ui_state(self, state: OverlayUIState):
         if state.x is not None and state.y is not None:
@@ -190,21 +203,31 @@ class OverlayWidget(QWidget):
         if state.progress is not None:
             for i in range(4):
                 progress = min(1, max(0, (state.progress - i)))
-                self.progress_bars[i].setValue(int(progress * self.progress_bars[i].maximum()))
+                self.progress_bars[i].setValue(
+                    int(progress * self.progress_bars[i].maximum())
+                )
         if state.text is not None:
             self.text = state.text
-            self.label.setText(self.text + self.map_pattern_match_text 
-                               if self.text != INITIAL_TEXT else INITIAL_TEXT)
+            self.label.setText(
+                self.text + self.map_pattern_match_text
+                if self.text != INITIAL_TEXT
+                else INITIAL_TEXT
+            )
         if state.map_pattern_match_text is not None:
             self.map_pattern_match_text = state.map_pattern_match_text
-            self.label.setText(self.text + self.map_pattern_match_text
-                                 if self.text != INITIAL_TEXT else INITIAL_TEXT)
+            self.label.setText(
+                self.text + self.map_pattern_match_text
+                if self.text != INITIAL_TEXT
+                else INITIAL_TEXT
+            )
         if state.draggable is not None:
             self._set_draggable(state.draggable)
         if state.visible is not None:
             self.visible = state.visible
         if state.progress2 is not None:
-            self.progress_bar2.setValue(int(state.progress2 * self.progress_bar2.maximum()))
+            self.progress_bar2.setValue(
+                int(state.progress2 * self.progress_bar2.maximum())
+            )
         if state.text2 is not None:
             self.label2.setText(state.text2)
         if state.progress2_visible is not None:
@@ -224,12 +247,14 @@ class OverlayWidget(QWidget):
     def timerEvent(self, event):
         visible = self.visible and self.windowOpacity() > 0.01
         if self.only_show_when_game_foreground:
-            visible = visible and (self.is_game_foreground or self.is_menu_opened or self.is_setting_opened)
+            visible = visible and (
+                self.is_game_foreground or self.is_menu_opened or self.is_setting_opened
+            )
         if visible and not self.isVisible():
             self.show()
         elif not visible and self.isVisible():
             self.hide()
-        
+
         if self.hide_text:
             self.label.hide()
         else:
@@ -244,6 +269,3 @@ class OverlayWidget(QWidget):
             self.progress_bar2.show()
         else:
             self.progress_bar2.hide()
-
-        
-                  

@@ -7,6 +7,7 @@ CONFIG_PATH = ".\\config.yaml"
 _config: dict = {}
 _config_mtime = None
 
+
 @dataclass
 class Config:
     day_period_seconds: list[int]
@@ -52,11 +53,11 @@ class Config:
     bug_report_email: str
 
     @staticmethod
-    def get() -> 'Config':
+    def get() -> "Config":
         global _config, _config_mtime
         mtime = os.path.getmtime(CONFIG_PATH)
         if mtime != _config_mtime:
-            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                 _config = yaml.safe_load(f)
             _config_mtime = mtime
         return Config(**_config)
