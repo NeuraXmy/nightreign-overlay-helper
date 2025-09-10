@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import csv
 
 Position = tuple[int, int]
@@ -6,11 +6,13 @@ Position = tuple[int, int]
 STD_MAP_SIZE = (750, 750)
 POI_CONSTRUCTS = [30, 32, 34, 37, 38, 40, 41]
 
+
 @dataclass
 class Construct:
     type: int
     pos: Position
     is_display: bool
+
 
 @dataclass
 class MapPattern:
@@ -31,7 +33,8 @@ class MapPattern:
     evpat_value: int
     evpat_flag: int
     pos_constructions: dict[Position, Construct]
-    
+
+
 @dataclass
 class MapInfo:
     name_dict: dict[int, str]
@@ -51,12 +54,12 @@ def load_map_info(
     names_csv_path: str,
     positions_csv_path: str,
 ):
-    with open(names_csv_path, 'r', encoding='utf-8') as f:
+    with open(names_csv_path, "r", encoding="utf-8") as f:
         f.readline()
         reader = csv.reader(f)
         name_dict = {int(row[0]): row[1] for row in reader}
 
-    with open(positions_csv_path, 'r', encoding='utf-8') as f:
+    with open(positions_csv_path, "r", encoding="utf-8") as f:
         f.readline()
         reader = csv.reader(f)
         pos_dict = {}
@@ -65,8 +68,8 @@ def load_map_info(
             x = int((x - 907.5537109) / 6.045 + 127.26920918617023)
             y = int((y - 1571.031006) / 6.045 + 242.71771372340424)
             pos_dict[int(row[0])] = (x, y)
-    
-    with open(constructs_csv_path, 'r', encoding='utf-8') as f:
+
+    with open(constructs_csv_path, "r", encoding="utf-8") as f:
         f.readline()
         reader = csv.reader(f)
         map_construct_dict: dict[int, list[Construct]] = {}
@@ -76,7 +79,7 @@ def load_map_info(
             construct = Construct(
                 type=int(row[2]),
                 pos=pos_dict[int(row[4])],
-                is_display=(row[3] == '1'),
+                is_display=(row[3] == "1"),
             )
             map_construct_dict.setdefault(map_id, []).append(construct)
             if construct.type // 1000 in POI_CONSTRUCTS:
@@ -84,31 +87,35 @@ def load_map_info(
                 all_poi_construct_type.add(construct.type)
         all_poi_construct_type.add(0)
 
-    with open(map_patterns_csv_path, 'r', encoding='utf-8') as f:
+    with open(map_patterns_csv_path, "r", encoding="utf-8") as f:
         f.readline()
         reader = csv.reader(f)
         patterns = []
         for row in reader:
-            patterns.append(MapPattern(
-                id=int(row[0]),
-                nightlord=int(row[1]),
-                earth_shifting=int(row[2]),
-                start_pos=pos_dict[int(row[3])],
-                treasure=int(row[4]),
-                event_value=int(row[5]),
-                event_flag=int(row[6]),
-                evpat_value=int(row[7]),
-                evpat_flag=int(row[8]),
-                rot_rew=int(row[9]),
-                day1_boss=int(row[10]),
-                day1_pos=pos_dict[int(row[11])],
-                day2_boss=int(row[12]),
-                day2_pos=pos_dict[int(row[13])],
-                day1_extra_boss=int(row[14]),
-                day2_extra_boss=int(row[15]),
-                pos_constructions={ c.pos: c for c in map_construct_dict.get(int(row[0]), [])}
-            ))
-    
+            patterns.append(
+                MapPattern(
+                    id=int(row[0]),
+                    nightlord=int(row[1]),
+                    earth_shifting=int(row[2]),
+                    start_pos=pos_dict[int(row[3])],
+                    treasure=int(row[4]),
+                    event_value=int(row[5]),
+                    event_flag=int(row[6]),
+                    evpat_value=int(row[7]),
+                    evpat_flag=int(row[8]),
+                    rot_rew=int(row[9]),
+                    day1_boss=int(row[10]),
+                    day1_pos=pos_dict[int(row[11])],
+                    day2_boss=int(row[12]),
+                    day2_pos=pos_dict[int(row[13])],
+                    day1_extra_boss=int(row[14]),
+                    day2_extra_boss=int(row[15]),
+                    pos_constructions={
+                        c.pos: c for c in map_construct_dict.get(int(row[0]), [])
+                    },
+                )
+            )
+
     return MapInfo(
         name_dict=name_dict,
         pos_dict=pos_dict,

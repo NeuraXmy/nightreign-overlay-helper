@@ -11,6 +11,7 @@ class DetectParam:
     rain_detect_param: RainDetectParam = None
     map_detect_param: MapDetectParam = None
 
+
 @dataclass
 class DetectResult:
     day_detect_result: DayDetectResult = None
@@ -27,8 +28,13 @@ class DetectorManager:
     def detect(self, params: DetectParam) -> DetectResult:
         result = DetectResult()
         with mss() as sct:
-            result.day_detect_result = self.day_detector.detect(sct, params.day_detect_param)
-            result.rain_detect_result = self.rain_detector.detect(sct, params.rain_detect_param)
-            result.map_detect_result = self.map_detector.detect(sct, params.map_detect_param)
+            result.day_detect_result = self.day_detector.detect(
+                sct, params.day_detect_param
+            )
+            result.rain_detect_result = self.rain_detector.detect(
+                sct, params.rain_detect_param
+            )
+            result.map_detect_result = self.map_detector.detect(
+                sct, params.map_detect_param
+            )
         return result
-        

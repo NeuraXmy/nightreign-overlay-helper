@@ -1,15 +1,22 @@
 from PyQt6.QtWidgets import QWidget
-from src.logger import info, warning, error
+from src.logger import info, warning
 
 
 def set_widget_always_on_top(widget: QWidget):
     try:
         import win32gui
         import win32con
+
         hwnd = widget.winId().__int__()
-        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 
-                                0, 0, 0, 0, 
-                                win32con.SWP_NOSIZE | win32con.SWP_NOMOVE)
+        win32gui.SetWindowPos(
+            hwnd,
+            win32con.HWND_TOPMOST,
+            0,
+            0,
+            0,
+            0,
+            win32con.SWP_NOSIZE | win32con.SWP_NOMOVE,
+        )
         info(f"Window HWND: {hwnd} set to TOPMOST.")
     except Exception as e:
         warning(f"Error setting system always on top: {e}")
@@ -21,11 +28,11 @@ def is_window_in_foreground(window_title: str) -> bool:
     """
     try:
         import win32gui
-        import time
+
         active_window_handle = win32gui.GetForegroundWindow()
         active_window_title = win32gui.GetWindowText(active_window_handle)
         if window_title.lower() in active_window_title.lower():
             return True
         return False
-    except Exception as e:
+    except Exception:
         return False

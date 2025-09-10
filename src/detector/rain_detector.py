@@ -7,7 +7,7 @@ from PyQt6.QtGui import QPixmap
 from mss.base import MSSBase
 
 from src.config import Config
-from src.logger import info, warning, error
+from src.logger import error
 from src.detector.utils import grab_region
 
 
@@ -17,6 +17,7 @@ class RainDetectParam:
     not_in_rain_hls: tuple[int, int, int] | None = None
     hp_bar_region: tuple[int] | None = None
 
+
 @dataclass
 class RainDetectResult:
     is_in_rain: bool | None = None
@@ -24,13 +25,13 @@ class RainDetectResult:
     not_in_rain_area_ratio: float = None
 
 
-
 class RainDetector:
     def __init__(self):
         pass
-        
+
     def match(
-        self, sct, 
+        self,
+        sct,
         hp_bar_region: tuple[int],
         in_rain_hls: tuple[int] | None,
         not_in_rain_hls: tuple[int] | None,
@@ -46,27 +47,47 @@ class RainDetector:
             def calc_pixel_num(hls: np.ndarray, c1: list[int], c2: list[int]) -> int:
                 lower = np.array([min(c1[i], c2[i]) for i in range(3)])
                 upper = np.array([max(c1[i], c2[i]) for i in range(3)])
-                tolerance = np.array([config.h_tolerance, config.l_tolerance, config.s_tolerance])
+                tolerance = np.array(
+                    [config.h_tolerance, config.l_tolerance, config.s_tolerance]
+                )
                 lower = lower - tolerance
                 upper = upper + tolerance
                 mask = cv2.inRange(hls, lower, upper)
                 return np.sum(mask > 0)
-                
+
             total_pixel_num = hls.shape[0] * hls.shape[1]
 
-            lower_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.lower_hls_not_in_rain
-            upper_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.upper_hls_not_in_rain
-            lower_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.lower_hls_in_rain
-            upper_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.upper_hls_in_rain
+            lower_hls_not_in_rain = (
+                not_in_rain_hls
+                if not_in_rain_hls is not None
+                else config.lower_hls_not_in_rain
+            )
+            upper_hls_not_in_rain = (
+                not_in_rain_hls
+                if not_in_rain_hls is not None
+                else config.upper_hls_not_in_rain
+            )
+            lower_hls_in_rain = (
+                in_rain_hls if in_rain_hls is not None else config.lower_hls_in_rain
+            )
+            upper_hls_in_rain = (
+                in_rain_hls if in_rain_hls is not None else config.upper_hls_in_rain
+            )
 
-            not_in_rain_ratio = calc_pixel_num(hls, lower_hls_not_in_rain, upper_hls_not_in_rain) / total_pixel_num
-            in_rain_ratio     = calc_pixel_num(hls, lower_hls_in_rain,     upper_hls_in_rain)     / total_pixel_num
+            not_in_rain_ratio = (
+                calc_pixel_num(hls, lower_hls_not_in_rain, upper_hls_not_in_rain)
+                / total_pixel_num
+            )
+            in_rain_ratio = (
+                calc_pixel_num(hls, lower_hls_in_rain, upper_hls_in_rain)
+                / total_pixel_num
+            )
 
             # print(f"{not_in_rain_ratio:.2f}, {in_rain_ratio:.2f}")
             # print("detect in rain time: ", time.time() - t)
             return not_in_rain_ratio, in_rain_ratio
-        except Exception as e:
-            error(f"Detect in rain error")
+        except Exception:
+            error("Detect in rain error")
             return 0.0, 0.0
 
     def detect(self, sct: MSSBase, params: RainDetectParam | None) -> RainDetectResult:
@@ -75,10 +96,7 @@ class RainDetector:
         if params is None or params.hp_bar_region is None:
             return ret
         not_in_rain_ratio, in_rain_ratio = self.match(
-            sct, 
-            params.hp_bar_region, 
-            params.in_rain_hls, 
-            params.not_in_rain_hls
+            sct, params.hp_bar_region, params.in_rain_hls, params.not_in_rain_hls
         )
         ret.not_in_rain_area_ratio = not_in_rain_ratio
         ret.in_rain_area_ratio = in_rain_ratio
@@ -94,9 +112,11 @@ class RainDetector:
     def get_to_detect_hp_hls(screenshot: QPixmap, region: tuple[int]) -> tuple[int]:
         img = Image.fromqpixmap(screenshot)
         hls = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HLS)
-        hp_bar_region = hls[region[1]:region[1]+region[3], region[0]:region[0]+region[2]]
-        hist = cv2.calcHist([hp_bar_region], [0, 1, 2], None, [180, 256, 256], [0, 180, 0, 256, 0, 256])
+        hp_bar_region = hls[
+            region[1] : region[1] + region[3], region[0] : region[0] + region[2]
+        ]
+        hist = cv2.calcHist(
+            [hp_bar_region], [0, 1, 2], None, [180, 256, 256], [0, 180, 0, 256, 0, 256]
+        )
         max_val = np.unravel_index(np.argmax(hist), hist.shape)
         return [int(x) for x in max_val]
-
-

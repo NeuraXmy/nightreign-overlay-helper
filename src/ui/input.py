@@ -1,13 +1,19 @@
 import pygame
 from PyQt6.QtCore import QObject, pyqtSignal
 from pynput import keyboard
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QDialog, 
-                             QLabel, QHBoxLayout)
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QWidget,
+    QPushButton,
+    QVBoxLayout,
+    QDialog,
+    QLabel,
+    QHBoxLayout,
+)
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from dataclasses import dataclass
 
-from src.logger import info, warning, error
+from src.logger import info, error
 
 
 class InputWorker(QObject):
@@ -23,7 +29,7 @@ class InputWorker(QObject):
         self.joysticks = []
 
         self.current_pressed_keys = set()
-        self.keyboard_listener = None 
+        self.keyboard_listener = None
 
         self.current_pressed_joystick_buttons = {}
 
@@ -46,13 +52,13 @@ class InputWorker(QObject):
                     # 检查是否为 Ctrl+[a-z] 生成的控制字符 (ASCII 1-26)
                     if 1 <= char_ord <= 26:
                         # 将其转换回对应的字母 'a'-'z'
-                        return chr(char_ord + 96) 
-                    
+                        return chr(char_ord + 96)
+
                     # 如果是其他可打印字符，直接返回
                     return key.char
                 else:
                     return None
-            
+
             # 作为后备，返回按键的字符串表示
             return str(key)
         except Exception as e:
@@ -69,8 +75,7 @@ class InputWorker(QObject):
         # --- pynput 键盘监听器初始化 ---
         info("pynput keyboard listener starting in worker thread.")
         self.keyboard_listener = keyboard.Listener(
-            on_press=self._on_key_press,
-            on_release=self._on_key_release
+            on_press=self._on_key_press, on_release=self._on_key_release
         )
         self.keyboard_listener.start()
 
@@ -91,16 +96,25 @@ class InputWorker(QObject):
                     if joystick_id not in self.current_pressed_joystick_buttons:
                         self.current_pressed_joystick_buttons[joystick_id] = set()
                     self.current_pressed_joystick_buttons[joystick_id].add(button_index)
-                    self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
+                    self.joystick_combo_pressed.emit(
+                        tuple(
+                            sorted(self.current_pressed_joystick_buttons[joystick_id])
+                        )
+                    )
 
                 elif event.type == pygame.JOYBUTTONUP:
                     joystick_id = event.joy
                     button_index = event.button
-                    if joystick_id in self.current_pressed_joystick_buttons and \
-                       button_index in self.current_pressed_joystick_buttons[joystick_id]:
-                        self.current_pressed_joystick_buttons[joystick_id].remove(button_index)
+                    if (
+                        joystick_id in self.current_pressed_joystick_buttons
+                        and button_index
+                        in self.current_pressed_joystick_buttons[joystick_id]
+                    ):
+                        self.current_pressed_joystick_buttons[joystick_id].remove(
+                            button_index
+                        )
                         # self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-                       
+
                 elif event.type == pygame.JOYAXISMOTION:
                     self.joystick_axis_moved.emit((event.joy, event.axis, event.value))
 
@@ -165,11 +179,12 @@ JOYSTICK_BUTTON_NAMES = {
     9: "RStick",
 }
 
+
 def format_combo(combo_type, combo_tuple):
     if combo_type == "keyboard":
         keys = []
         for k in combo_tuple:
-            cleaned_key = k.replace('_l', '').replace('_r', '')
+            cleaned_key = k.replace("_l", "").replace("_r", "")
             keys.append(cleaned_key.upper())
         return "键盘 " + " + ".join(sorted(keys))
     elif combo_type == "joystick":
@@ -182,23 +197,26 @@ class InputSettingDialog(QDialog):
     """
     一个对话框，用于捕获用户的键盘或手柄组合键输入。
     """
+
     def __init__(self, worker: InputWorker, parent=None):
         super().__init__(parent)
         self.worker = worker
-        
+
         # 内部状态
         self.input_type = None  # 'keyboard', 'joystick', or None
         self.current_combo = ()
-        
+
         # 最终要返回给主控件的设置
-        self.final_setting = ('none', ())
+        self.final_setting = ("none", ())
 
         self.setWindowTitle("设置按键")
         self.setMinimumSize(400, 200)
 
         # --- UI 组件 ---
         self.layout: QHBoxLayout = QVBoxLayout(self)
-        self.prompt_label = QLabel("请按下键盘或手柄组合键...\n(第一个按下的设备类型将被锁定)")
+        self.prompt_label = QLabel(
+            "请按下键盘或手柄组合键...\n(第一个按下的设备类型将被锁定)"
+        )
         self.prompt_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.combo_display_label = QLabel("等待输入...")
@@ -207,7 +225,9 @@ class InputSettingDialog(QDialog):
         font.setBold(True)
         self.combo_display_label.setFont(font)
         self.combo_display_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.combo_display_label.setStyleSheet("color: #3498db; border: 1px solid #ccc; padding: 10px;")
+        self.combo_display_label.setStyleSheet(
+            "color: #3498db; border: 1px solid #ccc; padding: 10px;"
+        )
 
         self.clear_button = QPushButton("清空")
         self.cancel_button = QPushButton("取消")
@@ -229,46 +249,46 @@ class InputSettingDialog(QDialog):
         self.confirm_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
         self.clear_button.clicked.connect(self._clear_setting)
-        
+
         self.worker.key_combo_pressed.connect(self._on_key_combo)
         self.worker.joystick_combo_pressed.connect(self._on_joystick_combo)
 
     def _on_key_combo(self, combo: tuple):
         # 如果已经锁定了手柄输入，则忽略键盘
-        if self.input_type == 'joystick':
+        if self.input_type == "joystick":
             return
-        
+
         # 如果这是第一次输入，则锁定为键盘
         if not self.input_type:
-            self.input_type = 'keyboard'
+            self.input_type = "keyboard"
 
         self.current_combo = combo
         self._update_display()
 
     def _on_joystick_combo(self, combo: tuple):
         # 如果已经锁定了键盘输入，则忽略手柄
-        if self.input_type == 'keyboard':
+        if self.input_type == "keyboard":
             return
-            
+
         # 如果这是第一次输入，则锁定为手柄
         if not self.input_type:
-            self.input_type = 'joystick'
+            self.input_type = "joystick"
 
         self.current_combo = combo
         self._update_display()
-        
+
     def _update_display(self):
         if not self.current_combo:
             self.combo_display_label.setText("等待输入...")
             return
-        
+
         display_text = format_combo(self.input_type, self.current_combo)
         self.combo_display_label.setText(display_text)
 
     def _clear_setting(self):
         """当点击清空按钮时调用"""
-        self.final_setting = ('none', ())
-        self.accept() # 关闭对话框并返回接受状态
+        self.final_setting = ("none", ())
+        self.accept()  # 关闭对话框并返回接受状态
 
     def accept(self):
         """重写 accept，在关闭前保存当前设置"""
@@ -287,19 +307,18 @@ class InputSettingDialog(QDialog):
         super().closeEvent(event)
 
 
-
 @dataclass
 class InputSetting:
-    type: str | None = None    # 'keyboard', 'joystick', or None
+    type: str | None = None  # 'keyboard', 'joystick', or None
     combo: tuple | None = None
 
     @staticmethod
-    def load_from_dict(data: dict) -> 'InputSetting':
+    def load_from_dict(data: dict) -> "InputSetting":
         ret = InputSetting()
         if data is None:
             return ret
-        ret.type = data.get('type')
-        ret.combo = data.get('combo', tuple())
+        ret.type = data.get("type")
+        ret.combo = data.get("combo", tuple())
         if ret.combo is not None:
             ret.combo = tuple(ret.combo)
         return ret
@@ -309,6 +328,7 @@ class InputSettingWidget(QWidget):
     """
     一个封装了按键设置逻辑的控件。
     """
+
     # 当设置被确认后，发射此信号
     setting_changed = pyqtSignal(InputSetting)
     # 当设置的快捷键被触发时，发射此信号
@@ -318,26 +338,26 @@ class InputSettingWidget(QWidget):
         super().__init__(parent)
         if not worker:
             raise ValueError("InputSettingWidget requires an InputWorker instance.")
-        
+
         self.worker = worker
-        self._setting_type = None # 'keyboard', 'joystick', or None
+        self._setting_type = None  # 'keyboard', 'joystick', or None
         self._setting_combo = ()
 
         # --- UI 组件 ---
         self.layout: QVBoxLayout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.setting_button = QPushButton()
         # self.setting_button.setMinimumHeight(30)
         # self.setMinimumHeight(30)
         self.setting_button.setStyleSheet("padding: 4px;")
         self.layout.addWidget(self.setting_button)
-        
+
         # --- 初始化 ---
         self._update_button_text()
         self.setting_button.clicked.connect(self._open_setting_dialog)
         self.worker.key_combo_pressed.connect(self.process_key_combo)
         self.worker.joystick_combo_pressed.connect(self.process_joystick_combo)
-        
+
     def _update_button_text(self):
         """根据当前设置更新按钮上的文本"""
         text = format_combo(self._setting_type, self._setting_combo)
@@ -348,9 +368,13 @@ class InputSettingWidget(QWidget):
         dialog = InputSettingDialog(self.worker, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._setting_type, self._setting_combo = dialog.get_setting()
-            info(f"Setting confirmed: Type={self._setting_type}, Combo={self._setting_combo}")
+            info(
+                f"Setting confirmed: Type={self._setting_type}, Combo={self._setting_combo}"
+            )
             self._update_button_text()
-            self.setting_changed.emit(InputSetting(self._setting_type, self._setting_combo))
+            self.setting_changed.emit(
+                InputSetting(self._setting_type, self._setting_combo)
+            )
         else:
             info("Setting canceled.")
 
@@ -364,11 +388,11 @@ class InputSettingWidget(QWidget):
     def get_setting(self) -> InputSetting:
         """获取当前控件保存的设置"""
         return InputSetting(self._setting_type, self._setting_combo)
-    
+
     def process_key_combo(self, keys: tuple):
-        if self._setting_type == 'keyboard' and keys == self._setting_combo:
+        if self._setting_type == "keyboard" and keys == self._setting_combo:
             self.input_triggered.emit()
-    
+
     def process_joystick_combo(self, buttons: tuple):
-        if self._setting_type == 'joystick' and buttons == self._setting_combo:
+        if self._setting_type == "joystick" and buttons == self._setting_combo:
             self.input_triggered.emit()

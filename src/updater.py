@@ -5,18 +5,17 @@ from PIL import Image
 
 from src.common import GAME_WINDOW_TITLE
 from src.config import Config
-from src.logger import info, warning, error
+from src.logger import info
 from src.ui.overlay import OverlayWidget, OverlayUIState
 from src.ui.map_overlay import MapOverlayWidget, MapOverlayUIState
 from src.detector import (
-    DetectorManager, 
-    DetectParam, 
+    DetectorManager,
+    DetectParam,
     DayDetectParam,
     RainDetectParam,
     MapDetectParam,
 )
 from src.detector.map_info import MapPattern
-from src.detector.map_detector import MapDetector
 from src.ui.utils import is_window_in_foreground
 
 
@@ -49,7 +48,9 @@ class Updater(QObject):
         self.overlay = overlay
         self.update_overlay_ui_state_signal.connect(self.overlay.update_ui_state)
         self.map_overlay = map_overlay
-        self.update_map_overlay_ui_state_signal.connect(self.map_overlay.update_ui_state)
+        self.update_map_overlay_ui_state_signal.connect(
+            self.map_overlay.update_ui_state
+        )
 
         self.detect_interval = 0.2
 
@@ -62,7 +63,7 @@ class Updater(QObject):
         self.dayx_detect_enabled: bool = True
         self.day1_detect_region = None
         self.dayx_detect_lang: str = "chs"
-        
+
         self.in_rain_start_time: float = None
         self.in_rain_detect_enabled: bool = True
         self.hp_bar_detect_region: tuple[int] = None
@@ -72,13 +73,14 @@ class Updater(QObject):
         self.map_detect_enabled: bool = True
         self.map_region: tuple[int] = None
         self.current_is_full_map: bool = False
-        self.do_match_map_pattern_flag: DoMatchMapPatternFlag = DoMatchMapPatternFlag.TRUE
+        self.do_match_map_pattern_flag: DoMatchMapPatternFlag = (
+            DoMatchMapPatternFlag.TRUE
+        )
         self.map_pattern: MapPattern = None
         self.map_overlay_visible: bool = False
         self.last_map_pattern_match_time: float = 0.0
 
         self.only_detect_when_game_foreground: bool = False
-
 
     def get_time(self) -> float:
         return time.time() * Config.get().time_scale
@@ -144,24 +146,28 @@ class Updater(QObject):
         if self.day is not None:
             text = f"DAY {'I' * self.day} - " + text
         return progress, text
-    
+
     def update_phase(self):
         config = Config.get()
         if self.current_phase is not None:
             index = self.current_phase.value
             phase_length = None if index >= 4 else config.day_period_seconds[index]
-            if phase_length is not None and self.get_time() - self.phase_start_time > phase_length:
+            if (
+                phase_length is not None
+                and self.get_time() - self.phase_start_time > phase_length
+            ):
                 self.current_phase = Phase(self.current_phase.value + 1)
                 self.phase_start_time += phase_length
                 info(f"Phase progress to {self.current_phase.name}.")
             if self.get_time() < self.phase_start_time:
                 if self.current_phase.value >= 1:
                     self.current_phase = Phase(self.current_phase.value - 1)
-                    self.phase_start_time -= config.day_period_seconds[self.current_phase.value]
+                    self.phase_start_time -= config.day_period_seconds[
+                        self.current_phase.value
+                    ]
                     info(f"Phase back to {self.current_phase.name}.")
                 else:
                     self.phase_start_time = self.get_time()
-
 
     def start_in_rain(self):
         self.in_rain_start_time = self.get_time()
@@ -189,59 +195,73 @@ class Updater(QObject):
         text = f"雨中冒险倒计时 {format_period(int(max(total - t, 0)))} - {percent}%"
         return progress, text
 
-
     def set_to_detect_map_pattern_once(self):
         self.do_match_map_pattern_flag = DoMatchMapPatternFlag.PREPARE
         info("Set to detect map pattern once.")
 
     def update_overlay_match_map_pattern_text(self):
-        match_ready = self.do_match_map_pattern_flag != DoMatchMapPatternFlag.FALSE and self.map_detect_enabled
+        match_ready = (
+            self.do_match_map_pattern_flag != DoMatchMapPatternFlag.FALSE
+            and self.map_detect_enabled
+        )
         if match_ready:
-            self.update_overlay_ui_state_signal.emit(OverlayUIState(
-                map_pattern_match_text=" - 地图识别就绪",
-            ))
+            self.update_overlay_ui_state_signal.emit(
+                OverlayUIState(
+                    map_pattern_match_text=" - 地图识别就绪",
+                )
+            )
         else:
-            self.update_overlay_ui_state_signal.emit(OverlayUIState(
-                map_pattern_match_text="",
-            ))
+            self.update_overlay_ui_state_signal.emit(
+                OverlayUIState(
+                    map_pattern_match_text="",
+                )
+            )
 
     def update_map_overlay_image(self, image: Image.Image | None):
         if image is None:
-            self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                clear_image=True,
-                map_pattern_match_time=0,
-                map_pattern_matching=False,
-            ))
+            self.update_map_overlay_ui_state_signal.emit(
+                MapOverlayUIState(
+                    clear_image=True,
+                    map_pattern_match_time=0,
+                    map_pattern_matching=False,
+                )
+            )
             info("Clear map overlay image.")
         else:
-            self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                overlay_image=image,
-                x=self.map_region[0],
-                y=self.map_region[1],
-                w=self.map_region[2],
-                h=self.map_region[3],
-                map_pattern_match_time=self.get_time(),
-                map_pattern_matching=False,
-            ))
+            self.update_map_overlay_ui_state_signal.emit(
+                MapOverlayUIState(
+                    overlay_image=image,
+                    x=self.map_region[0],
+                    y=self.map_region[1],
+                    w=self.map_region[2],
+                    h=self.map_region[3],
+                    map_pattern_match_time=self.get_time(),
+                    map_pattern_matching=False,
+                )
+            )
             info("Update map overlay image.")
 
     def show_map_overlay(self):
         if not self.map_overlay_visible:
-            self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                opacity=1.0,
-                x=self.map_region[0],
-                y=self.map_region[1],
-                w=self.map_region[2],
-                h=self.map_region[3],
-            ))
+            self.update_map_overlay_ui_state_signal.emit(
+                MapOverlayUIState(
+                    opacity=1.0,
+                    x=self.map_region[0],
+                    y=self.map_region[1],
+                    w=self.map_region[2],
+                    h=self.map_region[3],
+                )
+            )
             self.map_overlay_visible = True
             info("Show map overlay.")
 
     def hide_map_overlay(self):
         if self.map_overlay_visible:
-            self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                opacity=0.0,
-            ))
+            self.update_map_overlay_ui_state_signal.emit(
+                MapOverlayUIState(
+                    opacity=0.0,
+                )
+            )
             self.map_overlay_visible = False
             info("Hide map overlay.")
 
@@ -250,7 +270,6 @@ class Updater(QObject):
             self.hide_map_overlay()
         else:
             self.show_map_overlay()
-
 
     def detect_and_update(self):
         param = DetectParam()
@@ -303,7 +322,10 @@ class Updater(QObject):
                     self.hide_map_overlay()
 
             self.update_overlay_match_map_pattern_text()
-            if self.get_time() - self.last_map_pattern_match_time > Config.get().map_pattern_match_interval:
+            if (
+                self.get_time() - self.last_map_pattern_match_time
+                > Config.get().map_pattern_match_interval
+            ):
                 self.set_to_detect_map_pattern_once()
                 self.last_map_pattern_match_time = self.get_time()
                 info("Set to detect map pattern once by interval.")
@@ -314,50 +336,65 @@ class Updater(QObject):
                 self.update_map_overlay_image(None)
                 info("Hide overlay and prepared to detect map pattern.")
 
-            elif self.do_match_map_pattern_flag == DoMatchMapPatternFlag.TRUE and is_full_map:
+            elif (
+                self.do_match_map_pattern_flag == DoMatchMapPatternFlag.TRUE
+                and is_full_map
+            ):
                 # 特殊地形识别成功才进行匹配（避免地图半透明时就识别）
-                result = self.detector.detect(DetectParam(
-                    map_detect_param=MapDetectParam(
-                        map_region=self.map_region,
-                        img=map_img,    # 使用之前截取的图片，避免处理过程中画面变化
-                        do_match_earth_shifting=True,
+                result = self.detector.detect(
+                    DetectParam(
+                        map_detect_param=MapDetectParam(
+                            map_region=self.map_region,
+                            img=map_img,  # 使用之前截取的图片，避免处理过程中画面变化
+                            do_match_earth_shifting=True,
+                        )
                     )
-                ))
+                )
                 earth_shifting = result.map_detect_result.earth_shifting
                 if earth_shifting is not None:
                     # 进行匹配
                     self.do_match_map_pattern_flag = DoMatchMapPatternFlag.FALSE
-                    self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                        clear_image=True,
-                        map_pattern_matching=True,
-                        opacity=1.0,
-                    ))
-                    self.update_overlay_ui_state_signal.emit(OverlayUIState(
-                        map_pattern_match_text="",
-                    ))
-                    result = self.detector.detect(DetectParam(
-                        map_detect_param=MapDetectParam(
-                            map_region=self.map_region,
-                            img=map_img,
-                            earth_shifting=earth_shifting,
-                            do_match_pattern=True,
+                    self.update_map_overlay_ui_state_signal.emit(
+                        MapOverlayUIState(
+                            clear_image=True,
+                            map_pattern_matching=True,
+                            opacity=1.0,
                         )
-                    ))
+                    )
+                    self.update_overlay_ui_state_signal.emit(
+                        OverlayUIState(
+                            map_pattern_match_text="",
+                        )
+                    )
+                    result = self.detector.detect(
+                        DetectParam(
+                            map_detect_param=MapDetectParam(
+                                map_region=self.map_region,
+                                img=map_img,
+                                earth_shifting=earth_shifting,
+                                do_match_pattern=True,
+                            )
+                        )
+                    )
                     self.map_pattern = result.map_detect_result.pattern
-                    self.update_map_overlay_image(result.map_detect_result.overlay_image)
+                    self.update_map_overlay_image(
+                        result.map_detect_result.overlay_image
+                    )
                     self.last_map_pattern_match_time = self.get_time()
 
-    
     def check_game_foreground(self) -> bool:
         is_foreground = is_window_in_foreground(GAME_WINDOW_TITLE)
-        self.update_overlay_ui_state_signal.emit(OverlayUIState(
-            is_game_foreground=is_foreground,
-        ))
-        self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-            is_game_foreground=is_foreground,
-        ))
+        self.update_overlay_ui_state_signal.emit(
+            OverlayUIState(
+                is_game_foreground=is_foreground,
+            )
+        )
+        self.update_map_overlay_ui_state_signal.emit(
+            MapOverlayUIState(
+                is_game_foreground=is_foreground,
+            )
+        )
         return is_foreground
-
 
     def run(self):
         self._running = True
@@ -378,13 +415,15 @@ class Updater(QObject):
             progress, text = self.get_phase_progress_text()
             progress2, text2 = self.get_in_rain_progress_text()
 
-            self.update_overlay_ui_state_signal.emit(OverlayUIState(
-                progress=progress,
-                text=text,
-                progress2=progress2,
-                text2=text2,
-                progress2_visible=progress2 > 0.0,
-            ))
+            self.update_overlay_ui_state_signal.emit(
+                OverlayUIState(
+                    progress=progress,
+                    text=text,
+                    progress2=progress2,
+                    text2=text2,
+                    progress2_visible=progress2 > 0.0,
+                )
+            )
 
             elapsed = self.get_time() - start_time
             sleep_time = Config.get().update_interval - elapsed
@@ -393,5 +432,3 @@ class Updater(QObject):
 
     def stop(self):
         self._running = False
-
-
