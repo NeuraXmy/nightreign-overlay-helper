@@ -252,14 +252,11 @@ class MapDetector:
         # t.print()
         return best_ctype, best_score
 
-    def _match_map_pattern(self, img: np.ndarray, earth_shifing: int) -> tuple[MapPattern, int]:
-        assert earth_shifing is not None, "earth_shifing should be provided when matching map pattern"
+    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> tuple[MapPattern, int]:
+        assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
 
         t = time.time()
         img = cv2.resize(img, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
-
-        # 判断特殊地形
-        earth_shifting, earth_shifting_score = self._match_earth_shifting(img)
 
         # 识别POI
         map_bg = cv2.resize(MAP_BGS[earth_shifting], STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
