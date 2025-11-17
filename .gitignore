@@ -222,3 +222,28 @@ sandbox/
 *.spec
 
 .vscode/
+
+# Golang
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Compiled binary
+nightreign-overlay-helper
+nightreign-overlay-helper.exe
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
