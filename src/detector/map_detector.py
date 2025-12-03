@@ -50,7 +50,7 @@ PREDICT_EARTH_SHIFTING_SIZE_REGION = (
 )
 PREDICT_EARTH_SHIFTING_OFFSET_AND_STRIDE = (5, 1)
 PREDICT_EARTH_SHIFTING_SCALES = (0.95, 1.05, 7)
-MAP_BGS = { i : open_cv2_image(f"maps/{i}.jpg") for i in range(6) if i != 4 }
+MAP_BGS = { i : open_cv2_image(f"maps/{i}.jpg") for i in range(7) if i != 4 }
 
 POI_ICON_SCALE = { 30: 0.35, 32: 0.5, 34: 0.4, 37: 0.4, 38: 0.3, 40: 0.4, 41: 0.38, }
 POI_ICONS = { ctype: open_pil_image(f"icons/construct/{ctype}.png") for ctype in POI_ICON_SCALE.keys() }
@@ -252,8 +252,11 @@ class MapDetector:
         # t.print()
         return best_ctype, best_score
 
-    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> tuple[MapPattern, int]:
+    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> tuple[MapPattern | None, int]:
         assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
+
+        if earth_shifting > 5:
+            return None, 0
 
         t = time.time()
         img = cv2.resize(img, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
@@ -319,7 +322,7 @@ class MapDetector:
         return best_pattern, best_score
 
 
-    def _draw_overlay_image(self, pattern: MapPattern, draw_size: tuple[int, int]) -> Image.Image:
+    def _draw_overlay_image(self, pattern: MapPattern | None, draw_size: tuple[int, int]) -> Image.Image:
         def scale_size(p: int | float | Position) -> int | Position:
             # 以750x750为标准尺寸
             if isinstance(p, (int, float)):
@@ -382,89 +385,94 @@ class MapDetector:
         img = Image.new("RGBA", draw_size, (0, 0, 0, 0))
         texts, icons = [], []
 
-        # day1 boss
-        x, y = scale_size(pattern.day1_pos)
-        name = get_name(pattern.day1_boss) or "未知BOSS"
-        extra_name = get_name(pattern.day1_extra_boss) if pattern.day1_extra_boss != -1 else None
-        icons.append(((x, y), NIGHT_CIRCLE_ICON))
-        texts.append(((x, y + scale_size(40)), f"Day1 {name}", FONT_SIZE_LARGE, (210, 210, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
-        if extra_name: texts.append(((x, y + scale_size(60)), f"额外Boss:{extra_name}", 
-                                     FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+        if pattern:
+            # day1 boss
+            x, y = scale_size(pattern.day1_pos)
+            name = get_name(pattern.day1_boss) or "未知BOSS"
+            extra_name = get_name(pattern.day1_extra_boss) if pattern.day1_extra_boss != -1 else None
+            icons.append(((x, y), NIGHT_CIRCLE_ICON))
+            texts.append(((x, y + scale_size(40)), f"Day1 {name}", FONT_SIZE_LARGE, (210, 210, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+            if extra_name: texts.append(((x, y + scale_size(60)), f"额外Boss:{extra_name}", 
+                                        FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
 
-        # day2 boss
-        x, y = scale_size(pattern.day2_pos)
-        name = get_name(pattern.day2_boss) or "未知BOSS"
-        extra_name = get_name(pattern.day2_extra_boss) if pattern.day2_extra_boss != -1 else None
-        icons.append(((x, y), NIGHT_CIRCLE_ICON))
-        texts.append(((x, y + scale_size(40)), f"Day2 {name}", FONT_SIZE_LARGE, (210, 210, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
-        if extra_name: texts.append(((x, y + scale_size(60)), f"额外Boss:{extra_name}", 
-                                     FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+            # day2 boss
+            x, y = scale_size(pattern.day2_pos)
+            name = get_name(pattern.day2_boss) or "未知BOSS"
+            extra_name = get_name(pattern.day2_extra_boss) if pattern.day2_extra_boss != -1 else None
+            icons.append(((x, y), NIGHT_CIRCLE_ICON))
+            texts.append(((x, y + scale_size(40)), f"Day2 {name}", FONT_SIZE_LARGE, (210, 210, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+            if extra_name: texts.append(((x, y + scale_size(60)), f"额外Boss:{extra_name}", 
+                                        FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
 
-        for pos, construct in pattern.pos_constructions.items():
-            pos = scale_size(pos)
-            x, y = pos
-            ctype = construct.type
-            # boss
-            if ctype // 1000 in (45, 46) and ctype // 100 != 460 and (ctype == 45510 or ctype // 1000 != 45) and ctype not in (46780,):
-                name = get_name(ctype)
-                if pos == MAIN_CASTLE_UPPERFLOOR_POS:   
-                    y -= scale_size(10)
-                    x += scale_size(13)
-                    name = '楼顶:' + name
-                elif pos == MAIN_CASTLE_BASEMENT_POS:   
-                    y += scale_size(10)
-                    x -= scale_size(13)
-                    name = '地下室:' + name
-                else: 
+            for pos, construct in pattern.pos_constructions.items():
+                pos = scale_size(pos)
+                x, y = pos
+                ctype = construct.type
+                # boss
+                if ctype // 1000 in (45, 46) and ctype // 100 != 460 and (ctype == 45510 or ctype // 1000 != 45) and ctype not in (46780,):
+                    name = get_name(ctype)
+                    if pos == MAIN_CASTLE_UPPERFLOOR_POS:   
+                        y -= scale_size(10)
+                        x += scale_size(13)
+                        name = '楼顶:' + name
+                    elif pos == MAIN_CASTLE_BASEMENT_POS:   
+                        y += scale_size(10)
+                        x -= scale_size(13)
+                        name = '地下室:' + name
+                    else: 
+                        y += scale_size(15)
+                        if ctype in BOSS1_CTYPES:
+                            icons.append(((x, y - scale_size(20)), BOSS1_ICON))
+                        elif ctype in BOSS2_CTYPES:
+                            icons.append(((x, y - scale_size(20)), BOSS2_ICON))
+                    if name:
+                        texts.append(((x, y), name, FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+                # 主城类型
+                if ctype // 100 == 494 and ctype != 49400:
+                    y -= scale_size(30)
+                    x -= scale_size(15)
+                    texts.append(((x, y), get_name(ctype), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+                # 法师塔
+                if ctype // 100 == 400:
+                    texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (210, 255, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
+                # 马车
+                if ctype // 10 in (4500, 4501):
+                    icons.append(((x, y), CARRIAGE_ICON))
+                # POI
+                if ctype // 1000 in (30, 32, 34, 38):
                     y += scale_size(15)
-                    if ctype in BOSS1_CTYPES:
-                        icons.append(((x, y - scale_size(20)), BOSS1_ICON))
-                    elif ctype in BOSS2_CTYPES:
-                        icons.append(((x, y - scale_size(20)), BOSS2_ICON))
-                if name:
-                    texts.append(((x, y), name, FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
-            # 主城类型
-            if ctype // 100 == 494 and ctype != 49400:
-                y -= scale_size(30)
-                x -= scale_size(15)
-                texts.append(((x, y), get_name(ctype), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
-            # 法师塔
-            if ctype // 100 == 400:
-                texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (210, 255, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
-            # 马车
-            if ctype // 10 in (4500, 4501):
-                icons.append(((x, y), CARRIAGE_ICON))
-            # POI
-            if ctype // 1000 in (30, 32, 34, 38):
-                y += scale_size(15)
-                texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (200, 220, 150, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
-            # 特殊事件（癫火塔除外）
-            if ctype // 1000 in (20, 21):
-                icons.append(((x, y), EVENT_ICON))
-                y += scale_size(15)
-                texts.append(((x, y), get_event_text(pattern), FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
-            
+                    texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (200, 220, 150, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
+                # 特殊事件（癫火塔除外）
+                if ctype // 1000 in (20, 21):
+                    icons.append(((x, y), EVENT_ICON))
+                    y += scale_size(15)
+                    texts.append(((x, y), get_event_text(pattern), FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
+                
 
-        # 宝藏
-        treasure_id = pattern.treasure * 10 + pattern.earth_shifting
-        treasure = open_with_draw_size(f"treasures/treasure_{treasure_id}.png", (800, 800))
-        icons.append((scale_size((375, 375)), treasure))
+            # 宝藏
+            treasure_id = pattern.treasure * 10 + pattern.earth_shifting
+            treasure = open_with_draw_size(f"treasures/treasure_{treasure_id}.png", (800, 800))
+            icons.append((scale_size((375, 375)), treasure))
 
-        # 癫火塔
-        if pattern.event_value == 3080:
-            frenzy = open_with_draw_size(f"frenzy/Frenzy_{pattern.evpat_flag}.png", (800, 800))
-            icons.append((scale_size((375, 375)), frenzy))
+            # 癫火塔
+            if pattern.event_value == 3080:
+                frenzy = open_with_draw_size(f"frenzy/Frenzy_{pattern.evpat_flag}.png", (800, 800))
+                icons.append((scale_size((375, 375)), frenzy))
 
-        # 腐败庇佑
-        if pos := ROTREW_POS.get(pattern.rot_rew):
-            icons.append((pos, ROTREW_ICON))
-            texts.append(((pos[0], pos[1] + scale_size(20)), "庇佑", FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
+            # 腐败庇佑
+            if pos := ROTREW_POS.get(pattern.rot_rew):
+                icons.append((pos, ROTREW_ICON))
+                texts.append(((pos[0], pos[1] + scale_size(20)), "庇佑", FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
 
-        # 说明文本
-        text = f"#{pattern.id}    {get_name(pattern.nightlord + 100000)}"
-        if event_text := get_event_text(pattern):
-            text += f"    特殊事件: {event_text}"
-        texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            # 说明文本
+            text = f"#{pattern.id}    {get_name(pattern.nightlord + 100000)}"
+            if event_text := get_event_text(pattern):
+                text += f"    特殊事件: {event_text}"
+            texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+
+        else:
+            text = f"暂无该地图数据"
+            texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
 
         for icon in icons:  draw_icon(img, *icon)
         for text in texts:  draw_text(img, *text)
