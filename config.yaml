@@ -49,6 +49,8 @@ hpbar_border_v_peak_lower: 100        # 血条边界检测最低亮度
 hpbar_border_v_peak_threshold: 75     # 血条边界亮度提升阈值
 hpbar_border_v_peak_interval: 30      # 血条边界亮度区间宽度
 hpbar_recent_length_count: 10         # 记录过去多少次血条长度，用于稳定血条长度输出
+hpbar_low_hp_marker: 0.4              # 低血量触发被动标记位置
+hpbar_high_hp_marker: 0.85            # 高血量触发被动标记位置
 
 art_detect_standard_size: 50   # 绝招模板图片匹配标准尺寸(宽和高)
 art_detect_match_scales: [0.95, 1.05, 5]  # 绝招模板匹配缩放范围(最小比例,最大比例,步数)

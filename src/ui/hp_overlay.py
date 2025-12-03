@@ -85,15 +85,17 @@ class HpOverlayWidget(QWidget):
         line_height = int(self.LINE_HEIGHT / self.devicePixelRatio())
         line_width = int(self.LINE_WIDTH / self.devicePixelRatio())
 
+        cfg = Config.get()
+
         x, y, w, h = self.hpbar_region
         y -= line_height  # 移动到血条上方
         h = line_height
         self.setGeometry(x, y, w, h)
 
-        self.percent20line.move(int(self.width() * 0.2) - line_width // 2, 0)
+        self.percent20line.move(int(self.width() * cfg.hpbar_low_hp_marker) - line_width // 2, 0)
         self.percent20line.resize(line_width, self.height())
 
-        self.percent85line.move(int(self.width() * 0.85) - line_width // 2, 0)
+        self.percent85line.move(int(self.width() * cfg.hpbar_high_hp_marker) - line_width // 2, 0)
         self.percent85line.resize(line_width, self.height())
         
         self.percent100line.move(self.width() - line_width, 0)

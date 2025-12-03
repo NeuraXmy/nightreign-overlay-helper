@@ -60,6 +60,8 @@ class Config:
     hpbar_border_v_peak_threshold: int
     hpbar_border_v_peak_interval: int
     hpbar_recent_length_count: int
+    hpbar_low_hp_marker: float
+    hpbar_high_hp_marker: float
 
     art_detect_standard_size: int
     art_detect_match_scales: tuple[float, float, int]
