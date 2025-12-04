@@ -501,9 +501,8 @@ class SettingsWindow(QWidget):
             self.update_art_region()
             # 其他
             load_checkbox_state(self.debug_log_checkbox, data.get("debug_log_enabled", False))
-            # HDR图像处理选项 - 从config.yaml读取
-            config = Config.get()
-            load_checkbox_state(self.hdr_processing_checkbox, config.enable_hdr_processing)
+            # HDR图像处理选项 - 从settings.yaml读取
+            load_checkbox_state(self.hdr_processing_checkbox, data.get("hdr_processing_enabled", True))
 
             info("Settings loaded successfully")
         except Exception as e:
@@ -554,7 +553,7 @@ class SettingsWindow(QWidget):
                 "art_region": self.art_region,
                 # 其他
                 "debug_log_enabled": self.debug_log_checkbox.isChecked(),
-                # HDR图像处理选项不保存到settings.yaml，直接修改config.yaml
+                "hdr_processing_enabled": self.hdr_processing_checkbox.isChecked(),
             }
             save_yaml(SETTINGS_SAVE_PATH, data)
             info(f"Saved settings to {SETTINGS_SAVE_PATH}")
@@ -1096,18 +1095,7 @@ class SettingsWindow(QWidget):
 
     def update_hdr_processing(self, state):
         enabled = self.hdr_processing_checkbox.isChecked()
-        # 更新config.yaml文件中的enable_hdr_processing配置
-        try:
-            config_path = "config.yaml"
-            if os.path.exists(config_path):
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config_data = yaml.safe_load(f)
-                config_data['enable_hdr_processing'] = enabled
-                with open(config_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(config_data, f, allow_unicode=True, sort_keys=False)
-                info(f"HDR image processing enabled: {enabled}")
-            else:
-                warning(f"Config file not found: {config_path}")
-        except Exception as e:
-            error(f"Failed to update HDR processing setting: {e}")
+        # 保存到updater，实时生效
+        self.updater.hdr_processing_enabled = enabled
+        info(f"HDR image processing enabled: {enabled}")
 

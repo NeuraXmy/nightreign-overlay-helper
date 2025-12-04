@@ -29,8 +29,6 @@ class Config:
 
     time_scale: float
 
-    enable_hdr_processing: bool
-
     template_standard_height: int
     mask_lower_white: list[int]
     mask_upper_white: list[int]

@@ -86,6 +86,7 @@ class MapDetectParam:
     do_match_full_map: bool = False
     do_match_earth_shifting: bool = False
     do_match_pattern: bool = False
+    hdr_processing_enabled: bool = True
 
 
 @dataclass
@@ -491,8 +492,8 @@ class MapDetector:
             return ret
         
         if param.img is None:
-            # 根据配置选择图像处理方式
-            processing = 'normalize' if config.enable_hdr_processing else 'none'
+            # 根据参数选择图像处理方式
+            processing = 'normalize' if param.hdr_processing_enabled else 'none'
             img = grab_region(sct, param.map_region, processing=processing)
             img = np.array(img)
         else:

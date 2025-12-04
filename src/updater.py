@@ -105,6 +105,9 @@ class Updater(QObject):
         self.art_region: tuple[int] = None
         self.art_type: str = None
 
+        # HDR图像处理设置
+        self.hdr_processing_enabled: bool = False
+
 
     def get_time(self) -> float:
         return time.time() * Config.get().time_scale
@@ -197,6 +200,7 @@ class Updater(QObject):
             day_detect_param=DayDetectParam(
                 day1_region=self.day1_detect_region,
                 lang=self.dayx_detect_lang,
+                hdr_processing_enabled=self.hdr_processing_enabled,
             )
         )
         result = self.detector.detect(param)
@@ -325,6 +329,7 @@ class Updater(QObject):
             map_detect_param=MapDetectParam(
                 map_region=self.map_region,
                 do_match_full_map=True,
+                hdr_processing_enabled=self.hdr_processing_enabled,
             )
         )
         result = self.detector.detect(param)
@@ -360,6 +365,7 @@ class Updater(QObject):
                     map_region=self.map_region,
                     img=map_img,    # 使用之前截取的图片，避免处理过程中画面变化
                     do_match_earth_shifting=True,
+                    hdr_processing_enabled=self.hdr_processing_enabled,
                 )
             ))
             earth_shifting = result.map_detect_result.earth_shifting
@@ -384,6 +390,7 @@ class Updater(QObject):
                         img=map_img,
                         earth_shifting=earth_shifting,
                         do_match_pattern=True,
+                        hdr_processing_enabled=self.hdr_processing_enabled,
                     )
                 ))
                 self.map_pattern = result.map_detect_result.pattern
@@ -438,6 +445,7 @@ class Updater(QObject):
         param = DetectParam(
             art_detect_param=ArtDetectParam(
                 art_region=self.art_region,
+                hdr_processing_enabled=self.hdr_processing_enabled,
             )
         )
         result = self.detector.detect(param)
