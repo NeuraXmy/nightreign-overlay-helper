@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[oc]
 *.py[codz]
 *$py.class
 
@@ -220,5 +221,6 @@ build/
 dist/
 sandbox/
 *.spec
+uv.lock
 
 .vscode/
