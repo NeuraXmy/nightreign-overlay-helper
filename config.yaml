@@ -54,7 +54,7 @@ hpbar_high_hp_marker: 0.85            # 高血量触发被动标记位置
 
 art_detect_standard_size: 50   # 绝招模板图片匹配标准尺寸(宽和高)
 art_detect_match_scales: [0.95, 1.05, 5]  # 绝招模板匹配缩放范围(最小比例,最大比例,步数)
-art_detect_threshold: 0.3      # 绝招模板匹配得分阈值（越低越敏感）
+art_detect_threshold: 0.1      # 绝招模板匹配得分阈值（越低越敏感）
 art_detect_delay_seconds: 0.5  # 按下绝招后的检测延迟时间(秒)
 art_info: # 绝招时间信息
   duchess:
