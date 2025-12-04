@@ -15,19 +15,13 @@ Nightreign Overlay Helper is a utility program developed with PyQt6, designed to
 
 #### Prerequisites
 - Windows 7, 8, 10, or 11
-- Python 3.10 or higher
+- Python 3.13
 
 #### Steps
 
 1. Clone the repository and navigate to the project directory.
 
-2. Install the required dependencies:
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3. Build the executable using build script:
+2. Build the executable using build script:
 
     ```bash
     .\build.bat
@@ -62,19 +56,13 @@ The program recognizes game information by capturing screenshots of the game scr
 #### 环境要求
 
 - Windows 7、8、10 或 11
-- Python 3.10 及以上版本
+- Python 3.13
 
 #### 构建步骤
 
 1. 克隆代码库并进入项目目录。
 
-2. 安装所需依赖：
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3. 使用构建脚本生成可执行文件：
+2. 使用构建脚本生成可执行文件：
 
     ```bash
     .\build.bat
