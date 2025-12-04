@@ -1020,7 +1020,7 @@ class SettingsWindow(QWidget):
         msg.setMaximumWidth(400)
         msg.setWindowTitle("绝招倒计时")
         layout: QVBoxLayout = QVBoxLayout()
-        layout.addWidget(QLabel("该功能用于显示绝招效果的倒计时，支持的角色：女爵、隐士、复仇者\n"
+        layout.addWidget(QLabel("该功能用于显示绝招效果的倒计时，支持的角色：女爵、隐士、执行者、复仇者、学者\n"
                                 "只能显示自己使用的绝招效果的倒计时"))
         layout.addWidget(QLabel("1. 首先在设置界面调整\"截取绝招图标区域快捷键\""))
         layout.addWidget(img_widgets[0])
