@@ -33,7 +33,7 @@ class HpDetector:
         t = time.time()
         x, y, w, h = params.hpbar_region
         w = h * config.hpbar_region_aspect_ratio
-        img = grab_region(sct, (x, y, w, h))
+        img = grab_region(sct, (x, y, w, h), processing='none')
         original_w = img.width
         img = resize_by_height_keep_aspect_ratio(img, config.hpbar_detect_std_height)
         hsv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HSV)

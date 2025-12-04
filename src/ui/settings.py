@@ -314,6 +314,22 @@ class SettingsWindow(QWidget):
         debug_log_layout.addWidget(self.debug_log_checkbox)
         debug_layout.addLayout(debug_log_layout)
 
+        # HDR图像处理选项
+        hdr_processing_layout = QHBoxLayout()
+        self.hdr_processing_checkbox = QCheckBox("启用HDR图像处理")
+        self.hdr_processing_checkbox.setChecked(True)
+        self.hdr_processing_checkbox.setToolTip(
+            "在HDR显示模式下启用此选项可提高识别准确性\n"
+            "程序会自动对不同检测模块应用最佳的图像处理方式：\n"
+            "• 缩圈倒计时：HDR到SDR转换\n"
+            "• 地图识别：图像归一化(CLAHE)\n"
+            "• 血条/雨中检测：保持原始图像\n"
+            "如果遇到识别问题，可以尝试关闭此选项"
+        )
+        self.hdr_processing_checkbox.stateChanged.connect(self.update_hdr_processing)
+        hdr_processing_layout.addWidget(self.hdr_processing_checkbox)
+        self.other_layout.addLayout(hdr_processing_layout)
+
         open_log_and_abouts_layout = QHBoxLayout()
         self.other_layout.addLayout(open_log_and_abouts_layout)
 
@@ -485,6 +501,9 @@ class SettingsWindow(QWidget):
             self.update_art_region()
             # 其他
             load_checkbox_state(self.debug_log_checkbox, data.get("debug_log_enabled", False))
+            # HDR图像处理选项 - 从config.yaml读取
+            config = Config.get()
+            load_checkbox_state(self.hdr_processing_checkbox, config.enable_hdr_processing)
 
             info("Settings loaded successfully")
         except Exception as e:
@@ -535,6 +554,7 @@ class SettingsWindow(QWidget):
                 "art_region": self.art_region,
                 # 其他
                 "debug_log_enabled": self.debug_log_checkbox.isChecked(),
+                # HDR图像处理选项不保存到settings.yaml，直接修改config.yaml
             }
             save_yaml(SETTINGS_SAVE_PATH, data)
             info(f"Saved settings to {SETTINGS_SAVE_PATH}")
@@ -1073,4 +1093,21 @@ class SettingsWindow(QWidget):
         enabled = self.debug_log_checkbox.isChecked()
         set_log_level(INFO if not enabled else DEBUG)
         info(f"Debug log enabled: {enabled}")
+
+    def update_hdr_processing(self, state):
+        enabled = self.hdr_processing_checkbox.isChecked()
+        # 更新config.yaml文件中的enable_hdr_processing配置
+        try:
+            config_path = "config.yaml"
+            if os.path.exists(config_path):
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config_data = yaml.safe_load(f)
+                config_data['enable_hdr_processing'] = enabled
+                with open(config_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(config_data, f, allow_unicode=True, sort_keys=False)
+                info(f"HDR image processing enabled: {enabled}")
+            else:
+                warning(f"Config file not found: {config_path}")
+        except Exception as e:
+            error(f"Failed to update HDR processing setting: {e}")
 

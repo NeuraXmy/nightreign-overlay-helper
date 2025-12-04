@@ -37,7 +37,9 @@ class ArtDetector:
         config = Config.get()
         ret = ArtDetectResult()
 
-        sc = grab_region(sct, params.art_region).convert("RGB")
+        # 根据配置选择图像处理方式
+        processing = 'hdr_to_sdr' if config.enable_hdr_processing else 'none'
+        sc = grab_region(sct, params.art_region, processing=processing).convert("RGB")
         sc = resize_by_height_keep_aspect_ratio(sc, config.art_detect_standard_size)
         sc = np.array(sc)
 

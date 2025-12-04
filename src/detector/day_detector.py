@@ -97,7 +97,9 @@ class DayDetector:
             day2_region = (cx - day2_w // 2, cy - h // 2, day2_w, h)
             day3_w = int(w * template.day3_w_ratio)
             day3_region = (cx - day3_w // 2, cy - h // 2, day3_w, h)
-            sc = grab_region(sct, day3_region)
+            # 根据配置选择图像处理方式
+            processing = 'hdr_to_sdr' if config.enable_hdr_processing else 'none'
+            sc = grab_region(sct, day3_region, processing=processing)
             def match_region(region: tuple[int], template_mask: np.ndarray) -> float:
                 region = (
                     region[0] - day3_region[0], 

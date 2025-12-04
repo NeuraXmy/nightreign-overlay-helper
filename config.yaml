@@ -14,6 +14,14 @@ back_day_seconds: 10    # 后退一次缩圈时间（秒）
 
 time_scale: 1.0   # 时间流逝倍率
 
+# 图像处理设置（HDR模式支持）
+# 如果您在HDR模式下运行游戏，启用此选项可以提高识别准确性
+# 程序会针对不同检测模块自动选择最佳的图像处理方式：
+#   - 缩圈倒计时检测：使用HDR到SDR转换（保持颜色准确性）
+#   - 地图识别：使用图像归一化（CLAHE自适应直方图均衡化，增强对比度）
+# 如果您不使用HDR或遇到识别问题，可以将此选项设置为false
+enable_hdr_processing: true
+
 template_standard_height: 30      # DAYX模板图片标准高度
 mask_lower_white: [0, 0, 200]     # DAYX模板图片白色掩码下限(BGR)
 mask_upper_white: [179, 90, 255]  # DAYX模板图片白色掩码上限(BGR)

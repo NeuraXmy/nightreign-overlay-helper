@@ -4,13 +4,69 @@ from PIL import Image, ImageDraw, ImageFont
 from mss.base import MSSBase
 
 from src.common import get_data_path
-from src.logger import warning
+from src.logger import warning, debug
 
 
 def hls_to_rgb(hls: tuple[int, int, int]) -> tuple[int, int, int]:
     img = np.uint8([[hls]]) 
     img = cv2.cvtColor(img, cv2.COLOR_HLS2RGB)
-    return tuple(int(c) for c in img[0][0]) 
+    return tuple(int(c) for c in img[0][0])
+
+def normalize_image(img: Image.Image) -> Image.Image:
+    """
+    对图像进行归一化处理
+    在HDR模式下，Windows截图API可能返回不同亮度范围的数据，
+    导致颜色不一致，影响模板匹配。
+    
+    这个函数通过归一化将图像的亮度和对比度标准化，
+    使用直方图均衡化和对比度拉伸来提高匹配准确性。
+    适用于：地图识别等需要增强局部对比度的场景
+    """
+    # 将PIL图像转换为numpy数组
+    img_array = np.array(img)
+    
+    # 转换到LAB色彩空间，只对亮度通道进行归一化
+    lab = cv2.cvtColor(img_array, cv2.COLOR_RGB2LAB)
+    l, a, b = cv2.split(lab)
+    
+    # 对L通道进行CLAHE (对比度受限的自适应直方图均衡化)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    l_normalized = clahe.apply(l)
+    
+    # 合并通道
+    lab_normalized = cv2.merge([l_normalized, a, b])
+    
+    # 转换回RGB
+    img_normalized = cv2.cvtColor(lab_normalized, cv2.COLOR_LAB2RGB)
+    
+    return Image.fromarray(img_normalized)
+
+def convert_hdr_to_sdr(img: Image.Image) -> Image.Image:
+    """
+    将HDR色彩空间的图像转换为SDR色彩空间
+    在HDR模式下，Windows截图API可能返回HDR色彩空间的数据，
+    导致颜色过亮或不正确，影响模板匹配。
+    
+    这个函数通过色调映射（tone mapping）将HDR图像转换为SDR图像。
+    使用简单的gamma校正和亮度调整来实现基本的色调映射。
+    适用于：缩圈倒计时检测等需要保持颜色准确性的场景
+    """
+    # 将PIL图像转换为numpy数组
+    img_array = np.array(img, dtype=np.float32) / 255.0
+    
+    # 应用gamma校正 (通常HDR使用更高的gamma值)
+    # 使用2.2作为标准SDR gamma值
+    gamma = 2.2
+    img_array = np.power(img_array, 1.0 / gamma)
+    
+    # 限制亮度范围，避免过曝
+    # HDR内容可能包含超过1.0的亮度值
+    img_array = np.clip(img_array, 0.0, 1.0)
+    
+    # 转换回uint8
+    img_array = (img_array * 255).astype(np.uint8)
+    
+    return Image.fromarray(img_array)
     
 def get_size_by_height(size: tuple[int], target_height: int) -> tuple[int]:
     width, height = size
@@ -41,8 +97,20 @@ def paste_cv2(img1: np.ndarray, img2: np.ndarray, pos: tuple[int, int]):
     h, w = img2.shape[0], img2.shape[1]
     img1[y:y+h, x:x+w] = img2
 
-def grab_region(sct: MSSBase, region: tuple[int]) -> Image.Image:
-
+def grab_region(sct: MSSBase, region: tuple[int], processing: str = 'none') -> Image.Image:
+    """
+    截取屏幕区域并可选地进行图像处理
+    
+    Args:
+        sct: 截图对象
+        region: 截图区域 (x, y, w, h)
+        processing: 图像处理方式
+            - 'none': 不进行任何处理（默认）
+            - 'normalize': 使用归一化处理（适用于地图识别）
+            - 'hdr_to_sdr': 使用HDR到SDR转换（适用于缩圈倒计时）
+    """
+    from src.config import Config
+    
     x, y, w, h = region
     
     # 首先检查坐标是否已经是绝对坐标（包含屏幕偏移）
@@ -59,6 +127,16 @@ def grab_region(sct: MSSBase, region: tuple[int]) -> Image.Image:
             })
             img = Image.frombytes("RGB", screenshot.size, screenshot.bgra,
                                   "raw", "BGRX")
+            
+            # 根据processing参数进行图像处理
+            if processing == 'normalize':
+                debug(f"Applying image normalization for region {region}")
+                img = normalize_image(img)
+            elif processing == 'hdr_to_sdr':
+                debug(f"Applying HDR to SDR conversion for region {region}")
+                img = convert_hdr_to_sdr(img)
+            # processing == 'none' 时不做任何处理
+            
             return img
     
     # 如果没有找到匹配的屏幕，可能是相对坐标，尝试转换为绝对坐标
@@ -85,6 +163,15 @@ def grab_region(sct: MSSBase, region: tuple[int]) -> Image.Image:
             })
             img = Image.frombytes("RGB", screenshot.size, screenshot.bgra,
                                   "raw", "BGRX")
+            
+            # 根据processing参数进行图像处理
+            if processing == 'normalize':
+                debug(f"Applying image normalization for region {region}")
+                img = normalize_image(img)
+            elif processing == 'hdr_to_sdr':
+                debug(f"Applying HDR to SDR conversion for region {region}")
+                img = convert_hdr_to_sdr(img)
+            
             return img
     
     # 如果仍然找不到有效屏幕，使用原始逻辑作为最后的fallback
@@ -97,6 +184,15 @@ def grab_region(sct: MSSBase, region: tuple[int]) -> Image.Image:
         "height": abs_h
     })
     img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
+    
+    # 根据processing参数进行图像处理
+    if processing == 'normalize':
+        debug(f"Applying image normalization for region {region}")
+        img = normalize_image(img)
+    elif processing == 'hdr_to_sdr':
+        debug(f"Applying HDR to SDR conversion for region {region}")
+        img = convert_hdr_to_sdr(img)
+    
     return img
 
 

@@ -491,7 +491,9 @@ class MapDetector:
             return ret
         
         if param.img is None:
-            img = grab_region(sct, param.map_region)
+            # 根据配置选择图像处理方式
+            processing = 'normalize' if config.enable_hdr_processing else 'none'
+            img = grab_region(sct, param.map_region, processing=processing)
             img = np.array(img)
         else:
             img = param.img

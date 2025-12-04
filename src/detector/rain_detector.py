@@ -39,7 +39,7 @@ class RainDetector:
             t = time.time()
             config = Config.get()
 
-            img = grab_region(sct, hpcolor_region)
+            img = grab_region(sct, hpcolor_region, processing='none')
             hls = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HLS)
 
             def calc_pixel_num(hls: np.ndarray, c1: list[int], c2: list[int]) -> int:
