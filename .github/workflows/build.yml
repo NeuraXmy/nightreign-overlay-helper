@@ -24,7 +24,7 @@ jobs:
         run: uv sync
         
       - name: Build with PyInstaller
-        run: uvx pyinstaller --name "nightreign-overlay-helper" --windowed --icon="assets\icon.ico" src\app.py
+        run: uvx pyinstaller --name "nightreign-overlay-helper" --windowed --icon="assets\icon.ico" --hidden-import PyQt6 src\app.py
         
       - name: Copy additional files
         run: |
