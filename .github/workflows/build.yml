@@ -40,10 +40,22 @@ jobs:
           path: dist\nightreign-overlay-helper\
           retention-days: 30
 
+      - name: Package for Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          # 从 github.ref_name 获取标签名，例如 "v1.0.0"
+          $version = "${{ github.ref_name }}"
+          # 构造 zip 文件名，例如 "nightreign-overlay-helper-v1.0.0.zip"
+          $zipName = "nightreign-overlay-helper-$version.zip"
+          # 使用 PowerShell 的 Compress-Archive 命令创建 zip 文件
+          Compress-Archive -Path "dist/nightreign-overlay-helper/*" -DestinationPath "dist/$zipName"
+          Write-Host "Created zip file: dist/$zipName"
+          
       - name: Create Release and Upload
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/nightreign-overlay-helper/*
+          files: dist/nightreign-overlay-helper-${{ github.ref_name }}.zip
           prerelease: ${{ contains(github.ref, '-') }}
           generate_release_notes: true
