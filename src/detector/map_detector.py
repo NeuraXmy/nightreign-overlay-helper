@@ -471,8 +471,10 @@ class MapDetector:
             texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
 
         else:
-            text = f"暂无该地图数据"
+            text = f"大空洞：暂无该地图数据，显示可能的Boss与水晶点位"
             texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            hollow = open_with_draw_size("icons/hollow.png", (800, 800))
+            icons.append((scale_size((375, 375)), hollow))
 
         for icon in icons:  draw_icon(img, *icon)
         for text in texts:  draw_text(img, *text)
