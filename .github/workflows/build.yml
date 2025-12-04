@@ -24,7 +24,7 @@ jobs:
         run: uv sync
         
       - name: Build with PyInstaller
-        run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --icon="assets\icon.ico" src\app.py
+        run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." src\app.py
         
       - name: Copy additional files
         run: |

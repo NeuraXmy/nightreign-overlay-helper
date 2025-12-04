@@ -1,13 +1,33 @@
 from pathlib import Path
 import os
+import sys
 from datetime import timedelta
 from platformdirs import user_data_dir, user_desktop_dir
 import yaml
+import tomllib
 
 
 APP_NAME = "nightreign-overlay-helper"
 APP_NAME_CHS = "黑夜君临悬浮助手"
-APP_VERSION = "0.8.4"
+
+def get_version() -> str:
+    """从 pyproject.toml 读取版本号，自动适配源码和 PyInstaller 打包环境"""
+    # 检测是否为 PyInstaller 打包后的环境
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后：pyproject.toml 在程序根目录（_MEIPASS）
+        pyproject_path = Path(sys._MEIPASS) / "pyproject.toml"
+    else:
+        # 源码环境：pyproject.toml 在项目根目录
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    
+    try:
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+        return data["project"]["version"]
+    except Exception:
+        return "unknown"
+
+APP_VERSION = get_version()
 APP_FULLNAME = f"{APP_NAME_CHS}v{APP_VERSION}"
 APP_AUTHOR = "NeuraXmy"
 
