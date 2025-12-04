@@ -1,0 +1,61 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7.1.4
+        
+      - name: Install dependency
+        run: uv sync
+        
+      - name: Build with PyInstaller
+        run: uvx pyinstaller --name "nightreign-overlay-helper" --windowed --icon="assets\icon.ico" src\app.py
+        
+      - name: Copy additional files
+        run: |
+          xcopy /E /I /Y "assets" "dist\nightreign-overlay-helper\assets"
+          xcopy /E /I /Y "data" "dist\nightreign-overlay-helper\data"
+          copy "manual.txt" "dist\nightreign-overlay-helper\manual.txt"
+          copy "config.yaml" "dist\nightreign-overlay-helper\config.yaml"
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightreign-overlay-helper-windows
+          path: dist\nightreign-overlay-helper\
+          retention-days: 30
+
+      - name: Package for Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          # 从 github.ref_name 获取标签名，例如 "v1.0.0"
+          $version = "${{ github.ref_name }}"
+          # 构造 zip 文件名，例如 "nightreign-overlay-helper-v1.0.0.zip"
+          $zipName = "nightreign-overlay-helper-$version.zip"
+          # 使用 PowerShell 的 Compress-Archive 命令创建 zip 文件
+          Compress-Archive -Path "dist/nightreign-overlay-helper/*" -DestinationPath "dist/$zipName"
+          Write-Host "Created zip file: dist/$zipName"
+          
+      - name: Create Release and Upload
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/nightreign-overlay-helper-${{ github.ref_name }}.zip
+          prerelease: ${{ contains(github.ref, '-') }}
+          generate_release_notes: true
