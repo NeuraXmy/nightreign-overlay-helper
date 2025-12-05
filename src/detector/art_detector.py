@@ -14,6 +14,7 @@ from src.detector.utils import grab_region, resize_by_height_keep_aspect_ratio, 
 @dataclass
 class ArtDetectParam:
     art_region: tuple[int] | None = None
+    hdr_processing_enabled: bool = False
 
 @dataclass
 class ArtDetectResult:
@@ -37,7 +38,9 @@ class ArtDetector:
         config = Config.get()
         ret = ArtDetectResult()
 
-        sc = grab_region(sct, params.art_region).convert("RGB")
+        # 根据参数选择图像处理方式
+        processing = 'hdr_to_sdr' if params.hdr_processing_enabled else 'none'
+        sc = grab_region(sct, params.art_region, processing=processing).convert("RGB")
         sc = resize_by_height_keep_aspect_ratio(sc, config.art_detect_standard_size)
         sc = np.array(sc)
 

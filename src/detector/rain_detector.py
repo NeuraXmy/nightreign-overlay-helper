@@ -15,7 +15,10 @@ from src.detector.utils import grab_region
 class RainDetectParam:
     in_rain_hls: tuple[int, int, int] | None = None
     not_in_rain_hls: tuple[int, int, int] | None = None
+    in_rain_hls_hdr: tuple[int, int, int] | None = None
+    not_in_rain_hls_hdr: tuple[int, int, int] | None = None
     hpcolor_region: tuple[int] | None = None
+    hdr_processing_enabled: bool = False
 
 @dataclass
 class RainDetectResult:
@@ -34,12 +37,15 @@ class RainDetector:
         hpcolor_region: tuple[int],
         in_rain_hls: tuple[int] | None,
         not_in_rain_hls: tuple[int] | None,
+        in_rain_hls_hdr: tuple[int] | None,
+        not_in_rain_hls_hdr: tuple[int] | None,
+        hdr_processing_enabled: bool = False,
     ) -> tuple[float, float]:
         try:
             t = time.time()
             config = Config.get()
 
-            img = grab_region(sct, hpcolor_region)
+            img = grab_region(sct, hpcolor_region, processing='none')
             hls = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HLS)
 
             def calc_pixel_num(hls: np.ndarray, c1: list[int], c2: list[int]) -> int:
@@ -53,10 +59,17 @@ class RainDetector:
                 
             total_pixel_num = hls.shape[0] * hls.shape[1]
 
-            lower_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.lower_hls_not_in_rain
-            upper_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.upper_hls_not_in_rain
-            lower_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.lower_hls_in_rain
-            upper_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.upper_hls_in_rain
+            # 根据HDR模式选择配置
+            if hdr_processing_enabled:
+                lower_hls_not_in_rain = not_in_rain_hls_hdr if not_in_rain_hls_hdr is not None else config.lower_hls_not_in_rain_hdr
+                upper_hls_not_in_rain = not_in_rain_hls_hdr if not_in_rain_hls_hdr is not None else config.upper_hls_not_in_rain_hdr
+                lower_hls_in_rain = in_rain_hls_hdr if in_rain_hls_hdr is not None else config.lower_hls_in_rain_hdr
+                upper_hls_in_rain = in_rain_hls_hdr if in_rain_hls_hdr is not None else config.upper_hls_in_rain_hdr
+            else:
+                lower_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.lower_hls_not_in_rain
+                upper_hls_not_in_rain = not_in_rain_hls if not_in_rain_hls is not None else config.upper_hls_not_in_rain
+                lower_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.lower_hls_in_rain
+                upper_hls_in_rain = in_rain_hls if in_rain_hls is not None else config.upper_hls_in_rain
 
             not_in_rain_ratio = calc_pixel_num(hls, lower_hls_not_in_rain, upper_hls_not_in_rain) / total_pixel_num
             in_rain_ratio     = calc_pixel_num(hls, lower_hls_in_rain,     upper_hls_in_rain)     / total_pixel_num
@@ -76,7 +89,10 @@ class RainDetector:
             sct, 
             params.hpcolor_region, 
             params.in_rain_hls, 
-            params.not_in_rain_hls
+            params.not_in_rain_hls,
+            params.in_rain_hls_hdr,
+            params.not_in_rain_hls_hdr,
+            params.hdr_processing_enabled
         )
         ret.not_in_rain_area_ratio = not_in_rain_ratio
         ret.in_rain_area_ratio = in_rain_ratio

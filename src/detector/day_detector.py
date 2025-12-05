@@ -44,6 +44,7 @@ def match_mask(image: np.ndarray, template: np.ndarray) -> float:
 class DayDetectParam:
     day1_region: tuple[int] | None = None
     lang: str | None = None
+    hdr_processing_enabled: bool = False
 
 @dataclass
 class DayDetectResult:
@@ -87,17 +88,20 @@ class DayDetector:
             )
             self.templates[lang] = template
 
-    def match(self, sct: MSSBase, template: DayTempalte, day1_region: tuple[int]) -> tuple[bool, float]:
+    def match(self, sct: MSSBase, template: DayTempalte, params: DayDetectParam) -> tuple[bool, float]:
         try:
             config = Config.get()
             t = time.time()
+            day1_region = params.day1_region
             x, y, w, h = day1_region
             cx, cy = x + w // 2, y + h // 2
             day2_w = int(w * template.day2_w_ratio)
             day2_region = (cx - day2_w // 2, cy - h // 2, day2_w, h)
             day3_w = int(w * template.day3_w_ratio)
             day3_region = (cx - day3_w // 2, cy - h // 2, day3_w, h)
-            sc = grab_region(sct, day3_region)
+            # 根据参数选择图像处理方式
+            processing = 'hdr_to_sdr' if params.hdr_processing_enabled else 'none'
+            sc = grab_region(sct, day3_region, processing=processing)
             def match_region(region: tuple[int], template_mask: np.ndarray) -> float:
                 region = (
                     region[0] - day3_region[0], 
@@ -124,7 +128,7 @@ class DayDetector:
         if params is None or params.day1_region is None:
             return ret
         template = self.templates[params.lang]
-        score_day1, score_day2, score_day3 = self.match(sct, template, params.day1_region)
+        score_day1, score_day2, score_day3 = self.match(sct, template, params)
         ret.score_day1 = score_day1
         ret.score_day2 = score_day2
         ret.score_day3 = score_day3
