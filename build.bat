@@ -25,7 +25,7 @@ if %errorlevel% neq 0 (
 cd /d "%current_dir%"
 
 uv sync
-uv run pyinstaller --name "nightreign-overlay-helper" --windowed --icon="assets\icon.ico" src\app.py
+uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." src\app.py
 
 xcopy /E /I /Y "assets" "dist\nightreign-overlay-helper\assets"
 xcopy /E /I /Y "data" "dist\nightreign-overlay-helper\data"
