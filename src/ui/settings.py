@@ -185,8 +185,6 @@ class SettingsWindow(QWidget):
         only_show_when_game_foreground_layout.addWidget(self.only_show_when_game_foreground_checkbox)
         self.performance_layout.addLayout(only_show_when_game_foreground_layout)
 
-        self.performance_layout.addWidget(QLabel("⚠️开启HDR（显示设置->高动态范围成像）\n可能导致检测失效"))
-
         # 自动计时设置
         self.auto_timer_group = QGroupBox("缩圈&雨中冒险倒计时")
         self.auto_timer_layout = QVBoxLayout(self.auto_timer_group)
@@ -1056,7 +1054,7 @@ class SettingsWindow(QWidget):
         msg.setMaximumWidth(400)
         msg.setWindowTitle("血条比例标记")
         layout: QVBoxLayout = QVBoxLayout()
-        layout.addWidget(QLabel("该功能用于在血条上显示：20%（血量偏低触发词条）\n"
+        layout.addWidget(QLabel("该功能用于在血条上显示：40%（血量偏低触发词条）\n"
                                 "85%（非满血时触发的负面词条）和100%（满血）三个标记"))
         layout.addWidget(QLabel("1. 首先在设置界面调整\"截取血条区域快捷键\""))
         layout.addWidget(img_widgets[0])
