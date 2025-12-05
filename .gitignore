@@ -224,3 +224,5 @@ sandbox/
 uv.lock
 
 .vscode/
+
+justfile

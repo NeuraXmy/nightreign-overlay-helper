@@ -25,10 +25,17 @@ dayx_detect_langs:                # DAYX模板匹配语言
   eng: 'English'
   jp: '日本語'
 
+# 非HDR模式下的颜色配置
 upper_hls_not_in_rain: [3, 80, 128]   # 最高亮度下不在雨中时血条hls颜色
 lower_hls_not_in_rain: [5, 52, 166]   # 最低亮度下不在雨中时血条hls颜色
 upper_hls_in_rain: [163, 90, 130]     # 最高亮度下在雨中时血条hls颜色
 lower_hls_in_rain: [164, 62, 173]     # 最低亮度下在雨中时血条hls颜色
+
+# HDR模式下的颜色配置
+upper_hls_not_in_rain_hdr: [11, 91, 59]   # HDR模式：最高亮度下不在雨中时血条hls颜色
+lower_hls_not_in_rain_hdr: [9, 54, 88]   # HDR模式：最低亮度下不在雨中时血条hls颜色
+upper_hls_in_rain_hdr: [156, 98, 48]     # HDR模式：最高亮度下在雨中时血条hls颜色
+lower_hls_in_rain_hdr: [157, 64, 69]     # HDR模式：最低亮度下在雨中时血条hls颜色
 h_tolerance: 5    # 血条颜色匹配色相容差
 l_tolerance: 30   # 血条颜色匹配亮度容差
 s_tolerance: 30   # 血条颜色匹配饱和度容差

@@ -1,10 +1,10 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QEvent
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QSlider, QGroupBox, QCheckBox, QPushButton,
-    QMessageBox, QApplication, QFrame, QComboBox,
+    QMessageBox, QApplication, QFrame, QComboBox, QToolTip,
 )
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap, QIcon, QMouseEvent, QEnterEvent
 import yaml
 from dataclasses import dataclass, asdict
 import os
@@ -36,6 +36,26 @@ COLOR_ALIGN_TUTORIAL_IMG_PATH = get_asset_path("color_align_tutorial/{i}.jpg")
 MAP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("map_detect_tutorial/{i}.jpg")
 HP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("hp_detect_tutorial/{i}.jpg")
 ART_DETECT_TUTORIAL_IMG_PATH = get_asset_path("art_detect_tutorial/{i}.jpg")
+
+
+class QuickTooltipLabel(QLabel):
+    """快速显示tooltip的标签"""
+    def __init__(self, text: str, parent=None):
+        super().__init__(text, parent)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setMouseTracking(True)
+    
+    def enterEvent(self, event: QEnterEvent):
+        # 鼠标进入时立即显示tooltip
+        if self.toolTip():
+            QToolTip.showText(self.mapToGlobal(QPoint(0, self.height())), self.toolTip(), self)
+        super().enterEvent(event)
+    
+    def mousePressEvent(self, event: QMouseEvent):
+        # 点击时也显示tooltip
+        if event.button() == Qt.MouseButton.LeftButton and self.toolTip():
+            QToolTip.showText(event.globalPosition().toPoint(), self.toolTip(), self)
+        super().mousePressEvent(event)
 
 
 class SettingsWindow(QWidget):
@@ -165,8 +185,6 @@ class SettingsWindow(QWidget):
         only_show_when_game_foreground_layout.addWidget(self.only_show_when_game_foreground_checkbox)
         self.performance_layout.addLayout(only_show_when_game_foreground_layout)
 
-        self.performance_layout.addWidget(QLabel("⚠️开启HDR（显示设置->高动态范围成像）\n可能导致检测失效"))
-
         # 自动计时设置
         self.auto_timer_group = QGroupBox("缩圈&雨中冒险倒计时")
         self.auto_timer_layout = QVBoxLayout(self.auto_timer_group)
@@ -234,6 +252,8 @@ class SettingsWindow(QWidget):
         
         self.not_in_rain_hls = None
         self.in_rain_hls = None
+        self.not_in_rain_hls_hdr = None
+        self.in_rain_hls_hdr = None
         hp_color_layout = QHBoxLayout()
         hp_color_layout.addWidget(QLabel("正常血条颜色:"))
         self.not_in_rain_label = QLabel("默认")
@@ -314,6 +334,26 @@ class SettingsWindow(QWidget):
         debug_log_layout.addWidget(self.debug_log_checkbox)
         debug_layout.addLayout(debug_log_layout)
 
+        # HDR图像处理选项
+        hdr_processing_layout = QHBoxLayout()
+        self.hdr_processing_checkbox = QCheckBox("启用HDR图像处理")
+        self.hdr_processing_checkbox.setChecked(False)
+        self.hdr_processing_checkbox.stateChanged.connect(self.update_hdr_processing)
+        hdr_processing_layout.addWidget(self.hdr_processing_checkbox)
+        hdr_processing_help_label = QuickTooltipLabel("?")
+        hdr_processing_help_label.setStyleSheet("color: gray; font-weight: bold;")
+        hdr_processing_help_label.setToolTip(
+            "在HDR显示模式下启用此选项可提高识别准确性\n"
+            "程序会自动对不同检测模块应用最佳的图像处理方式：\n"
+            "• 缩圈倒计时：HDR到SDR转换\n"
+            "• 地图识别：图像归一化(CLAHE)\n"
+            "• 血条/雨中检测：保持原始图像\n"
+            "如果遇到识别问题，可以尝试关闭此选项"
+        )
+        hdr_processing_layout.addWidget(hdr_processing_help_label)
+        hdr_processing_layout.addStretch()
+        self.other_layout.addLayout(hdr_processing_layout)
+
         open_log_and_abouts_layout = QHBoxLayout()
         self.other_layout.addLayout(open_log_and_abouts_layout)
 
@@ -344,6 +384,21 @@ class SettingsWindow(QWidget):
         hp_detect_enable_layout.addWidget(self.hp_detect_enable_checkbox)
         hp_detect_enable_layout.addStretch()
         self.hp_detect_layout.addLayout(hp_detect_enable_layout)
+
+        hp_detect_keep_last_valid_layout = QHBoxLayout()
+        self.hp_detect_keep_last_valid_checkbox = QCheckBox("检测失败时保持上次结果")
+        self.hp_detect_keep_last_valid_checkbox.setChecked(False)
+        self.hp_detect_keep_last_valid_checkbox.stateChanged.connect(self.update_hp_detect_keep_last_valid)
+        hp_detect_keep_last_valid_layout.addWidget(self.hp_detect_keep_last_valid_checkbox)
+        hp_detect_keep_last_valid_help_label = QuickTooltipLabel("?")
+        hp_detect_keep_last_valid_help_label.setStyleSheet("color: gray; font-weight: bold;")
+        hp_detect_keep_last_valid_help_label.setToolTip(
+            "开启后，当血条检测暂时失败时，会继续显示上一次的有效结果\n"
+            "可以减少标记的抖动和闪烁，提高稳定性"
+        )
+        hp_detect_keep_last_valid_layout.addWidget(hp_detect_keep_last_valid_help_label)
+        hp_detect_keep_last_valid_layout.addStretch()
+        self.hp_detect_layout.addLayout(hp_detect_keep_last_valid_layout)
 
         self.hpbar_region = None
         capture_hpbar_region_input_setting_layout = QHBoxLayout()
@@ -464,6 +519,8 @@ class SettingsWindow(QWidget):
             self.align_to_detect_hp_color_input_widget.set_setting(InputSetting.load_from_dict(data.get("align_to_detect_hp_color_input_setting")))
             self.not_in_rain_hls = data.get("not_in_rain_hls", None)
             self.in_rain_hls = data.get("in_rain_hls", None)
+            self.not_in_rain_hls_hdr = data.get("not_in_rain_hls_hdr", None)
+            self.in_rain_hls_hdr = data.get("in_rain_hls_hdr", None)
             self.update_hp_color()
             # 地图识别
             load_checkbox_state(self.map_detect_enable_checkbox, data.get("map_detect_enabled", True))
@@ -474,6 +531,7 @@ class SettingsWindow(QWidget):
             self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
             # 血条比例标记
             load_checkbox_state(self.hp_detect_enable_checkbox, data.get("hp_detect_enabled", True))
+            load_checkbox_state(self.hp_detect_keep_last_valid_checkbox, data.get("hp_detect_keep_last_valid", False))
             self.capture_hpbar_region_input_widget.set_setting(InputSetting.load_from_dict(data.get("capture_hpbar_region_input_setting")))
             self.hpbar_region = data.get("hpbar_region", None)
             self.update_hpbar_region()
@@ -485,6 +543,8 @@ class SettingsWindow(QWidget):
             self.update_art_region()
             # 其他
             load_checkbox_state(self.debug_log_checkbox, data.get("debug_log_enabled", False))
+            # HDR图像处理选项 - 从settings.yaml读取
+            load_checkbox_state(self.hdr_processing_checkbox, data.get("hdr_processing_enabled", True))
 
             info("Settings loaded successfully")
         except Exception as e:
@@ -518,6 +578,8 @@ class SettingsWindow(QWidget):
                 "align_to_detect_hp_color_input_setting": asdict(self.align_to_detect_hp_color_input_widget.get_setting()),
                 "not_in_rain_hls": self.not_in_rain_hls,
                 "in_rain_hls": self.in_rain_hls,
+                "not_in_rain_hls_hdr": self.not_in_rain_hls_hdr,
+                "in_rain_hls_hdr": self.in_rain_hls_hdr,
                 # 地图识别
                 "map_detect_enabled": self.map_detect_enable_checkbox.isChecked(),
                 "capture_map_region_input_setting": asdict(self.capture_map_region_input_widget.get_setting()),
@@ -526,6 +588,7 @@ class SettingsWindow(QWidget):
                 "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
                 # 血条比例标记
                 "hp_detect_enabled": self.hp_detect_enable_checkbox.isChecked(),
+                "hp_detect_keep_last_valid": self.hp_detect_keep_last_valid_checkbox.isChecked(),
                 "capture_hpbar_region_input_setting": asdict(self.capture_hpbar_region_input_widget.get_setting()),
                 "hpbar_region": self.hpbar_region,
                 # 绝招计时器
@@ -535,6 +598,7 @@ class SettingsWindow(QWidget):
                 "art_region": self.art_region,
                 # 其他
                 "debug_log_enabled": self.debug_log_checkbox.isChecked(),
+                "hdr_processing_enabled": self.hdr_processing_checkbox.isChecked(),
             }
             save_yaml(SETTINGS_SAVE_PATH, data)
             info(f"Saved settings to {SETTINGS_SAVE_PATH}")
@@ -725,19 +789,36 @@ class SettingsWindow(QWidget):
         else:
             for item in region_result:
                 if item['color'] == COLOR_NOT_IN_RAIN:
-                    self.not_in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    # 根据HDR处理是否开启来决定修改哪个配置项
+                    if self.updater.hdr_processing_enabled:
+                        self.not_in_rain_hls_hdr = hls
+                    else:
+                        self.not_in_rain_hls = hls
                 elif item['color'] == COLOR_IN_RAIN:
-                    self.in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    # 根据HDR处理是否开启来决定修改哪个配置项
+                    if self.updater.hdr_processing_enabled:
+                        self.in_rain_hls_hdr = hls
+                    else:
+                        self.in_rain_hls = hls
             self.update_hp_color()
             self.save_settings()
 
     def clear_hp_color(self):
-        reply = QMessageBox.question(self, '确认', '确定要重置血条颜色设置为默认吗？', 
+        # 根据HDR模式显示不同的确认信息
+        mode_text = "HDR模式" if self.updater.hdr_processing_enabled else "普通模式"
+        reply = QMessageBox.question(self, '确认', f'确定要重置{mode_text}下的血条颜色设置为默认吗？', 
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                      QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
-            self.not_in_rain_hls = None
-            self.in_rain_hls = None
+            # 根据HDR模式仅重置对应的配置
+            if self.updater.hdr_processing_enabled:
+                self.not_in_rain_hls_hdr = None
+                self.in_rain_hls_hdr = None
+            else:
+                self.not_in_rain_hls = None
+                self.in_rain_hls = None
             self.update_hp_color()
 
     def show_capture_hp_color_help(self):
@@ -774,19 +855,39 @@ class SettingsWindow(QWidget):
     def update_hp_color(self):
         self.updater.not_in_rain_hls = self.not_in_rain_hls
         self.updater.in_rain_hls = self.in_rain_hls
-        info(f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}")
-        if self.not_in_rain_hls is None:
-            self.not_in_rain_label.setText(f"默认")
-            self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+        self.updater.not_in_rain_hls_hdr = self.not_in_rain_hls_hdr
+        self.updater.in_rain_hls_hdr = self.in_rain_hls_hdr
+        info(f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}, not_in_rain_hls_hdr={self.not_in_rain_hls_hdr}, in_rain_hls_hdr={self.in_rain_hls_hdr}")
+        
+        # 根据HDR模式显示不同的配置状态
+        if self.updater.hdr_processing_enabled:
+            # HDR模式：显示HDR配置状态
+            if self.not_in_rain_hls_hdr is None:
+                self.not_in_rain_label.setText(f"HDR:默认")
+                self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.not_in_rain_label.setText(f"HDR:已设置")
+                self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls_hdr)}; color: white")
+            if self.in_rain_hls_hdr is None:
+                self.in_rain_label.setText(f"HDR:默认")
+                self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.in_rain_label.setText(f"HDR:已设置")
+                self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls_hdr)}; color: white")
         else:
-            self.not_in_rain_label.setText(f"已设置")
-            self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white")
-        if self.in_rain_hls is None:
-            self.in_rain_label.setText(f"默认")
-            self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
-        else:
-            self.in_rain_label.setText(f"已设置")
-            self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white")
+            # 非HDR模式：显示普通配置状态
+            if self.not_in_rain_hls is None:
+                self.not_in_rain_label.setText(f"默认")
+                self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.not_in_rain_label.setText(f"已设置")
+                self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white")
+            if self.in_rain_hls is None:
+                self.in_rain_label.setText(f"默认")
+                self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.in_rain_label.setText(f"已设置")
+                self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white")
 
     # =========================== Map Detect =========================== #
 
@@ -908,6 +1009,11 @@ class SettingsWindow(QWidget):
         self.updater.hp_detect_enabled = self.hp_detect_enable_checkbox.isChecked()
         info(f"HP detect enabled: {self.updater.hp_detect_enabled}")
 
+    def update_hp_detect_keep_last_valid(self, state):
+        enabled = self.hp_detect_keep_last_valid_checkbox.isChecked()
+        self.updater.hp_detect_keep_last_valid = enabled
+        info(f"HP detect keep last valid: {enabled}")
+
     def capture_hpbar_region(self):
         COLOR_HPBAR_REGION = "#eb3b3b"
         SCREENSHOT_WINDOW_CONFIG = {
@@ -948,7 +1054,7 @@ class SettingsWindow(QWidget):
         msg.setMaximumWidth(400)
         msg.setWindowTitle("血条比例标记")
         layout: QVBoxLayout = QVBoxLayout()
-        layout.addWidget(QLabel("该功能用于在血条上显示：20%（血量偏低触发词条）\n"
+        layout.addWidget(QLabel("该功能用于在血条上显示：40%（血量偏低触发词条）\n"
                                 "85%（非满血时触发的负面词条）和100%（满血）三个标记"))
         layout.addWidget(QLabel("1. 首先在设置界面调整\"截取血条区域快捷键\""))
         layout.addWidget(img_widgets[0])
@@ -1073,4 +1179,11 @@ class SettingsWindow(QWidget):
         enabled = self.debug_log_checkbox.isChecked()
         set_log_level(INFO if not enabled else DEBUG)
         info(f"Debug log enabled: {enabled}")
+
+    def update_hdr_processing(self, state):
+        enabled = self.hdr_processing_checkbox.isChecked()
+        self.updater.hdr_processing_enabled = enabled
+        info(f"HDR image processing enabled: {enabled}")
+        # HDR模式切换时更新血条颜色显示
+        self.update_hp_color()
 

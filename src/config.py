@@ -40,6 +40,10 @@ class Config:
     upper_hls_not_in_rain: list[int]
     lower_hls_in_rain: list[int]
     upper_hls_in_rain: list[int]
+    lower_hls_not_in_rain_hdr: list[int]
+    upper_hls_not_in_rain_hdr: list[int]
+    lower_hls_in_rain_hdr: list[int]
+    upper_hls_in_rain_hdr: list[int]
     h_tolerance: int
     l_tolerance: int
     s_tolerance: int
