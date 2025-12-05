@@ -1,10 +1,10 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QEvent
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QSlider, QGroupBox, QCheckBox, QPushButton,
-    QMessageBox, QApplication, QFrame, QComboBox,
+    QMessageBox, QApplication, QFrame, QComboBox, QToolTip,
 )
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap, QIcon, QMouseEvent, QEnterEvent
 import yaml
 from dataclasses import dataclass, asdict
 import os
@@ -36,6 +36,26 @@ COLOR_ALIGN_TUTORIAL_IMG_PATH = get_asset_path("color_align_tutorial/{i}.jpg")
 MAP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("map_detect_tutorial/{i}.jpg")
 HP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("hp_detect_tutorial/{i}.jpg")
 ART_DETECT_TUTORIAL_IMG_PATH = get_asset_path("art_detect_tutorial/{i}.jpg")
+
+
+class QuickTooltipLabel(QLabel):
+    """快速显示tooltip的标签"""
+    def __init__(self, text: str, parent=None):
+        super().__init__(text, parent)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setMouseTracking(True)
+    
+    def enterEvent(self, event: QEnterEvent):
+        # 鼠标进入时立即显示tooltip
+        if self.toolTip():
+            QToolTip.showText(self.mapToGlobal(QPoint(0, self.height())), self.toolTip(), self)
+        super().enterEvent(event)
+    
+    def mousePressEvent(self, event: QMouseEvent):
+        # 点击时也显示tooltip
+        if event.button() == Qt.MouseButton.LeftButton and self.toolTip():
+            QToolTip.showText(event.globalPosition().toPoint(), self.toolTip(), self)
+        super().mousePressEvent(event)
 
 
 class SettingsWindow(QWidget):
@@ -319,8 +339,12 @@ class SettingsWindow(QWidget):
         # HDR图像处理选项
         hdr_processing_layout = QHBoxLayout()
         self.hdr_processing_checkbox = QCheckBox("启用HDR图像处理")
-        self.hdr_processing_checkbox.setChecked(True)
-        self.hdr_processing_checkbox.setToolTip(
+        self.hdr_processing_checkbox.setChecked(False)
+        self.hdr_processing_checkbox.stateChanged.connect(self.update_hdr_processing)
+        hdr_processing_layout.addWidget(self.hdr_processing_checkbox)
+        hdr_processing_help_label = QuickTooltipLabel("?")
+        hdr_processing_help_label.setStyleSheet("color: gray; font-weight: bold;")
+        hdr_processing_help_label.setToolTip(
             "在HDR显示模式下启用此选项可提高识别准确性\n"
             "程序会自动对不同检测模块应用最佳的图像处理方式：\n"
             "• 缩圈倒计时：HDR到SDR转换\n"
@@ -328,8 +352,8 @@ class SettingsWindow(QWidget):
             "• 血条/雨中检测：保持原始图像\n"
             "如果遇到识别问题，可以尝试关闭此选项"
         )
-        self.hdr_processing_checkbox.stateChanged.connect(self.update_hdr_processing)
-        hdr_processing_layout.addWidget(self.hdr_processing_checkbox)
+        hdr_processing_layout.addWidget(hdr_processing_help_label)
+        hdr_processing_layout.addStretch()
         self.other_layout.addLayout(hdr_processing_layout)
 
         open_log_and_abouts_layout = QHBoxLayout()
@@ -365,13 +389,16 @@ class SettingsWindow(QWidget):
 
         hp_detect_keep_last_valid_layout = QHBoxLayout()
         self.hp_detect_keep_last_valid_checkbox = QCheckBox("检测失败时保持上次结果")
-        self.hp_detect_keep_last_valid_checkbox.setToolTip(
+        self.hp_detect_keep_last_valid_checkbox.setChecked(False)
+        self.hp_detect_keep_last_valid_checkbox.stateChanged.connect(self.update_hp_detect_keep_last_valid)
+        hp_detect_keep_last_valid_layout.addWidget(self.hp_detect_keep_last_valid_checkbox)
+        hp_detect_keep_last_valid_help_label = QuickTooltipLabel("?")
+        hp_detect_keep_last_valid_help_label.setStyleSheet("color: gray; font-weight: bold;")
+        hp_detect_keep_last_valid_help_label.setToolTip(
             "开启后，当血条检测暂时失败时，会继续显示上一次的有效结果\n"
             "可以减少标记的抖动和闪烁，提高稳定性"
         )
-        self.hp_detect_keep_last_valid_checkbox.setChecked(True)
-        self.hp_detect_keep_last_valid_checkbox.stateChanged.connect(self.update_hp_detect_keep_last_valid)
-        hp_detect_keep_last_valid_layout.addWidget(self.hp_detect_keep_last_valid_checkbox)
+        hp_detect_keep_last_valid_layout.addWidget(hp_detect_keep_last_valid_help_label)
         hp_detect_keep_last_valid_layout.addStretch()
         self.hp_detect_layout.addLayout(hp_detect_keep_last_valid_layout)
 

@@ -86,7 +86,7 @@ class MapDetectParam:
     do_match_full_map: bool = False
     do_match_earth_shifting: bool = False
     do_match_pattern: bool = False
-    hdr_processing_enabled: bool = True
+    hdr_processing_enabled: bool = False
 
 
 @dataclass

@@ -44,7 +44,7 @@ def match_mask(image: np.ndarray, template: np.ndarray) -> float:
 class DayDetectParam:
     day1_region: tuple[int] | None = None
     lang: str | None = None
-    hdr_processing_enabled: bool = True
+    hdr_processing_enabled: bool = False
 
 @dataclass
 class DayDetectResult:

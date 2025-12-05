@@ -14,7 +14,7 @@ from src.detector.utils import grab_region, resize_by_height_keep_aspect_ratio, 
 @dataclass
 class ArtDetectParam:
     art_region: tuple[int] | None = None
-    hdr_processing_enabled: bool = True
+    hdr_processing_enabled: bool = False
 
 @dataclass
 class ArtDetectResult:
