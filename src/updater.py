@@ -82,6 +82,8 @@ class Updater(QObject):
         self.hpcolor_detect_region: tuple[int] = None
         self.in_rain_hls: tuple[int] = None
         self.not_in_rain_hls: tuple[int] = None
+        self.in_rain_hls_hdr: tuple[int] = None
+        self.not_in_rain_hls_hdr: tuple[int] = None
 
         self.map_overlay = map_overlay
         self.update_map_overlay_ui_state_signal.connect(self.map_overlay.update_ui_state)
@@ -246,7 +248,10 @@ class Updater(QObject):
             rain_detect_param=RainDetectParam(
                 in_rain_hls=self.in_rain_hls,
                 not_in_rain_hls=self.not_in_rain_hls,
+                in_rain_hls_hdr=self.in_rain_hls_hdr,
+                not_in_rain_hls_hdr=self.not_in_rain_hls_hdr,
                 hpcolor_region=self.hpcolor_detect_region,
+                hdr_processing_enabled=self.hdr_processing_enabled,
             )
         )
         result = self.detector.detect(param)

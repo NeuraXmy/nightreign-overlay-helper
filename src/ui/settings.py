@@ -234,6 +234,8 @@ class SettingsWindow(QWidget):
         
         self.not_in_rain_hls = None
         self.in_rain_hls = None
+        self.not_in_rain_hls_hdr = None
+        self.in_rain_hls_hdr = None
         hp_color_layout = QHBoxLayout()
         hp_color_layout.addWidget(QLabel("正常血条颜色:"))
         self.not_in_rain_label = QLabel("默认")
@@ -480,6 +482,8 @@ class SettingsWindow(QWidget):
             self.align_to_detect_hp_color_input_widget.set_setting(InputSetting.load_from_dict(data.get("align_to_detect_hp_color_input_setting")))
             self.not_in_rain_hls = data.get("not_in_rain_hls", None)
             self.in_rain_hls = data.get("in_rain_hls", None)
+            self.not_in_rain_hls_hdr = data.get("not_in_rain_hls_hdr", None)
+            self.in_rain_hls_hdr = data.get("in_rain_hls_hdr", None)
             self.update_hp_color()
             # 地图识别
             load_checkbox_state(self.map_detect_enable_checkbox, data.get("map_detect_enabled", True))
@@ -536,6 +540,8 @@ class SettingsWindow(QWidget):
                 "align_to_detect_hp_color_input_setting": asdict(self.align_to_detect_hp_color_input_widget.get_setting()),
                 "not_in_rain_hls": self.not_in_rain_hls,
                 "in_rain_hls": self.in_rain_hls,
+                "not_in_rain_hls_hdr": self.not_in_rain_hls_hdr,
+                "in_rain_hls_hdr": self.in_rain_hls_hdr,
                 # 地图识别
                 "map_detect_enabled": self.map_detect_enable_checkbox.isChecked(),
                 "capture_map_region_input_setting": asdict(self.capture_map_region_input_widget.get_setting()),
@@ -744,19 +750,36 @@ class SettingsWindow(QWidget):
         else:
             for item in region_result:
                 if item['color'] == COLOR_NOT_IN_RAIN:
-                    self.not_in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    # 根据HDR处理是否开启来决定修改哪个配置项
+                    if self.updater.hdr_processing_enabled:
+                        self.not_in_rain_hls_hdr = hls
+                    else:
+                        self.not_in_rain_hls = hls
                 elif item['color'] == COLOR_IN_RAIN:
-                    self.in_rain_hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    hls = RainDetector.get_to_detect_hp_hls(window.screenshot_pixmap, item['rect'])
+                    # 根据HDR处理是否开启来决定修改哪个配置项
+                    if self.updater.hdr_processing_enabled:
+                        self.in_rain_hls_hdr = hls
+                    else:
+                        self.in_rain_hls = hls
             self.update_hp_color()
             self.save_settings()
 
     def clear_hp_color(self):
-        reply = QMessageBox.question(self, '确认', '确定要重置血条颜色设置为默认吗？', 
+        # 根据HDR模式显示不同的确认信息
+        mode_text = "HDR模式" if self.updater.hdr_processing_enabled else "普通模式"
+        reply = QMessageBox.question(self, '确认', f'确定要重置{mode_text}下的血条颜色设置为默认吗？', 
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                      QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
-            self.not_in_rain_hls = None
-            self.in_rain_hls = None
+            # 根据HDR模式仅重置对应的配置
+            if self.updater.hdr_processing_enabled:
+                self.not_in_rain_hls_hdr = None
+                self.in_rain_hls_hdr = None
+            else:
+                self.not_in_rain_hls = None
+                self.in_rain_hls = None
             self.update_hp_color()
 
     def show_capture_hp_color_help(self):
@@ -793,19 +816,39 @@ class SettingsWindow(QWidget):
     def update_hp_color(self):
         self.updater.not_in_rain_hls = self.not_in_rain_hls
         self.updater.in_rain_hls = self.in_rain_hls
-        info(f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}")
-        if self.not_in_rain_hls is None:
-            self.not_in_rain_label.setText(f"默认")
-            self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+        self.updater.not_in_rain_hls_hdr = self.not_in_rain_hls_hdr
+        self.updater.in_rain_hls_hdr = self.in_rain_hls_hdr
+        info(f"Updated hp color: not_in_rain_hls={self.not_in_rain_hls}, in_rain_hls={self.in_rain_hls}, not_in_rain_hls_hdr={self.not_in_rain_hls_hdr}, in_rain_hls_hdr={self.in_rain_hls_hdr}")
+        
+        # 根据HDR模式显示不同的配置状态
+        if self.updater.hdr_processing_enabled:
+            # HDR模式：显示HDR配置状态
+            if self.not_in_rain_hls_hdr is None:
+                self.not_in_rain_label.setText(f"HDR:默认")
+                self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.not_in_rain_label.setText(f"HDR:已设置")
+                self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls_hdr)}; color: white")
+            if self.in_rain_hls_hdr is None:
+                self.in_rain_label.setText(f"HDR:默认")
+                self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.in_rain_label.setText(f"HDR:已设置")
+                self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls_hdr)}; color: white")
         else:
-            self.not_in_rain_label.setText(f"已设置")
-            self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white")
-        if self.in_rain_hls is None:
-            self.in_rain_label.setText(f"默认")
-            self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
-        else:
-            self.in_rain_label.setText(f"已设置")
-            self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white")
+            # 非HDR模式：显示普通配置状态
+            if self.not_in_rain_hls is None:
+                self.not_in_rain_label.setText(f"默认")
+                self.not_in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.not_in_rain_label.setText(f"已设置")
+                self.not_in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.not_in_rain_hls)}; color: white")
+            if self.in_rain_hls is None:
+                self.in_rain_label.setText(f"默认")
+                self.in_rain_label.setStyleSheet(f"background-color: #fff; color: black")
+            else:
+                self.in_rain_label.setText(f"已设置")
+                self.in_rain_label.setStyleSheet(f"background-color: rgb{hls_to_rgb(self.in_rain_hls)}; color: white")
 
     # =========================== Map Detect =========================== #
 
@@ -1095,7 +1138,8 @@ class SettingsWindow(QWidget):
 
     def update_hdr_processing(self, state):
         enabled = self.hdr_processing_checkbox.isChecked()
-        # 保存到updater，实时生效
         self.updater.hdr_processing_enabled = enabled
         info(f"HDR image processing enabled: {enabled}")
+        # HDR模式切换时更新血条颜色显示
+        self.update_hp_color()
 
