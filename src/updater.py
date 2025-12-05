@@ -98,6 +98,7 @@ class Updater(QObject):
         self.hp_overlay = hp_overlay
         self.hp_overlay_ui_state_signal.connect(self.hp_overlay.update_ui_state)
         self.hp_detect_enabled: bool = True
+        self.hp_detect_keep_last_valid: bool = False
         self.hpbar_region: tuple[int] = None
         self.hp_length: int = None
 
@@ -426,6 +427,7 @@ class Updater(QObject):
         param = DetectParam(
             hp_detect_param=HpDetectParam(
                 hpbar_region=self.hpbar_region,
+                keep_last_valid=self.hp_detect_keep_last_valid,
             )
         )
         result = self.detector.detect(param)

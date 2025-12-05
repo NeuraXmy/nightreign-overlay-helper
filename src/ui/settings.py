@@ -363,6 +363,18 @@ class SettingsWindow(QWidget):
         hp_detect_enable_layout.addStretch()
         self.hp_detect_layout.addLayout(hp_detect_enable_layout)
 
+        hp_detect_keep_last_valid_layout = QHBoxLayout()
+        self.hp_detect_keep_last_valid_checkbox = QCheckBox("检测失败时保持上次结果")
+        self.hp_detect_keep_last_valid_checkbox.setToolTip(
+            "开启后，当血条检测暂时失败时，会继续显示上一次的有效结果\n"
+            "可以减少标记的抖动和闪烁，提高稳定性"
+        )
+        self.hp_detect_keep_last_valid_checkbox.setChecked(True)
+        self.hp_detect_keep_last_valid_checkbox.stateChanged.connect(self.update_hp_detect_keep_last_valid)
+        hp_detect_keep_last_valid_layout.addWidget(self.hp_detect_keep_last_valid_checkbox)
+        hp_detect_keep_last_valid_layout.addStretch()
+        self.hp_detect_layout.addLayout(hp_detect_keep_last_valid_layout)
+
         self.hpbar_region = None
         capture_hpbar_region_input_setting_layout = QHBoxLayout()
         capture_hpbar_region_input_setting_layout.addWidget(QLabel("截取血条区域快捷键"))
@@ -494,6 +506,7 @@ class SettingsWindow(QWidget):
             self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
             # 血条比例标记
             load_checkbox_state(self.hp_detect_enable_checkbox, data.get("hp_detect_enabled", True))
+            load_checkbox_state(self.hp_detect_keep_last_valid_checkbox, data.get("hp_detect_keep_last_valid", False))
             self.capture_hpbar_region_input_widget.set_setting(InputSetting.load_from_dict(data.get("capture_hpbar_region_input_setting")))
             self.hpbar_region = data.get("hpbar_region", None)
             self.update_hpbar_region()
@@ -550,6 +563,7 @@ class SettingsWindow(QWidget):
                 "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
                 # 血条比例标记
                 "hp_detect_enabled": self.hp_detect_enable_checkbox.isChecked(),
+                "hp_detect_keep_last_valid": self.hp_detect_keep_last_valid_checkbox.isChecked(),
                 "capture_hpbar_region_input_setting": asdict(self.capture_hpbar_region_input_widget.get_setting()),
                 "hpbar_region": self.hpbar_region,
                 # 绝招计时器
@@ -969,6 +983,11 @@ class SettingsWindow(QWidget):
     def update_hp_detect_enable(self, state):
         self.updater.hp_detect_enabled = self.hp_detect_enable_checkbox.isChecked()
         info(f"HP detect enabled: {self.updater.hp_detect_enabled}")
+
+    def update_hp_detect_keep_last_valid(self, state):
+        enabled = self.hp_detect_keep_last_valid_checkbox.isChecked()
+        self.updater.hp_detect_keep_last_valid = enabled
+        info(f"HP detect keep last valid: {enabled}")
 
     def capture_hpbar_region(self):
         COLOR_HPBAR_REGION = "#eb3b3b"
