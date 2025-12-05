@@ -543,8 +543,8 @@ class SettingsWindow(QWidget):
             self.update_art_region()
             # 其他
             load_checkbox_state(self.debug_log_checkbox, data.get("debug_log_enabled", False))
-            # HDR图像处理选项 - 从settings.yaml读取
-            load_checkbox_state(self.hdr_processing_checkbox, data.get("hdr_processing_enabled", True))
+            # HDR图像处理
+            load_checkbox_state(self.hdr_processing_checkbox, data.get("hdr_processing_enabled", False))
 
             info("Settings loaded successfully")
         except Exception as e:
