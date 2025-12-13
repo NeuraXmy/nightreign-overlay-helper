@@ -280,12 +280,13 @@ class Updater(QObject):
                 map_pattern_match_text="",
             ))
 
-    def update_map_overlay_image(self, image: Image.Image | None):
+    def update_map_overlay_image(self, image: Image.Image | None, earth_shifting: int | None = None):
         if image is None:
             self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
                 clear_image=True,
                 map_pattern_match_time=0,
                 map_pattern_matching=False,
+                display_crystal_layout=False,
             ))
             info("Clear map overlay image.")
         else:
@@ -297,6 +298,7 @@ class Updater(QObject):
                 h=self.map_region[3],
                 map_pattern_match_time=self.get_time(),
                 map_pattern_matching=False,
+                display_crystal_layout=(earth_shifting == 4),
             ))
             info("Update map overlay image.")
 
@@ -400,7 +402,7 @@ class Updater(QObject):
                     )
                 ))
                 self.map_pattern = result.map_detect_result.pattern
-                self.update_map_overlay_image(result.map_detect_result.overlay_image)
+                self.update_map_overlay_image(result.map_detect_result.overlay_image, earth_shifting=earth_shifting)
                 self.last_map_pattern_match_time = self.get_time()
 
     # =============== HP Management =============== #

@@ -311,9 +311,23 @@ class SettingsWindow(QWidget):
         show_map_overlay_input_setting_layout = QHBoxLayout()
         show_map_overlay_input_setting_layout.addWidget(QLabel("显示/隐藏信息快捷键"))
         self.show_map_overlay_input_setting_widget = InputSettingWidget(self.input)
-        self.show_map_overlay_input_setting_widget.input_triggered.connect(updater.show_or_hide_map_overlay_by_shortcut)
+        self.show_map_overlay_input_setting_widget.input_triggered.connect(self.updater.show_or_hide_map_overlay_by_shortcut)
         show_map_overlay_input_setting_layout.addWidget(self.show_map_overlay_input_setting_widget)
         self.map_detect_layout.addLayout(show_map_overlay_input_setting_layout)
+
+        crystal_layout_next_input_setting_layout = QHBoxLayout()
+        crystal_layout_next_input_setting_layout.addWidget(QLabel("下一个水晶布局快捷键"))
+        self.crystal_layout_next_input_setting_widget = InputSettingWidget(self.input)
+        self.crystal_layout_next_input_setting_widget.input_triggered.connect(self.map_overlay.nextCrystalLayout)
+        crystal_layout_next_input_setting_layout.addWidget(self.crystal_layout_next_input_setting_widget)
+        self.map_detect_layout.addLayout(crystal_layout_next_input_setting_layout)
+
+        crystal_layout_last_input_setting_layout = QHBoxLayout()
+        crystal_layout_last_input_setting_layout.addWidget(QLabel("上一个水晶布局快捷键"))
+        self.crystal_layout_last_input_setting_widget = InputSettingWidget(self.input)
+        self.crystal_layout_last_input_setting_widget.input_triggered.connect(self.map_overlay.lastCrystalLayout)
+        crystal_layout_last_input_setting_layout.addWidget(self.crystal_layout_last_input_setting_widget)
+        self.map_detect_layout.addLayout(crystal_layout_last_input_setting_layout)
 
         # 其他设置
         self.other_group = QGroupBox("其他")
@@ -529,6 +543,8 @@ class SettingsWindow(QWidget):
             self.update_map_region()
             self.set_to_detect_map_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("set_to_detect_map_input_setting")))
             self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
+            self.crystal_layout_next_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("next_crystal_layout_input_setting")))
+            self.crystal_layout_last_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("last_crystal_layout_input_setting")))
             # 血条比例标记
             load_checkbox_state(self.hp_detect_enable_checkbox, data.get("hp_detect_enabled", True))
             load_checkbox_state(self.hp_detect_keep_last_valid_checkbox, data.get("hp_detect_keep_last_valid", False))
@@ -586,6 +602,8 @@ class SettingsWindow(QWidget):
                 "map_region": self.map_region,
                 "set_to_detect_map_input_setting": asdict(self.set_to_detect_map_input_setting_widget.get_setting()),
                 "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
+                "next_crystal_layout_input_setting": asdict(self.crystal_layout_next_input_setting_widget.get_setting()),
+                "last_crystal_layout_input_setting": asdict(self.crystal_layout_last_input_setting_widget.get_setting()),
                 # 血条比例标记
                 "hp_detect_enabled": self.hp_detect_enable_checkbox.isChecked(),
                 "hp_detect_keep_last_valid": self.hp_detect_keep_last_valid_checkbox.isChecked(),

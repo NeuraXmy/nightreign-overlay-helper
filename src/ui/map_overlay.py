@@ -10,8 +10,9 @@ from PyQt6.QtGui import QColor, QPixmap, QImage
 from PIL import Image
 from datetime import datetime, timedelta
 import time
+import glob
 
-from src.common import get_readable_timedelta
+from src.common import get_readable_timedelta, get_data_path
 from src.config import Config
 from src.logger import info, warning, error
 from src.ui.utils import set_widget_always_on_top, is_window_in_foreground, mss_region_to_qt_region
@@ -26,6 +27,7 @@ class MapOverlayUIState:
     opacity: float | None = None
     visible: bool | None = None
     overlay_image: Image.Image | None = None
+    display_crystal_layout: bool | None = None
     clear_image: bool = False
     map_pattern_matching: bool | None = None
     map_pattern_match_time: float | None = None
@@ -34,7 +36,6 @@ class MapOverlayUIState:
     is_game_foreground: bool | None = None
     is_menu_opened: bool | None = None
     is_setting_opened: bool | None = None
-
 
 
 class MapOverlayWidget(QWidget):
@@ -54,6 +55,14 @@ class MapOverlayWidget(QWidget):
         self.label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setScaledContents(True)
+
+        self.crystal_layout_idx: int | None = None
+        self.crystal_layout_imgs = [Image.open(p) for p in sorted(glob.glob(get_data_path("icons/crystal/*.png")))]
+
+        self.crystal_layout_label = QLabel(self)
+        self.crystal_layout_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.crystal_layout_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.crystal_layout_label.setScaledContents(True)
 
         self.map_pattern_match_time: float = 0.0
         self.map_pattern_matching: bool = False
@@ -91,6 +100,18 @@ class MapOverlayWidget(QWidget):
         pixmap.setDevicePixelRatio(self.devicePixelRatio())
         self.label.setPixmap(pixmap)
 
+    def update_crystal_layout(self):
+        if self.crystal_layout_idx is None:
+            self.crystal_layout_label.clear()
+            return
+        img = self.crystal_layout_imgs[self.crystal_layout_idx]
+        img = img.convert("RGBA")
+        data = img.tobytes("raw", "RGBA")
+        qimg = QImage(data, img.width, img.height, QImage.Format.Format_RGBA8888)
+        pixmap = QPixmap.fromImage(qimg)
+        pixmap.setDevicePixelRatio(self.devicePixelRatio())
+        self.crystal_layout_label.setPixmap(pixmap)
+
     def update_ui_state(self, state: MapOverlayUIState):
         if state.x is not None:
             region = mss_region_to_qt_region((state.x, state.y, state.w, state.h))
@@ -115,21 +136,37 @@ class MapOverlayWidget(QWidget):
             self.map_pattern_matching = state.map_pattern_matching
         if state.map_pattern_match_time is not None:
             self.map_pattern_match_time = state.map_pattern_match_time
+        if state.display_crystal_layout is not None:
+            self.crystal_layout_idx = 0 if state.display_crystal_layout else None
+            self.update_crystal_layout()
         self.update()
-
 
     def timerEvent(self, event):
         self.label.setGeometry(0, 0, self.width(), self.height())
+        self.crystal_layout_label.setGeometry(0, 0, self.width(), self.height())
         self.match_time_label.setGeometry(0, 0, int(self.width() * 0.97), int(self.height() * 0.99))
 
+        match_time_text = ""
         if self.map_pattern_matching:
             spin_line = ['|', '/', '-', '\\'][int(time.time() * 4) % 4]
-            self.match_time_label.setText(f"正在识别中... {spin_line}")
+            match_time_text = f"正在识别中... {spin_line}"
         elif self.map_pattern_match_time > 0:
             elapsed = time.time() - self.map_pattern_match_time
-            self.match_time_label.setText(f"识别时间：{get_readable_timedelta(timedelta(seconds=elapsed))}前")
+            match_time_text = f"识别时间：{get_readable_timedelta(timedelta(seconds=elapsed))}前"
         else:
-            self.match_time_label.setText("")
+            match_time_text = ""
+
+        if self.crystal_layout_idx is not None:
+            crystal_layout_text = "大空洞水晶布局 "
+            if self.crystal_layout_idx == 0:
+                crystal_layout_text += "所有"
+            else:
+                crystal_layout_text += f"{self.crystal_layout_idx}"
+            crystal_layout_text += f"/{len(self.crystal_layout_imgs) - 1}\n"
+            match_time_text = crystal_layout_text + match_time_text
+
+        self.match_time_label.setText(match_time_text)
+
         font_size = max(8, 24 * self.height() // 750)
         self.match_time_label.setStyleSheet(f"color: white; font-size: {font_size}px;")
 
@@ -151,5 +188,19 @@ class MapOverlayWidget(QWidget):
             self.show()
         elif not visible and self.isVisible():
             self.hide()
+
+    def nextCrystalLayout(self):
+        if self.visible and self.crystal_layout_idx is not None:
+            self.crystal_layout_idx += 1
+            if self.crystal_layout_idx >= len(self.crystal_layout_imgs):
+                self.crystal_layout_idx = 0
+            self.update_crystal_layout()
+
+    def lastCrystalLayout(self):
+        if self.visible and self.crystal_layout_idx is not None:
+            self.crystal_layout_idx -= 1
+            if self.crystal_layout_idx < 0:
+                self.crystal_layout_idx = len(self.crystal_layout_imgs) - 1
+            self.update_crystal_layout()
 
         
