@@ -1,6 +1,6 @@
 [project]
 name = "nightreign-overlay-helper"
-version = "0.9.0"
+version = "0.9.1"
 description = "Nightreign Overlay Helper is a utility program developed with PyQt6, designed to display various useful information and features while playing the game."
 readme = "README.md"
 requires-python = ">=3.13"
