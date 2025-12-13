@@ -667,12 +667,12 @@ class MapDetector:
 
         # 大空洞神授塔BOSS对应位置索引
         TGH_FLOOR_BOSS_POS_INDEX = {
-            1111: ('LT', 1),
-            1112: ('LT', 2),
-            1113: ('LT', 3),
-            1114: ('RB', 1),
-            1115: ('RB', 2),
-            1116: ('RB', 3),
+            1111: ('RB', 1),
+            1112: ('RB', 2),
+            1113: ('RB', 3),
+            1114: ('LT', 1),
+            1115: ('LT', 2),
+            1116: ('LT', 3),
         }
 
         # 开始绘制
@@ -747,8 +747,8 @@ class MapDetector:
                 texts.append(((x, y), get_name(ctype), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
                 # 下水道类型
                 for p2, c2 in pattern.pos_constructions.items():
-                    if match(535) and c2.type in (53700, 53710, 53720) \
-                    or match(536) and c2.type in (53600, 53610):
+                    if match(536) and c2.type in (53700, 53710, 53720) \
+                    or match(535) and c2.type in (53600, 53610):
                         y += scale_size(20)
                         texts.append(((x, y), '↓' + get_name(c2.type), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
             # 法师塔
