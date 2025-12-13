@@ -56,6 +56,9 @@ class Config:
     full_map_error_threshold: float
     earth_shifting_error_threshold: float
     map_pattern_match_interval: float
+    subicon_template_match_threshold: float
+    poi_match_sample_ratio_w_nightlord: float
+    poi_match_sample_ratio_wo_nightlord: float
 
     hpbar_region_aspect_ratio: float
     hpbar_detect_std_height: int

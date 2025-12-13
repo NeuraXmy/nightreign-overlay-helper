@@ -36,6 +36,11 @@ Double-click `nightreign-overlay-helper.exe` to run the program. Right-click the
 ## Safety
 The program recognizes game information by capturing screenshots of the game screen, without modifying game data or reading/writing to game memory.
 
+## Acknowledgements
+
+- All image resources used in this program are copyrighted by their respective owners.
+- Thanks to [Fuwish](https://github.com/Fuwishx) for map data support.
+
 ---
 
 # 黑夜君临悬浮助手
@@ -78,3 +83,8 @@ The program recognizes game information by capturing screenshots of the game scr
 ## 安全性
 
 本程序的游戏信息识别通过截屏游戏画面实现，不涉及对游戏数据的修改或对游戏内存的读写。
+
+## 声明
+
+- 本程序使用的图片资源所有版权归其合法所有者所有。
+- 感谢来自 [Fuwish](https://github.com/Fuwishx) 的地图解包数据支持。

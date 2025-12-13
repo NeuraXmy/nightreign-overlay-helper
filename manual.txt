@@ -1,4 +1,4 @@
-nightreign-overlay-helper 黑夜君临悬浮助手 v0.8.2
+nightreign-overlay-helper 黑夜君临悬浮助手
 作者: NeuraXmy@百度贴吧 / ルナ茶@bilibili
 
 ---
@@ -20,5 +20,5 @@ nightreign-overlay-helper 黑夜君临悬浮助手 v0.8.2
 ---
 
 https://github.com/NeuraXmy/nightreign-overlay-helper
-感谢来自 Fuwish@bilibili 的地图解包数据
+感谢来自 https://github.com/Fuwishx 的地图解包数据
 本程序禁止用于盈利目的
