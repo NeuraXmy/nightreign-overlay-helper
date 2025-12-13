@@ -21,4 +21,5 @@ nightreign-overlay-helper 黑夜君临悬浮助手
 
 https://github.com/NeuraXmy/nightreign-overlay-helper
 感谢来自 https://github.com/Fuwishx 的地图解包数据
+感谢来自 https://space.bilibili.com/391379672 的大空洞水晶布局分享
 本程序禁止用于盈利目的
