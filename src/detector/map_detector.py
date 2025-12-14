@@ -766,7 +766,7 @@ class MapDetector:
                 y += scale_size(15)
                 texts.append(((x, y), process_underground_name(get_name(ctype)), FONT_SIZE_SMALL, color, OUTLINE_W_SMALL, OUTLINE_COLOR))
             # 特殊事件（癫火塔除外）
-            if match(20, 21):
+            if 200 <= ctype // 100 <= 215:
                 icons.append(((x, y), EVENT_ICON))
                 y += scale_size(15)
                 texts.append(((x, y), get_event_text(pattern), FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
