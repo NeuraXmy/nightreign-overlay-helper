@@ -13,7 +13,7 @@ from src.logger import info, warning, error
 from src.ui.utils import set_widget_always_on_top
 
 
-INITIAL_TEXT = f"{APP_FULLNAME} by {APP_AUTHOR} (右键打开菜单)"
+INITIAL_TEXT = f"{APP_FULLNAME} (右键打开菜单)"
 
 
 @dataclass
