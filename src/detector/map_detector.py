@@ -755,7 +755,7 @@ class MapDetector:
             if match(400):
                 texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (210, 255, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
             # 马车
-            if match(4500, 4501):
+            if match(4500, 4501, 51150):
                 icons.append(((x, y), CARRIAGE_ICON))
             # POI
             if match(
