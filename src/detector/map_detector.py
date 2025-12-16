@@ -288,7 +288,7 @@ class MapDetector:
             nightlord, icon = nightlords[i]
             target_img = NIGHTLORD_ICON_BG.copy()   
             cx, cy = target_img.size[0] // 2, target_img.size[1] // 2
-            icon_scale = 0.8 if nightlord is not None else 1.0
+            icon_scale = 0.8 if nightlord is not None else 0.9
             icon = icon.resize((int(icon.size[0] * icon_scale), int(icon.size[1] * icon_scale)), resample=PIL_RESAMPLE_METHOD)
             iw, ih = icon.size
             target_img.alpha_composite(icon, (cx - iw // 2, cy - ih // 2))
@@ -437,8 +437,8 @@ class MapDetector:
         # 收集该位置可能出现的POI类型
         nightlords = [nightlord] if nightlord is not None else self.info.all_nightlords
         possible_ctypes = set()
-        for nightlord in nightlords:
-            possible_ctypes.update(self.info.possible_poi_types[(earth_shifting, nightlord, pos)])
+        for nl in nightlords:
+            possible_ctypes.update(self.info.possible_poi_types[(earth_shifting, nl, pos)])
 
         # print("pos:", pos, "possible ctypes:", possible_ctypes)
         for poi_key, info in self.poi_cate_info.items():
@@ -533,8 +533,8 @@ class MapDetector:
 
         all_poi_pos = set() # 收集所有待匹配POI点
         nightlords = [nightlord] if nightlord is not None else self.info.all_nightlords
-        for nightlord in nightlords:
-            all_poi_pos.update(self.info.all_poi_pos[(earth_shifting, nightlord)])
+        for nl in nightlords:
+            all_poi_pos.update(self.info.all_poi_pos[(earth_shifting, nl)])
 
         ratio = Config.get().poi_match_sample_ratio_w_nightlord if nightlord is not None else Config.get().poi_match_sample_ratio_wo_nightlord
         sample_num = max(8, int(len(all_poi_pos) * ratio))  # 最少采样8个POI点
