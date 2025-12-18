@@ -438,7 +438,7 @@ class MapDetector:
         nightlords = [nightlord] if nightlord is not None else self.info.all_nightlords
         possible_ctypes = set()
         for nl in nightlords:
-            possible_ctypes.update(self.info.possible_poi_types[(earth_shifting, nl, pos)])
+            possible_ctypes.update(self.info.possible_poi_types.get((earth_shifting, nl, pos), set()))
 
         # print("pos:", pos, "possible ctypes:", possible_ctypes)
         for poi_key, info in self.poi_cate_info.items():
@@ -534,7 +534,7 @@ class MapDetector:
         all_poi_pos = set() # 收集所有待匹配POI点
         nightlords = [nightlord] if nightlord is not None else self.info.all_nightlords
         for nl in nightlords:
-            all_poi_pos.update(self.info.all_poi_pos[(earth_shifting, nl)])
+            all_poi_pos.update(self.info.all_poi_pos.get((earth_shifting, nl), set()))
 
         ratio = Config.get().poi_match_sample_ratio_w_nightlord if nightlord is not None else Config.get().poi_match_sample_ratio_wo_nightlord
         sample_num = max(8, int(len(all_poi_pos) * ratio))  # 最少采样8个POI点
