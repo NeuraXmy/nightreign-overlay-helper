@@ -49,7 +49,7 @@ full_map_error_threshold: 20            # 判断当前地图是否是完整地�
 earth_shifting_error_threshold: 50      # 判断特殊地形的误差阈值
 map_pattern_match_interval: 2100        # 自动地图匹配间隔(秒)
 subicon_template_match_threshold: 0.1   # POI子图标模板匹配分数阈值，高于的视为无子图标
-poi_match_sample_ratio_w_nightlord: 0.5      # 已匹配夜王时POI匹配采样点数量
+poi_match_sample_ratio_w_nightlord: 1.0      # 已匹配夜王时POI匹配采样点数量
 poi_match_sample_ratio_wo_nightlord: 1.0     # 未匹配夜王时POI匹配采样点数量
 
 hpbar_region_aspect_ratio: 125        # 血条区域宽高比
