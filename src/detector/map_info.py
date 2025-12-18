@@ -16,7 +16,7 @@ TGH_UNDERGROUND_COORDS = [1160, 1159, 1107, 1110, 1153, 1175, 1174]
 @dataclass
 class Construct:
     type: int
-    is_display: bool
+    is_display: bool = True
     is_underground: bool = False
     pos_index: int = None
     pos: Position = None
@@ -98,19 +98,29 @@ def load_map_info(
             pos_dict[int(row[0])] = original_to_std_coord((x, y))
             tgh_pos_dict[int(row[0])] = tgh_original_to_std_coord((x, y))
     
+    all_poi_construct_ctypes: set[int] = set()
+    not_poi_construct_ctypes: set[int] = set()
+
     with open(constructs_csv_path, 'r', encoding='utf-8') as f:
         f.readline()
         reader = csv.reader(f)
         map_construct_dict: dict[int, list[Construct]] = {}
         for row in reader:
             map_id = int(row[1])
+            ctype = int(row[2])
             construct = Construct(
-                type=int(row[2]),
+                type=ctype,
                 pos_index=int(row[4]),
                 is_display=(row[3] == '1'),
                 is_underground=(int(row[4]) in TGH_UNDERGROUND_COORDS),
             )
             map_construct_dict.setdefault(map_id, []).append(construct)
+            # 顺便统计POI实际出现的建筑类型
+            if ctype not in all_poi_construct_ctypes and ctype not in not_poi_construct_ctypes:
+                if any(str(ctype).startswith(str(prefix)) for prefix in POI_CONSTRUCTS):
+                    all_poi_construct_ctypes.add(ctype)
+                else:
+                    not_poi_construct_ctypes.add(ctype)
 
     with open(map_patterns_csv_path, 'r', encoding='utf-8') as f:
         f.readline()
@@ -152,7 +162,7 @@ def load_map_info(
         all_earth_shiftings.add(es)
         all_nightlords.add(nightlord)
         for construct in pattern.pos_constructions.values():
-            if any(str(construct.type).startswith(str(ctype)) for ctype in POI_CONSTRUCTS):
+            if construct.type in all_poi_construct_ctypes:
                 if pattern.earth_shifting == 4 and construct.is_underground:
                     continue  # 大空洞地下建筑不纳入POI
                 all_poi_pos.setdefault((es, nightlord), set()).add(construct.pos)
@@ -164,7 +174,8 @@ def load_map_info(
         all_poi_construct_type[(es, nightlord)].add(0)
         for pattern in patterns:
             if pattern.earth_shifting == es and pattern.nightlord == nightlord:
-                if pos not in pattern.pos_constructions:
+                con = pattern.pos_constructions.get(pos, Construct(type=0))
+                if con.type not in all_poi_construct_ctypes:
                     possible_poi_types[(es, nightlord, pos)].add(0)
 
     return MapInfo(

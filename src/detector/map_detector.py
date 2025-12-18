@@ -428,7 +428,8 @@ class MapDetector:
 
         img_for_poi = cv2.resize(img, DOWNSAMPLE_SIZE, interpolation=CV2_RESIZE_METHOD)
         h, w, _ = img_for_poi.shape
-        img_for_poi = img_for_poi[int(h*0.2):int(h*0.8), int(w*0.2):int(w*0.6)]
+        h_min, h_max, w_min, w_max = int(h*0.2), int(h*0.8), int(w*0.2), int(w*0.6)
+        img_for_poi = img_for_poi[h_min:h_max, w_min:w_max]
         bg = Image.fromarray(bg).convert("RGBA")
 
         best_poi_key = None
@@ -456,7 +457,7 @@ class MapDetector:
                         poi_img.alpha_composite(resized_poi_icon, (dx, dy))
                         poi_img = np.array(poi_img)[..., :3]
                         poi_img = cv2.resize(poi_img, DOWNSAMPLE_SIZE, interpolation=CV2_RESIZE_METHOD)
-                        poi_img = poi_img[int(h*0.2):int(h*0.8), int(w*0.2):int(w*0.6)]
+                        poi_img = poi_img[h_min:h_max, w_min:w_max]
                         target_imgs.append(poi_img)
 
             target_imgs = np.array(target_imgs).astype(np.float32)
@@ -475,12 +476,13 @@ class MapDetector:
         # print("Best poi category:", best_poi_key, "score:", best_poi_key_score)
 
         # 判断子图标类型
-        DOWNSAMPLE_SIZE = (32, 32)
+        DOWNSAMPLE_SIZE = (64, 64)
         SCALE_RANGE = (0.9, 1.1, 5)
 
         img_for_subicon = cv2.resize(img, DOWNSAMPLE_SIZE, interpolation=CV2_RESIZE_METHOD)
         h, w, _ = img_for_subicon.shape
         img_for_subicon = img_for_subicon[int(h*0.4):, int(w*0.4):]
+        img_for_subicon = cv2.GaussianBlur(img_for_subicon, (3, 3), 0)
 
         best_subicon = None
         best_subicon_score = float('inf')
@@ -492,10 +494,12 @@ class MapDetector:
             subicon_img = SUBICON_IMAGES[subicon]
             for s in np.linspace(SCALE_RANGE[0], SCALE_RANGE[1], SCALE_RANGE[2], endpoint=True):
                 size = (int(DOWNSAMPLE_SIZE[0] * s * 0.3), int(DOWNSAMPLE_SIZE[1] * s * 0.3))
-                target_img = np.array(subicon_img.resize(size).convert("RGB"))
+                target_img = subicon_img.resize(size, resample=Image.Resampling.NEAREST).convert("RGB")
+                target_img = np.array(target_img).astype(np.uint8)
+                target_img = cv2.GaussianBlur(target_img, (3, 3), 0)
                 match_result, match_val = match_template(
                     img_for_subicon,
-                    cv2.cvtColor(np.array(target_img), cv2.COLOR_RGBA2RGB),
+                    target_img,
                     scales=(1.0, 1.0, 1)
                 )
                 if match_val < best_subicon_score:
