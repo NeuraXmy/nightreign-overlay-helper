@@ -521,7 +521,7 @@ class MapDetector:
         best_ctype = sorted(list(self.poi_cate_info[best_poi_key].subtypes.get(best_subicon).ctypes))[0]
         return best_ctype, best_poi_key_score * best_subicon_score
 
-    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> tuple[MapPattern | None, int]:
+    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> dict:
         assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
 
         t = time.time()
@@ -607,10 +607,15 @@ class MapDetector:
         info(f"Match map pattern: best pattern by score: {[p.id for p in best_patterns_by_score]} score: {best_score}")
         info(f"Match map pattern: best pattern by error: {[p.id for p in best_patterns_by_error]} error: {best_error}")
         info(f"Match map pattern: return pattern #{best_pattern.id}, time cost: {time.time() - t:.4f}s")
-        return best_pattern, best_score
+        return {
+            'pattern': best_pattern,
+            'nightlord': nightlord,
+            'score': best_score,
+            'error': best_error,
+        }
 
 
-    def _draw_overlay_image(self, pattern: MapPattern | None, draw_size: tuple[int, int]) -> Image.Image:
+    def _draw_overlay_image(self, pattern: MapPattern | None, draw_size: tuple[int, int], additional_info: dict) -> Image.Image:
         def scale_size(p: int | float | Position) -> int | Position:
             # 以750x750为标准尺寸
             if isinstance(p, (int, float)):
@@ -805,7 +810,12 @@ class MapDetector:
             texts.append(((pos[0], pos[1] + scale_size(20)), "庇佑", FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
 
         # 说明文本
-        text = f"#{pattern.id}    {get_name(pattern.nightlord + 100000)}"
+        text = f"#{pattern.id}"
+        if additional_info.get('error') is not None:
+            text += f" (E:{additional_info['error']})"
+        text += f"    {get_name(pattern.nightlord + 100000)}"
+        if additional_info.get('nightlord', 0) is None:
+            text += " (隐藏夜王)"
         if event_text := get_event_text(pattern):
             text += f"    特殊事件: {event_text}"
         texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
@@ -856,9 +866,9 @@ class MapDetector:
 
         # 地图模式匹配
         if param.do_match_pattern:
-            pattern, score = self._match_map_pattern(img, param.earth_shifting)
-            ret.pattern = pattern
-            ret.pattern_score = score
+            pattern_result = self._match_map_pattern(img, param.earth_shifting)
+            ret.pattern = pattern_result['pattern']
+            ret.pattern_score = pattern_result['score']
 
             # 决定信息绘制大小
             if config.fixed_map_overlay_draw_size is not None:
@@ -870,7 +880,7 @@ class MapDetector:
                 )
             else:
                 draw_size = STD_MAP_SIZE
-            ret.overlay_image = self._draw_overlay_image(pattern, draw_size)
+            ret.overlay_image = self._draw_overlay_image(ret.pattern, draw_size, pattern_result)
         
         return ret
 
