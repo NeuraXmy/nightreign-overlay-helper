@@ -7,15 +7,17 @@ from PyQt6.QtGui import QMouseEvent, QKeySequence, QKeyEvent
 from dataclasses import dataclass, field
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 from PyQt6.QtGui import QColor, QPixmap, QImage
-from PIL import Image
+from PIL import Image, ImageDraw
+import os
 from datetime import datetime, timedelta
 import time
 import glob
 
-from src.common import get_readable_timedelta, get_data_path
+from src.common import get_readable_timedelta, get_data_path, load_yaml
 from src.config import Config
 from src.logger import info, warning, error
 from src.ui.utils import set_widget_always_on_top, is_window_in_foreground, mss_region_to_qt_region
+from src.detector.utils import draw_text
 
 
 @dataclass
@@ -57,7 +59,7 @@ class MapOverlayWidget(QWidget):
         self.label.setScaledContents(True)
 
         self.crystal_layout_idx: int | None = None
-        self.crystal_layout_imgs = [Image.open(p) for p in sorted(glob.glob(get_data_path("icons/crystal/*.png")))]
+        self.init_crystal_layout_imgs()
 
         self.crystal_layout_label = QLabel(self)
         self.crystal_layout_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -88,6 +90,74 @@ class MapOverlayWidget(QWidget):
             opacity=0.0,
             visible=True,
         ))
+
+    def init_crystal_layout_imgs(self):
+        def load_pil_img(path: str, size: tuple[int, int], alpha: float) -> Image.Image:
+            if not os.path.isfile(path):
+                error(f"Failed to open image file: {path}")
+            icon = Image.open(path).convert("RGBA")
+            icon = icon.resize(size, Image.Resampling.BICUBIC)
+            if alpha < 1.0:
+                r, g, b, a = icon.split()
+                a = a.point(lambda p: int(p * alpha))
+                icon = Image.merge('RGBA', (r, g, b, a))
+            return icon
+        
+        MAP_SIZE = (750, 750)
+        ICON_SIZE = (MAP_SIZE[0] // 25, MAP_SIZE[1] // 25)
+        ICON_ALPHA = 0.8
+        SPEC_PATTERN_ICON_SIZE = (MAP_SIZE[0] // 20, MAP_SIZE[1] // 20)
+        SPEC_PATTERN_ICON_ALPHA = 0.8
+
+        self.crystal_layout_imgs = []
+
+        data = load_yaml(get_data_path("crystal.yaml"))
+
+        crystals, underground_crystals = data['crystals'], data['underground_crystals']
+        for pattern in data['patterns']:
+            is_main = set(pattern['initial']) == set(crystals.keys()) | set(underground_crystals.keys())
+
+            size = SPEC_PATTERN_ICON_SIZE if not is_main else ICON_SIZE
+            alpha = SPEC_PATTERN_ICON_ALPHA if not is_main else ICON_ALPHA
+            icon = load_pil_img(get_data_path("icons/crystal/crystal.png"), size, alpha)
+            icon_later = load_pil_img(get_data_path("icons/crystal/later_crystal.png"), size, alpha)
+            icon_underground = load_pil_img(get_data_path("icons/crystal/underground_crystal.png"), size, alpha)
+
+            img = Image.new("RGBA", MAP_SIZE, (0, 0, 0, 0))
+            def draw_crystal(idx: int, later: bool):
+                if later: 
+                    icon_img = icon_later
+                elif idx in underground_crystals:
+                    icon_img = icon_underground
+                else:
+                    icon_img = icon
+                x_ratio, y_ratio = underground_crystals[idx] if idx in underground_crystals else crystals[idx]
+                x = int(x_ratio * MAP_SIZE[0]) - icon_img.width // 2
+                y = int(y_ratio * MAP_SIZE[1]) - icon_img.height // 2
+                img.alpha_composite(icon_img, (x, y))
+
+            for idx in pattern['initial']:
+                draw_crystal(idx, later=False)
+            for idx in pattern['later']:
+                draw_crystal(idx, later=True)
+
+            # 图片正下方中间绘制图例
+            sx = MAP_SIZE[0] * 0.25
+            sy = MAP_SIZE[1] * 0.87
+            if not is_main:
+                img.alpha_composite(icon, (int(sx), int(sy)))
+                draw_text(img, (sx + ICON_SIZE[0] + 5, sy), "水晶点位", 20, color=(255, 255, 255, 220), outline_width=2, align='lt')
+                img.alpha_composite(icon_underground, (int(sx), int(sy + ICON_SIZE[1])))
+                draw_text(img, (sx + ICON_SIZE[0] + 5, sy + ICON_SIZE[1]), "地下水晶点位", 20, color=(255, 255, 255, 220), outline_width=2, align='lt')
+                img.alpha_composite(icon_later, (int(sx), int(sy + 2 * (ICON_SIZE[1]))))
+                draw_text(img, (sx + ICON_SIZE[0] + 5, sy + 2 * (ICON_SIZE[1])), "额外水晶点位", 20, color=(255, 255, 255, 220), outline_width=2, align='lt')
+            else:
+                img.alpha_composite(icon, (int(sx), int(sy + ICON_SIZE[1])))
+                draw_text(img, (sx + ICON_SIZE[0] + 5, sy + ICON_SIZE[1]), "水晶点位", 20, color=(255, 255, 255, 220), outline_width=2, align='lt')
+                img.alpha_composite(icon_underground, (int(sx), int(sy + 2 * (ICON_SIZE[1]))))
+                draw_text(img, (sx + ICON_SIZE[0] + 5, sy + 2 * (ICON_SIZE[1])), "地下水晶点位", 20, color=(255, 255, 255, 220), outline_width=2, align='lt')
+                
+            self.crystal_layout_imgs.append(img)
 
     def set_image(self, img: Image.Image | None):
         if img is None:
