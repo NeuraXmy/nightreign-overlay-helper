@@ -422,7 +422,7 @@ class MapDetector:
 
         # 判断建筑类型
         DOWNSAMPLE_SIZE = (16, 16)
-        MAX_OFFSET = 6
+        MAX_OFFSET = 4
         OFFSET_STRIDE = 2
         SCALE_RANGE = (0.9, 1.1, 5)
 
@@ -497,6 +497,8 @@ class MapDetector:
                 target_img = subicon_img.resize(size, resample=Image.Resampling.NEAREST).convert("RGB")
                 target_img = np.array(target_img).astype(np.uint8)
                 target_img = cv2.GaussianBlur(target_img, (3, 3), 0)
+                th, tw = target_img.shape[0], target_img.shape[1]
+                target_img = target_img[int(th*0.1):int(th*0.9), int(tw*0.1):int(tw*0.9)]
                 match_result, match_val = match_template(
                     img_for_subicon,
                     target_img,
@@ -569,6 +571,9 @@ class MapDetector:
             score, error = 0, 0
             for pos, ctype in poi_result.items():
                 expect_ctype = pattern.pos_constructions.get(pos, EMPTY_CONSTRUCTION).type
+                if expect_ctype not in self.all_poi_images:
+                    expect_ctype = 0
+
                 subicon = CTYPE_SUBICON_MAP.get(ctype)
                 expect_subicon = CTYPE_SUBICON_MAP.get(expect_ctype)
 
@@ -706,6 +711,11 @@ class MapDetector:
         if extra_name: texts.append(((x, y + scale_size(60)), f"额外Boss:{extra_name}", 
                                     FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
             
+        # 大空洞第二天缩圈位置
+        day2_lefttop = pattern.day2_pos_idx == 12000
+        IN_CIRCLE_COLOR = (200, 255, 200, 255)
+        OUT_CIRCLE_COLOR = (255, 200, 200, 255)
+            
         for pos, construct in pattern.pos_constructions.items():
             pos = scale_size(pos)
             x, y = pos
@@ -753,13 +763,14 @@ class MapDetector:
             if match(5358, 5359, 5367, 5368):
                 y += scale_size(25)
                 x += scale_size(5)
-                texts.append(((x, y), get_name(ctype), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+                color = IN_CIRCLE_COLOR if match(536) ^ day2_lefttop else OUT_CIRCLE_COLOR 
+                texts.append(((x, y), get_name(ctype), FONT_SIZE_LARGE, color, OUTLINE_W_LARGE, OUTLINE_COLOR))
                 # 下水道类型
                 for p2, c2 in pattern.pos_constructions.items():
                     if match(536) and c2.type in (53700, 53710, 53720) \
                     or match(535) and c2.type in (53600, 53610):
                         y += scale_size(20)
-                        texts.append(((x, y), '↓' + get_name(c2.type), FONT_SIZE_LARGE, (255, 255, 0, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+                        texts.append(((x, y), '↓' + get_name(c2.type), FONT_SIZE_LARGE, color, OUTLINE_W_LARGE, OUTLINE_COLOR))
             # 法师塔
             if match(400):
                 texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (210, 255, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
@@ -788,8 +799,9 @@ class MapDetector:
                 floor_pos, floor_num = TGH_FLOOR_BOSS_POS_INDEX[construct.pos_index]
                 x, y = scale_size((100, 280) if floor_pos == 'LT' else (680, 530))
                 y += scale_size((3 - floor_num) * 20)
+                color = IN_CIRCLE_COLOR if (day2_lefttop ^ (floor_pos == 'RB')) else OUT_CIRCLE_COLOR
                 texts.append(((x, y), f"{floor_num}F: {get_name(ctype)}", 
-                                FONT_SIZE_LARGE, (255, 255, 255, 255), OUTLINE_W_LARGE, OUTLINE_COLOR))
+                                FONT_SIZE_LARGE, color, OUTLINE_W_LARGE, OUTLINE_COLOR))
 
         # 宝藏
         treasure_id = pattern.treasure * 10 + pattern.earth_shifting
@@ -822,7 +834,7 @@ class MapDetector:
 
         # 大空洞第二天缩圈位置
         if pattern.earth_shifting == 4:
-            text = "左上" if pattern.day2_pos_idx == 12000 else "右下"
+            text = "左上" if day2_lefttop else "右下"
             text = f"Day2第一次缩圈位置：{text}"
             texts.append((scale_size((20, 38)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
 
