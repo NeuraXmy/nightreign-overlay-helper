@@ -478,9 +478,11 @@ class MapDetector:
             # best_img = target_imgs[min_idx].astype(np.uint8)
             # vis = np.concatenate([img_for_poi, best_img], axis=1)
             # display_cv2_image(vis, None)
-            # print(f"poi category {poi_key} match score: {poi_key_score:.4f}, time cost: {time.time() - t:.4f}s")
+            # if pos == (270, 615):
+            #     cv2.imwrite(f"sandbox/debug/{poi_key}.jpg", cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
+            # print(f"{pos} poi category {poi_key} match score: {poi_key_score:.4f}, time cost: {time.time() - t:.4f}s")
 
-        # print("Best poi category:", best_poi_key, "score:", best_poi_key_score)
+        # print(f"Best {pos} poi category:", best_poi_key, "score:", best_poi_key_score)
 
         # 判断子图标类型
         DOWNSAMPLE_SIZE = (64, 64)
@@ -616,7 +618,7 @@ class MapDetector:
         return best_patterns_by_error
 
 
-    def _draw_overlay_image(self, match_result: MapPatternMatchResult, draw_size: tuple[int, int]) -> Image.Image:
+    def _draw_overlay_image(self, match_result: MapPatternMatchResult, draw_size: tuple[int, int], result_index: int) -> Image.Image:
         pattern = match_result.pattern
 
         def scale_size(p: int | float | Position) -> int | Position:
@@ -842,7 +844,7 @@ class MapDetector:
         info(f"Draw overlay image size: {draw_size} time cost: {time.time() - t:.4f}s")
 
         # 保存结果用于调试
-        img.convert('RGB').save(get_appdata_path(f"map_overlay_result.jpg"))
+        img.convert('RGB').save(get_appdata_path(f"map_overlay_result_{result_index}.jpg"))
 
         return img
 
@@ -890,7 +892,7 @@ class MapDetector:
             else:
                 draw_size = STD_MAP_SIZE
 
-            ret.overlay_images = [self._draw_overlay_image(result, draw_size) for result in results]
+            ret.overlay_images = [self._draw_overlay_image(result, draw_size, i) for i, result in enumerate(results)]
         
         return ret
 
