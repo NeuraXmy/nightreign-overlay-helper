@@ -24,6 +24,7 @@ from src.detector.utils import (
     draw_text,
     grab_region,
     match_template,
+    align_image,
 )
 
 
@@ -541,8 +542,22 @@ class MapDetector:
         # 识别夜王
         nightlord, _ = self._match_nightlord(img)
 
-        # 识别POI
+        # 校准偏移
         map_bg = cv2.resize(MAP_BGS[earth_shifting], STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
+        try:
+            align_t = time.time()
+            ALIGN_REGION = (
+                int(STD_MAP_SIZE[0] * 0.2),
+                int(STD_MAP_SIZE[1] * 0.2),
+                int(STD_MAP_SIZE[0] * 0.6),
+                int(STD_MAP_SIZE[1] * 0.6),
+            )
+            img = align_image(img, map_bg, ALIGN_REGION)
+            info(f"MapDetector: Align map image time cost: {time.time() - align_t:.4f}s")
+        except Exception as e:
+            warning(f"MapDetector: Align map image failed: {e}")
+
+        # 识别POI
         poi_result: dict[Position, int] = {}
         poi_result_img = img.copy()    # for debug
 
