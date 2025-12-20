@@ -91,7 +91,6 @@ class Updater(QObject):
         self.map_region: tuple[int] = None
         self.current_is_full_map: bool = False
         self.do_match_map_pattern_flag: DoMatchMapPatternFlag = DoMatchMapPatternFlag.TRUE
-        self.map_pattern: MapPattern = None
         self.map_overlay_visible: bool = False
         self.last_map_pattern_match_time: float = 0.0
 
@@ -280,8 +279,8 @@ class Updater(QObject):
                 map_pattern_match_text="",
             ))
 
-    def update_map_overlay_image(self, image: Image.Image | None, earth_shifting: int | None = None):
-        if image is None:
+    def update_map_overlay_images(self, images: list[Image.Image] | None, earth_shifting: int | None = None):
+        if images is None:
             self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
                 clear_image=True,
                 map_pattern_match_time=0,
@@ -291,7 +290,7 @@ class Updater(QObject):
             info("Clear map overlay image.")
         else:
             self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
-                overlay_image=image,
+                overlay_images=images,
                 x=self.map_region[0],
                 y=self.map_region[1],
                 w=self.map_region[2],
@@ -363,7 +362,7 @@ class Updater(QObject):
         if self.do_match_map_pattern_flag == DoMatchMapPatternFlag.PREPARE:
             # 隐藏信息显示，等待下一次更新进行识别
             self.do_match_map_pattern_flag = DoMatchMapPatternFlag.TRUE
-            self.update_map_overlay_image(None)
+            self.update_map_overlay_images(None)
             info("Hide overlay and prepared to detect map pattern.")
 
         elif self.do_match_map_pattern_flag == DoMatchMapPatternFlag.TRUE and is_full_map:
@@ -401,8 +400,7 @@ class Updater(QObject):
                         hdr_processing_enabled=self.hdr_processing_enabled,
                     )
                 ))
-                self.map_pattern = result.map_detect_result.pattern
-                self.update_map_overlay_image(result.map_detect_result.overlay_image, earth_shifting=earth_shifting)
+                self.update_map_overlay_images(result.map_detect_result.overlay_images, earth_shifting=earth_shifting)
                 self.last_map_pattern_match_time = self.get_time()
 
     # =============== HP Management =============== #

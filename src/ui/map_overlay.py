@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QRect
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QProgressBar, 
     QLabel, QHBoxLayout, QSizePolicy, QStackedLayout,
@@ -28,7 +28,7 @@ class MapOverlayUIState:
     h: int | None = None
     opacity: float | None = None
     visible: bool | None = None
-    overlay_image: Image.Image | None = None
+    overlay_images: list[Image.Image] | None = None
     display_crystal_layout: bool | None = None
     clear_image: bool = False
     map_pattern_matching: bool | None = None
@@ -53,31 +53,58 @@ class MapOverlayWidget(QWidget):
         set_widget_always_on_top(self)
         self.startTimer(50)
 
-        self.label = QLabel(self)
-        self.label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setScaledContents(True)
+        # 悬浮地图信息
+        self.map_pattern_idx: int | None = None
+        self.overlay_images: list[Image.Image] | None = None
+        self.map_pattern_match_time: float = 0.0
+        self.map_pattern_matching: bool = False
 
+        self.overlay_image_box = QLabel(self)
+        self.overlay_image_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.overlay_image_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.overlay_image_box.setScaledContents(True)
+
+        # 悬浮水晶信息
         self.crystal_layout_idx: int | None = None
         self.init_crystal_layout_imgs()
 
-        self.crystal_layout_label = QLabel(self)
-        self.crystal_layout_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.crystal_layout_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.crystal_layout_label.setScaledContents(True)
+        self.crystal_layout_image_box = QLabel(self)
+        self.crystal_layout_image_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.crystal_layout_image_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.crystal_layout_image_box.setScaledContents(True)
 
-        self.map_pattern_match_time: float = 0.0
-        self.map_pattern_matching: bool = False
+        # 右下角标签VBOX
+        self.vbox = QVBoxLayout(self)
+        self.vbox.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+
+        def add_shadow(label: QLabel):
+            shadow_effect = QGraphicsDropShadowEffect(label)
+            shadow_effect.setBlurRadius(5)
+            shadow_effect.setOffset(2, 2)
+            shadow_effect.setColor(QColor(0, 0, 0, 160))
+            label.setGraphicsEffect(shadow_effect)
+
+
+        # 水晶序号标签
+        self.crystal_layout_label = QLabel(self)
+        self.crystal_layout_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+        add_shadow(self.crystal_layout_label)
+        self.vbox.addWidget(self.crystal_layout_label)
+
+        # 地图序号标签
+        self.map_pattern_label = QLabel(self)
+        self.map_pattern_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
+        add_shadow(self.map_pattern_label)
+        self.vbox.addWidget(self.map_pattern_label)
+
+        # 检测时间标签
         self.match_time_label = QLabel(self)
         self.match_time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom)
-        shadow_effect = QGraphicsDropShadowEffect(self.match_time_label)
-        shadow_effect.setBlurRadius(5)
-        shadow_effect.setOffset(2, 2)
-        shadow_effect.setColor(QColor(0, 0, 0, 160))
-        self.match_time_label.setGraphicsEffect(shadow_effect)
+        add_shadow(self.match_time_label)
+        self.vbox.addWidget(self.match_time_label)
+
 
         self.target_opacity = 1.0
-
         self.visible = True
         self.only_show_when_game_foreground = False
         self.is_game_foreground = False
@@ -90,6 +117,39 @@ class MapOverlayWidget(QWidget):
             opacity=0.0,
             visible=True,
         ))
+
+
+    def set_overlay_images(self, imgs: list[Image.Image] | None):
+        self.overlay_images = imgs
+        self.map_pattern_idx = 0
+        self.update_overlay_images()
+        
+    def update_overlay_images(self):
+        if not self.overlay_images:
+            self.overlay_images = None
+            self.overlay_image_box.clear()
+            return
+        img = self.overlay_images[self.map_pattern_idx]
+        data = img.convert("RGBA").tobytes("raw", "RGBA")
+        qimg = QImage(data, img.width, img.height, QImage.Format.Format_RGBA8888)
+        pixmap = QPixmap.fromImage(qimg)
+        pixmap.setDevicePixelRatio(self.devicePixelRatio())
+        self.overlay_image_box.setPixmap(pixmap)
+
+    def next_overlay_image(self):
+        if self.visible and self.overlay_images is not None:
+            self.map_pattern_idx += 1
+            if self.map_pattern_idx >= len(self.overlay_images):
+                self.map_pattern_idx = 0
+            self.update_overlay_images()
+
+    def last_overlay_image(self):
+        if self.visible and self.overlay_images is not None:
+            self.map_pattern_idx -= 1
+            if self.map_pattern_idx < 0:
+                self.map_pattern_idx = len(self.overlay_images) - 1
+            self.update_overlay_images()
+
 
     def init_crystal_layout_imgs(self):
         def load_pil_img(path: str, size: tuple[int, int], alpha: float) -> Image.Image:
@@ -142,7 +202,7 @@ class MapOverlayWidget(QWidget):
                 draw_crystal(idx, later=True)
 
             # 图片正下方中间绘制图例
-            sx = MAP_SIZE[0] * 0.25
+            sx = MAP_SIZE[0] * 0.2
             sy = MAP_SIZE[1] * 0.87
             if not is_main:
                 img.alpha_composite(icon, (int(sx), int(sy)))
@@ -159,20 +219,9 @@ class MapOverlayWidget(QWidget):
                 
             self.crystal_layout_imgs.append(img)
 
-    def set_image(self, img: Image.Image | None):
-        if img is None:
-            self.label.clear()
-            return
-        img = img.convert("RGBA")
-        data = img.tobytes("raw", "RGBA")
-        qimg = QImage(data, img.width, img.height, QImage.Format.Format_RGBA8888)
-        pixmap = QPixmap.fromImage(qimg)
-        pixmap.setDevicePixelRatio(self.devicePixelRatio())
-        self.label.setPixmap(pixmap)
-
     def update_crystal_layout(self):
         if self.crystal_layout_idx is None:
-            self.crystal_layout_label.clear()
+            self.crystal_layout_image_box.clear()
             return
         img = self.crystal_layout_imgs[self.crystal_layout_idx]
         img = img.convert("RGBA")
@@ -180,7 +229,22 @@ class MapOverlayWidget(QWidget):
         qimg = QImage(data, img.width, img.height, QImage.Format.Format_RGBA8888)
         pixmap = QPixmap.fromImage(qimg)
         pixmap.setDevicePixelRatio(self.devicePixelRatio())
-        self.crystal_layout_label.setPixmap(pixmap)
+        self.crystal_layout_image_box.setPixmap(pixmap)
+
+    def next_crystal_layout(self):
+        if self.visible and self.crystal_layout_idx is not None:
+            self.crystal_layout_idx += 1
+            if self.crystal_layout_idx >= len(self.crystal_layout_imgs):
+                self.crystal_layout_idx = 0
+            self.update_crystal_layout()
+
+    def last_crystal_layout(self):
+        if self.visible and self.crystal_layout_idx is not None:
+            self.crystal_layout_idx -= 1
+            if self.crystal_layout_idx < 0:
+                self.crystal_layout_idx = len(self.crystal_layout_imgs) - 1
+            self.update_crystal_layout()
+
 
     def update_ui_state(self, state: MapOverlayUIState):
         if state.x is not None:
@@ -190,10 +254,10 @@ class MapOverlayWidget(QWidget):
             self.target_opacity = state.opacity
         if state.visible is not None:
             self.visible = state.visible
-        if state.overlay_image is not None:
-            self.set_image(state.overlay_image)
+        if state.overlay_images is not None:
+            self.set_overlay_images(state.overlay_images)
         if state.clear_image:
-            self.set_image(None)
+            self.set_overlay_images(None)
         if state.only_show_when_game_foreground is not None:
             self.only_show_when_game_foreground = state.only_show_when_game_foreground
         if state.is_game_foreground is not None:
@@ -212,10 +276,37 @@ class MapOverlayWidget(QWidget):
         self.update()
 
     def timerEvent(self, event):
-        self.label.setGeometry(0, 0, self.width(), self.height())
-        self.crystal_layout_label.setGeometry(0, 0, self.width(), self.height())
-        self.match_time_label.setGeometry(0, 0, int(self.width() * 0.97), int(self.height() * 0.99))
+        w, h = self.width(), self.height()
+        self.overlay_image_box.setGeometry(0, 0, w, h)
+        self.crystal_layout_image_box.setGeometry(0, 0, w, h)
 
+        font_size = max(8, 24 * h // 750)
+
+        # 更新vbox
+        margin = int(font_size * 0.5)
+        self.vbox.setContentsMargins(margin, margin, margin, margin)
+        self.vbox.setSpacing(margin // 2)
+
+        # 更新地图序号标签
+        map_pattern_text = ""
+        if self.overlay_images is not None and self.map_pattern_idx is not None:
+            map_pattern_text = f"识别结果: {self.map_pattern_idx + 1}/{len(self.overlay_images)}"
+        self.map_pattern_label.setText(map_pattern_text)
+        self.map_pattern_label.setStyleSheet(f"color: white; font-size: {font_size}px;")
+
+        # 更新水晶布局标签
+        crystal_layout_text = ""
+        if self.crystal_layout_idx is not None:
+            crystal_layout_text = "水晶布局: "
+            if self.crystal_layout_idx == 0:
+                crystal_layout_text += "所有"
+            else:
+                crystal_layout_text += f"{self.crystal_layout_idx}"
+            crystal_layout_text += f"/{len(self.crystal_layout_imgs) - 1}"
+        self.crystal_layout_label.setText(crystal_layout_text)
+        self.crystal_layout_label.setStyleSheet(f"color: white; font-size: {font_size}px;")
+
+        # 更新识别时间标签
         match_time_text = ""
         if self.map_pattern_matching:
             spin_line = ['|', '/', '-', '\\'][int(time.time() * 4) % 4]
@@ -223,23 +314,10 @@ class MapOverlayWidget(QWidget):
         elif self.map_pattern_match_time > 0:
             elapsed = time.time() - self.map_pattern_match_time
             match_time_text = f"识别时间：{get_readable_timedelta(timedelta(seconds=elapsed))}前"
-        else:
-            match_time_text = ""
-
-        if self.crystal_layout_idx is not None:
-            crystal_layout_text = "大空洞水晶布局 "
-            if self.crystal_layout_idx == 0:
-                crystal_layout_text += "所有"
-            else:
-                crystal_layout_text += f"{self.crystal_layout_idx}"
-            crystal_layout_text += f"/{len(self.crystal_layout_imgs) - 1}\n"
-            match_time_text = crystal_layout_text + match_time_text
-
         self.match_time_label.setText(match_time_text)
-
-        font_size = max(8, 24 * self.height() // 750)
         self.match_time_label.setStyleSheet(f"color: white; font-size: {font_size}px;")
 
+        # 更新透明度
         threshold = 0.01
         step = 0.6
         real_opacity = self.windowOpacity()
@@ -259,18 +337,5 @@ class MapOverlayWidget(QWidget):
         elif not visible and self.isVisible():
             self.hide()
 
-    def nextCrystalLayout(self):
-        if self.visible and self.crystal_layout_idx is not None:
-            self.crystal_layout_idx += 1
-            if self.crystal_layout_idx >= len(self.crystal_layout_imgs):
-                self.crystal_layout_idx = 0
-            self.update_crystal_layout()
 
-    def lastCrystalLayout(self):
-        if self.visible and self.crystal_layout_idx is not None:
-            self.crystal_layout_idx -= 1
-            if self.crystal_layout_idx < 0:
-                self.crystal_layout_idx = len(self.crystal_layout_imgs) - 1
-            self.update_crystal_layout()
 
-        

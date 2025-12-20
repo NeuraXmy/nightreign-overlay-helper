@@ -214,6 +214,14 @@ class PoiCategoryInfo:
 
 
 @dataclass
+class MapPatternMatchResult:
+    pattern: MapPattern
+    nightlord: int | None
+    score: int
+    error: int
+
+
+@dataclass
 class MapDetectParam:
     map_region: tuple[int] | None = None
     img: np.ndarray | None = None
@@ -229,9 +237,8 @@ class MapDetectResult:
     is_full_map: bool = None
     earth_shifting: int | None = None
     earth_shifting_score: float | None = None
-    pattern: MapPattern = None
-    pattern_score: int = None
-    overlay_image: Image.Image = None
+    patterns: list[dict] = None
+    overlay_images: list[Image.Image] = None
 
 
 class MapDetector:  
@@ -523,7 +530,7 @@ class MapDetector:
         best_ctype = sorted(list(self.poi_cate_info[best_poi_key].subtypes.get(best_subicon).ctypes))[0]
         return best_ctype, best_poi_key_score * best_subicon_score
 
-    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int) -> dict:
+    def _match_map_pattern(self, img: np.ndarray, earth_shifting: int, topk: int) -> list[MapPatternMatchResult]:
         assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
 
         t = time.time()
@@ -561,8 +568,7 @@ class MapDetector:
 
         # 匹配地图模式
         EMPTY_CONSTRUCTION = Construct(type=0, pos=0, is_display=False)
-        best_patterns_by_score, best_score = None, -1e9
-        best_patterns_by_error, best_error = None, 1e9
+        results: list[MapPatternMatchResult] = []
         for pattern in self.info.patterns:
             if pattern.earth_shifting != earth_shifting:
                 continue
@@ -596,31 +602,23 @@ class MapDetector:
                         error += 1
 
             # info(f"pattern {pattern.id} match score: {score} error: {error}")
-            if score > best_score:
-                best_score = score
-                best_patterns_by_score = [pattern]
-            elif score == best_score:
-                best_patterns_by_score.append(pattern)
-            if error < best_error:
-                best_error = error
-                best_patterns_by_error = [pattern]
-            elif error == best_error:
-                best_patterns_by_error.append(pattern)
+            results.append(MapPatternMatchResult(
+                pattern=pattern,
+                nightlord=nightlord,
+                score=score,
+                error=error,
+            ))
 
         # 使用Error最小的结果
-        best_pattern = best_patterns_by_error[0]
-        info(f"Match map pattern: best pattern by score: {[p.id for p in best_patterns_by_score]} score: {best_score}")
-        info(f"Match map pattern: best pattern by error: {[p.id for p in best_patterns_by_error]} error: {best_error}")
-        info(f"Match map pattern: return pattern #{best_pattern.id}, time cost: {time.time() - t:.4f}s")
-        return {
-            'pattern': best_pattern,
-            'nightlord': nightlord,
-            'score': best_score,
-            'error': best_error,
-        }
+        results = sorted(results, key=lambda x: (x.error, -x.score))
+        best_patterns_by_error = results[:topk]
+        info(f"Match map pattern: return {[p.pattern.id for p in best_patterns_by_error]}, time cost: {time.time() - t:.4f}s")
+        return best_patterns_by_error
 
 
-    def _draw_overlay_image(self, pattern: MapPattern | None, draw_size: tuple[int, int], additional_info: dict) -> Image.Image:
+    def _draw_overlay_image(self, match_result: MapPatternMatchResult, draw_size: tuple[int, int]) -> Image.Image:
+        pattern = match_result.pattern
+
         def scale_size(p: int | float | Position) -> int | Position:
             # 以750x750为标准尺寸
             if isinstance(p, (int, float)):
@@ -823,10 +821,10 @@ class MapDetector:
 
         # 说明文本
         text = f"#{pattern.id}"
-        if additional_info.get('error') is not None:
-            text += f" (E:{additional_info['error']})"
+        if match_result.error is not None:
+            text += f" (E:{match_result.error})"
         text += f"    {get_name(pattern.nightlord + 100000)}"
-        if additional_info.get('nightlord', 0) is None:
+        if match_result.nightlord is None:
             text += " (隐藏夜王)"
         if event_text := get_event_text(pattern):
             text += f"    特殊事件: {event_text}"
@@ -878,9 +876,8 @@ class MapDetector:
 
         # 地图模式匹配
         if param.do_match_pattern:
-            pattern_result = self._match_map_pattern(img, param.earth_shifting)
-            ret.pattern = pattern_result['pattern']
-            ret.pattern_score = pattern_result['score']
+            results = self._match_map_pattern(img, param.earth_shifting, config.map_pattern_match_topk)
+            ret.patterns = [result.pattern for result in results]
 
             # 决定信息绘制大小
             if config.fixed_map_overlay_draw_size is not None:
@@ -892,7 +889,8 @@ class MapDetector:
                 )
             else:
                 draw_size = STD_MAP_SIZE
-            ret.overlay_image = self._draw_overlay_image(ret.pattern, draw_size, pattern_result)
+
+            ret.overlay_images = [self._draw_overlay_image(result, draw_size) for result in results]
         
         return ret
 

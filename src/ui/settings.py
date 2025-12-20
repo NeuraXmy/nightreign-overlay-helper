@@ -315,17 +315,31 @@ class SettingsWindow(QWidget):
         show_map_overlay_input_setting_layout.addWidget(self.show_map_overlay_input_setting_widget)
         self.map_detect_layout.addLayout(show_map_overlay_input_setting_layout)
 
+        map_pattern_next_input_setting_layout = QHBoxLayout()
+        map_pattern_next_input_setting_layout.addWidget(QLabel("下一个识别结果快捷键"))
+        self.map_pattern_next_input_setting_widget = InputSettingWidget(self.input)
+        self.map_pattern_next_input_setting_widget.input_triggered.connect(self.map_overlay.next_overlay_image)
+        map_pattern_next_input_setting_layout.addWidget(self.map_pattern_next_input_setting_widget)
+        self.map_detect_layout.addLayout(map_pattern_next_input_setting_layout)
+
+        map_pattern_last_input_setting_layout = QHBoxLayout()
+        map_pattern_last_input_setting_layout.addWidget(QLabel("上一个识别结果快捷键"))
+        self.map_pattern_last_input_setting_widget = InputSettingWidget(self.input)
+        self.map_pattern_last_input_setting_widget.input_triggered.connect(self.map_overlay.last_overlay_image)
+        map_pattern_last_input_setting_layout.addWidget(self.map_pattern_last_input_setting_widget)
+        self.map_detect_layout.addLayout(map_pattern_last_input_setting_layout)
+
         crystal_layout_next_input_setting_layout = QHBoxLayout()
         crystal_layout_next_input_setting_layout.addWidget(QLabel("下一个水晶布局快捷键"))
         self.crystal_layout_next_input_setting_widget = InputSettingWidget(self.input)
-        self.crystal_layout_next_input_setting_widget.input_triggered.connect(self.map_overlay.nextCrystalLayout)
+        self.crystal_layout_next_input_setting_widget.input_triggered.connect(self.map_overlay.next_crystal_layout)
         crystal_layout_next_input_setting_layout.addWidget(self.crystal_layout_next_input_setting_widget)
         self.map_detect_layout.addLayout(crystal_layout_next_input_setting_layout)
 
         crystal_layout_last_input_setting_layout = QHBoxLayout()
         crystal_layout_last_input_setting_layout.addWidget(QLabel("上一个水晶布局快捷键"))
         self.crystal_layout_last_input_setting_widget = InputSettingWidget(self.input)
-        self.crystal_layout_last_input_setting_widget.input_triggered.connect(self.map_overlay.lastCrystalLayout)
+        self.crystal_layout_last_input_setting_widget.input_triggered.connect(self.map_overlay.last_crystal_layout)
         crystal_layout_last_input_setting_layout.addWidget(self.crystal_layout_last_input_setting_widget)
         self.map_detect_layout.addLayout(crystal_layout_last_input_setting_layout)
 
@@ -543,6 +557,8 @@ class SettingsWindow(QWidget):
             self.update_map_region()
             self.set_to_detect_map_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("set_to_detect_map_input_setting")))
             self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
+            self.map_pattern_next_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("next_map_pattern_input_setting")))
+            self.map_pattern_last_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("last_map_pattern_input_setting")))
             self.crystal_layout_next_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("next_crystal_layout_input_setting")))
             self.crystal_layout_last_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("last_crystal_layout_input_setting")))
             # 血条比例标记
@@ -602,6 +618,8 @@ class SettingsWindow(QWidget):
                 "map_region": self.map_region,
                 "set_to_detect_map_input_setting": asdict(self.set_to_detect_map_input_setting_widget.get_setting()),
                 "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
+                "next_map_pattern_input_setting": asdict(self.map_pattern_next_input_setting_widget.get_setting()),
+                "last_map_pattern_input_setting": asdict(self.map_pattern_last_input_setting_widget.get_setting()),
                 "next_crystal_layout_input_setting": asdict(self.crystal_layout_next_input_setting_widget.get_setting()),
                 "last_crystal_layout_input_setting": asdict(self.crystal_layout_last_input_setting_widget.get_setting()),
                 # 血条比例标记
