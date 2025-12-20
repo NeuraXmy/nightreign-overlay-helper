@@ -770,7 +770,7 @@ class MapDetector:
                         y += scale_size(20)
                         texts.append(((x, y), '↓' + get_name(c2.type), FONT_SIZE_LARGE, color, OUTLINE_W_LARGE, OUTLINE_COLOR))
             # 法师塔
-            if match(400):
+            if match(400, 5110):
                 texts.append(((x, y), get_name(ctype), FONT_SIZE_SMALL, (210, 255, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
             # 马车
             if match(4500, 4501, 51150):
