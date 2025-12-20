@@ -480,14 +480,14 @@ class SettingsWindow(QWidget):
 
         layouts[0].addWidget(self.appearance_group)
         layouts[0].addWidget(self.input_group)
+        layouts[0].addWidget(self.other_group)
 
         layouts[1].addWidget(self.performance_group)
         layouts[1].addWidget(self.auto_timer_group)
-        layouts[1].addWidget(self.other_group)
+        layouts[1].addWidget(self.art_timer_group)
 
         layouts[2].addWidget(self.map_detect_group)
         layouts[2].addWidget(self.hp_detect_group)
-        layouts[2].addWidget(self.art_timer_group)
 
         self.layout: QHBoxLayout = QHBoxLayout(self)
         for l in layouts:
