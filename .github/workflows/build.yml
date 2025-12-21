@@ -15,10 +15,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6
         
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7.1.4
+        uses: astral-sh/setup-uv@v7
         
       - name: Install dependency
         run: uv sync
@@ -34,7 +34,7 @@ jobs:
           copy "config.yaml" "dist\nightreign-overlay-helper\config.yaml"
           
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: nightreign-overlay-helper-windows
           path: dist\nightreign-overlay-helper\
@@ -54,7 +54,7 @@ jobs:
           
       - name: Create Release and Upload
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/nightreign-overlay-helper-${{ github.ref_name }}.zip
           prerelease: ${{ contains(github.ref, '-') }}
