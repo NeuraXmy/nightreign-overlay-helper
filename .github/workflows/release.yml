@@ -1,0 +1,75 @@
+name: Release (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version without leading v (e.g. 1.2.3 or 1.2.3-rc.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          # IMPORTANT: pushes made with the default GITHUB_TOKEN do not trigger other workflows.
+          # Use a PAT stored in secrets.RELEASE_PAT so that pushing the tag triggers build.yml.
+          token: ${{ secrets['RELEASE_PAT'] }}
+
+      - name: Verify RELEASE_PAT is configured
+        shell: pwsh
+        env:
+          RELEASE_PAT: ${{ secrets['RELEASE_PAT'] }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:RELEASE_PAT)) {
+            Write-Error "Missing secret RELEASE_PAT. Create a Personal Access Token and add it as a repository secret named RELEASE_PAT."
+            exit 1
+          }
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install dependency
+        run: uv sync
+
+      - name: Set project version (pyproject.toml)
+        shell: pwsh
+        run: |
+          $tag = "v${{ inputs.version }}"
+          uv run python scripts/ci_version.py --tag "$tag" --file pyproject.toml --set-github-env
+
+      - name: Commit version bump
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          $status = git status --porcelain
+          if ([string]::IsNullOrWhiteSpace($status)) {
+            Write-Host "No version change to commit."
+            exit 0
+          }
+
+          git add pyproject.toml
+          git commit -m "chore: bump version to $env:PROJECT_VERSION"
+          git push
+
+      - name: Create and push tag
+        shell: pwsh
+        run: |
+          $tag = "v${{ inputs.version }}"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"
+
+      - name: Done
+        shell: pwsh
+        run: |
+          Write-Host "Tag pushed: v${{ inputs.version }}"
+          Write-Host "This will trigger .github/workflows/build.yml via tag push."
