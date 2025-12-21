@@ -6,31 +6,40 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QDialog,
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from dataclasses import dataclass
+import time
 
-from src.logger import info, warning, error
+from src.logger import info, warning, error, debug
+
+
+
+MAX_PRESS_DURATION = 10.0  # 按键最大持续时间(s)，超过则强制释放
+
+@dataclass
+class PressingInput:
+    identifier: str
+    time: float
 
 
 class InputWorker(QObject):
     key_combo_pressed = pyqtSignal(tuple)
     mousebutton_combo_pressed = pyqtSignal(tuple)
-    joystick_button_pressed = pyqtSignal(int)
     joystick_combo_pressed = pyqtSignal(tuple)
-    joystick_axis_moved = pyqtSignal(tuple)
-    joystick_hat_moved = pyqtSignal(tuple)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._running = True
-        self.joysticks = []
 
-        self.current_pressed_keys = set()
-        self.current_pressed_mouse_buttons = set()
-        self.keyboard_listener = None 
+        self.joysticks: list[pygame.joystick.JoystickType] = []
 
-        self.current_pressed_joystick_buttons = {}
+        self.pressing_keys: list[PressingInput] = []
+        self.pressing_mouse_buttons: list[PressingInput] = []
+        self.pressing_joystick_buttons: dict[int, list[PressingInput]] = {}
+
 
     def _get_key_identifier(self, key):
-        """一个健壮的方法，用于从 pynput 的 key 对象中获取可读的标识符。"""
+        """
+        用于从 pynput 的 key 对象中获取可读的标识符。
+        """
         try:
             if key is None:
                 return None
@@ -60,174 +69,14 @@ class InputWorker(QObject):
             error(f"Error in _get_key_identifier: {e}")
             return None
 
-    def run(self):
-        # --- Pygame 初始化 (Joystick Only) ---
-        pygame.init()
-        pygame.joystick.init()
-        info("Pygame initialized in worker thread (Joystick Only).")
-        clock = pygame.time.Clock()
-
-        # --- pynput 键盘监听器初始化 ---
-        info("pynput keyboard listener starting in worker thread.")
-        self.keyboard_listener = keyboard.Listener(
-            on_press=self._on_key_press,
-            on_release=self._on_key_release
-        )
-        self.keyboard_listener.start()
-
-        # --- pynput 鼠标监听器初始化 ---
-        info("pynput mouse listener starting in worker thread.")
-        self.mouse_listener = mouse.Listener(
-            on_click=self._on_mouse_click
-        )
-        self.mouse_listener.start()
-
-        # --- 主事件循环 ---
-        while self._running:
-            # 处理 Pygame 事件 (只处理手柄相关事件)
-            try:
-                self._scan_joysticks()
-
-                events = pygame.event.get()
-
-                for event in events:
-                    if event.type == pygame.QUIT:
-                        self._running = False
-                        break
-
-                    # --- 手柄事件处理 ---
-                    elif event.type == pygame.JOYBUTTONDOWN:
-                        joystick_id = event.joy
-                        button_index = event.button
-                        self.joystick_button_pressed.emit(button_index)
-
-                        if joystick_id not in self.current_pressed_joystick_buttons:
-                            self.current_pressed_joystick_buttons[joystick_id] = set()
-                        self.current_pressed_joystick_buttons[joystick_id].add(button_index)
-                        self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-
-                    elif event.type == pygame.JOYBUTTONUP:
-                        joystick_id = event.joy
-                        button_index = event.button
-                        if joystick_id in self.current_pressed_joystick_buttons and \
-                        button_index in self.current_pressed_joystick_buttons[joystick_id]:
-                            self.current_pressed_joystick_buttons[joystick_id].remove(button_index)
-                            # self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-                        
-                    elif event.type == pygame.JOYAXISMOTION:
-                        self.joystick_axis_moved.emit((event.joy, event.axis, event.value))
-
-                        # 将 RT/LT 当做按钮处理
-                        joystick_id = event.joy
-                        axis_index = event.axis
-                        button_index = 1000 + axis_index
-                        axis_value = event.value
-                        LT_AXIS_INDEX = 4
-                        RT_AXIS_INDEX = 5
-                        TRIGGER_THRESHOLD = 0.5
-
-                        if axis_index in (LT_AXIS_INDEX, RT_AXIS_INDEX):
-                            if joystick_id not in self.current_pressed_joystick_buttons:
-                                self.current_pressed_joystick_buttons[joystick_id] = set()
-                            if axis_value > TRIGGER_THRESHOLD:
-                                if button_index not in self.current_pressed_joystick_buttons[joystick_id]:
-                                    self.current_pressed_joystick_buttons[joystick_id].add(button_index)
-                                    self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-                            if axis_value <= -TRIGGER_THRESHOLD:
-                                if button_index in self.current_pressed_joystick_buttons[joystick_id]:
-                                    self.current_pressed_joystick_buttons[joystick_id].remove(button_index)
-                                    # self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-
-                    elif event.type == pygame.JOYHATMOTION:
-                        self.joystick_hat_moved.emit((event.joy, event.hat, event.value))
-
-                        # 将方向键当做按钮处理
-                        joystick_id = event.joy
-                        hat_index = event.hat
-                        hat_value = event.value  # (x, y)
-                        HAT_BUTTON_MAP = {
-                            (1, 0): 2001,   # 右
-                            (-1, 0): 2002,  # 左
-                            (0, -1): 2003,  # 下
-                            (0, 1): 2004,   # 上
-                            (0, 0): None,   # 恢复
-                        }
-                        if hat_index == 0:  # 只处理第一个方向键帽
-                            button_index = HAT_BUTTON_MAP.get(hat_value, None)
-                            if joystick_id not in self.current_pressed_joystick_buttons:
-                                self.current_pressed_joystick_buttons[joystick_id] = set()
-                            if button_index is not None:
-                                self.current_pressed_joystick_buttons[joystick_id].add(button_index)
-                                self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-                            else:
-                                # 恢复所有方向键
-                                if joystick_id in self.current_pressed_joystick_buttons:
-                                    for dir_button in [2001, 2002, 2003, 2004]:
-                                        if dir_button in self.current_pressed_joystick_buttons[joystick_id]:
-                                            self.current_pressed_joystick_buttons[joystick_id].remove(dir_button)
-                                    # self.joystick_combo_pressed.emit(tuple(sorted(self.current_pressed_joystick_buttons[joystick_id])))
-
-                clock.tick(10)
-
-            except Exception as e:
-                error(f"Error in Pygame event loop: {e}")
-                self.current_pressed_joystick_buttons.clear()
-                self.current_pressed_keys.clear()
-
-        info("Pygame worker thread finished.")
-        pygame.quit()
-
-        if self.keyboard_listener and self.keyboard_listener.is_alive():
-            self.keyboard_listener.stop()
-            self.keyboard_listener.join(timeout=5.0)
-            info("pynput keyboard listener stopped.")
-
-        if self.mouse_listener and self.mouse_listener.is_alive():
-            self.mouse_listener.stop()
-            self.mouse_listener.join(timeout=5.0)
-            info("pynput mouse listener stopped.")
-
-        info("InputWorker stopped.")
-
-    def _on_key_press(self, key):
-        try:
-            key_identifier = self._get_key_identifier(key)
-            if key_identifier and key_identifier not in self.current_pressed_keys:
-                self.current_pressed_keys.add(key_identifier)
-                self.key_combo_pressed.emit(tuple(sorted(self.current_pressed_keys)))
-        except Exception as e:
-            error(f"Error in _on_key_press: {e}")
-
-    def _on_key_release(self, key):
-        try:
-            key_identifier = self._get_key_identifier(key)
-            if key_identifier and key_identifier in self.current_pressed_keys:
-                self.current_pressed_keys.remove(key_identifier)
-                # self.key_combo_pressed.emit(tuple(sorted(self.current_pressed_keys)))
-        except Exception as e:
-            error(f"Error in _on_key_release: {e}")
-
-    def _on_mouse_click(self, x, y, button, pressed):
-        try:
-            button_identifier = str(button).split('.')[-1].upper()
-            if button_identifier in ('LEFT', 'RIGHT'):  # 忽略左键和右键
-                return
-            if pressed:
-                if button_identifier not in self.current_pressed_mouse_buttons:
-                    self.current_pressed_mouse_buttons.add(button_identifier)
-                    self.mousebutton_combo_pressed.emit(tuple(sorted(self.current_pressed_mouse_buttons)))
-            else:
-                if button_identifier in self.current_pressed_mouse_buttons:
-                    self.current_pressed_mouse_buttons.remove(button_identifier)
-                    # self.mousebutton_combo_pressed.emit(tuple(sorted(self.current_pressed_mouse_buttons)))
-        except Exception as e:
-            error(f"Error in _on_mouse_click: {e}")
-
     def _scan_joysticks(self):
+        """
+        扫描并初始化连接的手柄设备。
+        """
         count = pygame.joystick.get_count()
         if count == len(self.joysticks):
             return
-        self.joysticks = []
+        self.joysticks.clear()
         for i in range(count):
             try:
                 joystick = pygame.joystick.Joystick(i)
@@ -237,8 +86,213 @@ class InputWorker(QObject):
             except pygame.error as e:
                 error(f"Could not initialize joystick {i}: {e}")
 
+
+    def _press(self, type: str, identifier: str, joystick_id: int = None):
+        """
+        处理任意按键按下事件
+        """
+        debug(f"InputWorker: press type={type}, identifier={identifier}, joystick_id={joystick_id}")
+
+        if identifier is None:
+            return
+
+        match type:
+            case 'keyboard':
+                inputs = self.pressing_keys
+                signal = self.key_combo_pressed
+            case 'mousebutton':
+                inputs = self.pressing_mouse_buttons
+                signal = self.mousebutton_combo_pressed
+            case 'joystick':
+                if joystick_id is None:
+                    warning("InputWorker: joystick_id is None in _press for joystick type")
+                    return
+                inputs = self.pressing_joystick_buttons.setdefault(joystick_id, [])
+                signal = self.joystick_combo_pressed
+            case _:
+                warning(f"InputWorker: Unknown input type \"{type}\" in _press")
+                return
+            
+        # 检测超时释放
+        now = time.time()
+        for pi in inputs[:]:
+            if now - pi.time > MAX_PRESS_DURATION:
+                inputs.remove(pi)
+                warning(f"InputWorker: Auto-released input \"{pi.identifier}\" due to timeout")
+        
+        if any(pi.identifier == identifier for pi in inputs):
+            return
+        
+        inputs.append(PressingInput(
+            identifier=identifier,
+            time=now,
+        ))
+        combo = tuple(pi.identifier for pi in inputs)
+        signal.emit(combo)
+        debug(f"InputWorker: emit {type} combo: {combo}")
+    
+    def _release(self, type: str, identifier: str, joystick_id: int = None):
+        """
+        处理任意按键松开事件
+        """
+        debug(f"InputWorker: release type={type}, identifier={identifier}, joystick_id={joystick_id}")
+
+        if identifier is None:
+            return
+
+        match type:
+            case 'keyboard':
+                inputs = self.pressing_keys
+            case 'mousebutton':
+                inputs = self.pressing_mouse_buttons
+            case 'joystick':
+                if joystick_id is None:
+                    warning("InputWorker: joystick_id is None in _release for joystick type")
+                    return
+                inputs = self.pressing_joystick_buttons.setdefault(joystick_id, [])
+            case _:
+                warning(f"InputWorker: Unknown input type \"{type}\" in _release")
+                return
+            
+        for pi in inputs[:]:
+            if pi.identifier == identifier:
+                inputs.remove(pi)
+                break
+
+
+    def run(self):
+        # 初始化 Pygame
+        pygame.init()
+        pygame.joystick.init()
+        info("Pygame initialized in worker thread (Joystick Only).")
+        clock = pygame.time.Clock()
+
+        # 初始化pynput键盘监听
+        self.keyboard_listener = keyboard.Listener(
+            on_press=self._on_key_press,
+            on_release=self._on_key_release
+        )
+        self.keyboard_listener.start()
+        info("Pynput keyboard listener started in worker thread.")
+
+        # 初始化pynput鼠标监听
+        self.mouse_listener = mouse.Listener(
+            on_click=self._on_mouse_click
+        )
+        self.mouse_listener.start()
+        info("Pynput mouse listener started in worker thread.")
+
+        # Pygame 事件循环
+        while self._running:
+            try:
+                self._scan_joysticks()
+
+                events = pygame.event.get()
+                for event in events:
+                    # 退出事件
+                    if event.type == pygame.QUIT:
+                        self._running = False
+                        break
+
+                    # 手柄按钮按下事件
+                    elif event.type == pygame.JOYBUTTONDOWN:
+                        self._press('joystick', event.button, event.joy)
+
+                    # 手柄按钮松开事件
+                    elif event.type == pygame.JOYBUTTONUP:
+                        self._release('joystick', event.button, event.joy)
+                    
+                    # 手柄轴移动事件
+                    elif event.type == pygame.JOYAXISMOTION:
+                        # 将 RT/LT 当做按钮处理
+                        joystick_id, axis_index, axis_value = event.joy, event.axis, event.value
+                        button_index = 1000 + axis_index
+                        LT_AXIS_INDEX = 4
+                        RT_AXIS_INDEX = 5
+                        TRIGGER_THRESHOLD = 0.5
+                        if axis_index in (LT_AXIS_INDEX, RT_AXIS_INDEX):
+                            if axis_value > TRIGGER_THRESHOLD:
+                                self._press('joystick', button_index, joystick_id)
+                            if axis_value <= -TRIGGER_THRESHOLD:
+                                self._release('joystick', button_index, joystick_id)
+
+                    elif event.type == pygame.JOYHATMOTION:
+                        # 将方向键当做按钮处理
+                        joystick_id, hat_index, hat_value = event.joy, event.hat, event.value
+                        HAT_BUTTON_MAP = {
+                            (1, 0): 2001,   # 右
+                            (-1, 0): 2002,  # 左
+                            (0, -1): 2003,  # 下
+                            (0, 1): 2004,   # 上
+                            (0, 0): None,   # 恢复
+                        }
+                        if hat_index == 0:  # 只处理第一个方向键帽
+                            button_index = HAT_BUTTON_MAP.get(hat_value, None)
+                            if button_index is not None:
+                                self._press('joystick', button_index, joystick_id)
+                            else:
+                                # 恢复所有方向键
+                                if joystick_id in self.pressing_joystick_buttons:
+                                    for dir_button in [2001, 2002, 2003, 2004]:
+                                        self._release('joystick', dir_button, joystick_id)
+
+                clock.tick(10)
+
+            except Exception as e:
+                error(f"Error in Pygame event loop: {e}")
+
+        info("Pygame main loop finished.")
+        pygame.quit()
+
+        if self.keyboard_listener and self.keyboard_listener.is_alive():
+            self.keyboard_listener.stop()
+            self.keyboard_listener.join(timeout=5.0)
+            info("Pynput keyboard listener stopped.")
+
+        if self.mouse_listener and self.mouse_listener.is_alive():
+            self.mouse_listener.stop()
+            self.mouse_listener.join(timeout=5.0)
+            info("Pynput mouse listener stopped.")
+
+        info("InputWorker stopped.")
+
     def stop(self):
         self._running = False
+
+
+    def _on_key_press(self, key):
+        """
+        处理键盘按下事件
+        """
+        key_identifier = self._get_key_identifier(key)
+        if key_identifier is not None:
+            self._press('keyboard', key_identifier)
+
+    def _on_key_release(self, key):
+        """
+        处理键盘松开事件
+        """
+        key_identifier = self._get_key_identifier(key)
+        if key_identifier is not None:
+            self._release('keyboard', key_identifier)
+
+    def _on_mouse_click(self, x, y, button, pressed):
+        """
+        处理鼠标点击事件
+        """
+        try:
+            button_identifier = str(button).split('.')[-1].upper()
+        except:
+            warning(f"InputWorker: Unknown mouse button {button} in _on_mouse_click")
+            return
+
+        if button_identifier in ('LEFT', 'RIGHT'):  # 忽略左键和右键
+            return
+        if pressed:
+            self._press('mousebutton', button_identifier)
+        else:
+            self._release('mousebutton', button_identifier)
+
 
 
 JOYSTICK_BUTTON_NAMES = {
@@ -260,7 +314,10 @@ JOYSTICK_BUTTON_NAMES = {
     2004: "Up",
 }
 
-def format_combo(combo_type, combo_tuple):
+def format_combo(combo_type: str, combo_tuple: tuple[str, ...]) -> str:
+    """
+    将按键组合格式化为可读字符串。
+    """
     if combo_type == "keyboard":
         keys = []
         for k in combo_tuple:
@@ -332,31 +389,31 @@ class InputSettingDialog(QDialog):
         self.worker.joystick_combo_pressed.connect(self._on_joystick_combo)
         self.worker.mousebutton_combo_pressed.connect(self._on_mousebutton_combo)
 
-    def _on_key_combo(self, combo: tuple):
+    def _on_key_combo(self, combo: tuple[str, ...]):
         if not self.input_type:
             self.input_type = 'keyboard'
         if self.input_type != 'keyboard':
             return
 
-        self.current_combo = combo
+        self.current_combo = tuple(sorted(combo))
         self._update_display()
 
-    def _on_joystick_combo(self, combo: tuple):
+    def _on_joystick_combo(self, combo: tuple[str, ...]):
         if not self.input_type:
             self.input_type = 'joystick'
         if self.input_type != 'joystick':
             return
 
-        self.current_combo = combo
+        self.current_combo = tuple(sorted(combo))
         self._update_display()
 
-    def _on_mousebutton_combo(self, combo: tuple):
+    def _on_mousebutton_combo(self, combo: tuple[str, ...]):
         if not self.input_type:
             self.input_type = 'mousebutton'
         if self.input_type != 'mousebutton':
             return
 
-        self.current_combo = combo
+        self.current_combo = tuple(sorted(combo))
         self._update_display()
         
     def _update_display(self):
@@ -387,7 +444,6 @@ class InputSettingDialog(QDialog):
         self.worker.key_combo_pressed.disconnect(self._on_key_combo)
         self.worker.joystick_combo_pressed.disconnect(self._on_joystick_combo)
         super().closeEvent(event)
-
 
 
 @dataclass
@@ -422,8 +478,8 @@ class InputSettingWidget(QWidget):
             raise ValueError("InputSettingWidget requires an InputWorker instance.")
         
         self.worker = worker
-        self._setting_type = None # 'keyboard' / 'joystick' / 'mousebutton' / None
-        self._setting_combo = ()
+        self._setting_type: str = None # 'keyboard' / 'joystick' / 'mousebutton' / None
+        self._setting_combo: tuple[str, ...] = ()
 
         # --- UI 组件 ---
         self.layout: QVBoxLayout = QVBoxLayout(self)
@@ -451,6 +507,7 @@ class InputSettingWidget(QWidget):
         dialog = InputSettingDialog(self.worker, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._setting_type, self._setting_combo = dialog.get_setting()
+            self._setting_combo = tuple(sorted(self._setting_combo))    # 排序以保证一致性
             info(f"Setting confirmed: Type={self._setting_type}, Combo={self._setting_combo}")
             self._update_button_text()
             self.setting_changed.emit(InputSetting(self._setting_type, self._setting_combo))
@@ -468,14 +525,27 @@ class InputSettingWidget(QWidget):
         """获取当前控件保存的设置"""
         return InputSetting(self._setting_type, self._setting_combo)
     
-    def process_key_combo(self, keys: tuple):
-        if self._setting_type == 'keyboard' and keys == self._setting_combo:
+
+    def check_combo(self, combo: tuple[str, ...]) -> bool:
+        """
+        检查传入的组合键是否与当前设置匹配
+        """
+        if not self._setting_type or not self._setting_combo:
+            return False
+        if len(combo) < len(self._setting_combo):
+            return False
+        # return tuple(sorted(combo)) == self._setting_combo    # 严格匹配
+        return tuple(sorted(combo[-len(self._setting_combo):])) == self._setting_combo  # 后缀匹配（允许额外按键存在）
+
+
+    def process_key_combo(self, keys: tuple[str, ...]):
+        if self._setting_type == 'keyboard' and self.check_combo(keys):
             self.input_triggered.emit()
     
-    def process_joystick_combo(self, buttons: tuple):
-        if self._setting_type == 'joystick' and buttons == self._setting_combo:
+    def process_joystick_combo(self, buttons: tuple[str, ...]):
+        if self._setting_type == 'joystick' and self.check_combo(buttons):
             self.input_triggered.emit()
 
-    def process_mousebutton_combo(self, buttons: tuple):
-        if self._setting_type == 'mousebutton' and buttons == self._setting_combo:
+    def process_mousebutton_combo(self, buttons: tuple[str, ...]):
+        if self._setting_type == 'mousebutton' and self.check_combo(buttons):
             self.input_triggered.emit()
