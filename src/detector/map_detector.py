@@ -36,6 +36,7 @@ def open_pil_image(path: str, size: tuple[int, int] | None = None) -> Image.Imag
     if not os.path.exists(path):
         raise FileNotFoundError(f"Image file not found: {path}")
     image = Image.open(path).convert("RGBA")
+    image.load()
     if size is not None:
         image = image.resize(size, resample=PIL_RESAMPLE_METHOD)
     return image
