@@ -7,6 +7,7 @@ import time
 from mss.base import MSSBase
 from enum import Enum
 import random
+import gc
 
 from src.config import Config
 from src.logger import info, warning, error, debug
@@ -36,6 +37,7 @@ def open_pil_image(path: str, size: tuple[int, int] | None = None) -> Image.Imag
     if not os.path.exists(path):
         raise FileNotFoundError(f"Image file not found: {path}")
     image = Image.open(path).convert("RGBA")
+    image.load()
     if size is not None:
         image = image.resize(size, resample=PIL_RESAMPLE_METHOD)
     return image
@@ -61,7 +63,12 @@ MATCH_EARTH_SHIFTING_REGION = (
 )
 MATCH_EARTH_SHIFTING_OFFSET_AND_STRIDE = (5, 1)
 MATCH_EARTH_SHIFTING_SCALES = (0.95, 1.05, 7)
+
 MAP_BGS = { i : open_cv2_image(f"maps/{i}.jpg") for i in range(6) }
+MAG_BG_FOR_POI_MATCH_INDEX_MAP = {
+    # 除了大空洞，其他使用普通地图背景进行POI匹配（因为特殊地形内不会匹配，所以没有问题）
+    0: 0, 1: 0, 2: 0, 3: 0, 4: 4, 5: 0,
+}
 
 MATCH_NIGHTLORD_SIZE = (300, 300)
 NIGHTLORD_ICONS = { i : open_pil_image(f"icons/nightlord/{i}.png") for i in range(10) }
@@ -230,6 +237,7 @@ class MapDetectParam:
     do_match_full_map: bool = False
     do_match_earth_shifting: bool = False
     do_match_pattern: bool = False
+    return_pattern_topk: int | None = None
     hdr_processing_enabled: bool = False
 
 @dataclass
@@ -365,7 +373,7 @@ class MapDetector:
         info(f"MapDetector: Match earth shifting: best map {best_map_id} score {best_score:.4f}, time cost: {time.time() - t:.4f}s")
         return best_map_id, best_score
     
-    def _match_nightlord(self, img: np.array) -> tuple[int | None, float]:
+    def _match_nightlord(self, img: np.ndarray) -> tuple[int | None, float]:
         t = time.time()
         img = cv2.resize(img, MATCH_NIGHTLORD_SIZE, interpolation=CV2_RESIZE_METHOD)
         h, w = img.shape[0], img.shape[1]
@@ -543,7 +551,8 @@ class MapDetector:
         nightlord, _ = self._match_nightlord(img)
 
         # 校准偏移
-        map_bg = cv2.resize(MAP_BGS[earth_shifting], STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
+        map_bg = open_cv2_image(f"maps_poi_match/{MAG_BG_FOR_POI_MATCH_INDEX_MAP[earth_shifting]}.jpg")
+        map_bg = cv2.resize(map_bg, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
         try:
             align_t = time.time()
             ALIGN_REGION = (
@@ -837,21 +846,27 @@ class MapDetector:
             texts.append(((pos[0], pos[1] + scale_size(20)), "庇佑", FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
 
         # 说明文本
+        info_text_y_offset = 0
         text = f"#{pattern.id}"
         if match_result.error is not None:
-            text += f" (E:{match_result.error})"
-        text += f"    {get_name(pattern.nightlord + 100000)}"
+            text += f" (#{result_index+1} E:{match_result.error})"
+        text += f"  {get_name(pattern.earth_shifting + 200000)} - {get_name(pattern.nightlord + 100000)}"
         if match_result.nightlord is None:
             text += " (隐藏夜王)"
-        if event_text := get_event_text(pattern):
-            text += f"    特殊事件: {event_text}"
-        texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+        texts.append((scale_size((20, 10)), text, scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+        info_text_y_offset += 28
 
         # 大空洞第二天缩圈位置
         if pattern.earth_shifting == 4:
             text = "左上" if day2_lefttop else "右下"
             text = f"Day2第一次缩圈位置：{text}"
-            texts.append((scale_size((20, 38)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            texts.append((scale_size((20, 10 + info_text_y_offset)), text, scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            info_text_y_offset += 28
+        
+        # 特殊事件
+        if event_text := get_event_text(pattern):
+            texts.append((scale_size((20, 10 + info_text_y_offset)), f"特殊事件: {event_text}", scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            info_text_y_offset += 28
 
         for icon in icons:  draw_icon(img, *icon)
         for text in texts:  draw_text(img, *text)
@@ -893,8 +908,7 @@ class MapDetector:
 
         # 地图模式匹配
         if param.do_match_pattern:
-            results = self._match_map_pattern(img, param.earth_shifting, config.map_pattern_match_topk)
-            ret.patterns = [result.pattern for result in results]
+            results = self._match_map_pattern(img, param.earth_shifting, topk=param.return_pattern_topk)
 
             # 决定信息绘制大小
             if config.fixed_map_overlay_draw_size is not None:
@@ -907,8 +921,18 @@ class MapDetector:
             else:
                 draw_size = STD_MAP_SIZE
 
-            ret.overlay_images = [self._draw_overlay_image(result, draw_size, i) for i, result in enumerate(results)]
-        
+            ret.patterns = []
+            ret.overlay_images = []
+            for i, result in enumerate(results):
+                try:
+                    info(f"MapDetector: Start to draw overlay image for pattern {result.pattern.id}")
+                    overlay_img = self._draw_overlay_image(result, draw_size, i)
+                    ret.overlay_images.append(overlay_img)
+                    ret.patterns.append(result.pattern)
+                    gc.collect()
+                except Exception as e:
+                    error(f"MapDetector: Draw overlay image of pattern {result.pattern.id} failed: {e}")
+
         return ret
 
 

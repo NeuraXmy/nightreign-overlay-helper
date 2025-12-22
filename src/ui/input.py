@@ -12,7 +12,7 @@ from src.logger import info, warning, error, debug
 
 
 
-MAX_PRESS_DURATION = 10.0  # 按键最大持续时间(s)，超过则强制释放
+MAX_PRESS_DURATION = 20.0  # 按键最大持续时间(s)，超过则强制释放
 
 @dataclass
 class PressingInput:
@@ -118,7 +118,7 @@ class InputWorker(QObject):
         for pi in inputs[:]:
             if now - pi.time > MAX_PRESS_DURATION:
                 inputs.remove(pi)
-                warning(f"InputWorker: Auto-released input \"{pi.identifier}\" due to timeout")
+                warning(f"InputWorker: Auto-released {type} \"{pi.identifier}\" due to timeout")
         
         if any(pi.identifier == identifier for pi in inputs):
             return

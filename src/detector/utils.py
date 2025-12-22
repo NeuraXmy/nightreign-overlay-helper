@@ -233,15 +233,8 @@ def draw_text(img: Image.Image, pos: tuple[int, int], text: str, size: int,
         pos = (pos[0] + text_size[0] // 2, pos[1] - text_size[1] // 2)
     elif align == 'lt':
         pos = (pos[0] + text_size[0] // 2, pos[1] + text_size[1] // 2)
-    if outline_width > 0:
-        for dx in range(-outline_width, outline_width+1):
-            for dy in range(-outline_width, outline_width+1):
-                if dx*dx + dy*dy <= outline_width * outline_width:
-                    draw.text((pos[0] - text_size[0] // 2 + dx,
-                              pos[1] - text_size[1] // 2 + dy), text,
-                              font=font, fill=outline_color)
     draw.text((pos[0] - text_size[0] // 2, pos[1] - text_size[1] // 2),
-              text, font=font, fill=color)
+              text, font=font, fill=color, stroke_width=outline_width, stroke_fill=outline_color)
 
 
 def match_template(

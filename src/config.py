@@ -59,7 +59,9 @@ class Config:
     subicon_template_match_threshold: float
     poi_match_sample_ratio_w_nightlord: float
     poi_match_sample_ratio_wo_nightlord: float
-    map_pattern_match_topk: int
+    default_map_pattern_match_topk: int
+    max_map_pattern_match_topk: int
+    min_map_pattern_match_topk: int
 
     hpbar_region_aspect_ratio: float
     hpbar_detect_std_height: int
