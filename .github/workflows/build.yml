@@ -3,7 +3,6 @@ name: Build and Release
 on:
   workflow_dispatch:
   push:
-    # branches: [ "main" ]
     tags:
       - 'v*'
 
@@ -15,13 +14,19 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6
         
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7.1.4
+        uses: astral-sh/setup-uv@v7
         
       - name: Install dependency
         run: uv sync
+
+      - name: Verify project version matches tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          uv run python scripts/ci_version.py --tag "${{ github.ref_name }}" --file pyproject.toml --check --set-github-env
         
       - name: Build with PyInstaller
         run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." src\app.py
@@ -34,14 +39,14 @@ jobs:
           copy "config.yaml" "dist\nightreign-overlay-helper\config.yaml"
           
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: nightreign-overlay-helper-windows
           path: dist\nightreign-overlay-helper\
           retention-days: 30
 
       - name: Package for Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
         shell: pwsh
         run: |
           # 从 github.ref_name 获取标签名，例如 "v1.0.0"
@@ -53,8 +58,8 @@ jobs:
           Write-Host "Created zip file: dist/$zipName"
           
       - name: Create Release and Upload
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/nightreign-overlay-helper-${{ github.ref_name }}.zip
           prerelease: ${{ contains(github.ref, '-') }}
