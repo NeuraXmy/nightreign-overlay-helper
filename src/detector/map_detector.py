@@ -894,7 +894,6 @@ class MapDetector:
         # 地图模式匹配
         if param.do_match_pattern:
             results = self._match_map_pattern(img, param.earth_shifting, config.map_pattern_match_topk)
-            ret.patterns = [result.pattern for result in results]
 
             # 决定信息绘制大小
             if config.fixed_map_overlay_draw_size is not None:
@@ -907,8 +906,17 @@ class MapDetector:
             else:
                 draw_size = STD_MAP_SIZE
 
-            ret.overlay_images = [self._draw_overlay_image(result, draw_size, i) for i, result in enumerate(results)]
-        
+            ret.patterns = []
+            ret.overlay_images = []
+            for i, result in enumerate(results):
+                try:
+                    info(f"MapDetector: Start to draw overlay image for pattern {result.pattern.id}")
+                    overlay_img = self._draw_overlay_image(result, draw_size, i)
+                    ret.overlay_images.append(overlay_img)
+                    ret.patterns.append(result.pattern)
+                except Exception as e:
+                    error(f"MapDetector: Draw overlay image of pattern {result.pattern.id} failed: {e}")
+
         return ret
 
 
