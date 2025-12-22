@@ -315,6 +315,25 @@ class SettingsWindow(QWidget):
         show_map_overlay_input_setting_layout.addWidget(self.show_map_overlay_input_setting_widget)
         self.map_detect_layout.addLayout(show_map_overlay_input_setting_layout)
 
+        map_pattern_return_topk_setting_layout = QHBoxLayout()
+        map_pattern_return_topk_setting_layout.addWidget(QLabel("识别结果返回数量"))
+        self.map_pattern_return_topk_combobox = QComboBox()
+        for i in range(config.min_map_pattern_match_topk, config.max_map_pattern_match_topk + 1):
+            self.map_pattern_return_topk_combobox.addItem(str(i))
+        self.map_pattern_return_topk_combobox.setCurrentText(str(config.default_map_pattern_match_topk))
+        self.map_pattern_return_topk_combobox.currentTextChanged.connect(self.update_map_pattern_return_topk)
+        map_pattern_return_topk_help_label = QuickTooltipLabel("?")
+        map_pattern_return_topk_help_label.setStyleSheet("color: gray; font-weight: bold;")
+        map_pattern_return_topk_help_label.setToolTip("""
+设置每次地图识别时返回的最佳结果数量
+由于大空洞某些地图地表建筑相似度较高，难以定位到唯一地图结果，
+因此需要在多个候选地图中选择正确的地图
+如果识别地图时程序闪退，或者内存占用过大，可以尝试减小此数值
+""".strip())
+        map_pattern_return_topk_setting_layout.addWidget(self.map_pattern_return_topk_combobox)
+        map_pattern_return_topk_setting_layout.addWidget(map_pattern_return_topk_help_label)
+        self.map_detect_layout.addLayout(map_pattern_return_topk_setting_layout)
+
         map_pattern_next_input_setting_layout = QHBoxLayout()
         map_pattern_next_input_setting_layout.addWidget(QLabel("下一个识别结果快捷键"))
         self.map_pattern_next_input_setting_widget = InputSettingWidget(self.input)
@@ -557,6 +576,7 @@ class SettingsWindow(QWidget):
             self.update_map_region()
             self.set_to_detect_map_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("set_to_detect_map_input_setting")))
             self.show_map_overlay_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("show_map_overlay_input_setting")))
+            load_combobox_value(self.map_pattern_return_topk_combobox, str(data.get("map_pattern_return_topk", config.default_map_pattern_match_topk)))
             self.map_pattern_next_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("next_map_pattern_input_setting")))
             self.map_pattern_last_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("last_map_pattern_input_setting")))
             self.crystal_layout_next_input_setting_widget.set_setting(InputSetting.load_from_dict(data.get("next_crystal_layout_input_setting")))
@@ -618,6 +638,7 @@ class SettingsWindow(QWidget):
                 "map_region": self.map_region,
                 "set_to_detect_map_input_setting": asdict(self.set_to_detect_map_input_setting_widget.get_setting()),
                 "show_map_overlay_input_setting": asdict(self.show_map_overlay_input_setting_widget.get_setting()),
+                "map_pattern_return_topk": int(self.map_pattern_return_topk_combobox.currentText()),
                 "next_map_pattern_input_setting": asdict(self.map_pattern_next_input_setting_widget.get_setting()),
                 "last_map_pattern_input_setting": asdict(self.map_pattern_last_input_setting_widget.get_setting()),
                 "next_crystal_layout_input_setting": asdict(self.crystal_layout_next_input_setting_widget.get_setting()),
@@ -1023,6 +1044,10 @@ class SettingsWindow(QWidget):
             self.map_region_label.setText("❌未设置地图区域")
         else:
             self.map_region_label.setText(f"✔️已设置地图区域: {map_region}")
+
+    def update_map_pattern_return_topk(self, text: str):
+        self.updater.map_pattern_return_topk = int(text)
+        info(f"Map pattern return topk changed to {text}")
 
     # =========================== Performance =========================== #
 

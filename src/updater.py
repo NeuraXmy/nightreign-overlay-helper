@@ -93,6 +93,7 @@ class Updater(QObject):
         self.do_match_map_pattern_flag: DoMatchMapPatternFlag = DoMatchMapPatternFlag.TRUE
         self.map_overlay_visible: bool = False
         self.last_map_pattern_match_time: float = 0.0
+        self.map_pattern_return_topk: int = 5
 
         self.hp_overlay = hp_overlay
         self.hp_overlay_ui_state_signal.connect(self.hp_overlay.update_ui_state)
@@ -398,6 +399,7 @@ class Updater(QObject):
                         earth_shifting=earth_shifting,
                         do_match_pattern=True,
                         hdr_processing_enabled=self.hdr_processing_enabled,
+                        return_pattern_topk=self.map_pattern_return_topk,
                     )
                 ))
                 self.update_map_overlay_images(result.map_detect_result.overlay_images, earth_shifting=earth_shifting)

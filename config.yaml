@@ -51,7 +51,9 @@ map_pattern_match_interval: 2100        # 自动地图匹配间隔(秒)
 subicon_template_match_threshold: 0.06  # POI子图标模板匹配分数阈值，高于的视为无子图标
 poi_match_sample_ratio_w_nightlord: 1.0      # 已匹配夜王时POI匹配采样点数量
 poi_match_sample_ratio_wo_nightlord: 1.0     # 未匹配夜王时POI匹配采样点数量
-map_pattern_match_topk: 5                    # 地图识别返回的最佳结果数量
+default_map_pattern_match_topk: 5            # 地图识别返回的最佳结果数量默认值
+max_map_pattern_match_topk: 10               # 地图识别返回的最佳结果数量最大值
+min_map_pattern_match_topk: 1                # 地图识别返回的最佳结果数量最小值
 
 hpbar_region_aspect_ratio: 125        # 血条区域宽高比
 hpbar_detect_std_height: 15           # 血条检测标准高度

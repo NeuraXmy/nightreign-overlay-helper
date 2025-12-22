@@ -237,6 +237,7 @@ class MapDetectParam:
     do_match_full_map: bool = False
     do_match_earth_shifting: bool = False
     do_match_pattern: bool = False
+    return_pattern_topk: int | None = None
     hdr_processing_enabled: bool = False
 
 @dataclass
@@ -372,7 +373,7 @@ class MapDetector:
         info(f"MapDetector: Match earth shifting: best map {best_map_id} score {best_score:.4f}, time cost: {time.time() - t:.4f}s")
         return best_map_id, best_score
     
-    def _match_nightlord(self, img: np.array) -> tuple[int | None, float]:
+    def _match_nightlord(self, img: np.ndarray) -> tuple[int | None, float]:
         t = time.time()
         img = cv2.resize(img, MATCH_NIGHTLORD_SIZE, interpolation=CV2_RESIZE_METHOD)
         h, w = img.shape[0], img.shape[1]
@@ -901,7 +902,7 @@ class MapDetector:
 
         # 地图模式匹配
         if param.do_match_pattern:
-            results = self._match_map_pattern(img, param.earth_shifting, config.map_pattern_match_topk)
+            results = self._match_map_pattern(img, param.earth_shifting, topk=param.return_pattern_topk)
 
             # 决定信息绘制大小
             if config.fixed_map_overlay_draw_size is not None:
