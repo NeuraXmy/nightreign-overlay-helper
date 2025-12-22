@@ -7,6 +7,7 @@ import time
 from mss.base import MSSBase
 from enum import Enum
 import random
+import gc
 
 from src.config import Config
 from src.logger import info, warning, error, debug
@@ -915,6 +916,7 @@ class MapDetector:
                     overlay_img = self._draw_overlay_image(result, draw_size, i)
                     ret.overlay_images.append(overlay_img)
                     ret.patterns.append(result.pattern)
+                    gc.collect()
                 except Exception as e:
                     error(f"MapDetector: Draw overlay image of pattern {result.pattern.id} failed: {e}")
 
