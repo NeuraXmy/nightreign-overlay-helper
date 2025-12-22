@@ -846,21 +846,27 @@ class MapDetector:
             texts.append(((pos[0], pos[1] + scale_size(20)), "庇佑", FONT_SIZE_SMALL, (255, 200, 200, 255), OUTLINE_W_SMALL, OUTLINE_COLOR))
 
         # 说明文本
+        info_text_y_offset = 0
         text = f"#{pattern.id}"
         if match_result.error is not None:
-            text += f" (E:{match_result.error})"
-        text += f"    {get_name(pattern.nightlord + 100000)}"
+            text += f" (#{result_index+1} E:{match_result.error})"
+        text += f"  {get_name(pattern.earth_shifting + 200000)} - {get_name(pattern.nightlord + 100000)}"
         if match_result.nightlord is None:
             text += " (隐藏夜王)"
-        if event_text := get_event_text(pattern):
-            text += f"    特殊事件: {event_text}"
-        texts.append((scale_size((20, 10)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+        texts.append((scale_size((20, 10)), text, scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+        info_text_y_offset += 28
 
         # 大空洞第二天缩圈位置
         if pattern.earth_shifting == 4:
             text = "左上" if day2_lefttop else "右下"
             text = f"Day2第一次缩圈位置：{text}"
-            texts.append((scale_size((20, 38)), text, scale_size(24), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            texts.append((scale_size((20, 10 + info_text_y_offset)), text, scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            info_text_y_offset += 28
+        
+        # 特殊事件
+        if event_text := get_event_text(pattern):
+            texts.append((scale_size((20, 10 + info_text_y_offset)), f"特殊事件: {event_text}", scale_size(22), (255, 255, 255, 255), scale_size(3), OUTLINE_COLOR, 'lt'))
+            info_text_y_offset += 28
 
         for icon in icons:  draw_icon(img, *icon)
         for text in texts:  draw_text(img, *text)
