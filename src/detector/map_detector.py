@@ -63,7 +63,12 @@ MATCH_EARTH_SHIFTING_REGION = (
 )
 MATCH_EARTH_SHIFTING_OFFSET_AND_STRIDE = (5, 1)
 MATCH_EARTH_SHIFTING_SCALES = (0.95, 1.05, 7)
+
 MAP_BGS = { i : open_cv2_image(f"maps/{i}.jpg") for i in range(6) }
+MAG_BG_FOR_POI_MATCH_INDEX_MAP = {
+    # 除了大空洞，其他使用普通地图背景进行POI匹配（因为特殊地形内不会匹配，所以没有问题）
+    0: 0, 1: 0, 2: 0, 3: 0, 4: 4, 5: 0,
+}
 
 MATCH_NIGHTLORD_SIZE = (300, 300)
 NIGHTLORD_ICONS = { i : open_pil_image(f"icons/nightlord/{i}.png") for i in range(10) }
@@ -545,7 +550,8 @@ class MapDetector:
         nightlord, _ = self._match_nightlord(img)
 
         # 校准偏移
-        map_bg = cv2.resize(MAP_BGS[earth_shifting], STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
+        map_bg = open_cv2_image(f"maps_poi_match/{MAG_BG_FOR_POI_MATCH_INDEX_MAP[earth_shifting]}.jpg")
+        map_bg = cv2.resize(map_bg, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
         try:
             align_t = time.time()
             ALIGN_REGION = (
