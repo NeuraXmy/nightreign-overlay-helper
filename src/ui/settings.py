@@ -2,13 +2,16 @@ from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QEvent
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QSlider, QGroupBox, QCheckBox, QPushButton,
-    QMessageBox, QApplication, QFrame, QComboBox, QToolTip,
+    QMessageBox, QApplication, QFrame, QComboBox, QToolTip, 
+    QLineEdit, QScrollArea,
 )
 from PyQt6.QtGui import QPixmap, QIcon, QMouseEvent, QEnterEvent
 import yaml
 from dataclasses import dataclass, asdict
 import os
 import ctypes
+import shutil
+import re
 
 from src.updater import Updater
 from src.common import (
@@ -31,11 +34,44 @@ from src.ui.utils import process_region_to_adapt_scale, get_qt_screen_by_mss_reg
 BUTTON_STYLE = "padding: 4px; min-height: 20px;"
 
 SETTINGS_SAVE_PATH = get_appdata_path("settings.yaml")
+PRESET_SETTINGS_DIR = get_appdata_path("preset_settings")
+
 DETECT_REGION_TUTORIAL_IMG_PATH = get_asset_path("detect_region_tutorial/{i}.jpg")
 COLOR_ALIGN_TUTORIAL_IMG_PATH = get_asset_path("color_align_tutorial/{i}.jpg")
 MAP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("map_detect_tutorial/{i}.jpg")
 HP_DETECT_TUTORIAL_IMG_PATH = get_asset_path("hp_detect_tutorial/{i}.jpg")
 ART_DETECT_TUTORIAL_IMG_PATH = get_asset_path("art_detect_tutorial/{i}.jpg")
+
+
+def info_box(message: str, parent=None):
+    msg = QMessageBox(parent)
+    msg.setIcon(QMessageBox.Icon.Information)
+    msg.setWindowTitle(APP_FULLNAME)
+    msg.setText(message)
+    msg.exec()
+
+def warning_box(message: str, parent=None):
+    msg = QMessageBox(parent)
+    msg.setIcon(QMessageBox.Icon.Warning)
+    msg.setWindowTitle(APP_FULLNAME)
+    msg.setText(message)
+    msg.exec()
+
+def error_box(message: str, parent=None):
+    msg = QMessageBox(parent)
+    msg.setIcon(QMessageBox.Icon.Critical)
+    msg.setWindowTitle(APP_FULLNAME)
+    msg.setText(message)
+    msg.exec()
+
+def comfirm_box(message: str, parent=None) -> bool:
+    msg = QMessageBox(parent)
+    msg.setIcon(QMessageBox.Icon.Question)
+    msg.setWindowTitle(APP_FULLNAME)
+    msg.setText(message)
+    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    result = msg.exec()
+    return result == QMessageBox.StandardButton.Yes
 
 
 class QuickTooltipLabel(QLabel):
@@ -58,30 +94,112 @@ class QuickTooltipLabel(QLabel):
         super().mousePressEvent(event)
 
 
+class PresetDialog(QWidget):
+    save_preset_signal = pyqtSignal(str)
+    load_preset_signal = pyqtSignal(str)
+    remove_preset_signal = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("预设设置")
+        self.setMinimumSize(350, 400)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+        self._init_ui()
+
+    def _init_ui(self):
+        self.main_layout = QVBoxLayout(self)
+
+        # --- 1. 保存预设部分 ---
+        save_layout = QHBoxLayout()
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("输入新预设名称...")
+        self.save_btn = QPushButton("保存预设")
+        self.save_btn.clicked.connect(self._on_save_clicked)
+        
+        save_layout.addWidget(self.name_input)
+        save_layout.addWidget(self.save_btn)
+        self.main_layout.addLayout(save_layout)
+
+        # 分割线
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        self.main_layout.addWidget(line)
+
+        # --- 2. 预设列表展示部分 ---
+        self.main_layout.addWidget(QLabel("已有预设列表:"))
+        
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.list_container = QWidget()
+        self.list_layout = QVBoxLayout(self.list_container)
+        self.list_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.scroll_area.setWidget(self.list_container)
+        
+        self.main_layout.addWidget(self.scroll_area)
+
+    def set_preset_names(self, names: list[str]):
+        """更新预设名称列表并重新渲染UI"""
+        # 清空当前布局中的所有组件
+        while self.list_layout.count():
+            item = self.list_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        # 重新填充
+        for name in names:
+            item_widget = QWidget()
+            item_layout = QHBoxLayout(item_widget)
+            item_layout.setContentsMargins(5, 2, 5, 2)
+
+            name_label = QLabel(name)
+            load_btn = QPushButton("加载")
+            load_btn.setFixedWidth(60)
+            # 使用 lambda 捕获当前的 name
+            load_btn.clicked.connect(lambda checked, n=name: self.load_preset_signal.emit(n))
+
+            remove_btn = QPushButton("删除")
+            remove_btn.setFixedWidth(60)
+            remove_btn.setStyleSheet("color: red;")
+            remove_btn.clicked.connect(lambda checked, n=name: self.remove_preset_signal.emit(n))
+
+            item_layout.addWidget(name_label)
+            item_layout.addWidget(load_btn)
+            item_layout.addWidget(remove_btn)
+            
+            self.list_layout.addWidget(item_widget)
+
+    def _is_valid_filename(self, filename: str) -> bool:
+        """检查是否是合适的文件名 (Windows/Linux 通用规则)"""
+        if not filename or filename.strip() == "":
+            return False
+        # 禁止包含 / \ : * ? " < > |
+        invalid_chars = r'[\\/:*?"<>|]'
+        if re.search(invalid_chars, filename):
+            return False
+        # 限制长度
+        if len(filename) > 200:
+            return False
+        return True
+
+    def _on_save_clicked(self):
+        """保存按钮点击逻辑"""
+        name = self.name_input.text().strip()
+        if self._is_valid_filename(name):
+            self.save_preset_signal.emit(name)
+            self.name_input.clear()  # 发送后清空输入框
+        else:
+            warning_box("无效的预设名称！请避免使用特殊字符 / \\ : * ? \" < > | 并确保名称非空且不过长。", self)
+
+
 class SettingsWindow(QWidget):
     update_overlay_ui_state_signal = pyqtSignal(OverlayUIState)
     update_map_overlay_ui_state_signal = pyqtSignal(MapOverlayUIState)
+    update_preset_list_signal = pyqtSignal(list)
 
-    def __init__(self, overlay: OverlayWidget, map_overlay: MapOverlayWidget, updater: Updater, input: InputWorker):
-        super().__init__()
-        config = Config.get()
-        self.overlay = overlay
-        self.map_overlay = map_overlay
-        self.update_overlay_ui_state_signal.connect(overlay.update_ui_state)
-        self.update_map_overlay_ui_state_signal.connect(map_overlay.update_ui_state)
-        self.updater = updater
-        self.input = input
 
-        self.setWindowIcon(QIcon(ICON_PATH))
-        try:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f'{APP_NAME}.{APP_VERSION}')
-        except Exception as e:
-            warning(f"Failed to set AppUserModelID: {e}")
-
-        self.setWindowTitle(f"{APP_FULLNAME} - 设置")
-        self.setMinimumSize(350, 200)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-
+    def init_appearance_group(self):
         # 外观设置
         self.appearance_group = QGroupBox("计时器外观")
         self.appearance_layout = QVBoxLayout(self.appearance_group)
@@ -128,7 +246,10 @@ class SettingsWindow(QWidget):
         self.appearance_layout.addWidget(QLabel("⚠️请使用窗口化/无边框窗口化模式启动游戏"))
         self.appearance_layout.addWidget(QLabel("⚠️悬浮窗与部分AI补帧工具（小黄鸭）不兼容\n"
                                                  "同时使用可能出现卡顿"))
-                                                
+
+    def init_input_group(self):
+        config = Config.get()
+
         # 输入设置
         self.input_group = QGroupBox("计时快捷键")
         self.input_layout = QVBoxLayout(self.input_group)
@@ -163,6 +284,8 @@ class SettingsWindow(QWidget):
 
         self.input_layout.addWidget(QLabel("点击按钮修改，支持键盘或手柄组合键"))
 
+    def init_performance_group(self):
+        config = Config.get()
 
         # 性能设置
         self.performance_group = QGroupBox("性能")
@@ -184,6 +307,9 @@ class SettingsWindow(QWidget):
         self.only_show_when_game_foreground_checkbox.stateChanged.connect(self.update_only_show_when_game_foreground)
         only_show_when_game_foreground_layout.addWidget(self.only_show_when_game_foreground_checkbox)
         self.performance_layout.addLayout(only_show_when_game_foreground_layout)
+
+    def init_auto_timer_group(self):
+        config = Config.get()
 
         # 自动计时设置
         self.auto_timer_group = QGroupBox("缩圈&雨中冒险倒计时")
@@ -271,6 +397,9 @@ class SettingsWindow(QWidget):
         clear_to_detect_hp_layout.addWidget(clear_to_detect_hp_color)
         clear_to_detect_hp_layout.addStretch()
         self.auto_timer_layout.addLayout(clear_to_detect_hp_layout)
+
+    def init_map_detect_group(self):
+        config = Config.get()
 
         # 地图识别设置
         self.map_detect_group = QGroupBox("地图识别")
@@ -362,9 +491,15 @@ class SettingsWindow(QWidget):
         crystal_layout_last_input_setting_layout.addWidget(self.crystal_layout_last_input_setting_widget)
         self.map_detect_layout.addLayout(crystal_layout_last_input_setting_layout)
 
+    def init_other_group(self):
         # 其他设置
         self.other_group = QGroupBox("其他")
         self.other_layout = QVBoxLayout(self.other_group)
+
+        open_preset_dialog_button = QPushButton("管理预设")
+        open_preset_dialog_button.setStyleSheet(BUTTON_STYLE)
+        open_preset_dialog_button.clicked.connect(self.open_preset_dialog)
+        self.other_layout.addWidget(open_preset_dialog_button)
 
         debug_layout = QHBoxLayout()
         self.other_layout.addLayout(debug_layout)
@@ -414,6 +549,7 @@ class SettingsWindow(QWidget):
         abouts_button.clicked.connect(self.open_about_dialog)
         open_log_and_abouts_layout.addWidget(abouts_button)
 
+    def init_hp_detect_group(self):
         # HP检测设置
         self.hp_detect_group = QGroupBox("血条比例标记")
         self.hp_detect_layout = QVBoxLayout(self.hp_detect_group)
@@ -458,6 +594,7 @@ class SettingsWindow(QWidget):
         self.hpbar_region_label = QLabel("当前血条区域: 未设置")
         self.hp_detect_layout.addWidget(self.hpbar_region_label)
 
+    def init_art_timer_group(self):
         # 绝招计时器设置
         self.art_timer_group = QGroupBox("绝招倒计时")
         self.art_timer_layout = QVBoxLayout(self.art_timer_group)
@@ -494,6 +631,7 @@ class SettingsWindow(QWidget):
         self.art_region_label = QLabel("当前绝招图标区域: 未设置")
         self.art_timer_layout.addWidget(self.art_region_label)
 
+    def init_layouts(self):
         # Layouts  
         layouts = [QVBoxLayout() for _ in range(3)]
 
@@ -513,8 +651,13 @@ class SettingsWindow(QWidget):
             l.addStretch()
             self.layout.addLayout(l)
 
-        # 加载设置
-        self.load_settings()
+    def init_preset_dialog(self):
+        self.preset_dialog = PresetDialog()
+        self.preset_dialog.save_preset_signal.connect(self.save_preset)
+        self.preset_dialog.load_preset_signal.connect(self.load_preset)
+        self.preset_dialog.remove_preset_signal.connect(self.remove_preset)
+        self.update_preset_list_signal.connect(self.preset_dialog.set_preset_names)
+        self.update_preset_list()
 
 
     def load_settings(self):
@@ -688,6 +831,129 @@ class SettingsWindow(QWidget):
         self.save_settings()
         super().closeEvent(event)
         info("Settings window closed")
+
+
+    def __init__(self, overlay: OverlayWidget, map_overlay: MapOverlayWidget, updater: Updater, input: InputWorker):
+        super().__init__()
+        config = Config.get()
+        self.overlay = overlay
+        self.map_overlay = map_overlay
+        self.update_overlay_ui_state_signal.connect(overlay.update_ui_state)
+        self.update_map_overlay_ui_state_signal.connect(map_overlay.update_ui_state)
+        self.updater = updater
+        self.input = input
+
+        self.setWindowIcon(QIcon(ICON_PATH))
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f'{APP_NAME}.{APP_VERSION}')
+        except Exception as e:
+            warning(f"Failed to set AppUserModelID: {e}")
+
+        self.setWindowTitle(f"{APP_FULLNAME} - 设置")
+        self.setMinimumSize(350, 200)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+
+        self.init_appearance_group()
+        self.init_input_group()
+        self.init_performance_group()                                        
+        self.init_auto_timer_group()
+        self.init_map_detect_group()
+        self.init_other_group()
+        self.init_hp_detect_group()
+        self.init_art_timer_group()
+
+        self.init_layouts()
+
+        self.init_preset_dialog()
+
+        # 加载设置
+        self.load_settings()
+
+
+    # =========================== Preset =========================== #
+
+    def load_preset(self, preset_name: str):
+        info(f"Loading preset settings '{preset_name}'")
+
+        if not comfirm_box(f"是否加载预设设置：\"{preset_name}\"？\n当前设置将被覆盖。", self.preset_dialog):
+            info(f"Loading preset settings '{preset_name}' canceled by user")
+            return
+
+        preset_path = os.path.join(PRESET_SETTINGS_DIR, f"{preset_name}.yaml")
+        if not os.path.exists(preset_path):
+            warning(f"Preset settings file not found: {preset_path}")
+            error_box(f"预设配置文件未找到：{preset_path}", self.preset_dialog)
+        
+        # overide current settings with preset
+        current_path = SETTINGS_SAVE_PATH
+        if os.path.exists(current_path + '.bak'):
+            os.remove(current_path + '.bak')
+        os.rename(current_path, current_path + ".bak")
+        try:
+            shutil.copyfile(preset_path, current_path)
+            self.load_settings()
+            info(f"Loaded preset settings '{preset_name}' from {preset_path}")
+            info_box(f"成功加载预设设置：{preset_name}", self.preset_dialog)
+        except Exception as e:
+            os.rename(current_path + ".bak", current_path)
+            error(f"Failed to load preset settings '{preset_name}': {e}")
+            error_box(f"加载预设设置失败：{e}\n已还原到之前的设置。", self.preset_dialog)
+        
+        self.update_preset_list()
+        
+    def save_preset(self, preset_name: str):
+        preset_path = os.path.join(PRESET_SETTINGS_DIR, f"{preset_name}.yaml")
+        if os.path.exists(preset_path):
+            if not comfirm_box(f"预设设置 \"{preset_name}\"已存在，是否覆盖？", self.preset_dialog):
+                info(f"Saving preset settings '{preset_name}' canceled by user")
+                return
+        try:
+            os.makedirs(PRESET_SETTINGS_DIR, exist_ok=True)
+            self.save_settings()
+            shutil.copyfile(SETTINGS_SAVE_PATH, preset_path)
+            info(f"Saved preset settings '{preset_name}' to {preset_path}")
+            # info_box(f"成功保存预设设置：\"{preset_name}\"", self.preset_dialog)
+
+        except Exception as e:
+            error(f"Failed to save preset settings '{preset_name}': {e}")
+            error_box(f"保存预设设置失败：{e}", self.preset_dialog)
+
+        self.update_preset_list()
+
+    def remove_preset(self, preset_name: str):
+        preset_path = os.path.join(PRESET_SETTINGS_DIR, f"{preset_name}.yaml")
+        if not os.path.exists(preset_path):
+            warning(f"Preset settings file not found: {preset_path}")
+            error_box(f"预设配置文件未找到：{preset_path}", self.preset_dialog)
+            return
+        if not comfirm_box(f"是否删除预设设置：\"{preset_name}\"？", self.preset_dialog):
+            info(f"Removing preset settings '{preset_name}' canceled by user")
+            return
+        try:
+            os.remove(preset_path)
+            info(f"Removed preset settings '{preset_name}'")
+            # info_box(f"成功删除预设设置：\"{preset_name}\"", self.preset_dialog)
+
+        except Exception as e:
+            error(f"Failed to remove preset settings '{preset_name}': {e}")
+            error_box(f"删除预设设置失败：{e}", self.preset_dialog)
+
+        self.update_preset_list()
+
+    def open_preset_dialog(self):
+        self.preset_dialog.show()
+        self.preset_dialog.activateWindow()
+
+    def update_preset_list(self):
+        try:
+            preset_names = []
+            if os.path.exists(PRESET_SETTINGS_DIR):
+                for file in os.listdir(PRESET_SETTINGS_DIR):
+                    if file.endswith(".yaml"):
+                        preset_names.append(os.path.splitext(file)[0])
+            self.update_preset_list_signal.emit(preset_names)
+        except Exception as e:
+            error(f"Failed to update preset list: {e}")
 
     # =========================== Overlay Appearance =========================== #
 
