@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 _SECTION_RE = re.compile(r"^\s*\[(?P<name>[^\]]+)\]\s*$")
+# 修改后的正则表达式，不包含换行符在 suffix 中
 _VERSION_LINE_RE = re.compile(r"^(?P<prefix>\s*version\s*=\s*)\"(?P<value>[^\"]*)\"(?P<suffix>\s*)$")
 
 
@@ -90,7 +91,9 @@ def update_pyproject_version(pyproject_path: Path, new_version: str) -> bool:
         if not in_project:
             continue
 
-        m = _VERSION_LINE_RE.match(line)
+        # 移除行尾进行匹配，避免换行符影响正则匹配
+        line_without_ending = line.rstrip('\r\n')
+        m = _VERSION_LINE_RE.match(line_without_ending)
         if not m:
             continue
 
@@ -98,13 +101,10 @@ def update_pyproject_version(pyproject_path: Path, new_version: str) -> bool:
         if current == new_version:
             return False
 
-        if line.endswith("\r\n"):
-            line_ending = "\r\n"
-        elif line.endswith("\n"):
-            line_ending = "\n"
-        else:
-            line_ending = ""
-
+        # 获取原始行尾（可能是 \n, \r\n 或空）
+        line_ending = line[len(line_without_ending):]
+        
+        # 重构行，保持原始格式和行尾
         lines[idx] = f"{m.group('prefix')}\"{new_version}\"{m.group('suffix')}{line_ending}"
         pyproject_path.write_text("".join(lines), encoding="utf-8")
         return True
