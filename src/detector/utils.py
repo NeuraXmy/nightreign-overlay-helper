@@ -250,8 +250,15 @@ def match_template(
         if resized_template.shape[0] > image.shape[0] or resized_template.shape[1] > image.shape[1]:
             continue
         if mask is not None:
-            mask = cv2.resize(mask, (resized_template.shape[1], resized_template.shape[0]))
-        result = cv2.matchTemplate(image, resized_template, cv2.TM_SQDIFF_NORMED, mask)
+            # 注意：cv2.matchTemplate 的 mask 参数对 TM_SQDIFF_NORMED 静默无效，
+            # 只对 TM_SQDIFF 生效。这里用 TM_SQDIFF + mask，再按有效像素数归一化到 [0,1]，
+            # 数值尺度与 TM_SQDIFF_NORMED 接近，便于复用原有阈值。
+            resized_mask = cv2.resize(mask, (resized_template.shape[1], resized_template.shape[0]))
+            result = cv2.matchTemplate(image, resized_template, cv2.TM_SQDIFF, resized_mask)
+            n_active = max(1, np.count_nonzero(resized_mask) * resized_template.shape[2])
+            result = result / (n_active * 255.0 * 255.0)
+        else:
+            result = cv2.matchTemplate(image, resized_template, cv2.TM_SQDIFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
         if min_val < best_val:
             best_val = min_val
