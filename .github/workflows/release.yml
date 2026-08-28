@@ -61,6 +61,15 @@ jobs:
           git commit -m "chore: bump version to $env:PROJECT_VERSION"
           git push
 
+      - name: Verify native DLL before tagging
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "native/MaaWin32Screencap.dll" -PathType Leaf)) {
+            Write-Error "native/MaaWin32Screencap.dll not found. Aborting tag creation."
+            exit 1
+          }
+          Write-Host "native/MaaWin32Screencap.dll verified. Safe to create tag."
+
       - name: Create and push tag
         shell: pwsh
         run: |

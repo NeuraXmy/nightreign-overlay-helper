@@ -16,6 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Verify native DLL
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "native/MaaWin32Screencap.dll" -PathType Leaf)) {
+            Write-Error "native/MaaWin32Screencap.dll not found. Ensure the DLL is committed to the repository."
+            exit 1
+          }
+          Write-Host "native/MaaWin32Screencap.dll verified."
+
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.0.1
         
@@ -29,7 +38,22 @@ jobs:
           uv run python scripts/ci_version.py --tag "${{ github.ref_name }}" --file pyproject.toml --check --set-github-env
         
       - name: Build with PyInstaller
-        run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." src\app.py
+        run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." --add-binary "native\MaaWin32Screencap.dll;native" src\app.py
+
+      - name: Verify build artifact contains native DLL
+        shell: pwsh
+        run: |
+          $exe = "dist\nightreign-overlay-helper\nightreign-overlay-helper.exe"
+          if (-not (Test-Path $exe -PathType Leaf)) {
+            Write-Error "Build artifact not found: $exe"
+            exit 1
+          }
+          $null = findstr /C:"MaaWin32Screencap.dll" $exe
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "MaaWin32Screencap.dll signature not found in build artifact. Check --add-binary parameter."
+            exit 1
+          }
+          Write-Host "Build artifact verified: contains MaaWin32Screencap.dll."
         
       - name: Copy additional files
         run: |
