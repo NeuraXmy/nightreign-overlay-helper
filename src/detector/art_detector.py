@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from PIL import Image
 import time
 from PyQt6.QtGui import QPixmap
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 
 from src.config import Config
 from src.common import get_data_path, get_appdata_path
@@ -38,7 +38,7 @@ class ArtDetector:
             self.art_imgs[art_type] = rgb
             self.art_masks[art_type] = mask
 
-    def detect(self, sct: MSSBase, params: ArtDetectParam | None) -> ArtDetectResult:
+    def detect(self, engine: ScreencapEngine, params: ArtDetectParam | None) -> ArtDetectResult:
         if params is None or params.art_region is None:
             return ArtDetectResult()
         config = Config.get()
@@ -46,7 +46,7 @@ class ArtDetector:
 
         # 根据参数选择图像处理方式
         processing = 'hdr_to_sdr' if params.hdr_processing_enabled else 'none'
-        sc = grab_region(sct, params.art_region, processing=processing).convert("RGB")
+        sc = grab_region(engine, params.art_region, processing=processing).convert("RGB")
         sc = resize_by_height_keep_aspect_ratio(sc, config.art_detect_standard_size)
         sc = np.array(sc)
 

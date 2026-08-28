@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from PIL import Image
 import time
 from PyQt6.QtGui import QPixmap
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 
 from src.config import Config
 from src.logger import info, warning, error, debug
@@ -27,7 +27,7 @@ class HpDetector:
         self.last_valid_length: int | None = None
         self.stable_count: int = 0
 
-    def detect(self, sct: MSSBase, params: HpDetectParam | None) -> HpDetectResult:
+    def detect(self, engine: ScreencapEngine, params: HpDetectParam | None) -> HpDetectResult:
         if params is None or params.hpbar_region is None:
             return HpDetectResult()
         config = Config.get()
@@ -36,7 +36,7 @@ class HpDetector:
         t = time.time()
         x, y, w, h = params.hpbar_region
         w = h * config.hpbar_region_aspect_ratio
-        img = grab_region(sct, (x, y, w, h), processing='none')
+        img = grab_region(engine, (x, y, w, h), processing='none')
         original_w = img.width
         img = resize_by_height_keep_aspect_ratio(img, config.hpbar_detect_std_height)
         hsv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HSV)

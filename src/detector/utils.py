@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from mss.base import MSSBase
 
 from src.common import get_data_path
 from src.logger import warning, debug
+from src.screencap import ScreencapEngine
 
 
 def hls_to_rgb(hls: tuple[int, int, int]) -> tuple[int, int, int]:
@@ -97,103 +97,92 @@ def paste_cv2(img1: np.ndarray, img2: np.ndarray, pos: tuple[int, int]):
     h, w = img2.shape[0], img2.shape[1]
     img1[y:y+h, x:x+w] = img2
 
-def grab_region(sct: MSSBase, region: tuple[int], processing: str = 'none') -> Image.Image:
+def get_monitors() -> list[dict]:
+    """使用 QApplication.screens() 推导 monitors 列表。
+    monitors[0] 为所有屏幕汇总，monitors[1:] 为各屏幕（物理像素坐标）。"""
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance()
+    if app is None:
+        return []
+    screens = app.screens()
+    if not screens:
+        return []
+    monitors = []
+    all_left = min(s.geometry().x() for s in screens)
+    all_top = min(s.geometry().y() for s in screens)
+    all_right = max(s.geometry().x() + int(s.size().width() * s.devicePixelRatio()) for s in screens)
+    all_bottom = max(s.geometry().y() + int(s.size().height() * s.devicePixelRatio()) for s in screens)
+    monitors.append({
+        "left": all_left,
+        "top": all_top,
+        "width": all_right - all_left,
+        "height": all_bottom - all_top,
+    })
+    for screen in screens:
+        geo = screen.geometry()
+        ratio = screen.devicePixelRatio()
+        monitors.append({
+            "left": geo.x(),
+            "top": geo.y(),
+            "width": int(geo.width() * ratio),
+            "height": int(geo.height() * ratio),
+        })
+    return monitors
+
+
+def _apply_processing(img: Image.Image, processing: str, region) -> Image.Image:
+    if processing == 'normalize':
+        debug(f"Applying image normalization for region {region}")
+        return normalize_image(img)
+    elif processing == 'hdr_to_sdr':
+        debug(f"Applying HDR to SDR conversion for region {region}")
+        return convert_hdr_to_sdr(img)
+    return img
+
+
+def grab_region(engine: ScreencapEngine, region: tuple[int, int, int, int], processing: str = 'none') -> Image.Image:
     """
     截取屏幕区域并可选地进行图像处理
-    
+
     Args:
-        sct: 截图对象
+        engine: 截图引擎实例
         region: 截图区域 (x, y, w, h)
         processing: 图像处理方式
             - 'none': 不进行任何处理（默认）
             - 'normalize': 使用归一化处理（适用于地图识别）
             - 'hdr_to_sdr': 使用HDR到SDR转换（适用于缩圈倒计时）
     """
-    from src.config import Config
-    
     x, y, w, h = region
-    
-    # 首先检查坐标是否已经是绝对坐标（包含屏幕偏移）
-    # 如果坐标在任何屏幕的范围内，直接使用
-    for monitor in sct.monitors[1:]:  # 跳过 monitors[0] (所有屏幕的汇总)
+    if w <= 0 or h <= 0:
+        raise ValueError(f"Invalid region size: w={w}, h={h}")
+
+    full_img = engine.grab_fullscreen()
+    full_array = np.array(full_img)
+
+    monitors = get_monitors()
+    if not monitors:
+        cropped = full_array[y:y + h, x:x + w]
+        return _apply_processing(Image.fromarray(cropped), processing, region)
+
+    for monitor in monitors[1:]:
         if (monitor["left"] <= x < monitor["left"] + monitor["width"] and
                 monitor["top"] <= y < monitor["top"] + monitor["height"]):
-            # 坐标已经是绝对坐标，直接截图
-            screenshot = sct.grab({
-                "left": x,
-                "top": y,
-                "width": w,
-                "height": h
-            })
-            img = Image.frombytes("RGB", screenshot.size, screenshot.bgra,
-                                  "raw", "BGRX")
-            
-            # 根据processing参数进行图像处理
-            if processing == 'normalize':
-                debug(f"Applying image normalization for region {region}")
-                img = normalize_image(img)
-            elif processing == 'hdr_to_sdr':
-                debug(f"Applying HDR to SDR conversion for region {region}")
-                img = convert_hdr_to_sdr(img)
-            # processing == 'none' 时不做任何处理
-            
-            return img
-    
-    # 如果没有找到匹配的屏幕，可能是相对坐标，尝试转换为绝对坐标
-    # 默认使用主屏幕偏移（保持向后兼容）
-    main_screen = sct.monitors[1]
-    main_screen_offset = (main_screen["left"], main_screen["top"])
-    absolute_region = (
-        x + main_screen_offset[0],
-        y + main_screen_offset[1],
-        w,
-        h,
-    )
-    
-    # 验证转换后的坐标是否有效
-    abs_x, abs_y, abs_w, abs_h = absolute_region
-    for monitor in sct.monitors[1:]:
+            cropped = full_array[y:y + h, x:x + w]
+            return _apply_processing(Image.fromarray(cropped), processing, region)
+
+    main_screen = monitors[1]
+    abs_x = x + main_screen["left"]
+    abs_y = y + main_screen["top"]
+
+    for monitor in monitors[1:]:
         if (monitor["left"] <= abs_x < monitor["left"] + monitor["width"] and
                 monitor["top"] <= abs_y < monitor["top"] + monitor["height"]):
-            screenshot = sct.grab({
-                "left": abs_x,
-                "top": abs_y,
-                "width": abs_w,
-                "height": abs_h
-            })
-            img = Image.frombytes("RGB", screenshot.size, screenshot.bgra,
-                                  "raw", "BGRX")
-            
-            # 根据processing参数进行图像处理
-            if processing == 'normalize':
-                debug(f"Applying image normalization for region {region}")
-                img = normalize_image(img)
-            elif processing == 'hdr_to_sdr':
-                debug(f"Applying HDR to SDR conversion for region {region}")
-                img = convert_hdr_to_sdr(img)
-            
-            return img
-    
-    # 如果仍然找不到有效屏幕，使用原始逻辑作为最后的fallback
-    warning(f"Region {region} could not be mapped to any screen. "
-            f"Using fallback method.")
-    screenshot = sct.grab({
-        "left": abs_x,
-        "top": abs_y,
-        "width": abs_w,
-        "height": abs_h
-    })
-    img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
-    
-    # 根据processing参数进行图像处理
-    if processing == 'normalize':
-        debug(f"Applying image normalization for region {region}")
-        img = normalize_image(img)
-    elif processing == 'hdr_to_sdr':
-        debug(f"Applying HDR to SDR conversion for region {region}")
-        img = convert_hdr_to_sdr(img)
-    
-    return img
+            cropped = full_array[abs_y:abs_y + h, abs_x:abs_x + w]
+            return _apply_processing(Image.fromarray(cropped), processing, region)
+
+    warning(f"Region {region} could not be mapped to any screen. Using fallback method.")
+    cropped = full_array[abs_y:abs_y + h, abs_x:abs_x + w]
+    return _apply_processing(Image.fromarray(cropped), processing, region)
 
 
 DEFAULT_FONT_PATH = get_data_path("fonts/SourceHanSansSC-Normal.otf")

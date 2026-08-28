@@ -10,7 +10,7 @@ from PyQt6.QtGui import QColor
 from src.common import APP_FULLNAME, APP_AUTHOR
 from src.config import Config
 from src.logger import info, warning, error
-from src.ui.utils import set_widget_always_on_top, mss_region_to_qt_region
+from src.ui.utils import set_widget_always_on_top, region_to_qt_region
 
 
 @dataclass
@@ -68,7 +68,7 @@ class HpOverlayWidget(QWidget):
         
     def update_ui_state(self, state: HpOverlayUIState):
         if state.x is not None:
-            self.hpbar_region = mss_region_to_qt_region((state.x, state.y, state.w, state.h))
+            self.hpbar_region = region_to_qt_region((state.x, state.y, state.w, state.h))
         if state.visible is not None:
             self.visible = state.visible
         if state.only_show_when_game_foreground is not None:

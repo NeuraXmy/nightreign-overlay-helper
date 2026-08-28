@@ -15,6 +15,7 @@ from src.ui.settings import SettingsWindow
 from src.updater import Updater
 from src.common import APP_FULLNAME, APP_VERSION, ICON_PATH
 from src.logger import info, warning, error
+from src.screencap import get_engine
 
 
 def log_system_and_screen_info(app: QApplication):
@@ -28,16 +29,6 @@ def log_system_and_screen_info(app: QApplication):
         warning(f"Error getting OS info: {e}")
 
     try:
-        import mss
-        with mss.mss() as sct:
-            monitors = sct.monitors
-            info(f"MSS Detected {len(monitors)-1} monitor(s):")
-            for i, monitor in enumerate(monitors[1:], start=1):
-                info(f"    Monitor {i}: {monitor['width']}x{monitor['height']} at ({monitor['left']},{monitor['top']})")
-    except Exception as e:
-        warning(f"Error getting monitor info: {e}")
-
-    try:
         screens = app.screens()
         info(f"QApplication detected {len(screens)} screen(s):")
         for i, screen in enumerate(screens, start=1):
@@ -45,7 +36,9 @@ def log_system_and_screen_info(app: QApplication):
             pos = screen.geometry().topLeft()
             dpi = screen.logicalDotsPerInch()
             device_pixel_ratio = screen.devicePixelRatio()
-            info(f"    Screen {i}: {size.width()}x{size.height()} at ({pos.x()},{pos.y()}), DPI: {dpi}, Device Pixel Ratio: {device_pixel_ratio}")
+            phys_w = int(size.width() * device_pixel_ratio)
+            phys_h = int(size.height() * device_pixel_ratio)
+            info(f"    Screen {i}: {size.width()}x{size.height()} (logical) / {phys_w}x{phys_h} (physical) at ({pos.x()},{pos.y()}), DPI: {dpi}, Device Pixel Ratio: {device_pixel_ratio}")
     except Exception as e:
         warning(f"Error getting screens from QApplication: {e}")
 
@@ -143,6 +136,11 @@ if __name__ == "__main__":
         else:
             info("Input thread stopped.")
         info("All Thread stopped.")
+
+        try:
+            get_engine().shutdown()
+        except Exception as e:
+            warning(f"Error shutting down screencap engine: {e}")
 
         tray_icon.deleteLater()
 

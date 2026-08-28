@@ -16,7 +16,7 @@ import glob
 from src.common import get_readable_timedelta, get_data_path, load_yaml
 from src.config import Config
 from src.logger import info, warning, error
-from src.ui.utils import set_widget_always_on_top, is_window_in_foreground, mss_region_to_qt_region
+from src.ui.utils import set_widget_always_on_top, is_window_in_foreground, region_to_qt_region
 from src.detector.utils import draw_text
 
 
@@ -248,7 +248,7 @@ class MapOverlayWidget(QWidget):
 
     def update_ui_state(self, state: MapOverlayUIState):
         if state.x is not None:
-            region = mss_region_to_qt_region((state.x, state.y, state.w, state.h))
+            region = region_to_qt_region((state.x, state.y, state.w, state.h))
             self.setGeometry(*region)
         if state.opacity is not None:
             self.target_opacity = state.opacity
