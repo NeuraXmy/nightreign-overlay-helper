@@ -3,7 +3,7 @@ import numpy as np
 from dataclasses import dataclass
 from PIL import Image
 import time
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 import yaml
 
 from src.config import Config
@@ -88,7 +88,7 @@ class DayDetector:
             )
             self.templates[lang] = template
 
-    def match(self, sct: MSSBase, template: DayTempalte, params: DayDetectParam) -> tuple[bool, float]:
+    def match(self, engine: ScreencapEngine, template: DayTempalte, params: DayDetectParam) -> tuple[bool, float]:
         try:
             config = Config.get()
             t = time.time()
@@ -101,7 +101,7 @@ class DayDetector:
             day3_region = (cx - day3_w // 2, cy - h // 2, day3_w, h)
             # 根据参数选择图像处理方式
             processing = 'hdr_to_sdr' if params.hdr_processing_enabled else 'none'
-            sc = grab_region(sct, day3_region, processing=processing)
+            sc = grab_region(engine, day3_region, processing=processing)
             def match_region(region: tuple[int], template_mask: np.ndarray) -> float:
                 region = (
                     region[0] - day3_region[0], 
@@ -122,13 +122,13 @@ class DayDetector:
             error(f"Detect dayx error")
             return float('inf'), float('inf'), float('inf')
 
-    def detect(self, sct: MSSBase, params: DayDetectParam | None) -> DayDetectResult:
+    def detect(self, engine: ScreencapEngine, params: DayDetectParam | None) -> DayDetectResult:
         ret = DayDetectResult()
         config = Config.get()
         if params is None or params.day1_region is None:
             return ret
         template = self.templates[params.lang]
-        score_day1, score_day2, score_day3 = self.match(sct, template, params)
+        score_day1, score_day2, score_day3 = self.match(engine, template, params)
         ret.score_day1 = score_day1
         ret.score_day2 = score_day2
         ret.score_day3 = score_day3

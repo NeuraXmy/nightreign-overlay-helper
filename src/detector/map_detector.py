@@ -4,7 +4,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from PIL import Image
 import time
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 from enum import Enum
 import random
 import gc
@@ -878,7 +878,7 @@ class MapDetector:
 
         return img
 
-    def detect(self, sct: MSSBase, param: MapDetectParam | None) -> MapDetectResult:
+    def detect(self, engine: ScreencapEngine, param: MapDetectParam | None) -> MapDetectResult:
         config = Config.get()
         ret = MapDetectResult()
         if param is None or param.map_region is None:
@@ -887,7 +887,7 @@ class MapDetector:
         if param.img is None:
             # 根据参数选择图像处理方式
             processing = 'normalize' if param.hdr_processing_enabled else 'none'
-            img = grab_region(sct, param.map_region, processing=processing)
+            img = grab_region(engine, param.map_region, processing=processing)
             img = np.array(img)
         else:
             img = param.img

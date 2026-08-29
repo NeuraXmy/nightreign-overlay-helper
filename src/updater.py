@@ -21,6 +21,13 @@ from src.detector import (
 )
 from src.detector.map_info import MapPattern
 from src.ui.utils import is_window_in_foreground
+from src.screencap import (
+    get_engine,
+    ScreencapMode,
+    ScreencapInitError,
+    ScreencapRuntimeError,
+    EngineStatus,
+)
 
 
 class DoMatchMapPatternFlag(Enum):
@@ -62,7 +69,8 @@ class Updater(QObject):
         self.is_setting_opened = False
         self.is_menu_opened = False
 
-        self.detector = DetectorManager()
+        self.detector = DetectorManager(get_engine())
+        self.screencap_mode: ScreencapMode = ScreencapMode.AUTO
         self.only_detect_when_game_foreground: bool = False
         self.detect_interval = 0.2
 
@@ -492,11 +500,17 @@ class Updater(QObject):
     # =============== Main Loop =============== #
 
     def detect_and_update_all(self):
-        self.detect_and_update_dayx()
-        self.detect_and_update_in_rain()
-        self.detect_and_update_map()
-        self.detect_and_update_hp()
-        self.detect_and_update_art()
+        for detect_fn in [
+            self.detect_and_update_dayx,
+            self.detect_and_update_in_rain,
+            self.detect_and_update_map,
+            self.detect_and_update_hp,
+            self.detect_and_update_art,
+        ]:
+            try:
+                detect_fn()
+            except ScreencapRuntimeError as e:
+                warning(f"Screen capture failed during {detect_fn.__name__}: {e}. Skipping.")
 
     def check_game_foreground(self) -> bool:
         is_foreground = is_window_in_foreground(GAME_WINDOW_TITLE)
@@ -524,6 +538,15 @@ class Updater(QObject):
             last_detect_time = 0
             while self._running:
                 start_time = self.get_time()
+
+                engine = get_engine()
+                if engine.status != EngineStatus.CONNECTED:
+                    try:
+                        engine.initialize(self.screencap_mode)
+                    except ScreencapInitError as e:
+                        warning(f"ScreencapEngine init failed: {e}. Skipping this cycle.")
+                        time.sleep(Config.get().update_interval)
+                        continue
 
                 is_game_foreground = self.check_game_foreground()
 

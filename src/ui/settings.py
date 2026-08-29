@@ -28,7 +28,7 @@ from src.ui.capture_region import CaptureRegionWindow
 from src.detector.rain_detector import RainDetector
 from src.detector.utils import hls_to_rgb
 from src.ui.bug_report import BugReportWindow
-from src.ui.utils import process_region_to_adapt_scale, get_qt_screen_by_mss_region
+from src.ui.utils import process_region_to_adapt_scale, get_qt_screen_by_region
 
 
 BUTTON_STYLE = "padding: 4px; min-height: 20px;"
@@ -300,6 +300,15 @@ class SettingsWindow(QWidget):
         self.detect_interval_combobox.currentTextChanged.connect(self.update_detect_interval)
         detect_interval_layout.addWidget(self.detect_interval_combobox)
         self.performance_layout.addLayout(detect_interval_layout)
+
+        screencap_mode_layout = QHBoxLayout()
+        screencap_mode_layout.addWidget(QLabel("截图方式"))
+        self.screencap_mode_combobox = QComboBox()
+        self.screencap_mode_combobox.addItems(["自动", "仅前台", "仅后台"])
+        self.screencap_mode_combobox.setCurrentText("自动")
+        self.screencap_mode_combobox.currentTextChanged.connect(self.update_screencap_mode)
+        screencap_mode_layout.addWidget(self.screencap_mode_combobox)
+        self.performance_layout.addLayout(screencap_mode_layout)
 
         only_show_when_game_foreground_layout = QHBoxLayout()
         self.only_show_when_game_foreground_checkbox = QCheckBox("仅在游戏时显示和检测")
@@ -697,6 +706,7 @@ class SettingsWindow(QWidget):
             # 性能
             load_checkbox_state(self.only_show_when_game_foreground_checkbox, data.get("only_show_when_game_foreground", False))
             load_combobox_value(self.detect_interval_combobox, data.get("detect_interval", "高"))
+            load_combobox_value(self.screencap_mode_combobox, data.get("screencap_mode", "自动"))
             # 自动计时
             load_checkbox_state(self.dayx_detect_enable_checkbox, data.get("dayx_detect_enabled", True))
             load_checkbox_state(self.in_rain_detect_enable_checkbox, data.get("in_rain_detect_enabled", True))
@@ -763,6 +773,7 @@ class SettingsWindow(QWidget):
                 # 性能
                 "only_show_when_game_foreground": self.only_show_when_game_foreground_checkbox.isChecked(),
                 "detect_interval": self.detect_interval_combobox.currentText(),
+                "screencap_mode": self.screencap_mode_combobox.currentText(),
                 # 自动计时
                 "dayx_detect_enabled": self.dayx_detect_enable_checkbox.isChecked(),
                 "in_rain_detect_enabled": self.in_rain_detect_enable_checkbox.isChecked(),
@@ -1298,7 +1309,7 @@ class SettingsWindow(QWidget):
         map_region = self.map_region
         if map_region is not None:
             old_map_region = map_region.copy()
-            screen = get_qt_screen_by_mss_region(map_region)
+            screen = get_qt_screen_by_region(map_region)
             scale = screen.devicePixelRatio()
             map_region = process_region_to_adapt_scale(map_region, scale)
             info(f"Map region adapted to screen scale {scale}: {old_map_region} -> {map_region}")
@@ -1322,6 +1333,13 @@ class SettingsWindow(QWidget):
         detect_interval = config.detect_intervals.get(text, 0.2)
         self.updater.detect_interval = detect_interval
         info(f"Detect interval changed to {detect_interval} seconds ({text})")
+
+    def update_screencap_mode(self, text: str):
+        from src.screencap import ScreencapMode
+        mode_map = {"自动": ScreencapMode.AUTO, "仅前台": ScreencapMode.FOREGROUND, "仅后台": ScreencapMode.BACKGROUND}
+        mode = mode_map.get(text, ScreencapMode.AUTO)
+        self.updater.screencap_mode = mode
+        info(f"Screencap mode changed to {text}")
 
     def update_only_show_when_game_foreground(self, state):
         enabled = self.only_show_when_game_foreground_checkbox.isChecked()

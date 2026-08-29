@@ -32,9 +32,9 @@ def is_window_in_foreground(window_title: str) -> bool:
         return False
 
 
-def get_qt_screen_by_mss_region(region: tuple[int]) -> QWidget:
+def get_qt_screen_by_region(region: tuple[int]) -> QWidget:
     """
-    根据mss的region获取对应的QScreen对象。
+    根据物理像素 region 获取对应的 QScreen 对象。
     """
     x, y, w, h = region
     app: QApplication = QApplication.instance()
@@ -45,15 +45,15 @@ def get_qt_screen_by_mss_region(region: tuple[int]) -> QWidget:
         sw = screen.geometry().width()
         sh = screen.geometry().height()
         ratio = screen.devicePixelRatio()
-        mss_sw = int(sw * ratio)
-        mss_sh = int(sh * ratio)
-        if sx <= x <= sx + mss_sw and sy <= y <= sy + mss_sh:
+        phys_sw = int(sw * ratio)
+        phys_sh = int(sh * ratio)
+        if sx <= x <= sx + phys_sw and sy <= y <= sy + phys_sh:
             return screen
     raise ValueError(f"Region {region} is out of all screen bounds")
 
 
-def mss_region_to_qt_region(region: tuple[int]):
-    screen = get_qt_screen_by_mss_region(region)
+def region_to_qt_region(region: tuple[int]):
+    screen = get_qt_screen_by_region(region)
     x, y, w, h = region
     sx = screen.geometry().x()
     sy = screen.geometry().y()

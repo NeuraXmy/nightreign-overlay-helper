@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from PIL import Image
 import time
 from PyQt6.QtGui import QPixmap
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 
 from src.config import Config
 from src.logger import info, warning, error, debug
@@ -33,7 +33,7 @@ class RainDetector:
         pass
         
     def match(
-        self, sct, 
+        self, engine,
         hpcolor_region: tuple[int],
         in_rain_hls: tuple[int] | None,
         not_in_rain_hls: tuple[int] | None,
@@ -45,7 +45,7 @@ class RainDetector:
             t = time.time()
             config = Config.get()
 
-            img = grab_region(sct, hpcolor_region, processing='none')
+            img = grab_region(engine, hpcolor_region, processing='none')
             hls = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2HLS)
 
             def calc_pixel_num(hls: np.ndarray, c1: list[int], c2: list[int]) -> int:
@@ -80,13 +80,13 @@ class RainDetector:
             error(f"Detect in rain error")
             return 0.0, 0.0
 
-    def detect(self, sct: MSSBase, params: RainDetectParam | None) -> RainDetectResult:
+    def detect(self, engine: ScreencapEngine, params: RainDetectParam | None) -> RainDetectResult:
         config = Config.get()
         ret = RainDetectResult()
         if params is None or params.hpcolor_region is None:
             return ret
         not_in_rain_ratio, in_rain_ratio = self.match(
-            sct, 
+            engine,
             params.hpcolor_region, 
             params.in_rain_hls, 
             params.not_in_rain_hls,

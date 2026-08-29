@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from PIL import Image
 import time
 from PyQt6.QtGui import QPixmap
-from mss.base import MSSBase
+from src.screencap import ScreencapEngine
 
 from src.config import Config
 from src.common import get_data_path, get_appdata_path
@@ -25,14 +25,20 @@ class ArtDetector:
     def __init__(self):
         config = Config.get()
         self.art_imgs: dict[str, np.ndarray] = {}
+        self.art_masks: dict[str, np.ndarray] = {}
         for art_type in config.art_info.keys():
-            img = Image.open(get_data_path(f"icons/art/{art_type}.png")).convert("RGB")
+            img = Image.open(get_data_path(f"icons/art/{art_type}.png")).convert("RGBA")
             img = resize_by_height_keep_aspect_ratio(img, config.art_detect_standard_size)
             w, h = img.size
-            img = np.array(img)[h//4:h*3//4, w//4:w*3//4]
-            self.art_imgs[art_type] = img
+            arr = np.array(img)[h//4:h*3//4, w//4:w*3//4]
+            rgb = arr[:, :, :3]
+            alpha = arr[:, :, 3]
+            # alpha 通道二值化为 mask，只对图标主体像素做模板匹配，忽略背景
+            _, mask = cv2.threshold(alpha, 127, 255, cv2.THRESH_BINARY)
+            self.art_imgs[art_type] = rgb
+            self.art_masks[art_type] = mask
 
-    def detect(self, sct: MSSBase, params: ArtDetectParam | None) -> ArtDetectResult:
+    def detect(self, engine: ScreencapEngine, params: ArtDetectParam | None) -> ArtDetectResult:
         if params is None or params.art_region is None:
             return ArtDetectResult()
         config = Config.get()
@@ -40,13 +46,13 @@ class ArtDetector:
 
         # 根据参数选择图像处理方式
         processing = 'hdr_to_sdr' if params.hdr_processing_enabled else 'none'
-        sc = grab_region(sct, params.art_region, processing=processing).convert("RGB")
+        sc = grab_region(engine, params.art_region, processing=processing).convert("RGB")
         sc = resize_by_height_keep_aspect_ratio(sc, config.art_detect_standard_size)
         sc = np.array(sc)
 
         best_art_type, best_score = None, 1.0
         for art_type, art_img in self.art_imgs.items():
-            match, score = match_template(sc, art_img, config.art_detect_match_scales)
+            match, score = match_template(sc, art_img, config.art_detect_match_scales, mask=self.art_masks[art_type])
             if score < best_score:
                 best_art_type, best_score = art_type, score
             info(f"Art type: {art_type}, score: {score:.4f}")

@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout default branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # IMPORTANT: pushes made with the default GITHUB_TOKEN do not trigger other workflows.
@@ -34,7 +34,7 @@ jobs:
           }
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.0.1
 
       - name: Install dependency
         run: uv sync
@@ -60,6 +60,15 @@ jobs:
           git add pyproject.toml
           git commit -m "chore: bump version to $env:PROJECT_VERSION"
           git push
+
+      - name: Verify native DLL before tagging
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "native/MaaWin32Screencap.dll" -PathType Leaf)) {
+            Write-Error "native/MaaWin32Screencap.dll not found. Aborting tag creation."
+            exit 1
+          }
+          Write-Host "native/MaaWin32Screencap.dll verified. Safe to create tag."
 
       - name: Create and push tag
         shell: pwsh
