@@ -12,6 +12,7 @@ from src.ui.overlay import OverlayWidget
 from src.ui.map_overlay import MapOverlayWidget
 from src.ui.hp_overlay import HpOverlayWidget
 from src.ui.settings import SettingsWindow
+from src.ui.admin_prompt import show_admin_prompt
 from src.updater import Updater
 from src.common import APP_FULLNAME, APP_VERSION, ICON_PATH
 from src.logger import info, warning, error
@@ -53,9 +54,15 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     log_system_and_screen_info(app)
-    
+
     # 防止因没有窗口而导致程序退出
+    # （需在启动弹窗前设置，避免弹窗关闭时被判定为“最后一个窗口关闭”而退出程序）
     app.setQuitOnLastWindowClosed(False)
+
+    # 启动时检测管理员权限并弹窗提示（未提权时游戏内将无法正常监听按键）
+    if not show_admin_prompt():
+        time.sleep(0.5)  # 等待以管理员身份启动的新实例拉起
+        os._exit(0)
 
     # 创建对象
     input = InputWorker()
