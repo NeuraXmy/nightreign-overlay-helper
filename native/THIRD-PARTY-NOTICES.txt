@@ -1,0 +1,16 @@
+Nightreign P2P functionality incorporates connection-query and ETW latency concepts from:
+
+SteamP2PInfo
+Copyright (c) 2022 William Tremblay
+https://github.com/tremwil/SteamP2PInfo
+Licensed under the MIT License. See licenses/SteamP2PInfo-LICENSE.txt.
+
+Steamworks.NET
+Copyright (c) 2013-2022 Riley Labrecque
+https://github.com/rlabrecque/Steamworks.NET
+Licensed under the MIT License. See licenses/Steamworks.NET-LICENSE.txt.
+
+Microsoft.Diagnostics.Tracing.TraceEvent
+Copyright (c) Microsoft Corporation
+https://github.com/microsoft/perfview
+Licensed under the MIT License. See licenses/TraceEvent-LICENSE.txt.

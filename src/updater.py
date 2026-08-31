@@ -55,6 +55,7 @@ class Updater(QObject):
     update_map_overlay_ui_state_signal = pyqtSignal(MapOverlayUIState)
     hp_overlay_ui_state_signal = pyqtSignal(HpOverlayUIState)
     input_block_signals_signal = pyqtSignal(bool)
+    game_foreground_changed = pyqtSignal(bool)
 
     def __init__(
         self, 
@@ -524,6 +525,7 @@ class Updater(QObject):
         self.hp_overlay_ui_state_signal.emit(HpOverlayUIState(
             is_game_foreground=is_foreground,
         ))
+        self.game_foreground_changed.emit(is_foreground)
 
         self.input_block_signals_signal.emit(self.only_detect_when_game_foreground and \
             not (is_foreground or self.is_setting_opened or self.is_menu_opened))

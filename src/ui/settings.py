@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QSlider, QGroupBox, QCheckBox, QPushButton,
     QMessageBox, QApplication, QFrame, QComboBox, QToolTip, 
-    QLineEdit, QScrollArea,
+    QLineEdit, QScrollArea, QSpinBox,
 )
 from PyQt6.QtGui import QPixmap, QIcon, QMouseEvent, QEnterEvent
 import yaml
@@ -23,6 +23,8 @@ from src.logger import info, warning, error, set_log_level, INFO, DEBUG
 from src.config import Config
 from src.ui.overlay import OverlayUIState, OverlayWidget
 from src.ui.map_overlay import MapOverlayWidget, MapOverlayUIState
+from src.ui.p2p_overlay import P2POverlayWidget, P2POverlayUIState
+from src.p2p import P2PService, P2PStatus
 from src.ui.input import InputWorker, InputSettingWidget, InputSetting
 from src.ui.capture_region import CaptureRegionWindow
 from src.detector.rain_detector import RainDetector
@@ -196,6 +198,7 @@ class PresetDialog(QWidget):
 class SettingsWindow(QWidget):
     update_overlay_ui_state_signal = pyqtSignal(OverlayUIState)
     update_map_overlay_ui_state_signal = pyqtSignal(MapOverlayUIState)
+    update_p2p_overlay_ui_state_signal = pyqtSignal(P2POverlayUIState)
     update_preset_list_signal = pyqtSignal(list)
 
 
@@ -558,6 +561,60 @@ class SettingsWindow(QWidget):
         abouts_button.clicked.connect(self.open_about_dialog)
         open_log_and_abouts_layout.addWidget(abouts_button)
 
+    def init_p2p_group(self):
+        self.p2p_group = QGroupBox("队友延迟")
+        layout = QVBoxLayout(self.p2p_group)
+
+        self.p2p_enabled_checkbox = QCheckBox("启用队友延迟显示")
+        self.p2p_enabled_checkbox.setChecked(True)
+        self.p2p_enabled_checkbox.stateChanged.connect(self.update_p2p_enabled)
+        layout.addWidget(self.p2p_enabled_checkbox)
+
+        size_layout = QHBoxLayout()
+        size_layout.addWidget(QLabel("悬浮窗大小"))
+        self.p2p_size_slider = QSlider(Qt.Orientation.Horizontal)
+        self.p2p_size_slider.setRange(50, 200)
+        self.p2p_size_slider.setValue(100)
+        self.p2p_size_slider.valueChanged.connect(self.update_p2p_size)
+        size_layout.addWidget(self.p2p_size_slider)
+        layout.addLayout(size_layout)
+
+        opacity_layout = QHBoxLayout()
+        opacity_layout.addWidget(QLabel("悬浮窗透明度"))
+        self.p2p_opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self.p2p_opacity_slider.setRange(10, 100)
+        self.p2p_opacity_slider.setValue(75)
+        self.p2p_opacity_slider.valueChanged.connect(self.update_p2p_opacity)
+        opacity_layout.addWidget(self.p2p_opacity_slider)
+        layout.addLayout(opacity_layout)
+
+        thresholds_layout = QHBoxLayout()
+        thresholds_layout.addWidget(QLabel("Ping 分色"))
+        self.p2p_good_ping_spinbox = QSpinBox()
+        self.p2p_good_ping_spinbox.setRange(1, 999)
+        self.p2p_good_ping_spinbox.setSuffix(" ms")
+        self.p2p_good_ping_spinbox.setValue(80)
+        self.p2p_good_ping_spinbox.valueChanged.connect(self.update_p2p_thresholds)
+        thresholds_layout.addWidget(self.p2p_good_ping_spinbox)
+        thresholds_layout.addWidget(QLabel("/"))
+        self.p2p_warning_ping_spinbox = QSpinBox()
+        self.p2p_warning_ping_spinbox.setRange(2, 2000)
+        self.p2p_warning_ping_spinbox.setSuffix(" ms")
+        self.p2p_warning_ping_spinbox.setValue(150)
+        self.p2p_warning_ping_spinbox.valueChanged.connect(self.update_p2p_thresholds)
+        thresholds_layout.addWidget(self.p2p_warning_ping_spinbox)
+        layout.addLayout(thresholds_layout)
+
+        position_button = QPushButton("重置队友延迟悬浮窗位置")
+        position_button.setStyleSheet(BUTTON_STYLE)
+        position_button.clicked.connect(self.reset_p2p_position)
+        layout.addWidget(position_button)
+
+        self.p2p_status_label = QLabel("状态：联机组件尚未启动")
+        self.p2p_status_label.setWordWrap(True)
+        self.p2p_status_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.p2p_status_label)
+
     def init_hp_detect_group(self):
         # HP检测设置
         self.hp_detect_group = QGroupBox("血条比例标记")
@@ -650,10 +707,11 @@ class SettingsWindow(QWidget):
 
         layouts[1].addWidget(self.performance_group)
         layouts[1].addWidget(self.auto_timer_group)
-        layouts[1].addWidget(self.art_timer_group)
+        layouts[1].addWidget(self.p2p_group)
 
         layouts[2].addWidget(self.map_detect_group)
         layouts[2].addWidget(self.hp_detect_group)
+        layouts[2].addWidget(self.art_timer_group)
 
         self.layout: QHBoxLayout = QHBoxLayout(self)
         for l in layouts:
@@ -707,6 +765,24 @@ class SettingsWindow(QWidget):
             load_checkbox_state(self.only_show_when_game_foreground_checkbox, data.get("only_show_when_game_foreground", False))
             load_combobox_value(self.detect_interval_combobox, data.get("detect_interval", "高"))
             load_combobox_value(self.screencap_mode_combobox, data.get("screencap_mode", "自动"))
+            # 队友延迟
+            self.p2p_enabled_checkbox.blockSignals(True)
+            self.p2p_enabled_checkbox.setChecked(data.get("p2p_enabled", True))
+            self.p2p_enabled_checkbox.blockSignals(False)
+            load_slider_value(self.p2p_size_slider, data.get("p2p_size", 100))
+            load_slider_value(self.p2p_opacity_slider, data.get("p2p_opacity", 75))
+            self.p2p_good_ping_spinbox.setValue(data.get("p2p_good_ping", 80))
+            self.p2p_warning_ping_spinbox.setValue(data.get("p2p_warning_ping", 150))
+            self.update_p2p_enabled()
+            self.update_p2p_thresholds()
+            p2p_x = data.get("p2p_x")
+            p2p_y = data.get("p2p_y")
+            if p2p_x is None or p2p_y is None:
+                self.p2p_overlay.reset_position()
+            else:
+                self.update_p2p_overlay_ui_state_signal.emit(
+                    P2POverlayUIState(x=p2p_x, y=p2p_y)
+                )
             # 自动计时
             load_checkbox_state(self.dayx_detect_enable_checkbox, data.get("dayx_detect_enabled", True))
             load_checkbox_state(self.in_rain_detect_enable_checkbox, data.get("in_rain_detect_enabled", True))
@@ -774,6 +850,14 @@ class SettingsWindow(QWidget):
                 "only_show_when_game_foreground": self.only_show_when_game_foreground_checkbox.isChecked(),
                 "detect_interval": self.detect_interval_combobox.currentText(),
                 "screencap_mode": self.screencap_mode_combobox.currentText(),
+                # 队友延迟
+                "p2p_enabled": self.p2p_enabled_checkbox.isChecked(),
+                "p2p_size": self.p2p_size_slider.value(),
+                "p2p_opacity": self.p2p_opacity_slider.value(),
+                "p2p_x": self.p2p_overlay.x(),
+                "p2p_y": self.p2p_overlay.y(),
+                "p2p_good_ping": self.p2p_good_ping_spinbox.value(),
+                "p2p_warning_ping": self.p2p_warning_ping_spinbox.value(),
                 # 自动计时
                 "dayx_detect_enabled": self.dayx_detect_enable_checkbox.isChecked(),
                 "in_rain_detect_enabled": self.in_rain_detect_enable_checkbox.isChecked(),
@@ -825,6 +909,10 @@ class SettingsWindow(QWidget):
         self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
             is_setting_opened=True,
         ))
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(
+            draggable=True,
+            is_setting_opened=True,
+        ))
         self.updater.is_setting_opened = True
         # self.load_settings()
         super().showEvent(event)
@@ -838,19 +926,35 @@ class SettingsWindow(QWidget):
         self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(
             is_setting_opened=False,
         ))
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(
+            draggable=False,
+            is_setting_opened=False,
+        ))
         self.updater.is_setting_opened = False
         self.save_settings()
         super().closeEvent(event)
         info("Settings window closed")
 
 
-    def __init__(self, overlay: OverlayWidget, map_overlay: MapOverlayWidget, updater: Updater, input: InputWorker):
+    def __init__(
+        self,
+        overlay: OverlayWidget,
+        map_overlay: MapOverlayWidget,
+        updater: Updater,
+        input: InputWorker,
+        p2p_overlay: P2POverlayWidget,
+        p2p_service: P2PService,
+    ):
         super().__init__()
         config = Config.get()
         self.overlay = overlay
         self.map_overlay = map_overlay
         self.update_overlay_ui_state_signal.connect(overlay.update_ui_state)
         self.update_map_overlay_ui_state_signal.connect(map_overlay.update_ui_state)
+        self.p2p_overlay = p2p_overlay
+        self.p2p_service = p2p_service
+        self.update_p2p_overlay_ui_state_signal.connect(p2p_overlay.update_ui_state)
+        self.p2p_service.status_changed.connect(self.update_p2p_status_display)
         self.updater = updater
         self.input = input
 
@@ -870,6 +974,7 @@ class SettingsWindow(QWidget):
         self.init_auto_timer_group()
         self.init_map_detect_group()
         self.init_other_group()
+        self.init_p2p_group()
         self.init_hp_detect_group()
         self.init_art_timer_group()
 
@@ -1345,8 +1450,62 @@ class SettingsWindow(QWidget):
         enabled = self.only_show_when_game_foreground_checkbox.isChecked()
         self.update_overlay_ui_state_signal.emit(OverlayUIState(only_show_when_game_foreground=enabled))
         self.update_map_overlay_ui_state_signal.emit(MapOverlayUIState(only_show_when_game_foreground=enabled))
+        self.update_p2p_overlay_ui_state_signal.emit(
+            P2POverlayUIState(only_show_when_game_foreground=enabled)
+        )
         self.updater.only_detect_when_game_foreground = enabled
         info(f"Overlay only show when game foreground: {enabled}")
+
+    # =========================== Teammate latency =========================== #
+
+    def update_p2p_enabled(self, state=None):
+        enabled = self.p2p_enabled_checkbox.isChecked()
+        self.p2p_service.set_enabled(enabled)
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(enabled=enabled))
+        info(f"P2P info enabled: {enabled}")
+
+    def update_p2p_size(self, value):
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(scale=value / 100.0))
+
+    def update_p2p_opacity(self, value):
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(opacity=value / 100.0))
+
+    def update_p2p_thresholds(self, value=None):
+        good_ping = self.p2p_good_ping_spinbox.value()
+        warning_ping = max(good_ping + 1, self.p2p_warning_ping_spinbox.value())
+        if warning_ping != self.p2p_warning_ping_spinbox.value():
+            self.p2p_warning_ping_spinbox.blockSignals(True)
+            self.p2p_warning_ping_spinbox.setValue(warning_ping)
+            self.p2p_warning_ping_spinbox.blockSignals(False)
+        self.update_p2p_overlay_ui_state_signal.emit(P2POverlayUIState(
+            good_ping=good_ping,
+            warning_ping=warning_ping,
+        ))
+
+    def update_p2p_status_display(self, status: P2PStatus):
+        helper_ok = status.state not in {"disabled", "helper_missing", "helper_error"}
+        steam_api_text = "已连接" if status.state in {
+            "steam_ready", "runtime_error"
+        } else ("失败" if status.state == "steam_api_error" else "等待")
+        etw_names = {
+            "disabled": "已关闭",
+            "waiting": "等待游戏",
+            "starting": "正在启动",
+            "ready": "已启用",
+            "error": "不可用，请以管理员身份运行",
+        }
+        self.p2p_status_label.setText(
+            f"状态：{status.message}\n"
+            f"黑夜君临：{'已运行' if status.game_running else '等待'}\n"
+            f"联机组件：{'已启动' if helper_ok else '未启动'}\n"
+            f"SteamAPI：{steam_api_text}\n"
+            f"ETW 延迟：{etw_names.get(status.etw_state, status.etw_state)}\n"
+            f"当前队友：{status.peer_count}"
+        )
+
+    def reset_p2p_position(self):
+        self.p2p_overlay.reset_position()
+        info("P2P overlay position reset")
 
     # =========================== HP Detect =========================== #
         
