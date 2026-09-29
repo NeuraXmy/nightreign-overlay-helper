@@ -71,6 +71,7 @@ class Updater(QObject):
 
         self.detector = DetectorManager(get_engine())
         self.screencap_mode: ScreencapMode = ScreencapMode.AUTO
+        self._applied_screencap_mode: ScreencapMode | None = None
         self.only_detect_when_game_foreground: bool = False
         self.detect_interval = 0.2
 
@@ -511,6 +512,9 @@ class Updater(QObject):
                 detect_fn()
             except ScreencapRuntimeError as e:
                 warning(f"Screen capture failed during {detect_fn.__name__}: {e}. Skipping.")
+            except Exception as e:
+                # 单次检测出错不应导致整个检测线程退出（例如游戏刚启动时的异常画面）
+                error(f"Unexpected error during {detect_fn.__name__}: {e}. Skipping.")
 
     def check_game_foreground(self) -> bool:
         is_foreground = is_window_in_foreground(GAME_WINDOW_TITLE)
@@ -540,9 +544,14 @@ class Updater(QObject):
                 start_time = self.get_time()
 
                 engine = get_engine()
+                if engine.status == EngineStatus.CONNECTED and \
+                        self.screencap_mode != self._applied_screencap_mode:
+                    info(f"Screencap mode changed to {self.screencap_mode.name}, reconnecting engine.")
+                    engine.shutdown()
                 if engine.status != EngineStatus.CONNECTED:
                     try:
                         engine.initialize(self.screencap_mode)
+                        self._applied_screencap_mode = self.screencap_mode
                     except ScreencapInitError as e:
                         warning(f"ScreencapEngine init failed: {e}. Skipping this cycle.")
                         time.sleep(Config.get().update_interval)

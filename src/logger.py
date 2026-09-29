@@ -30,6 +30,9 @@ def set_log_level(level: int):
     else:
         _logger.setLevel(level)
 
+def is_debug_enabled() -> bool:
+    return _logger is not None and _logger.isEnabledFor(DEBUG)
+
 def debug(msg: str):
     global _logger
     if _logger is None:

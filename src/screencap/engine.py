@@ -55,7 +55,11 @@ class ScreencapEngine:
             elif mode == ScreencapMode.BACKGROUND:
                 methods = Manager.METHOD_BACKGROUND
             else:
-                methods = Manager.METHOD_ALL
+                # AUTO：排除 DXGI 桌面复制方式（全桌面 / 单窗口），
+                # 这两种方式在独占全屏/HDR下抓不到游戏画面，会导致地图识别失效
+                methods = Manager.METHOD_ALL & ~(
+                    Manager.METHOD_DXGI_DESKTOP_DUP | Manager.METHOD_DXGI_DESKTOP_DUP_WINDOW
+                )
 
             self._mgr = Manager(hwnd=hwnd, methods=methods)
 
