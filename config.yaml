@@ -46,7 +46,7 @@ fixed_map_overlay_draw_size: null       # 固定地图信息绘制尺寸(宽,高
 map_overlay_draw_size_ratio: 1.0        # 地图信息绘制尺寸相对于原图比例
 full_map_hough_circle_thres: [150, 200, 250]  # 判断完整地图时霍夫圆检测阈值列表
 full_map_error_threshold: 20            # 判断当前地图是否是完整地图的误差阈值
-earth_shifting_error_threshold: 50      # 判断特殊地形的误差阈值
+earth_shifting_min_matches: 150         # 判断特殊地形所需的最少SIFT匹配特征点数
 map_pattern_match_interval: 2100        # 自动地图匹配间隔(秒)
 subicon_template_match_threshold: 0.06  # POI子图标模板匹配分数阈值，高于的视为无子图标
 poi_match_sample_ratio_w_nightlord: 1.0      # 已匹配夜王时POI匹配采样点数量
