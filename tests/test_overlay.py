@@ -19,6 +19,7 @@ from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.overlay_test.api import OverlayTestApi
+from nightreign_overlay.plugins.overlay_test.overlay import OverlayTestWindow
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
 
 
@@ -142,9 +143,11 @@ def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:
     manager.discover()
     manager.load_all()
     manager.start()
+    assert not manager.is_active("overlay_test")
 
+    manager.set_enabled("overlay_test", True)
     assert manager.is_active("overlay_test")
-    [overlay] = core.overlays.windows()
+    [overlay] = [window for window in core.overlays.windows() if isinstance(window, OverlayTestWindow)]
     assert overlay.isVisible()
 
     api = core.services.require(OverlayTestApi)
@@ -158,12 +161,12 @@ def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:
     manager.set_enabled("overlay_test", False)
     record = manager.get("overlay_test")
     assert record is not None and record.state == PluginState.INACTIVE
-    assert core.overlays.windows() == []
+    assert not any(isinstance(window, OverlayTestWindow) for window in core.overlays.windows())
     assert core.services.get(OverlayTestApi) is None
 
     manager.set_enabled("overlay_test", True)
-    assert len(core.overlays.windows()) == 1
+    [overlay] = [window for window in core.overlays.windows() if isinstance(window, OverlayTestWindow)]
     # Settings survive a disable / enable cycle.
-    assert core.overlays.windows()[0].size() == QSize(600, 264)
+    assert overlay.size() == QSize(600, 264)
     manager.shutdown()
     assert core.overlays.windows() == []

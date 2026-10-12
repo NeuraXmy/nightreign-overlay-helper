@@ -31,7 +31,8 @@ class PluginSwitch(SwitchButton):
             self.setChecked(
                 self._manager.is_enabled(self._plugin_id) and record.state != PluginState.UNAVAILABLE
             )
-        self.setEnabled(record.state != PluginState.UNAVAILABLE)
+        toggleable = self._manager.is_user_toggleable(self._plugin_id)
+        self.setEnabled(toggleable and record.state != PluginState.UNAVAILABLE)
 
     def _on_toggled(self, checked: bool) -> None:
         set_plugin_enabled(self._manager, self._plugin_id, checked, self)

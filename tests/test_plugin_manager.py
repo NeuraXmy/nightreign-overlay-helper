@@ -10,7 +10,15 @@ from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
-from nightreign_overlay.plugin import Plugin, PluginKind, PluginManager, PluginManifest, PluginState
+from nightreign_overlay.plugin import (
+    PLUGIN_KIND_DISPLAY_ORDER,
+    Plugin,
+    PluginKind,
+    PluginManager,
+    PluginManifest,
+    PluginState,
+    SettingsScope,
+)
 
 #: Lifecycle calls recorded by the fake plugins, e.g. ``("activate", "a")``.
 Calls = list[tuple[str, str]]
@@ -69,6 +77,39 @@ def test_order_follows_dependencies_then_kind(
     )
     assert ids(manager) == ["hotkeys", "capture", "feature", "debug"]
     assert [c for c in calls if c[0] == "load"] == [("load", p) for p in ids(manager)]
+
+
+def test_settings_scope_defaults_to_a_standalone_page() -> None:
+    manifest = PluginManifest(id="feature")
+    assert manifest.settings_scope == SettingsScope.PAGE
+    assert PLUGIN_KIND_DISPLAY_ORDER == (PluginKind.FEATURE, PluginKind.INFRASTRUCTURE, PluginKind.DEBUG)
+
+
+def test_default_enablement_follows_plugin_kind(
+    calls: Calls, make_manager: Callable[..., PluginManager]
+) -> None:
+    manager = make_manager(
+        make_plugin("feature", calls, kind=PluginKind.FEATURE),
+        make_plugin("infrastructure", calls, kind=PluginKind.INFRASTRUCTURE),
+        make_plugin("debug", calls, kind=PluginKind.DEBUG),
+    )
+    manager.start()
+
+    assert manager.is_active("feature")
+    assert manager.is_active("infrastructure")
+    assert not manager.is_active("debug")
+
+
+def test_managed_infrastructure_cannot_be_disabled(
+    calls: Calls, make_manager: Callable[..., PluginManager]
+) -> None:
+    manager = make_manager(make_plugin("capture", calls, kind=PluginKind.INFRASTRUCTURE))
+    manager.start()
+
+    assert manager.is_active("capture")
+    assert not manager.is_user_toggleable("capture")
+    assert manager.set_enabled("capture", False) == []
+    assert manager.is_active("capture")
 
 
 def test_missing_requirement_makes_plugin_and_dependents_unavailable(
@@ -209,3 +250,12 @@ def test_builtin_plugins_are_discovered(store: ConfigStore, qapp: QApplication) 
     assert record is not None and record.state == PluginState.INACTIVE
     assert manager.display_name("overlay_test") == "Overlay test"
     assert record.plugin is not None and record.plugin.ctx.tutorial_file() is not None
+
+    capture = manager.get("capture")
+    hud = manager.get("hud")
+    input_plugin = manager.get("input")
+    region = manager.get("region")
+    assert capture and capture.manifest.settings_scope == SettingsScope.GENERAL
+    assert hud and hud.manifest.settings_scope == SettingsScope.GENERAL
+    assert input_plugin and input_plugin.manifest.settings_scope == SettingsScope.HIDDEN
+    assert region and region.manifest.settings_scope == SettingsScope.HIDDEN

@@ -1,0 +1,5 @@
+plugin:
+  name: 区域标定
+  description: 为检测插件保存统一的屏幕区域。
+selection:
+  hint: 拖动鼠标框选区域，按 Esc 取消

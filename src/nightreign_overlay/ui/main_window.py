@@ -11,7 +11,7 @@ from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME
-from nightreign_overlay.plugin import PluginKind, PluginManager
+from nightreign_overlay.plugin import PLUGIN_KIND_DISPLAY_ORDER, PluginManager, SettingsScope
 from nightreign_overlay.ui.overlay import OverlayManager
 from nightreign_overlay.ui.pages import AboutPage, HomePage, PluginPage, SettingsPage
 from nightreign_overlay.ui.theme import app_icon, fluent_icon
@@ -49,7 +49,7 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.homePage, FluentIcon.HOME, tr("nav.home"))
         self._init_plugin_pages(plugins)
 
-        self.settingsPage = SettingsPage(config, self)
+        self.settingsPage = SettingsPage(config, plugins, self)
         self.aboutPage = AboutPage(self)
         self.addSubInterface(
             self.settingsPage, FluentIcon.SETTING, tr("nav.settings"), NavigationItemPosition.BOTTOM
@@ -58,8 +58,12 @@ class MainWindow(FluentWindow):
 
     def _init_plugin_pages(self, plugins: PluginManager) -> None:
         records = plugins.records()
-        for kind in PluginKind:
-            group = [r for r in records if r.manifest.kind == kind]
+        for kind in PLUGIN_KIND_DISPLAY_ORDER:
+            group = [
+                record
+                for record in records
+                if record.manifest.kind == kind and record.manifest.settings_scope == SettingsScope.PAGE
+            ]
             if not group:
                 continue
             self.navigationInterface.addItemHeader(

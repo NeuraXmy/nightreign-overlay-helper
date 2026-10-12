@@ -11,8 +11,9 @@ from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, Pus
 
 from nightreign_overlay.core.app_config import OVERLAY_MODES, THEMES, AppConfig
 from nightreign_overlay.core.i18n import LANGUAGES, tr
-from nightreign_overlay.core.log import LOG_LEVELS, set_log_level
+from nightreign_overlay.core.log import LOG_LEVELS, get_logger, set_log_level
 from nightreign_overlay.core.paths import log_dir, user_data_dir
+from nightreign_overlay.plugin import PluginManager, SettingsScope
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigColorCard,
@@ -21,17 +22,20 @@ from nightreign_overlay.ui.components import (
     SettingSection,
 )
 
+log = get_logger(__name__)
+
 
 class SettingsPage(ScrollPage):
     #: The user asked to restart the application (e.g. to apply a new language).
     restartRequested = pyqtSignal()
 
-    def __init__(self, config: AppConfig, parent: QWidget | None = None) -> None:
+    def __init__(self, config: AppConfig, plugins: PluginManager, parent: QWidget | None = None) -> None:
         super().__init__("settingsPage", tr("settings.title"), parent)
         self._config = config
         self._init_appearance()
         self._init_overlay()
         self._init_behavior()
+        self._init_plugin_settings(plugins)
         self._init_advanced()
 
         config.language.valueChanged.connect(self._on_language_changed)
@@ -94,6 +98,19 @@ class SettingsPage(ScrollPage):
             ),
         )
         self.addWidget(section)
+
+    def _init_plugin_settings(self, plugins: PluginManager) -> None:
+        """Embed general-scope plugin settings without creating extra navigation pages."""
+        for record in plugins.records():
+            if record.manifest.settings_scope != SettingsScope.GENERAL or record.plugin is None:
+                continue
+            try:
+                content = record.plugin.create_settings_widget(self.view)
+            except Exception:
+                log.exception("Plugin %s failed to create its general settings widget", record.id)
+                continue
+            if content is not None:
+                self.addWidget(content)
 
     def _init_advanced(self) -> None:
         section = SettingSection(tr("settings.advanced.title"), self.view)

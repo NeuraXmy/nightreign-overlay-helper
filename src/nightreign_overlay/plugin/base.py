@@ -23,6 +23,21 @@ class PluginKind(StrEnum):
     DEBUG = "debug"
 
 
+class SettingsScope(StrEnum):
+    """Where, if anywhere, a plugin exposes its settings in the user interface."""
+
+    #: The plugin has its own navigation page.
+    PAGE = "page"
+    #: The plugin contributes its settings to the general settings page.
+    GENERAL = "general"
+    #: The plugin has no direct settings entry; features expose its actions where relevant.
+    HIDDEN = "hidden"
+
+
+#: User-facing plugin group order. Lifecycle order remains dependency-driven in ``PluginManager``.
+PLUGIN_KIND_DISPLAY_ORDER = (PluginKind.FEATURE, PluginKind.INFRASTRUCTURE, PluginKind.DEBUG)
+
+
 @dataclass(frozen=True)
 class PluginManifest:
     """Static description of a plugin.
@@ -40,9 +55,17 @@ class PluginManifest:
     requires: tuple[str, ...] = ()
     #: Plugins that are used when present; they only influence the activation order.
     optional: tuple[str, ...] = ()
-    default_enabled: bool = True
+    #: Explicit initial state override. ``None`` follows the default for :attr:`kind`.
+    default_enabled: bool | None = None
+    #: Controls the settings entry independently of the plugin's runtime role.
+    settings_scope: SettingsScope = SettingsScope.PAGE
     #: Sort key inside its kind group (navigation, home page).
     order: int = 100
+
+    @property
+    def initial_enabled(self) -> bool:
+        """Initial state when the user has not persisted an explicit choice."""
+        return self.kind != PluginKind.DEBUG if self.default_enabled is None else self.default_enabled
 
 
 class Plugin(QObject):

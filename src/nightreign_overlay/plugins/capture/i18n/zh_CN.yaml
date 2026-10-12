@@ -1,0 +1,12 @@
+plugin:
+  name: 截图引擎
+  description: 为检测插件提供统一的游戏画面。
+settings:
+  title: 截图设置
+  interval:
+    title: 检测间隔
+    content: 每个间隔最多捕获一帧，所有检测插件共享该帧。
+    value: "{milliseconds} ms"
+  foreground:
+    title: 仅游戏前台截图
+    content: 游戏不在前台时暂停截图。
