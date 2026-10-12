@@ -1,0 +1,15 @@
+plugin:
+  name: 共享 HUD
+  description: 为倒计时等紧凑状态信息提供共享悬浮容器。
+settings:
+  layout:
+    title: 布局
+  direction:
+    title: 排列方向
+    content: 控制 HUD 内功能组件的排列方式。
+    vertical: 垂直
+    horizontal: 水平
+  spacing:
+    title: 组件间距
+    content: 相邻 HUD 组件之间的距离。
+    value: "{pixels} px"

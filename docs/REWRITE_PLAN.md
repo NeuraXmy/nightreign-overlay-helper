@@ -10,7 +10,7 @@
 | 2 | 功能互相复杂依赖，`Updater` 是巨型协调者 | **核心底座 + 插件** 架构。插件之间只通过 *服务契约（Service API）* 与 *类型化事件（Event Bus）* 交互，依赖在 manifest 中显式声明，由插件管理器做拓扑排序与联动启停 |
 | 3 | UI 难看 | 引入 [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)（PyQt6 版 `PyQt6-Fluent-Widgets`），主界面使用 `FluentWindow` |
 | 4 | 无多语言 | 自研轻量 i18n：YAML 词条 + 命名空间（核心 / 每个插件各自一份），支持 简中 / 繁中 / English / 日本語，同时加载 qfluentwidgets 自带翻译 |
-| 5 | 设置菜单平铺 | 设置窗口升级为 **主界面**：首页展示概况；左侧导航为每个功能一个页面，页面内用选项卡切换「设置 / 教程」；通用设置与关于放在导航底部 |
+| 5 | 设置菜单平铺 | 设置窗口升级为 **主界面**：首页展示概况；用户可见的功能插件使用独立页面；基础能力按设置范围归入通用设置或隐藏；通用设置与关于放在导航底部 |
 
 非目标（本阶段不做）：修改游戏内存、网络服务端、Linux 正式支持。
 
@@ -116,7 +116,21 @@ manifest = PluginManifest(
 - **功能插件（feature）**：`day_timer` 缩圈倒计时、`rain_timer` 雨中冒险计时、`map_detect` 地图识别、`hp_marker` 血条比例标记、`art_timer` 绝招倒计时、`p2p_latency` 队友延迟。
 - **调试插件**：`overlay_test` 测试悬浮窗（本阶段实现，用于验证底座、悬浮窗与跨平台行为）。
 
-### 3.6 悬浮窗拆分策略
+### 3.6 设置范围与用户入口
+
+`PluginManifest.settings_scope` 独立于运行时的 `kind` 与依赖关系，决定插件设置在 UI 中的入口：
+
+- `page`：创建独立导航页与首页卡片，适用于用户直接使用的功能插件；这是默认值。
+- `general`：不创建导航页或首页卡片，其 `create_settings_widget()` 合并到通用设置页，适用于有少量全局选项的基础能力。
+- `hidden`：不创建设置入口、导航页或首页卡片；功能插件在自身页面按需暴露其操作入口，例如“标定区域”或功能自身的快捷键。
+
+用户可见的插件分组顺序固定为 **功能 → 基础 → 调试**。该顺序只影响导航和首页，插件运行时仍按依赖拓扑排序启停。
+
+P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使用 `hidden`。因此基础服务仍独立加载、启停和提供 API，但不增加用户的页面理解成本。首页的插件卡片与“已启用插件数”也只统计 `settings_scope=page` 的用户可见插件，避免将后台基础服务误认为用户需要管理的功能。
+
+插件的首次启用状态按 `kind` 决定：功能插件与基础插件默认启用，调试插件默认关闭；manifest 可显式覆盖默认值。基础插件由应用托管，始终启用且不接受用户的开关请求，即使遗留配置中记录为关闭也不生效。
+
+### 3.7 悬浮窗拆分策略
 
 插件边界和窗口边界不要求一一对应：业务能力按插件拆分，窗口则按展示职责组合。更新频率、定位规则、交互方式或显示时机差异明显的内容使用独立窗口；视觉形式一致的小型状态信息组合到共享 HUD，避免屏幕上散落多个窗口。
 
@@ -139,6 +153,13 @@ manifest = PluginManifest(
 
 配置归属保持在能力拥有者一侧：`hud` 保存共享窗口的位置、缩放、透明度、排列与间距；倒计时内容和检测参数保存在各自功能插件；地图窗口配置归 `map_detect`；血量阈值、颜色和线宽归 `hp_marker`。这样既能共享窗口基础能力，也不会把功能配置重新耦合到一个巨型 Overlay 插件中。
 
+### 3.8 P2 实施约束
+
+- 功能行为以旧版为还原基准；仅在确认旧版存在缺陷时调整，并在实现记录中单独说明差异。
+- `capture` 是唯一的周期性截图提供者：功能插件先订阅 `FrameCaptured`，再以自己的插件 ID 调用 `CaptureApi.acquire_stream(owner)` 申请帧流，并在 `PluginContext.on_cleanup()` 中调用 `release_stream(owner)`。首个租约启动定时截图，最后一个租约释放后立即停止；`capture_now()` 仅用于单次请求。这样没有截图消费者时不会定时抓取屏幕，多个消费者仍共享同一完整帧后各自裁剪区域。
+- 平台差异与外设能力必须保持可调用的服务契约和可注入测试接口。macOS 使用 Qt 截图作开发调试降级；Windows 原生 DLL 打包、`pynput` 权限行为和 pygame 手柄实机验证在 Windows 环境执行。
+- 功能插件使用 HUD 时，调用方在自己的 `PluginContext` 中注册清理回调移除组件，保证热停用不会影响其他 HUD 内容。
+
 ## 4. 配置系统
 
 - 声明式配置：插件定义 `ConfigGroup` 子类，类属性使用 `BoolOption / RangeOption / ChoiceOption / Option` 描述默认值与校验规则；实例化后每一项为带 `valueChanged` 信号的 `ConfigItem`。
@@ -160,11 +181,11 @@ manifest = PluginManifest(
 
 - **主界面 `MainWindow(FluentWindow)`**
   - 顶部：首页
-  - 中部（可滚动）：每个插件一个导航项，按 基础 / 功能 / 调试 分组
-  - 底部：通用设置、关于
-- **首页**：应用信息横幅（名称 / 版本 / 平台）、运行状态卡片（游戏窗口是否前台、悬浮窗模式、已启用插件数）、插件快捷开关列表。
+  - 中部（可滚动）：仅 `settings_scope=page` 的插件作为导航项，按 功能 / 基础 / 调试 分组
+  - 底部：通用设置（包含 `settings_scope=general` 的插件设置）、关于
+- **首页**：应用信息横幅（名称 / 版本 / 平台）、运行状态卡片（游戏窗口是否前台、悬浮窗模式、已启用插件数）、`settings_scope=page` 插件的快捷开关列表。
 - **插件页**：页头（图标 / 名称 / 描述 / 启用开关 / 依赖状态），下方 `SegmentedWidget` 选项卡：「设置」「教程」，插件可以追加自定义选项卡。
-- **通用设置**：语言、主题（浅色 / 深色 / 跟随系统）、主题色、悬浮窗显示模式（自动 / 悬浮窗 / 普通窗口）、关闭主界面时最小化到托盘、日志级别、打开配置 / 日志目录。
+- **通用设置**：语言、主题（浅色 / 深色 / 跟随系统）、主题色、悬浮窗显示模式（自动 / 悬浮窗 / 普通窗口）、关闭主界面时最小化到托盘、`settings_scope=general` 的插件设置、日志级别、打开配置 / 日志目录。
 - **托盘**：显示主界面、退出；双击托盘图标打开主界面。
 - **悬浮窗基类 `OverlayWindow`**：统一处理无边框 / 透明 / 置顶 / 鼠标穿透 / 不抢焦点 / 拖动 / 位置持久化 / 透明度 / “仅游戏前台显示”，以及普通窗口 fallback。
 
@@ -193,7 +214,7 @@ manifest = PluginManifest(
 |-----|------|-----|
 | P0 | 计划文档 | ✅ |
 | P1 | 底座：core / platform / plugin / 主界面 / 托盘 / 悬浮窗基类 / i18n；`overlay_test` 测试插件；单元测试 | ✅ 本次完成 |
-| P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 待开始 |
+| P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 🚧 进行中：服务契约、Qt 降级实现和单元测试已完成；Windows DLL 打包与真实手柄验证留待 Windows 环境 |
 | P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 待开始 |
 | P4 | `map_detect`、`hp_marker`、`p2p_latency`（含 NightreignP2PHelper 原生组件） | 待开始 |
 | P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 待开始 |

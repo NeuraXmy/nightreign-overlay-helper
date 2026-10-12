@@ -22,7 +22,13 @@ from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME, APP_VERSION
-from nightreign_overlay.plugin import PluginKind, PluginManager, PluginRecord, PluginState
+from nightreign_overlay.plugin import (
+    PLUGIN_KIND_DISPLAY_ORDER,
+    PluginManager,
+    PluginRecord,
+    PluginState,
+    SettingsScope,
+)
 from nightreign_overlay.ui.components import ScrollPage, SettingSection
 from nightreign_overlay.ui.components.plugin_widgets import PluginSwitch
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -202,7 +208,11 @@ class HomePage(ScrollPage):
         self.addWidget(section)
 
     def _init_plugins(self) -> None:
-        records = self._plugins.records()
+        records = [
+            record
+            for record in self._plugins.records()
+            if record.manifest.settings_scope == SettingsScope.PAGE
+        ]
         if not records:
             section = SettingSection(tr("home.plugins.title"), self.view)
             hint = BodyLabel(tr("home.plugins.empty"), section)
@@ -211,8 +221,12 @@ class HomePage(ScrollPage):
             self.addWidget(section)
             return
 
-        for kind in PluginKind:
-            group = [r for r in records if r.manifest.kind == kind]
+        for kind in PLUGIN_KIND_DISPLAY_ORDER:
+            group = [
+                record
+                for record in records
+                if record.manifest.kind == kind and record.manifest.settings_scope == SettingsScope.PAGE
+            ]
             if not group:
                 continue
             section = SettingSection(tr(f"plugin.kind.{kind.value}"), self.view)
@@ -240,6 +254,10 @@ class HomePage(ScrollPage):
         self.overlayCard.setValue(tr(key))
 
     def _update_plugin_status(self, _changed_id: str = "") -> None:
-        records = self._plugins.records()
-        active = sum(r.state == PluginState.ACTIVE for r in records)
+        records = [
+            record
+            for record in self._plugins.records()
+            if record.manifest.settings_scope == SettingsScope.PAGE
+        ]
+        active = sum(record.state == PluginState.ACTIVE for record in records)
         self.pluginCard.setValue(tr("home.status.plugins_value", active=active, total=len(records)))

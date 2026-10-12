@@ -1,0 +1,8 @@
+plugin:
+  name: 输入与快捷键
+  description: 集中管理功能插件注册的全局快捷键。
+settings:
+  title: 输入设置
+  listener:
+    title: 启用全局键盘监听
+    content: 需要系统允许应用监听全局输入；关闭后仍可使用测试注入接口。

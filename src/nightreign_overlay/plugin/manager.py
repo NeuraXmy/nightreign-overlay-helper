@@ -173,7 +173,13 @@ class PluginManager(QObject):
 
     def is_enabled(self, plugin_id: str) -> bool:
         record = self._records[plugin_id]
-        return self._config.enabled.value.get(plugin_id, record.manifest.default_enabled)
+        if record.manifest.kind == PluginKind.INFRASTRUCTURE:
+            return True
+        return self._config.enabled.value.get(plugin_id, record.manifest.initial_enabled)
+
+    def is_user_toggleable(self, plugin_id: str) -> bool:
+        """Whether a user may enable or disable this plugin from the interface."""
+        return self._records[plugin_id].manifest.kind != PluginKind.INFRASTRUCTURE
 
     def is_active(self, plugin_id: str) -> bool:
         record = self._records.get(plugin_id)
@@ -206,10 +212,15 @@ class PluginManager(QObject):
     # -- user actions -------------------------------------------------------------------------
 
     def set_enabled(self, plugin_id: str, enabled: bool) -> list[str]:
-        """Enable / disable a plugin together with its requirements / dependents.
+        """Enable / disable a user-controllable plugin together with its requirements / dependents.
 
         Returns the ids of *other* plugins whose enabled state changed as a side effect.
+        Infrastructure plugins are always managed by the application and cannot be disabled through this
+        user-action entrypoint.
         """
+        if not self.is_user_toggleable(plugin_id):
+            log.info("Ignored user toggle for managed infrastructure plugin %s", plugin_id)
+            return []
         chain = self.requirements_of(plugin_id) if enabled else self.dependents_of(plugin_id)
         if enabled and any(self._records[p].state == PluginState.UNAVAILABLE for p in chain):
             log.warning("Cannot enable %s: a requirement is unavailable", plugin_id)
