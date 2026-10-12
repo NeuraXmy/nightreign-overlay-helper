@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.common import get_data_path
 from src.logger import warning, debug
-from src.screencap import ScreencapEngine
+from src.screencap import ScreencapEngine, ScreencapRuntimeError
 
 
 def hls_to_rgb(hls: tuple[int, int, int]) -> tuple[int, int, int]:
@@ -159,16 +159,24 @@ def grab_region(engine: ScreencapEngine, region: tuple[int, int, int, int], proc
     full_img = engine.grab_fullscreen()
     full_array = np.array(full_img)
 
+    def crop(y0: int, x0: int) -> Image.Image:
+        sub = full_array[y0:y0 + h, x0:x0 + w]
+        if sub.size == 0 or sub.shape[0] != h or sub.shape[1] != w:
+            raise ScreencapRuntimeError(
+                "grab_failed",
+                f"Captured frame {full_array.shape[1]}x{full_array.shape[0]} "
+                f"cannot contain region {region}",
+            )
+        return _apply_processing(Image.fromarray(sub), processing, region)
+
     monitors = get_monitors()
     if not monitors:
-        cropped = full_array[y:y + h, x:x + w]
-        return _apply_processing(Image.fromarray(cropped), processing, region)
+        return crop(y, x)
 
     for monitor in monitors[1:]:
         if (monitor["left"] <= x < monitor["left"] + monitor["width"] and
                 monitor["top"] <= y < monitor["top"] + monitor["height"]):
-            cropped = full_array[y:y + h, x:x + w]
-            return _apply_processing(Image.fromarray(cropped), processing, region)
+            return crop(y, x)
 
     main_screen = monitors[1]
     abs_x = x + main_screen["left"]
@@ -177,12 +185,10 @@ def grab_region(engine: ScreencapEngine, region: tuple[int, int, int, int], proc
     for monitor in monitors[1:]:
         if (monitor["left"] <= abs_x < monitor["left"] + monitor["width"] and
                 monitor["top"] <= abs_y < monitor["top"] + monitor["height"]):
-            cropped = full_array[abs_y:abs_y + h, abs_x:abs_x + w]
-            return _apply_processing(Image.fromarray(cropped), processing, region)
+            return crop(abs_y, abs_x)
 
     warning(f"Region {region} could not be mapped to any screen. Using fallback method.")
-    cropped = full_array[abs_y:abs_y + h, abs_x:abs_x + w]
-    return _apply_processing(Image.fromarray(cropped), processing, region)
+    return crop(abs_y, abs_x)
 
 
 DEFAULT_FONT_PATH = get_data_path("fonts/SourceHanSansSC-Normal.otf")

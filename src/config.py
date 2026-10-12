@@ -54,7 +54,7 @@ class Config:
     map_overlay_draw_size_ratio: float | None
     full_map_hough_circle_thres: list[int]
     full_map_error_threshold: float
-    earth_shifting_error_threshold: float
+    earth_shifting_min_matches: int
     map_pattern_match_interval: float
     subicon_template_match_threshold: float
     poi_match_sample_ratio_w_nightlord: float

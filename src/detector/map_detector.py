@@ -10,7 +10,7 @@ import random
 import gc
 
 from src.config import Config
-from src.logger import info, warning, error, debug
+from src.logger import info, warning, error, debug, is_debug_enabled
 from src.common import get_appdata_path, get_data_path
 from src.detector.map_info import (
     load_map_info, 
@@ -54,17 +54,13 @@ def open_cv2_image(path: str, size: tuple[int, int] | None = None) -> np.ndarray
 
 CHECK_FULL_MAP_STD_SIZE = (100, 100)
 
-MATCH_EARTH_SHIFTING_SIZE = (100, 100)
-MATCH_EARTH_SHIFTING_REGION = (
-    int(MATCH_EARTH_SHIFTING_SIZE[0] * 0.2),
-    int(MATCH_EARTH_SHIFTING_SIZE[1] * 0.2),
-    int(MATCH_EARTH_SHIFTING_SIZE[0] * 0.6),
-    int(MATCH_EARTH_SHIFTING_SIZE[1] * 0.6),
-)
-MATCH_EARTH_SHIFTING_OFFSET_AND_STRIDE = (5, 1)
-MATCH_EARTH_SHIFTING_SCALES = (0.95, 1.05, 7)
-
 MAP_BGS = { i : open_cv2_image(f"maps/{i}.jpg") for i in range(6) }
+
+# 地形识别：用 SIFT 特征点匹配数量判断地图底图（对颜色/亮度不敏感，
+# 且能有效区分 大空洞 与普通地形，避免被色彩差异误导）
+MATCH_EARTH_SHIFTING_SIFT_SIZE = (750, 750)
+MATCH_EARTH_SHIFTING_MASK_RATIO = 0.46
+
 MAG_BG_FOR_POI_MATCH_INDEX_MAP = {
     # 除了大空洞，其他使用普通地图背景进行POI匹配（因为特殊地形内不会匹配，所以没有问题）
     0: 0, 1: 0, 2: 0, 3: 0, 4: 4, 5: 0,
@@ -260,6 +256,15 @@ class MapDetector:
             get_data_path('csv/positions.csv'),
         )
 
+        # 初始化地形识别用的SIFT特征
+        self.sift = cv2.SIFT_create()
+        self.map_bg_sift: dict[int, tuple] = {}
+        for map_id, map_img in MAP_BGS.items():
+            resized = cv2.resize(map_img, MATCH_EARTH_SHIFTING_SIFT_SIZE, interpolation=CV2_RESIZE_METHOD)
+            gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
+            self.map_bg_sift[map_id] = self.sift.detectAndCompute(gray, None)
+        self.bf_matcher = cv2.BFMatcher()
+
         # 初始化POI信息
         all_poi_construct_types = set()
         for es in self.info.all_earth_shiftings:
@@ -345,32 +350,30 @@ class MapDetector:
         debug(f"MapDetector: Full map match error: {error:.4f}")
         return error
     
-    def _match_earth_shifting(self, img: np.ndarray) -> tuple[int, float]:
+    def _match_earth_shifting(self, img: np.ndarray) -> tuple[int, int]:
         t = time.time()
-        img = cv2.resize(img, MATCH_EARTH_SHIFTING_SIZE, interpolation=CV2_RESIZE_METHOD)
-        x, y, w, h = MATCH_EARTH_SHIFTING_REGION
-        img = img[y:y+h, x:x+w].astype(int)
-        best_map_id, best_score = None, float('inf')
-        offset, stride = MATCH_EARTH_SHIFTING_OFFSET_AND_STRIDE
-        min_scale, max_scale, scale_num = MATCH_EARTH_SHIFTING_SCALES
-        for map_id, map_img in MAP_BGS.items():
-            score = float('inf')
-            for scale in np.linspace(min_scale, max_scale, scale_num, endpoint=True):
-                size = (int(MATCH_EARTH_SHIFTING_SIZE[0] * scale), int(MATCH_EARTH_SHIFTING_SIZE[1] * scale))
-                map_resized = cv2.resize(map_img, size, interpolation=CV2_RESIZE_METHOD).astype(int)
-                for dx in range(-offset, offset+1, stride):
-                    for dy in range(-offset, offset+1, stride):
-                        map_shifted = map_resized[y+dy:y+h+dy, x+dx:x+w+dx]
-                        diff = np.abs((img - map_shifted))
-                        diff[diff > 100] = 0
-                        diff = np.linalg.norm(diff, axis=2)
-                        cur_score = np.median(diff)
-                        score = min(score, cur_score)
-            # print(f"map {map_id} score: {score:.4f}")
-            if score < best_score:
+        img = cv2.resize(img, MATCH_EARTH_SHIFTING_SIFT_SIZE, interpolation=CV2_RESIZE_METHOD)
+        w, h = MATCH_EARTH_SHIFTING_SIFT_SIZE
+        # 屏蔽地图圆形区域外的游戏画面，避免干扰特征匹配
+        mask = np.zeros((h, w), np.uint8)
+        cv2.circle(mask, (w // 2, h // 2), int(min(w, h) * MATCH_EARTH_SHIFTING_MASK_RATIO), 255, -1)
+        img = img.copy()
+        img[mask == 0] = 0
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        _, des = self.sift.detectAndCompute(gray, None)
+
+        best_map_id, best_score = None, -1
+        for map_id, (_, ref_des) in self.map_bg_sift.items():
+            if des is None or ref_des is None:
+                score = 0
+            else:
+                matches = self.bf_matcher.knnMatch(des, ref_des, k=2)
+                score = sum(1 for m, n in matches if m.distance < 0.75 * n.distance)
+            # print(f"map {map_id} matches: {score}")
+            if score > best_score:
                 best_score = score
                 best_map_id = map_id
-        info(f"MapDetector: Match earth shifting: best map {best_map_id} score {best_score:.4f}, time cost: {time.time() - t:.4f}s")
+        info(f"MapDetector: Match earth shifting: best map {best_map_id} matches {best_score}, time cost: {time.time() - t:.4f}s")
         return best_map_id, best_score
     
     def _match_nightlord(self, img: np.ndarray) -> tuple[int | None, float]:
@@ -895,13 +898,21 @@ class MapDetector:
 
         # 判断是否是全图
         if param.do_match_full_map:
+            if is_debug_enabled():
+                try:
+                    cv2.imwrite(
+                        get_appdata_path("debug_map_input.jpg"),
+                        cv2.cvtColor(img, cv2.COLOR_RGB2BGR),
+                    )
+                except Exception:
+                    pass
             full_map_error = self._match_full_map(img)
             ret.is_full_map = full_map_error <= config.full_map_error_threshold
 
         # 判断特殊地形
         if param.do_match_earth_shifting:
             earth_shifting, earth_shifting_score = self._match_earth_shifting(img)
-            if earth_shifting_score > config.earth_shifting_error_threshold:
+            if earth_shifting_score < config.earth_shifting_min_matches:
                 earth_shifting = None
             ret.earth_shifting = earth_shifting
             ret.earth_shifting_score = earth_shifting_score
