@@ -1,0 +1,142 @@
+common:
+  "on": 开
+  "off": 关
+
+nav:
+  home: 主页
+  settings: 设置
+  about: 关于
+
+home:
+  subtitle: 《艾尔登法环 黑夜君临》悬浮窗辅助工具
+  version: "版本 {version}"
+  status:
+    title: 运行状态
+    game: 游戏窗口
+    game_unsupported: 当前平台不支持检测（视为前台）
+    game_foreground: 位于前台
+    game_background: 未在前台
+    overlay: 悬浮窗显示方式
+    overlay_transparent: 透明悬浮窗
+    overlay_window: 普通窗口（兼容模式）
+    plugins: 功能
+    plugins_value: "{active} / {total} 个运行中"
+  plugins:
+    title: 功能
+    empty: 还没有安装任何功能插件。
+
+plugin:
+  kind:
+    infrastructure: 基础组件
+    feature: 功能
+    debug: 调试工具
+  state:
+    active: 运行中
+    inactive: 未启用
+    failed: "启动失败：{error}"
+    unavailable: "不可用：缺少依赖 {plugins}"
+    circular: 不可用：存在循环依赖
+  cascade:
+    enabled: "已同时启用依赖的功能：{plugins}"
+    disabled: "已同时停用依赖它的功能：{plugins}"
+
+plugin_page:
+  tab:
+    settings: 设置
+    tutorial: 教程
+  no_settings: 该功能没有可调整的选项。
+  no_tutorial: 该功能暂无教程。
+
+settings:
+  title: 设置
+  open: 打开
+  appearance:
+    title: 个性化
+  language:
+    title: 语言
+    content: 界面显示语言，修改后需要重启生效
+    auto: 跟随系统
+  theme:
+    title: 主题
+    content: 主界面的明暗主题
+    dark: 深色
+    light: 浅色
+    auto: 跟随系统
+  theme_color:
+    title: 主题色
+    content: 主界面的强调色
+  overlay:
+    title: 悬浮窗
+  overlay_mode:
+    title: 悬浮窗显示方式
+    content: 透明悬浮窗显示异常时，可切换为普通窗口
+    auto: 自动
+    overlay: 透明悬浮窗
+    window: 普通窗口
+  behavior:
+    title: 行为
+  close_to_tray:
+    title: 关闭时最小化到托盘
+    content: 关闭主界面后程序在系统托盘中继续运行
+  start_minimized:
+    title: 启动时最小化
+    content: 启动后不显示主界面，只显示托盘图标
+  advanced:
+    title: 高级
+  log_level:
+    title: 日志级别
+    content: 反馈问题时建议设置为 DEBUG
+  data_dir:
+    title: 数据目录
+  log_dir:
+    title: 日志目录
+  restart:
+    title: 需要重启
+    content: 重启后语言设置才会生效。
+    button: 立即重启
+
+about:
+  project:
+    title: 项目
+    repo_button: 访问仓库
+    repo_content: "版本 {version} · 开源项目，欢迎 Star"
+    feedback_title: 问题反馈
+    feedback_content: 遇到问题或有建议？欢迎提交 Issue
+    feedback_button: 提交反馈
+  credits:
+    title: 致谢
+    visit: 访问
+    fuwish: 地图解包数据支持
+    quexuan: 大空洞水晶布局分享
+    steam_p2p_info: P2P 连接查询与 ETW 延迟测量思路（MIT 许可）
+    fluent_widgets: Fluent Design 风格界面组件库
+
+tray:
+  show: 显示主界面
+  quit: 退出
+  hidden_hint: 程序已最小化到托盘，可在设置中关闭此行为。
+
+overlay:
+  menu:
+    reset_position: 重置位置
+    click_through: 开启鼠标穿透
+    open_main_window: 打开主界面
+
+overlay_settings:
+  title: 悬浮窗
+  opacity:
+    title: 不透明度
+    content: 悬浮窗整体的不透明度
+  scale:
+    title: 缩放
+    content: 悬浮窗内容的大小
+  click_through:
+    title: 鼠标穿透
+    content: 开启后鼠标操作会穿过悬浮窗（仅透明悬浮窗模式有效），需在此处关闭
+  only_when_game_foreground:
+    title: 仅在游戏位于前台时显示
+    content: 切换到其他窗口时自动隐藏（仅透明悬浮窗模式有效）
+  reset_position:
+    title: 重置位置
+    content: 将悬浮窗移回屏幕顶部中央
+    button: 重置

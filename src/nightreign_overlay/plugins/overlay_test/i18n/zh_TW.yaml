@@ -1,0 +1,30 @@
+plugin:
+  name: 懸浮窗測試
+  description: 一個獨立的示範懸浮窗，用於檢查拖曳、縮放、透明度、滑鼠穿透與視窗模式等基礎功能
+
+overlay:
+  title: 懸浮窗測試
+  countdown: "倒數 {seconds} 秒"
+  game_unknown: 遊戲：未偵測
+  game_foreground: 遊戲：前景
+  game_background: 遊戲：背景
+  mode_transparent: 透明懸浮窗
+  mode_window: 一般視窗
+
+settings:
+  content:
+    title: 測試內容
+  cycle_seconds:
+    title: 倒數週期
+    content: 倒數歸零後自動重新開始
+    value: "{seconds} 秒"
+  accent_color:
+    title: 強調色
+    content: 標題與進度條的顏色
+  show_background:
+    title: 顯示背景面板
+    content: 關閉後只繪製文字與進度條，用於檢查透明背景
+  restart:
+    title: 重新開始倒數
+    content: 透過服務註冊表呼叫本外掛提供的 OverlayTestApi
+    button: 重新開始

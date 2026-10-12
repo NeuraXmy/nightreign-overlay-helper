@@ -1,0 +1,142 @@
+common:
+  "on": 開
+  "off": 關
+
+nav:
+  home: 主頁
+  settings: 設定
+  about: 關於
+
+home:
+  subtitle: 《艾爾登法環 黑夜君臨》懸浮窗輔助工具
+  version: "版本 {version}"
+  status:
+    title: 執行狀態
+    game: 遊戲視窗
+    game_unsupported: 目前平台不支援偵測（視為前景）
+    game_foreground: 位於前景
+    game_background: 不在前景
+    overlay: 懸浮窗顯示方式
+    overlay_transparent: 透明懸浮窗
+    overlay_window: 一般視窗（相容模式）
+    plugins: 功能
+    plugins_value: "{active} / {total} 個執行中"
+  plugins:
+    title: 功能
+    empty: 尚未安裝任何功能外掛。
+
+plugin:
+  kind:
+    infrastructure: 基礎元件
+    feature: 功能
+    debug: 除錯工具
+  state:
+    active: 執行中
+    inactive: 未啟用
+    failed: "啟動失敗：{error}"
+    unavailable: "無法使用：缺少相依 {plugins}"
+    circular: 無法使用：存在循環相依
+  cascade:
+    enabled: "已同時啟用相依的功能：{plugins}"
+    disabled: "已同時停用相依於它的功能：{plugins}"
+
+plugin_page:
+  tab:
+    settings: 設定
+    tutorial: 教學
+  no_settings: 此功能沒有可調整的選項。
+  no_tutorial: 此功能暫無教學。
+
+settings:
+  title: 設定
+  open: 開啟
+  appearance:
+    title: 個人化
+  language:
+    title: 語言
+    content: 介面顯示語言，修改後需要重新啟動才會生效
+    auto: 跟隨系統
+  theme:
+    title: 主題
+    content: 主介面的明暗主題
+    dark: 深色
+    light: 淺色
+    auto: 跟隨系統
+  theme_color:
+    title: 主題色
+    content: 主介面的強調色
+  overlay:
+    title: 懸浮窗
+  overlay_mode:
+    title: 懸浮窗顯示方式
+    content: 透明懸浮窗顯示異常時，可切換為一般視窗
+    auto: 自動
+    overlay: 透明懸浮窗
+    window: 一般視窗
+  behavior:
+    title: 行為
+  close_to_tray:
+    title: 關閉時最小化至系統匣
+    content: 關閉主介面後程式會在系統匣中繼續執行
+  start_minimized:
+    title: 啟動時最小化
+    content: 啟動後不顯示主介面，只顯示系統匣圖示
+  advanced:
+    title: 進階
+  log_level:
+    title: 日誌層級
+    content: 回報問題時建議設為 DEBUG
+  data_dir:
+    title: 資料目錄
+  log_dir:
+    title: 日誌目錄
+  restart:
+    title: 需要重新啟動
+    content: 重新啟動後語言設定才會生效。
+    button: 立即重新啟動
+
+about:
+  project:
+    title: 專案
+    repo_button: 前往儲存庫
+    repo_content: "版本 {version} · 開源專案，歡迎 Star"
+    feedback_title: 問題回報
+    feedback_content: 遇到問題或有建議？歡迎提交 Issue
+    feedback_button: 提交回報
+  credits:
+    title: 致謝
+    visit: 前往
+    fuwish: 地圖解包資料支援
+    quexuan: 大空洞水晶配置分享
+    steam_p2p_info: P2P 連線查詢與 ETW 延遲量測思路（MIT 授權）
+    fluent_widgets: Fluent Design 風格介面元件庫
+
+tray:
+  show: 顯示主介面
+  quit: 結束
+  hidden_hint: 程式已最小化至系統匣，可在設定中關閉此行為。
+
+overlay:
+  menu:
+    reset_position: 重設位置
+    click_through: 開啟滑鼠穿透
+    open_main_window: 開啟主介面
+
+overlay_settings:
+  title: 懸浮窗
+  opacity:
+    title: 不透明度
+    content: 懸浮窗整體的不透明度
+  scale:
+    title: 縮放
+    content: 懸浮窗內容的大小
+  click_through:
+    title: 滑鼠穿透
+    content: 開啟後滑鼠操作會穿過懸浮窗（僅透明懸浮窗模式有效），需在此處關閉
+  only_when_game_foreground:
+    title: 僅在遊戲位於前景時顯示
+    content: 切換到其他視窗時自動隱藏（僅透明懸浮窗模式有效）
+  reset_position:
+    title: 重設位置
+    content: 將懸浮窗移回螢幕頂部中央
+    button: 重設
