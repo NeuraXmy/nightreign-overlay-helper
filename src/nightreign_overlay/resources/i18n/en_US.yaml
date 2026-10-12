@@ -1,0 +1,142 @@
+common:
+  "on": "On"
+  "off": "Off"
+
+nav:
+  home: Home
+  settings: Settings
+  about: About
+
+home:
+  subtitle: Overlay toolkit for ELDEN RING NIGHTREIGN
+  version: "Version {version}"
+  status:
+    title: Status
+    game: Game window
+    game_unsupported: Detection not supported here (assumed focused)
+    game_foreground: In foreground
+    game_background: Not in foreground
+    overlay: Overlay presentation
+    overlay_transparent: Transparent overlay
+    overlay_window: Regular window (compatibility)
+    plugins: Features
+    plugins_value: "{active} / {total} running"
+  plugins:
+    title: Features
+    empty: No feature plugins are installed yet.
+
+plugin:
+  kind:
+    infrastructure: Components
+    feature: Features
+    debug: Debug tools
+  state:
+    active: Running
+    inactive: Disabled
+    failed: "Failed to start: {error}"
+    unavailable: "Unavailable: missing {plugins}"
+    circular: "Unavailable: circular dependency"
+  cascade:
+    enabled: "Also enabled required features: {plugins}"
+    disabled: "Also disabled dependent features: {plugins}"
+
+plugin_page:
+  tab:
+    settings: Settings
+    tutorial: Tutorial
+  no_settings: This feature has no options.
+  no_tutorial: No tutorial is available for this feature yet.
+
+settings:
+  title: Settings
+  open: Open
+  appearance:
+    title: Personalization
+  language:
+    title: Language
+    content: Interface language; takes effect after a restart
+    auto: Use system setting
+  theme:
+    title: Theme
+    content: Light or dark appearance of the main window
+    dark: Dark
+    light: Light
+    auto: Use system setting
+  theme_color:
+    title: Accent color
+    content: Accent color of the main window
+  overlay:
+    title: Overlays
+  overlay_mode:
+    title: Overlay presentation
+    content: Switch to regular windows if transparent overlays render incorrectly
+    auto: Automatic
+    overlay: Transparent overlay
+    window: Regular window
+  behavior:
+    title: Behavior
+  close_to_tray:
+    title: Minimize to tray on close
+    content: Keep running in the system tray after closing the main window
+  start_minimized:
+    title: Start minimized
+    content: Only show the tray icon on startup
+  advanced:
+    title: Advanced
+  log_level:
+    title: Log level
+    content: Use DEBUG when reporting a problem
+  data_dir:
+    title: Data directory
+  log_dir:
+    title: Log directory
+  restart:
+    title: Restart required
+    content: The new language is applied after a restart.
+    button: Restart now
+
+about:
+  project:
+    title: Project
+    repo_button: Open repository
+    repo_content: "Version {version} · open source, stars welcome"
+    feedback_title: Feedback
+    feedback_content: Found a bug or have an idea? Open an issue
+    feedback_button: Give feedback
+  credits:
+    title: Credits
+    visit: Visit
+    fuwish: Map data extraction
+    quexuan: Great Hollow crystal layouts
+    steam_p2p_info: P2P connection query and ETW latency concepts (MIT)
+    fluent_widgets: Fluent Design widget library
+
+tray:
+  show: Show main window
+  quit: Quit
+  hidden_hint: Still running in the system tray. You can change this in Settings.
+
+overlay:
+  menu:
+    reset_position: Reset position
+    click_through: Enable click-through
+    open_main_window: Open main window
+
+overlay_settings:
+  title: Overlay
+  opacity:
+    title: Opacity
+    content: Overall opacity of the overlay
+  scale:
+    title: Scale
+    content: Size of the overlay content
+  click_through:
+    title: Click-through
+    content: Mouse input passes through the overlay (transparent mode only); turn it off here
+  only_when_game_foreground:
+    title: Only show while the game is focused
+    content: Hide automatically when another window is active (transparent mode only)
+  reset_position:
+    title: Reset position
+    content: Move the overlay back to the top centre of the screen
+    button: Reset

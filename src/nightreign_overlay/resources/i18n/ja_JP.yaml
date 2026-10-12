@@ -1,0 +1,142 @@
+common:
+  "on": オン
+  "off": オフ
+
+nav:
+  home: ホーム
+  settings: 設定
+  about: 情報
+
+home:
+  subtitle: 『ELDEN RING NIGHTREIGN』オーバーレイ支援ツール
+  version: "バージョン {version}"
+  status:
+    title: 状態
+    game: ゲームウィンドウ
+    game_unsupported: この環境では検出非対応（前面とみなす）
+    game_foreground: 前面
+    game_background: 背面
+    overlay: オーバーレイ表示方式
+    overlay_transparent: 透過オーバーレイ
+    overlay_window: 通常ウィンドウ（互換モード）
+    plugins: 機能
+    plugins_value: "{active} / {total} 実行中"
+  plugins:
+    title: 機能
+    empty: 機能プラグインはまだインストールされていません。
+
+plugin:
+  kind:
+    infrastructure: 基盤コンポーネント
+    feature: 機能
+    debug: デバッグツール
+  state:
+    active: 実行中
+    inactive: 無効
+    failed: "起動失敗：{error}"
+    unavailable: "利用不可：依存 {plugins} がありません"
+    circular: 利用不可：循環依存があります
+  cascade:
+    enabled: "依存する機能も有効にしました：{plugins}"
+    disabled: "この機能に依存する機能も無効にしました：{plugins}"
+
+plugin_page:
+  tab:
+    settings: 設定
+    tutorial: チュートリアル
+  no_settings: この機能には設定項目がありません。
+  no_tutorial: この機能のチュートリアルはまだありません。
+
+settings:
+  title: 設定
+  open: 開く
+  appearance:
+    title: 個人用設定
+  language:
+    title: 言語
+    content: 表示言語（再起動後に反映されます）
+    auto: システムに従う
+  theme:
+    title: テーマ
+    content: メインウィンドウのライト／ダーク表示
+    dark: ダーク
+    light: ライト
+    auto: システムに従う
+  theme_color:
+    title: アクセントカラー
+    content: メインウィンドウの強調色
+  overlay:
+    title: オーバーレイ
+  overlay_mode:
+    title: オーバーレイ表示方式
+    content: 透過オーバーレイが正しく表示されない場合は通常ウィンドウに切り替えてください
+    auto: 自動
+    overlay: 透過オーバーレイ
+    window: 通常ウィンドウ
+  behavior:
+    title: 動作
+  close_to_tray:
+    title: 閉じるとトレイに格納
+    content: メインウィンドウを閉じてもシステムトレイで動作を続けます
+  start_minimized:
+    title: 最小化して起動
+    content: 起動時はトレイアイコンのみ表示します
+  advanced:
+    title: 詳細設定
+  log_level:
+    title: ログレベル
+    content: 不具合報告の際は DEBUG を推奨します
+  data_dir:
+    title: データフォルダー
+  log_dir:
+    title: ログフォルダー
+  restart:
+    title: 再起動が必要です
+    content: 言語設定は再起動後に反映されます。
+    button: 今すぐ再起動
+
+about:
+  project:
+    title: プロジェクト
+    repo_button: リポジトリを開く
+    repo_content: "バージョン {version} · オープンソース、Star 歓迎"
+    feedback_title: フィードバック
+    feedback_content: 不具合や要望は Issue でお知らせください
+    feedback_button: フィードバック
+  credits:
+    title: 謝辞
+    visit: 開く
+    fuwish: マップ解析データの提供
+    quexuan: 大空洞クリスタル配置の共有
+    steam_p2p_info: P2P 接続照会と ETW 遅延計測の手法（MIT ライセンス）
+    fluent_widgets: Fluent Design ウィジェットライブラリ
+
+tray:
+  show: メインウィンドウを表示
+  quit: 終了
+  hidden_hint: システムトレイで動作中です。この動作は設定で変更できます。
+
+overlay:
+  menu:
+    reset_position: 位置をリセット
+    click_through: クリック透過を有効にする
+    open_main_window: メインウィンドウを開く
+
+overlay_settings:
+  title: オーバーレイ
+  opacity:
+    title: 不透明度
+    content: オーバーレイ全体の不透明度
+  scale:
+    title: 拡大率
+    content: オーバーレイの表示サイズ
+  click_through:
+    title: クリック透過
+    content: マウス操作がオーバーレイを通過します（透過モードのみ）。解除はここで行います
+  only_when_game_foreground:
+    title: ゲームが前面のときのみ表示
+    content: 他のウィンドウに切り替えると自動で非表示にします（透過モードのみ）
+  reset_position:
+    title: 位置をリセット
+    content: オーバーレイを画面上部中央に戻します
+    button: リセット

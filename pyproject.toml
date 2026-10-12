@@ -1,22 +1,63 @@
 [project]
 name = "nightreign-overlay-helper"
-version = "0.10.8.dev1"
-description = "Nightreign Overlay Helper is a utility program developed with PyQt6, designed to display various useful information and features while playing the game."
+dynamic = ["version"]
+description = "An overlay helper for ELDEN RING NIGHTREIGN, built with PyQt6 and PyQt-Fluent-Widgets."
 readme = "README.md"
-requires-python = ">=3.13"
+license = { text = "AGPL-3.0-only" }
+authors = [{ name = "NeuraXmy" }]
+requires-python = ">=3.11"
 dependencies = [
-    "numpy>=2",
-    "opencv-python>=5",
-    "pillow>=12",
+    "PyQt6>=6.7",
+    "PyQt6-Fluent-Widgets>=1.11,<1.12",
     "platformdirs>=4",
-    "pygame>=2",
-    "pyinstaller>=6",
-    "pynput>=1",
-    "pyqt6>=6",
-    "pywin32>=312",
     "pyyaml>=6",
 ]
+
+[project.scripts]
+nightreign-overlay-helper = "nightreign_overlay.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/nightreign_overlay/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nightreign_overlay"]
 
 [[tool.uv.index]]
 url = "https://mirrors.cloud.tencent.com/pypi/simple/"
 default = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = [".tmp"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "N", "RUF"]
+ignore = [
+    "N802",   # Qt overrides such as paintEvent / closeEvent use camelCase
+    "N815",   # Qt signals use camelCase (valueChanged) to match Qt conventions
+    "RUF001", # full-width punctuation is expected in Chinese strings
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["nightreign_overlay"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
