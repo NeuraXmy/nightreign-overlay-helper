@@ -27,9 +27,20 @@ jobs:
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v10.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
         
       - name: Install dependency
         run: uv sync
+
+      - name: Build teammate latency helper
+        shell: pwsh
+        run: |
+          dotnet restore native/NightreignP2PHelper/NightreignP2PHelper.csproj --locked-mode
+          dotnet publish native/NightreignP2PHelper/NightreignP2PHelper.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o build/NightreignP2PHelper --no-restore
 
       - name: Verify project version matches tag
         if: startsWith(github.ref, 'refs/tags/v')
@@ -38,7 +49,7 @@ jobs:
           uv run python scripts/ci_version.py --tag "${{ github.ref_name }}" --file pyproject.toml --check --set-github-env
         
       - name: Build with PyInstaller
-        run: uv run pyinstaller --name "nightreign-overlay-helper" --windowed --onefile --distpath "dist\nightreign-overlay-helper" --icon="assets\icon.ico" --add-data "pyproject.toml;." --add-binary "native\MaaWin32Screencap.dll;native" src\app.py
+        run: uv run pyinstaller --noconfirm --clean --distpath "dist\nightreign-overlay-helper" --workpath "build\pyinstaller" nightreign-overlay-helper.spec
 
       - name: Verify build artifact contains native DLL
         shell: pwsh
@@ -53,6 +64,13 @@ jobs:
             Write-Error "MaaWin32Screencap.dll signature not found in build artifact. Check --add-binary parameter."
             exit 1
           }
+          $archiveListing = uv run pyi-archive_viewer -l $exe
+          $foreignRootIcu = $archiveListing | Select-String -Pattern "'b', 'icu(?:uc|in|dt.*)\.dll'"
+          if ($foreignRootIcu) {
+            Write-Error "Foreign ICU DLL found at archive root; this breaks PyQt6.QtCore on clean machines."
+            $foreignRootIcu | ForEach-Object { Write-Error $_.Line }
+            exit 1
+          }
           Write-Host "Build artifact verified: contains MaaWin32Screencap.dll."
         
       - name: Copy additional files
@@ -61,6 +79,31 @@ jobs:
           xcopy /E /I /Y "data" "dist\nightreign-overlay-helper\data"
           copy "manual.txt" "dist\nightreign-overlay-helper\manual.txt"
           copy "config.yaml" "dist\nightreign-overlay-helper\config.yaml"
+          New-Item -ItemType Directory -Force "dist\nightreign-overlay-helper\bin" | Out-Null
+          New-Item -ItemType Directory -Force "dist\nightreign-overlay-helper\third-party" | Out-Null
+          Copy-Item "build\NightreignP2PHelper\NightreignP2PHelper.exe" "dist\nightreign-overlay-helper\bin\NightreignP2PHelper.exe"
+          Copy-Item "build\NightreignP2PHelper\amd64" "dist\nightreign-overlay-helper\bin\amd64" -Recurse -Force
+          Copy-Item "native\licenses" "dist\nightreign-overlay-helper\third-party\licenses" -Recurse -Force
+          Copy-Item "native\THIRD-PARTY-NOTICES.txt" "dist\nightreign-overlay-helper\third-party\THIRD-PARTY-NOTICES.txt" -Force
+
+      - name: Verify teammate latency package
+        shell: pwsh
+        run: |
+          $requiredFiles = @(
+            "dist\nightreign-overlay-helper\bin\NightreignP2PHelper.exe",
+            "dist\nightreign-overlay-helper\bin\amd64\KernelTraceControl.dll",
+            "dist\nightreign-overlay-helper\bin\amd64\msdia140.dll",
+            "dist\nightreign-overlay-helper\third-party\THIRD-PARTY-NOTICES.txt"
+          )
+          foreach ($requiredFile in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
+              throw "Missing teammate latency release file: $requiredFile"
+            }
+          }
+          'shutdown' | & "dist\nightreign-overlay-helper\bin\NightreignP2PHelper.exe"
+          if ($LASTEXITCODE -ne 0) {
+            throw "NightreignP2PHelper smoke test failed with exit code $LASTEXITCODE"
+          }
           
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7.0.1

@@ -221,8 +221,17 @@ build/
 dist/
 sandbox/
 *.spec
+!nightreign-overlay-helper.spec
 uv.lock
 
 .vscode/
 
 justfile
+
+# .NET helper build outputs
+**/[Bb]in/
+**/[Oo]bj/
+
+# Local-only tests
+/tests/
+/native/NightreignP2PHelper.Tests/

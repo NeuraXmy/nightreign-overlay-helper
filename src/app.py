@@ -11,8 +11,10 @@ from src.ui.input import InputWorker
 from src.ui.overlay import OverlayWidget
 from src.ui.map_overlay import MapOverlayWidget
 from src.ui.hp_overlay import HpOverlayWidget
+from src.ui.p2p_overlay import P2POverlayUIState, P2POverlayWidget
 from src.ui.settings import SettingsWindow
 from src.ui.admin_prompt import show_admin_prompt
+from src.p2p import P2PService
 from src.updater import Updater
 from src.common import APP_FULLNAME, APP_VERSION, ICON_PATH
 from src.logger import info, warning, error
@@ -69,9 +71,16 @@ if __name__ == "__main__":
     overlay = OverlayWidget()
     map_overlay = MapOverlayWidget()
     hp_overlay = HpOverlayWidget()
+    p2p_overlay = P2POverlayWidget()
+    p2p_service = P2PService()
+    p2p_service.status_changed.connect(p2p_overlay.set_status)
+    p2p_service.peers_changed.connect(p2p_overlay.set_peers)
 
     updater = Updater(input, overlay, map_overlay, hp_overlay)
-    settings_window = SettingsWindow(overlay, map_overlay, updater, input)
+    updater.game_foreground_changed.connect(p2p_overlay.set_game_foreground)
+    settings_window = SettingsWindow(
+        overlay, map_overlay, updater, input, p2p_overlay, p2p_service
+    )
     
     # 创建系统托盘图标和菜单
     tray_icon = QSystemTrayIcon()
@@ -100,16 +109,20 @@ if __name__ == "__main__":
     def on_menu_show():
         overlay.is_menu_opened = True
         map_overlay.is_menu_opened = True
+        p2p_overlay.update_ui_state(P2POverlayUIState(is_menu_opened=True))
         updater.is_menu_opened = True
         # info("Menu opened")
     def on_menu_hide():
         overlay.is_menu_opened = False
         map_overlay.is_menu_opened = False
+        p2p_overlay.update_ui_state(P2POverlayUIState(is_menu_opened=False))
         updater.is_menu_opened = False
         # info("Menu closed")
 
     overlay.right_click_signal.connect(show_menu_at_cursor_pos)
     overlay.right_click_signal.connect(on_menu_show)
+    p2p_overlay.right_click_signal.connect(show_menu_at_cursor_pos)
+    p2p_overlay.right_click_signal.connect(on_menu_show)
     menu.aboutToShow.connect(on_menu_show)
     menu.aboutToHide.connect(on_menu_hide)
 
@@ -125,9 +138,13 @@ if __name__ == "__main__":
     updater_thread.started.connect(updater.run)
     updater_thread.start()
 
+    # 设置加载完成后启动，确保联机信息启用状态已经生效。
+    p2p_service.start()
+
     # 清理：程序退出时，停止worker并等待线程结束
     def on_quit():
         info("Stopping worker thread...")
+        p2p_service.stop()
         updater.stop()
         updater_thread.quit()
         if not updater_thread.wait(1000):
