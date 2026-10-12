@@ -116,6 +116,29 @@ manifest = PluginManifest(
 - **功能插件（feature）**：`day_timer` 缩圈倒计时、`rain_timer` 雨中冒险计时、`map_detect` 地图识别、`hp_marker` 血条比例标记、`art_timer` 绝招倒计时、`p2p_latency` 队友延迟。
 - **调试插件**：`overlay_test` 测试悬浮窗（本阶段实现，用于验证底座、悬浮窗与跨平台行为）。
 
+### 3.6 悬浮窗拆分策略
+
+插件边界和窗口边界不要求一一对应：业务能力按插件拆分，窗口则按展示职责组合。更新频率、定位规则、交互方式或显示时机差异明显的内容使用独立窗口；视觉形式一致的小型状态信息组合到共享 HUD，避免屏幕上散落多个窗口。
+
+规划为三个展示容器：
+
+| 窗口 | 内容 | 拆分依据 |
+|-----|------|---------|
+| `HpMarkerOverlay` | 血量阈值标记 | 动态跟随血条位置、高频更新、固定鼠标穿透，不使用普通的拖动位置持久化 |
+| `MapInfoOverlay` | 地图识别结果、水晶布局、识别状态 | 显示区域较大，只在地图识别期间出现，并有独立的切换交互 |
+| `HudOverlay` | 缩圈、雨中、绝招等倒计时或紧凑状态 | 视觉形式和更新频率接近，共享位置、缩放、透明度、排列方向与间距 |
+
+`hud` 是只负责容器和布局的基础插件，不直接依赖或导入任何功能插件。`day_timer`、`rain_timer`、`art_timer` 等功能插件通过稳定的 `HudApi` 注册和移除自己的组件；组件的业务状态及显示内容仍由对应功能插件管理。插件停用时，其 HUD 组件必须随插件上下文自动移除，其他组件和 HUD 窗口继续运行。
+
+依赖关系按以下方式声明：
+
+- `day_timer`、`rain_timer`、`art_timer` 对 `hud` 使用强依赖，需要显示时向 `HudApi` 注册组件。
+- `map_detect` 创建并管理独立的 `MapInfoOverlay`，对 `capture` 使用强依赖，对 `day_timer` 使用弱依赖；缩圈阶段只用于优化地图识别时机。
+- `hp_marker` 创建并管理独立的 `HpMarkerOverlay`，只依赖截图或血条检测能力，不依赖 HUD 和地图插件。
+- `hud`、`map_detect`、`hp_marker` 都通过核心 `OverlayManager` 接入统一的置顶、显示模式和游戏前台可见性管理。
+
+配置归属保持在能力拥有者一侧：`hud` 保存共享窗口的位置、缩放、透明度、排列与间距；倒计时内容和检测参数保存在各自功能插件；地图窗口配置归 `map_detect`；血量阈值、颜色和线宽归 `hp_marker`。这样既能共享窗口基础能力，也不会把功能配置重新耦合到一个巨型 Overlay 插件中。
+
 ## 4. 配置系统
 
 - 声明式配置：插件定义 `ConfigGroup` 子类，类属性使用 `BoolOption / RangeOption / ChoiceOption / Option` 描述默认值与校验规则；实例化后每一项为带 `valueChanged` 信号的 `ConfigItem`。
