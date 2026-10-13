@@ -226,7 +226,7 @@ class MapDetectPlugin(Plugin):
     def _run_job(self, job: _Job) -> MapDetectResult:
         # Only this single worker accesses detector caches. No Qt object is read or mutated here.
         if self._detector is None:
-            self._detector = MapDetector(job.settings)
+            self._detector = MapDetector(job.settings, language=self.ctx.language)
         self._detector.config = job.settings
         image = normalize_image(job.image) if job.hdr and job.stage == "check" else job.image
         if job.stage == "check":

@@ -174,7 +174,10 @@ def test_all_poi_icon_pixels_and_crystal_layouts(legacy):
         "error": logging.getLogger(__name__).error,
     }
     exec(compile(ast.Module(body=[method], type_ignores=[]), "legacy_crystal", "exec"), namespace)
-    a, b = SimpleNamespace(), SimpleNamespace()
+    from nightreign_overlay.plugins.map_detect.localization import rendering_translator
+
+    localized = rendering_translator("zh_CN")
+    a, b = SimpleNamespace(), SimpleNamespace(_tr=lambda key, **kw: localized.tr("map_detect", key, **kw))
     namespace["init_crystal_layout_imgs"](a)
     MapInfoOverlay.init_crystal_layout_imgs(b)
     assert len(a.crystal_layout_imgs) == len(b.crystal_layout_imgs) == 5
