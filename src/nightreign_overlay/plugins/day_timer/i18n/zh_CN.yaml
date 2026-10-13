@@ -2,6 +2,7 @@ plugin:
   name: 缩圈计时
   description: 自动识别 DAY I/II/III 并显示缩圈倒计时。
 hud:
+  map_ready: " - 地图识别就绪"
   waiting: 等待识别 DAY
   phase: "DAY {day} - {remaining} 后第{circle}圈{action}"
   circle:

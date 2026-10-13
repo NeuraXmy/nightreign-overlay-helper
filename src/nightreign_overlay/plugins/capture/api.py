@@ -88,3 +88,12 @@ def resize_to_height(image: np.ndarray, height: int) -> np.ndarray:
     width = max(1, int(image.shape[1] * height / image.shape[0]))
     interpolation = cv2.INTER_AREA if image.shape[0] > height else cv2.INTER_LANCZOS4
     return cv2.resize(image, (width, height), interpolation=interpolation)
+
+
+def normalize_image(image: np.ndarray) -> np.ndarray:
+    """Legacy map HDR normalization: LAB luminance CLAHE, without altering the shared frame."""
+    lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+    luminance, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    normalized = cv2.merge([clahe.apply(luminance), a, b])
+    return cv2.cvtColor(normalized, cv2.COLOR_LAB2RGB)

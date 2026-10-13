@@ -1,0 +1,56 @@
+plugin:
+  name: 地图信息
+  description: 识别完整地图，显示建筑、首领、事件、宝藏与大空洞水晶布局。
+overlay:
+  result: "识别结果: {index}/{total}"
+  crystal: "水晶布局: "
+  all: 所有
+  matching: "正在识别中... {spinner}"
+  elapsed: "识别时间：{elapsed}前"
+settings:
+  basic: 地图识别与快捷键
+  advanced: 高级检测选项
+  action: 执行
+  calibrate_region:
+    title: 地图区域
+    content: 框选完整地图，边缘与地图边框贴合；保存时取左上角的正方形区域。
+    annotate: 点我并框出 地图 的区域
+  recognize:
+    title: 识别地图
+    content: 清除旧结果，在下一次完整地图显示且地形清晰时识别；也可绑定游戏内快捷键。
+  toggle:
+    title: 显示／隐藏地图信息
+    content: 手动切换信息显示；完整地图打开或关闭时仍按旧版自动显示或隐藏。
+  next_result:
+    title: 下一个识别结果
+    content: 循环查看候选地图，用实际建筑和首领确认正确结果。
+  previous_result:
+    title: 上一个识别结果
+    content: 反向循环查看候选地图。
+  next_crystal:
+    title: 下一个水晶布局
+    content: 大空洞识别后在全部点位与四种水晶布局间循环。
+  previous_crystal:
+    title: 上一个水晶布局
+    content: 反向循环查看大空洞水晶布局。
+  topk:
+    title: 识别结果返回数量
+    content: 大空洞地表建筑可能相似，请切换候选确认；如内存占用过大，可减少返回数量。
+  match_interval:
+    title: 自动匹配间隔
+    content: 两次自动地图匹配的最短间隔，单位为秒；手动识别不受此限制。
+  full_map_error_threshold:
+    title: 完整地图误差阈值
+    content: 判断当前画面是否为完整地图的误差上限。数值越大越宽松，也更容易误判。
+  earth_shifting_error_threshold:
+    title: 特殊地形误差阈值
+    content: 判断特殊地形类型的误差上限。数值越大越宽松，也更容易误判。
+  subicon_template_match_threshold:
+    title: POI 子图标阈值
+    content: 子图标模板匹配分数高于此值时视为没有子图标；数值越大越容易保留子图标。
+  poi_match_sample_ratio_w_nightlord:
+    title: 已匹配夜王时采样比例
+    content: 已确定夜王时用于 POI 匹配的采样点比例。降低数值可减少耗时，但可能降低识别稳定性。
+  poi_match_sample_ratio_wo_nightlord:
+    title: 未匹配夜王时采样比例
+    content: 未确定夜王时用于 POI 匹配的采样点比例。降低数值可减少耗时，但可能降低识别稳定性。

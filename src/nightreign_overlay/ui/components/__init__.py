@@ -6,6 +6,7 @@ from nightreign_overlay.ui.components.reset_button import create_reset_button
 from nightreign_overlay.ui.components.setting_cards import (
     ConfigChoiceCard,
     ConfigColorCard,
+    ConfigDoubleSpinCard,
     ConfigRangeCard,
     ConfigSwitchCard,
     HotkeySettingCard,
@@ -15,6 +16,7 @@ from nightreign_overlay.ui.components.setting_cards import (
 __all__ = [
     "ConfigChoiceCard",
     "ConfigColorCard",
+    "ConfigDoubleSpinCard",
     "ConfigRangeCard",
     "ConfigSwitchCard",
     "HotkeySettingCard",

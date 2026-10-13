@@ -27,11 +27,19 @@ class RegionTarget:
 
 
 class RegionApi:
-    def request_region(self, key: str, label: str | None = None, color: str | None = None) -> QRect | None:
+    def request_region(
+        self,
+        key: str,
+        label: str | None = None,
+        color: str | None = None,
+        *,
+        screenshot_path: str | None = None,
+    ) -> QRect | None:
         """Interactively select one global-pixel rectangle and persist it under ``key``.
 
         ``label`` is the text of the selector's annotation button, e.g. "click and box the DAY I icon";
-        ``color`` overrides the default annotation colour.
+        ``color`` overrides the default annotation colour. ``screenshot_path`` optionally saves
+        the annotated screen at the moment of confirmation, like the legacy calibration diagnostics.
         """
         raise NotImplementedError
 
@@ -61,9 +69,13 @@ class RegionApi:
     def hide_preview(self) -> None:
         raise NotImplementedError
 
-    def save_region_for_test(self, key: str, rect: QRect) -> None:
+    def save_region(self, key: str, rect: QRect) -> None:
         """Persist a rectangle without opening the platform UI."""
         raise NotImplementedError
+
+    def save_region_for_test(self, key: str, rect: QRect) -> None:
+        """Compatibility alias for existing integrations."""
+        self.save_region(key, rect)
 
 
 class RegionStatus(QWidget):

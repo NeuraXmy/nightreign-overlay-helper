@@ -17,6 +17,7 @@ from qfluentwidgets import (
     BodyLabel,
     ColorPickerButton,
     ComboBox,
+    DoubleSpinBox,
     FluentIconBase,
     IndicatorPosition,
     SettingCard,
@@ -346,6 +347,47 @@ class ConfigRangeCard(_ConfigCard):
         with QSignalBlocker(self.slider):
             self.slider.setValue(value)
         self.valueLabel.setText(self._formatter(value))
+
+
+class ConfigDoubleSpinCard(_ConfigCard):
+    """Spin box for a floating-point :class:`RangeOption`."""
+
+    def __init__(
+        self,
+        item: ConfigItem[float],
+        icon: Icon,
+        title: str,
+        content: str | None = None,
+        parent: QWidget | None = None,
+        *,
+        decimals: int = 2,
+        step: float = 0.1,
+        formatter: Callable[[float], str] = str,
+    ) -> None:
+        super().__init__(item, icon, title, content, parent)
+        option = item.option
+        if not isinstance(option, RangeOption) or not isinstance(option.default, float):
+            raise TypeError("ConfigDoubleSpinCard requires a floating-point RangeOption")
+        self._formatter = formatter
+        self.spinBox = DoubleSpinBox(self)
+        self.spinBox.setKeyboardTracking(False)
+        self.spinBox.setRange(option.minimum, option.maximum)
+        self.spinBox.setDecimals(decimals)
+        self.spinBox.setSingleStep(step)
+        self.spinBox.setMinimumWidth(120)
+        self._sync(item.value)
+        self._addControl(self.spinBox)
+
+        self.spinBox.valueChanged.connect(self._on_value_changed)
+        item.valueChanged.connect(self._sync)
+
+    def _on_value_changed(self, value: float) -> None:
+        self.item.set(value)
+
+    def _sync(self, value: float) -> None:
+        with QSignalBlocker(self.spinBox):
+            self.spinBox.setValue(value)
+        self.spinBox.setToolTip(self._formatter(value))
 
 
 class ConfigColorCard(_ConfigCard):
