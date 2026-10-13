@@ -18,6 +18,8 @@ class AppConfig(ConfigGroup):
     theme = ChoiceOption("dark", THEMES)
     theme_color = ColorOption("#c8a35a")
     overlay_mode = ChoiceOption("auto", OVERLAY_MODES)
+    #: Legacy "仅在游戏时显示和检测": one switch for every overlay, detection and hotkeys.
+    only_when_game_foreground = BoolOption(False)
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
     log_level = ChoiceOption("INFO", LOG_LEVELS)

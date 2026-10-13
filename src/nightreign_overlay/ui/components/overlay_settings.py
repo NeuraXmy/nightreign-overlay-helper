@@ -10,7 +10,6 @@ from nightreign_overlay.ui.components.page import SettingSection
 from nightreign_overlay.ui.components.setting_cards import (
     ConfigChoiceCard,
     ConfigRangeCard,
-    ConfigSwitchCard,
     MultiButtonSettingCard,
 )
 from nightreign_overlay.ui.overlay import OverlayConfig
@@ -63,12 +62,6 @@ class OverlaySettingSection(SettingSection):
                 FluentIcon.FILTER,
                 tr("overlay_settings.input_mode.title"),
                 tr("overlay_settings.input_mode.content"),
-            ),
-            ConfigSwitchCard(
-                config.only_when_game_foreground,
-                FluentIcon.GAME,
-                tr("overlay_settings.only_when_game_foreground.title"),
-                tr("overlay_settings.only_when_game_foreground.content"),
             ),
             reset_card,
         )

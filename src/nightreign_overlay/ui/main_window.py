@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QGuiApplication
+from PyQt6.QtCore import QEvent, pyqtSignal
+from PyQt6.QtGui import QCloseEvent, QGuiApplication, QHideEvent, QShowEvent
 from PyQt6.QtWidgets import QSystemTrayIcon
 from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 
@@ -25,6 +25,8 @@ class MainWindow(FluentWindow):
     hiddenToTray = pyqtSignal()
     #: The window was closed and the application should exit.
     quitRequested = pyqtSignal()
+    #: Whether the window is on screen (shown and not minimized); legacy "settings window opened".
+    presenceChanged = pyqtSignal(bool)
 
     def __init__(
         self,
@@ -94,6 +96,23 @@ class MainWindow(FluentWindow):
     def prepare_quit(self) -> None:
         """Let the next close event through instead of hiding to the tray."""
         self._quitting = True
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        self.presenceChanged.emit(self.is_present)
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        super().hideEvent(event)
+        self.presenceChanged.emit(self.is_present)
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.WindowStateChange:
+            self.presenceChanged.emit(self.is_present)
+
+    @property
+    def is_present(self) -> bool:
+        return self.isVisible() and not self.isMinimized()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._quitting:

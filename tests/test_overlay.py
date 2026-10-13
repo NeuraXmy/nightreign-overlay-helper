@@ -13,7 +13,7 @@ from conftest import process_events
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
-from nightreign_overlay.core.game_window import GameForegroundChanged, GameWindowMonitor
+from nightreign_overlay.core.game_window import ForegroundPolicy, GameForegroundChanged, GameWindowMonitor
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.platforms import PlatformBackend
@@ -61,6 +61,7 @@ def core(store: ConfigStore, qapp: QApplication) -> Iterator[Core]:
         (AppConfig, config),
         (GameWindowMonitor, monitor),
         (OverlayManager, overlays),
+        (ForegroundPolicy, overlays.foreground),
     ):
         services.register(api, impl)
     yield Core(backend, config, events, services, monitor, overlays)
@@ -125,7 +126,7 @@ def test_input_modes_apply_transparent_passthrough_only_in_overlay_mode(
 
 
 def test_follows_game_foreground(core: Core, window: OverlayWindow) -> None:
-    window.config.only_when_game_foreground.set(True)
+    core.config.only_when_game_foreground.set(True)
     core.monitor.start()
     assert not window.isVisible()
 
@@ -140,6 +141,52 @@ def test_follows_game_foreground(core: Core, window: OverlayWindow) -> None:
     # Window mode ignores the rule so the overlay stays reachable.
     core.config.overlay_mode.set("window")
     assert window.isVisible()
+    core.monitor.stop()
+
+
+def test_foreground_rule_is_global_and_ui_keeps_overlays_visible(
+    core: Core, window: OverlayWindow, store: ConfigStore
+) -> None:
+    other = OverlayWindow(core.overlays, store.bind(OverlayConfig, "other"), "other", QSize(50, 50))
+    other.show_overlay()
+    policy = core.overlays.foreground
+    core.monitor.start()  # game in the background
+    assert window.isVisible() and other.isVisible()
+
+    core.config.only_when_game_foreground.set(True)
+    assert not window.isVisible() and not other.isVisible()
+    assert not policy.detection_allowed and not policy.input_allowed
+
+    # Legacy is_setting_opened / is_menu_opened: using the app keeps overlays and hotkeys, not detection.
+    for source in ("main_window", "tray_menu", "overlay_menu", "region_selection"):
+        policy.set_ui_active(source, True)
+        assert window.isVisible() and other.isVisible()
+        assert policy.input_allowed and not policy.detection_allowed
+        policy.set_ui_active(source, False)
+        assert not window.isVisible()
+
+    core.overlays.mainWindowHideRequested.emit()
+    assert window.isVisible()
+    core.overlays.mainWindowShowRequested.emit()
+    assert not window.isVisible()
+    other.dispose()
+    core.monitor.stop()
+
+
+def test_own_hide_reasons_win_over_the_foreground_exemption(core: Core, store: ConfigStore) -> None:
+    config = store.bind(HudConfig, "plugins.hud")
+    overlay = HudOverlay(core.overlays, store.bind(OverlayConfig, "hud.overlay"), config, "HUD")
+    overlay.add_widget("test", QWidget(), order=0)
+    core.config.only_when_game_foreground.set(True)
+    core.overlays.foreground.set_ui_active("main_window", True)
+    core.monitor.start()
+    assert overlay.isVisible()
+
+    config.enabled.set(False)
+    assert not overlay.isVisible()
+    overlay.hide_overlay()
+    config.enabled.set(True)
+    assert not overlay.isVisible()
     core.monitor.stop()
 
 

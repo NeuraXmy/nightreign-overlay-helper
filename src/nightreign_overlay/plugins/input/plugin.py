@@ -12,6 +12,7 @@ from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
+from nightreign_overlay.core.game_window import ForegroundPolicy
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice, InputStateListener
 from nightreign_overlay.plugins.input.config import InputConfig
@@ -43,6 +44,8 @@ class _HotkeyService(QObject, HotkeyApi):
         self._config = config
         self._callbacks: dict[str, Callable[[], None]] = {}
         self._capture_listeners: set[InputStateListener] = set()
+        #: Legacy blockSignals: hotkeys are ignored while the foreground policy hides the overlays.
+        self.foreground: ForegroundPolicy | None = None
         self.inputStateChanged.connect(self._dispatch)
 
     def register(self, action_id: str, default: HotkeyBinding, callback: Callable[[], None]) -> None:
@@ -78,6 +81,8 @@ class _HotkeyService(QObject, HotkeyApi):
         # Like the legacy tool, only a press can trigger; releasing part of a chord must not.
         if self._capture_listeners or not pressed or not keys:
             return
+        if self.foreground is not None and not self.foreground.input_allowed:
+            return
         for action_id, callback in tuple(self._callbacks.items()):
             binding = self.binding(action_id, HotkeyBinding(None))
             if binding.device == device and _matches_suffix(binding.keys, keys):
@@ -111,12 +116,14 @@ class InputPlugin(Plugin):
         self.ctx.provide(HotkeyApi, self._service)
 
     def on_activate(self) -> None:
+        self._service.foreground = self.ctx.services.get(ForegroundPolicy)
         if self.config.enable_global_listener.value:
             self._start_keyboard_listener()
         self.ctx.on_cleanup(self._stop_listeners)
 
     def on_deactivate(self) -> None:
         self._service._callbacks.clear()
+        self._service.foreground = None
 
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)

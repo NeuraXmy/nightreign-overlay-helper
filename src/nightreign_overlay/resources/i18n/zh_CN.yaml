@@ -73,6 +73,9 @@ settings:
     auto: 自动
     overlay: 透明悬浮窗
     window: 普通窗口
+  only_when_game_foreground:
+    title: 仅在游戏时显示和检测
+    content: 游戏不在前台时隐藏所有悬浮窗、暂停截图检测并屏蔽快捷键；主界面或菜单打开时悬浮窗和快捷键仍可用
   behavior:
     title: 行为
   close_to_tray:
@@ -146,9 +149,6 @@ overlay_settings:
     normal: 不穿透
     locked: 仅锁定位置
     passthrough: 完全穿透
-  only_when_game_foreground:
-    title: 仅在游戏位于前台时显示
-    content: 切换到其他窗口时自动隐藏（仅透明悬浮窗模式有效）
   reset_position:
     title: 重置位置
     content: 将悬浮窗移回屏幕顶部中央

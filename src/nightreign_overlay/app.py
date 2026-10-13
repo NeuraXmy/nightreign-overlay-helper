@@ -16,7 +16,7 @@ from nightreign_overlay.core import i18n
 from nightreign_overlay.core.app_config import APP_CONFIG_NAMESPACE, AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
-from nightreign_overlay.core.game_window import GameWindowMonitor
+from nightreign_overlay.core.game_window import ForegroundPolicy, GameWindowMonitor
 from nightreign_overlay.core.log import get_logger, set_log_level, setup_logging
 from nightreign_overlay.core.paths import DATA_DIR_ENV, log_dir, resource_path, settings_file
 from nightreign_overlay.core.services import ServiceRegistry
@@ -73,6 +73,7 @@ class Application(QObject):
         self.services.register(PlatformBackend, self.backend)
         self.services.register(AppConfig, self.config)
         self.services.register(GameWindowMonitor, self.game_monitor)
+        self.services.register(ForegroundPolicy, self.overlays.foreground)
         self.services.register(OverlayManager, self.overlays)
 
         self.plugins = PluginManager(self.store, self.translator, self.services, self.events, self)
@@ -102,9 +103,13 @@ class Application(QObject):
         self.window.quitRequested.connect(self.quit)
         self.window.hiddenToTray.connect(self._on_hidden_to_tray)
         self.window.settingsPage.restartRequested.connect(self.restart)
+        foreground = self.overlays.foreground
+        self.window.presenceChanged.connect(lambda present: foreground.set_ui_active("main_window", present))
         if self.tray is not None:
             self.tray.showRequested.connect(self.window.bring_to_front)
             self.tray.quitRequested.connect(self.quit)
+            self.tray.menu.aboutToShow.connect(lambda: foreground.set_ui_active("tray_menu", True))
+            self.tray.menu.aboutToHide.connect(lambda: foreground.set_ui_active("tray_menu", False))
         self._qt_app.aboutToQuit.connect(self._shutdown)
 
     def start(self) -> None:

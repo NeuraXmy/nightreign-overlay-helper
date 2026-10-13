@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QApplication
 
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
+from nightreign_overlay.core.game_window import ForegroundPolicy
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin.context import PluginContext
@@ -45,7 +46,7 @@ def test_capture_frames_carry_the_shared_hdr_setting(
 ) -> None:
     services = ServiceRegistry()
     events = EventBus()
-    services.register(capture_plugin.GameWindowMonitor, SimpleNamespace(is_foreground=True))
+    services.register(ForegroundPolicy, SimpleNamespace(detection_allowed=True))
     plugin = CapturePlugin(PluginContext("capture", tmp_path, store, Translator("zh_CN"), services, events))
     plugin.on_load()
     source = QImage(4, 3, QImage.Format.Format_RGB32)
@@ -58,6 +59,33 @@ def test_capture_frames_carry_the_shared_hdr_setting(
     assert frame.hdr is True
     # The shared frame stays raw; consumers decide how to process it.
     assert frame.image.pixelColor(0, 0).name() == "#808080"
+
+
+def test_capture_and_hotkeys_follow_the_foreground_policy(
+    store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch
+) -> None:
+    services = ServiceRegistry()
+    policy = SimpleNamespace(detection_allowed=False, input_allowed=False)
+    services.register(ForegroundPolicy, policy)
+    capture = CapturePlugin(
+        PluginContext("capture", tmp_path, store, Translator("zh_CN"), services, EventBus())
+    )
+    capture.on_load()
+    source = QImage(4, 3, QImage.Format.Format_RGB32)
+    monkeypatch.setattr(capture_plugin, "_grab_primary_screen", lambda: source)
+    assert capture.capture_now() is None
+    policy.detection_allowed = True
+    assert capture.capture_now() is not None
+
+    service = _HotkeyService(store.bind(InputConfig, "plugins.input"))
+    service.foreground = policy
+    fired: list[str] = []
+    service.register("act", HotkeyBinding(InputDevice.KEYBOARD, ("f1",)), lambda: fired.append("act"))
+    service.trigger_for_test(InputDevice.KEYBOARD, ("f1",))
+    assert fired == []
+    policy.input_allowed = True
+    service.trigger_for_test(InputDevice.KEYBOARD, ("f1",))
+    assert fired == ["act"]
 
 
 def test_hdr_to_sdr_matches_legacy_gamma() -> None:

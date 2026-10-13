@@ -72,6 +72,12 @@ class SettingsPage(ScrollPage):
                 tr("settings.overlay_mode.content"),
             ),
             ConfigSwitchCard(
+                self._config.only_when_game_foreground,
+                FluentIcon.GAME,
+                tr("settings.only_when_game_foreground.title"),
+                tr("settings.only_when_game_foreground.content"),
+            ),
+            ConfigSwitchCard(
                 self._config.close_to_tray,
                 FluentIcon.MINIMIZE,
                 tr("settings.close_to_tray.title"),

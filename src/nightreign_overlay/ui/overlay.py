@@ -30,8 +30,8 @@ from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import Action, FluentIcon, RoundMenu
 
 from nightreign_overlay.core.app_config import AppConfig
-from nightreign_overlay.core.config import BoolOption, ChoiceOption, ConfigGroup, Option, RangeOption
-from nightreign_overlay.core.game_window import GameWindowMonitor
+from nightreign_overlay.core.config import ChoiceOption, ConfigGroup, Option, RangeOption
+from nightreign_overlay.core.game_window import ForegroundPolicy, GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.platforms import PlatformBackend
@@ -60,7 +60,6 @@ class OverlayConfig(ConfigGroup):
     opacity = RangeOption(100, 20, 100)
     scale = RangeOption(100, 50, 200)
     input_mode = ChoiceOption("normal", ("normal", "locked", "passthrough"))
-    only_when_game_foreground = BoolOption(False)
 
 
 class OverlayManager(QObject):
@@ -89,6 +88,8 @@ class OverlayManager(QObject):
         self._app_config = app_config
         self._game_monitor = game_monitor
         self._windows: list[OverlayWindow] = []
+        #: Shared with capture / input through the service registry.
+        self.foreground = ForegroundPolicy(app_config, game_monitor, self)
 
         self._topmost_timer = QTimer(self)
         self._topmost_timer.setInterval(self.TOPMOST_INTERVAL_MS)
@@ -96,7 +97,10 @@ class OverlayManager(QObject):
         self._topmost_timer.start()
 
         app_config.overlay_mode.valueChanged.connect(self._on_mode_changed)
-        game_monitor.foregroundChanged.connect(self._on_foreground_changed)
+        self.foreground.changed.connect(self._on_foreground_changed)
+        # A region selection takes the focus from the game; overlays must stay as a reference.
+        self.mainWindowHideRequested.connect(lambda: self.foreground.set_ui_active("region_selection", True))
+        self.mainWindowShowRequested.connect(lambda: self.foreground.set_ui_active("region_selection", False))
 
     @property
     def backend(self) -> PlatformBackend:
@@ -128,7 +132,7 @@ class OverlayManager(QObject):
         for window in self.windows():
             window.apply_window_mode()
 
-    def _on_foreground_changed(self, _foreground: bool) -> None:
+    def _on_foreground_changed(self) -> None:
         for window in self.windows():
             window.update_visibility()
 
@@ -180,7 +184,6 @@ class OverlayWindow(QWidget):
         config.opacity.valueChanged.connect(self._apply_opacity)
         config.scale.valueChanged.connect(self._on_scale_changed)
         config.input_mode.valueChanged.connect(self._on_input_mode_changed)
-        config.only_when_game_foreground.valueChanged.connect(self._on_visibility_rule_changed)
         config.position.valueChanged.connect(self._on_position_changed)
         manager.register(self)
 
@@ -210,11 +213,17 @@ class OverlayWindow(QWidget):
         self.update_visibility()
 
     def should_be_visible(self) -> bool:
+        """Visibility = own request AND subclass conditions AND the global foreground gate.
+
+        Own hide reasons (``hide_overlay()``, a disabled overlay, the map not being open, no HP bar...)
+        always win; subclasses add theirs with ``cond and super().should_be_visible()``. The foreground
+        gate can only hide, never show, an overlay.
+        """
         if not self._requested:
             return False
         # In window mode the overlay can take focus itself, so focus based hiding would make it unreachable.
-        if self.manager.transparent_mode and self.config.only_when_game_foreground.value:
-            return self.manager.game_foreground
+        if self.manager.transparent_mode:
+            return self.manager.foreground.display_allowed
         return True
 
     def update_visibility(self) -> None:
@@ -341,7 +350,12 @@ class OverlayWindow(QWidget):
                 triggered=self.manager.quitRequested.emit,
             )
         )
-        menu.exec(event.globalPos())
+        # Legacy is_menu_opened: the menu takes the focus from the game, which must not hide its overlay.
+        self.manager.foreground.set_ui_active("overlay_menu", True)
+        try:
+            menu.exec(event.globalPos())
+        finally:
+            self.manager.foreground.set_ui_active("overlay_menu", False)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         # Overlays are owned by plugins; closing them from the window manager (Alt+F4, Cmd+W) is ignored.
@@ -371,9 +385,6 @@ class OverlayWindow(QWidget):
     def _on_input_mode_changed(self, _mode: str) -> None:
         if self.manager.transparent_mode:
             self.apply_window_mode()
-
-    def _on_visibility_rule_changed(self, _enabled: bool) -> None:
-        self.update_visibility()
 
     def _on_position_changed(self, value: list[int | None] | None) -> None:
         default = self._default_position()

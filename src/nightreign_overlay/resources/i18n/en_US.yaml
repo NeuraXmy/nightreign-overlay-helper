@@ -73,6 +73,9 @@ settings:
     auto: Automatic
     overlay: Transparent overlay
     window: Regular window
+  only_when_game_foreground:
+    title: Only show and detect while the game is focused
+    content: Hide all overlays, pause detection and ignore hotkeys while another window is active; overlays and hotkeys stay available while the main window or a menu is open
   behavior:
     title: Behavior
   close_to_tray:
@@ -146,9 +149,6 @@ overlay_settings:
     normal: Normal
     locked: Lock position only
     passthrough: Full pass-through
-  only_when_game_foreground:
-    title: Only show while the game is focused
-    content: Hide automatically when another window is active (transparent mode only)
   reset_position:
     title: Reset position
     content: Move the overlay back to the top centre of the screen
