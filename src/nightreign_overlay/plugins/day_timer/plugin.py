@@ -88,6 +88,9 @@ class _DayTimerHud(QWidget):
             segment.setStyleSheet(style)
         self.label.setStyleSheet(_DAY_TEXT_STYLE.format(font_size=round(self.BASE_FONT_SIZE * scale)))
 
+    def set_hud_text_hidden(self, hidden: bool) -> None:
+        self.label.setHidden(hidden)
+
 
 class _DayTimerService(DayTimerApi):
     def __init__(self, plugin: DayTimerPlugin) -> None:

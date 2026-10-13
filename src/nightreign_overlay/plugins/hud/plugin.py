@@ -39,6 +39,9 @@ class HudPlugin(Plugin):
     def on_load(self) -> None:
         self.config = self.ctx.config(HudConfig)
         self.overlay_config = self.ctx.config(OverlayConfig, "overlay")
+        self.config.hide_text.valueChanged.connect(
+            lambda value: self.ctx.log.info("Overlay hide text set to %s", value)
+        )
         self._overlay: HudOverlay | None = None
 
     def on_activate(self) -> None:
@@ -64,5 +67,13 @@ class HudPlugin(Plugin):
             self.ctx.tr("settings.enabled.title"),
             self.ctx.tr("settings.enabled.content"),
         )
-        panel.addSection(OverlaySettingSection(self.overlay_config, leading_cards=(enabled_card,)))
+        hide_text_card = ConfigSwitchCard(
+            self.config.hide_text,
+            FluentIcon.FONT,
+            self.ctx.tr("settings.hide_text.title"),
+            self.ctx.tr("settings.hide_text.content"),
+        )
+        panel.addSection(
+            OverlaySettingSection(self.overlay_config, leading_cards=(enabled_card, hide_text_card))
+        )
         return panel
