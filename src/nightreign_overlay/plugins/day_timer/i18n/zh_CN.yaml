@@ -54,6 +54,3 @@ settings:
     title: 回退秒数
   threshold:
     title: 模板匹配阈值
-  hdr:
-    title: 启用 HDR 图像处理
-    content: HDR 显示模式下对截图做 HDR 到 SDR 转换以提高识别准确性，遇到识别问题可尝试关闭。

@@ -48,6 +48,9 @@ class CapturePlugin(Plugin):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._capture_stream_tick)
         self.config.interval_ms.valueChanged.connect(self._timer.setInterval)
+        self.config.hdr_processing.valueChanged.connect(
+            lambda value: self.ctx.log.info("HDR image processing enabled: %s", value)
+        )
         self._latest_frame: FrameCaptured | None = None
         self._native: _MaaCapture | None = None
         self._stream_owners: dict[str, int] = {}
@@ -111,7 +114,7 @@ class CapturePlugin(Plugin):
         image = self._native.grab() if self._native is not None else _grab_primary_screen()
         if image is None or image.isNull():
             return None
-        frame = make_frame(image)
+        frame = make_frame(image, hdr=self.config.hdr_processing.value)
         self._latest_frame = frame
         self.ctx.publish(frame)
         return frame
@@ -132,6 +135,12 @@ class CapturePlugin(Plugin):
                 FluentIcon.GAME,
                 self.ctx.tr("settings.foreground.title"),
                 self.ctx.tr("settings.foreground.content"),
+            ),
+            ConfigSwitchCard(
+                self.config.hdr_processing,
+                FluentIcon.BRIGHTNESS,
+                self.ctx.tr("settings.hdr.title"),
+                self.ctx.tr("settings.hdr.content"),
             ),
         )
         panel.addSection(section)

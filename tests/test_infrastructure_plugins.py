@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QApplication
@@ -15,7 +16,8 @@ from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin.context import PluginContext
-from nightreign_overlay.plugins.capture.api import make_frame
+from nightreign_overlay.plugins.capture import plugin as capture_plugin
+from nightreign_overlay.plugins.capture.api import hdr_to_sdr, make_frame
 from nightreign_overlay.plugins.capture.plugin import CapturePlugin
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice
 from nightreign_overlay.plugins.input.config import InputConfig
@@ -36,6 +38,31 @@ def test_capture_frame_is_detached() -> None:
 
     source.fill(0xFF000000)
     assert frame.image.pixelColor(0, 0).name() == "#112233"
+
+
+def test_capture_frames_carry_the_shared_hdr_setting(
+    store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch
+) -> None:
+    services = ServiceRegistry()
+    events = EventBus()
+    services.register(capture_plugin.GameWindowMonitor, SimpleNamespace(is_foreground=True))
+    plugin = CapturePlugin(PluginContext("capture", tmp_path, store, Translator("zh_CN"), services, events))
+    plugin.on_load()
+    source = QImage(4, 3, QImage.Format.Format_RGB32)
+    source.fill(0xFF808080)
+    monkeypatch.setattr(capture_plugin, "_grab_primary_screen", lambda: source)
+
+    assert plugin.capture_now().hdr is False
+    plugin.config.hdr_processing.set(True)
+    frame = plugin.capture_now()
+    assert frame.hdr is True
+    # The shared frame stays raw; consumers decide how to process it.
+    assert frame.image.pixelColor(0, 0).name() == "#808080"
+
+
+def test_hdr_to_sdr_matches_legacy_gamma() -> None:
+    pixels = np.array([[[0, 64, 255]]], dtype=np.uint8)
+    assert hdr_to_sdr(pixels).tolist() == [[[0, 136, 255]]]
 
 
 def test_capture_stream_runs_only_while_leased(

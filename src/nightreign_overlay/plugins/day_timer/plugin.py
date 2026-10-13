@@ -161,10 +161,6 @@ class DayTimerPlugin(Plugin):
         watchers = (
             (self.config.auto_detect, lambda value: self.ctx.log.info("DayX detect enabled: %s", value)),
             (self.config.language, on_language),
-            (
-                self.config.hdr_processing,
-                lambda value: self.ctx.log.info("HDR image processing enabled: %s", value),
-            ),
         )
         for item, slot in watchers:
             item.valueChanged.connect(slot)
@@ -219,7 +215,7 @@ class DayTimerPlugin(Plugin):
             region,
             language,
             self.config.score_threshold.value / 100,
-            hdr=self.config.hdr_processing.value,
+            hdr=event.hdr,
         )
         if result is None:
             return
@@ -422,12 +418,6 @@ class DayTimerPlugin(Plugin):
                 FluentIcon.DEVELOPER_TOOLS,
                 self.ctx.tr("settings.threshold.title"),
                 formatter=lambda value: f"{value}%",
-            ),
-            ConfigSwitchCard(
-                self.config.hdr_processing,
-                FluentIcon.BRIGHTNESS,
-                self.ctx.tr("settings.hdr.title"),
-                self.ctx.tr("settings.hdr.content"),
             ),
         )
         panel.addSection(basic)
