@@ -1,3 +1,7 @@
+meta:
+  name: 繁體中文
+  locales: [zh_HK, zh_MO, zh_Hant]
+
 common:
   "on": 開
   "off": 關

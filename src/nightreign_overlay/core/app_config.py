@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from nightreign_overlay.core.config import BoolOption, ChoiceOption, ColorOption, ConfigGroup
-from nightreign_overlay.core.i18n import LANGUAGES
+from nightreign_overlay.core.i18n import available_languages
 from nightreign_overlay.core.log import LOG_LEVELS
 
 APP_CONFIG_NAMESPACE = "app"
@@ -14,7 +14,7 @@ OVERLAY_MODES = ("auto", "overlay", "window")
 
 
 class AppConfig(ConfigGroup):
-    language = ChoiceOption("auto", ("auto", *LANGUAGES))
+    language = ChoiceOption("auto", ("auto", *available_languages()))
     theme = ChoiceOption("dark", THEMES)
     theme_color = ColorOption("#c8a35a")
     overlay_mode = ChoiceOption("auto", OVERLAY_MODES)

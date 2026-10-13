@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, PushSettingCard
 
 from nightreign_overlay.core.app_config import OVERLAY_MODES, THEMES, AppConfig
-from nightreign_overlay.core.i18n import LANGUAGES, tr
+from nightreign_overlay.core.i18n import language_names, tr
 from nightreign_overlay.core.log import LOG_LEVELS, get_logger, set_log_level
 from nightreign_overlay.core.paths import log_dir, user_data_dir
 from nightreign_overlay.plugin import PluginManager, SettingsScope
@@ -42,7 +42,7 @@ class SettingsPage(ScrollPage):
     def _init_general(self) -> None:
         """Group appearance, overlay presentation, and startup behavior together."""
         section = SettingSection(tr("settings.general.title"), self.view)
-        languages = [("auto", tr("settings.language.auto")), *LANGUAGES.items()]
+        languages = [("auto", tr("settings.language.auto")), *language_names().items()]
         section.addCards(
             ConfigChoiceCard(
                 self._config.language,
