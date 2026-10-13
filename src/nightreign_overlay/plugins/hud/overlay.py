@@ -36,6 +36,7 @@ class HudOverlay(OverlayWindow):
         self._layout.setContentsMargins(8, 8, 8, 8)
         self._apply_layout()
         config.enabled.valueChanged.connect(lambda _value: self.update_visibility())
+        config.hide_text.valueChanged.connect(self._apply_text_hidden)
 
     def add_widget(self, owner: str, widget: QWidget, order: int) -> str:
         token = f"{owner}:{next(self._counter)}"
@@ -45,6 +46,7 @@ class HudOverlay(OverlayWindow):
         set_scale = getattr(widget, "set_hud_scale", None)
         if callable(set_scale):
             set_scale(self.scale_factor)
+        _set_text_hidden(widget, self._config.hide_text.value)
         widget.show()
         self._apply_layout()
         self.show_overlay()
@@ -74,6 +76,11 @@ class HudOverlay(OverlayWindow):
                 set_scale(scale)
         self._apply_layout()
 
+    def _apply_text_hidden(self, hidden: bool) -> None:
+        for entry in self._entries.values():
+            _set_text_hidden(entry.widget, hidden)
+        self._apply_layout()
+
     def _apply_layout(self) -> None:
         scale = self.scale_factor
         self._layout.setDirection(QBoxLayout.Direction.TopToBottom)
@@ -92,3 +99,9 @@ class HudOverlay(OverlayWindow):
         self.set_base_size(logical_hint)
         self.updateGeometry()
         self.update()
+
+
+def _set_text_hidden(widget: QWidget, hidden: bool) -> None:
+    set_hidden = getattr(widget, "set_hud_text_hidden", None)
+    if callable(set_hidden):
+        set_hidden(hidden)

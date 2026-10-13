@@ -208,6 +208,32 @@ def test_hud_scales_contributed_day_timer_content(core: Core, store: ConfigStore
     assert overlay.width() >= widget.width() + 24
 
 
+def test_hud_hide_text_hides_labels_but_keeps_progress(core: Core, store: ConfigStore) -> None:
+    config = store.bind(HudConfig, "plugins.hud")
+    overlay = HudOverlay(core.overlays, store.bind(OverlayConfig, "hud.overlay"), config, "HUD")
+    overlay.show_overlay()
+    widget = _DayTimerHud([270, 180, 210, 180], "Waiting")
+    overlay.add_widget("day_timer", widget, order=0)
+    process_events()
+    full_height = overlay.height()
+
+    config.hide_text.set(True)
+    process_events()
+    assert not widget.label.isVisible()
+    assert all(segment.isVisible() for segment in widget.segments)
+    assert overlay.height() < full_height
+
+    # Widgets added while the setting is on start with their text hidden.
+    late = _DayTimerHud([270, 180, 210, 180], "Waiting")
+    overlay.add_widget("other", late, order=1)
+    process_events()
+    assert not late.label.isVisible()
+
+    config.hide_text.set(False)
+    process_events()
+    assert widget.label.isVisible() and late.label.isVisible()
+
+
 def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:
     manager = PluginManager(store, Translator("en_US"), core.services, core.events)
     manager.discover()
