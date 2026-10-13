@@ -107,6 +107,11 @@ class _RegionService(RegionApi):
         value = self._plugin.config.regions.value.get(key)
         return QRect(*value) if value is not None else None
 
+    def clear_region(self, key: str) -> None:
+        regions = self._plugin.config.regions.value
+        if key in regions:
+            self._plugin.config.regions.set({name: rect for name, rect in regions.items() if name != key})
+
     def save_region_for_test(self, key: str, rect: QRect) -> None:
         if rect.width() <= 0 or rect.height() <= 0:
             raise ValueError("a calibrated region must have a positive size")

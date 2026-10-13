@@ -41,13 +41,21 @@ class PluginContext:
         self._events = events
         self._subscriptions: list[Subscription] = []
         self._cleanups: list[Callable[[], None]] = []
+        self._configs: list[ConfigGroup] = []
 
     # -- configuration / resources ------------------------------------------------------------
 
     def config(self, group_cls: type[G], section: str | None = None) -> G:
         """Bind a config group under ``plugins.<id>`` (or ``plugins.<id>.<section>``)."""
         namespace = f"plugins.{self.plugin_id}" + (f".{section}" if section else "")
-        return self._store.bind(group_cls, namespace)
+        group = self._store.bind(group_cls, namespace)
+        self._configs.append(group)
+        return group
+
+    def reset_configs(self) -> None:
+        """Restore every option of every group bound through :meth:`config` to its default."""
+        for group in self._configs:
+            group.reset_all()
 
     def tr(self, key: str, **kwargs: Any) -> str:
         return self._translator.tr(self.plugin_id, key, **kwargs)

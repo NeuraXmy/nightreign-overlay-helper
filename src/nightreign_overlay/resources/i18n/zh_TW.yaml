@@ -51,6 +51,15 @@ plugin_page:
   no_settings: 此功能沒有可調整的選項。
   no_tutorial: 此功能暫無教學。
 
+settings_reset:
+  button: 重設
+  title: 重設設定
+  plugin_content: 確定要將本頁的所有設定恢復為預設值嗎？本頁的快捷鍵會恢復預設，已標定的辨識區域會被清除，此操作無法復原。
+  general_content: 確定要將本頁的所有設定恢復為預設值嗎？此操作無法復原。
+  confirm: 重設
+  cancel: 取消
+  done: 已恢復預設設定
+
 settings:
   title: 設定
   open: 開啟

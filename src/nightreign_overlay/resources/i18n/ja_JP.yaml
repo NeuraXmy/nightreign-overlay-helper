@@ -50,6 +50,15 @@ plugin_page:
   no_settings: この機能には設定項目がありません。
   no_tutorial: この機能のチュートリアルはまだありません。
 
+settings_reset:
+  button: リセット
+  title: 設定のリセット
+  plugin_content: このページのすべての設定を既定値に戻しますか？このページのショートカットは既定値に戻り、設定済みの検出範囲は消去されます。この操作は元に戻せません。
+  general_content: このページのすべての設定を既定値に戻しますか？この操作は元に戻せません。
+  confirm: リセット
+  cancel: キャンセル
+  done: 既定の設定に戻しました
+
 settings:
   title: 設定
   open: 開く

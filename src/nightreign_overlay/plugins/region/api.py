@@ -41,6 +41,10 @@ class RegionApi:
     def region(self, key: str) -> QRect | None:
         raise NotImplementedError
 
+    def clear_region(self, key: str) -> None:
+        """Forget the rectangle stored under ``key`` so it has to be calibrated again."""
+        raise NotImplementedError
+
     def save_region_for_test(self, key: str, rect: QRect) -> None:
         """Persist a rectangle without opening the platform UI."""
         raise NotImplementedError

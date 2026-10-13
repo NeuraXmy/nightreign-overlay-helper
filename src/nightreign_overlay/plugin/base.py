@@ -110,3 +110,11 @@ class Plugin(QObject):
     def create_settings_widget(self, parent: QWidget) -> QWidget | None:
         """Return the content of the "Settings" tab, or None if the plugin has no settings."""
         return None
+
+    def reset_settings(self) -> None:
+        """Restore everything the settings widget edits to its defaults (the page's "Reset" button).
+
+        The default resets the config groups bound through the context. Override it to also reset settings
+        kept by other plugins on this plugin's behalf, such as shortcuts and calibrated regions.
+        """
+        self.ctx.reset_configs()
