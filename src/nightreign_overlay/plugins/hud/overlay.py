@@ -20,6 +20,8 @@ class _Entry:
 
 
 class HudOverlay(OverlayWindow):
+    drag_hint_enabled = True
+
     def __init__(
         self,
         manager: OverlayManager,

@@ -127,6 +127,10 @@ class ForegroundPolicy(QObject):
             self._ui_sources.discard(source)
         self.changed.emit()
 
+    def is_ui_active(self, source: str) -> bool:
+        """Whether a particular editing surface is open (e.g. for legacy overlay dragging)."""
+        return source in self._ui_sources
+
     def _on_option_changed(self, enabled: bool) -> None:
         log.info("Overlay only show when game foreground: %s", enabled)
         self.changed.emit()
