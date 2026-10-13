@@ -315,7 +315,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 | P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 🚧 进行中：服务契约、Qt 降级实现和单元测试已完成；Windows DLL 打包与真实手柄验证留待 Windows 环境 |
 | P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 🚧 进行中：三个插件已实现并有非视觉单元测试；雨中 / 绝招的视觉识别待实机手动验证 |
 | P4 | `map_detect`、`hp_marker`、`p2p_latency`（含 NightreignP2PHelper 原生组件） | 🚧 进行中：三个插件均已完成代码迁移与基础测试；地图/血条视觉实机验证及 Windows Steam/ETW 联机验证留待目标环境 |
-| P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 待开始 |
+| P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 🚧 已加入 Windows 文件夹构建脚本与 PyInstaller spec；其余发布事项待完成 |
 
 ## 10. 风险与应对
 
