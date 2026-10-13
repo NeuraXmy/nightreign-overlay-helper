@@ -6,8 +6,11 @@ from PyQt6.QtCore import QRect
 
 
 class RegionApi:
-    def request_region(self, key: str) -> QRect | None:
-        """Interactively select one global-pixel rectangle and persist it under ``key``."""
+    def request_region(self, key: str, label: str | None = None) -> QRect | None:
+        """Interactively select one global-pixel rectangle and persist it under ``key``.
+
+        ``label`` is the text of the selector's annotation button, e.g. "click and box the DAY I icon".
+        """
         raise NotImplementedError
 
     def region(self, key: str) -> QRect | None:

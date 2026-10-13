@@ -50,8 +50,8 @@ plugin_page:
 settings:
   title: Settings
   open: Open
-  appearance:
-    title: Personalization
+  general:
+    title: General
   language:
     title: Language
     content: Interface language; takes effect after a restart
@@ -121,6 +121,16 @@ overlay:
     reset_position: Reset position
     click_through: Enable click-through
     open_main_window: Open main window
+    quit: Quit
+
+input_dialog:
+  title: Set shortcut
+  hint: Press a keyboard, mouse, or controller combination. The first input locks the device type.
+  waiting: Waiting for input…
+  unset: Not set
+  clear: Clear
+  cancel: Cancel
+  confirm: Confirm
 
 overlay_settings:
   title: Overlay
@@ -130,13 +140,18 @@ overlay_settings:
   scale:
     title: Scale
     content: Size of the overlay content
-  click_through:
-    title: Click-through
-    content: Mouse input passes through the overlay (transparent mode only); turn it off here
+  input_mode:
+    title: Mouse interaction
+    content: Controls whether the overlay can be dragged or mouse input passes through it (full pass-through is transparent mode only).
+    normal: Normal
+    locked: Lock position only
+    passthrough: Full pass-through
   only_when_game_foreground:
     title: Only show while the game is focused
     content: Hide automatically when another window is active (transparent mode only)
   reset_position:
     title: Reset position
     content: Move the overlay back to the top centre of the screen
-    button: Reset
+    reset: Reset
+    horizontal: Reset horizontal only
+    horizontal_content: Keep the current height and move to the horizontal centre

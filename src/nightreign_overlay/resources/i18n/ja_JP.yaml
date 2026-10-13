@@ -50,8 +50,8 @@ plugin_page:
 settings:
   title: 設定
   open: 開く
-  appearance:
-    title: 個人用設定
+  general:
+    title: 一般
   language:
     title: 言語
     content: 表示言語（再起動後に反映されます）
@@ -121,6 +121,16 @@ overlay:
     reset_position: 位置をリセット
     click_through: クリック透過を有効にする
     open_main_window: メインウィンドウを開く
+    quit: 終了
+
+input_dialog:
+  title: ショートカットを設定
+  hint: キーボード、マウス、またはコントローラーの組み合わせを押してください。最初の入力でデバイス種類が固定されます。
+  waiting: 入力待ち…
+  unset: 未設定
+  clear: クリア
+  cancel: キャンセル
+  confirm: 確定
 
 overlay_settings:
   title: オーバーレイ
@@ -130,13 +140,18 @@ overlay_settings:
   scale:
     title: 拡大率
     content: オーバーレイの表示サイズ
-  click_through:
-    title: クリック透過
-    content: マウス操作がオーバーレイを通過します（透過モードのみ）。解除はここで行います
+  input_mode:
+    title: マウス操作
+    content: オーバーレイのドラッグ可否と、下のウィンドウへのマウス操作の透過を設定します（完全透過は透過モードのみ）。
+    normal: 透過しない
+    locked: 位置のみ固定
+    passthrough: 完全透過
   only_when_game_foreground:
     title: ゲームが前面のときのみ表示
     content: 他のウィンドウに切り替えると自動で非表示にします（透過モードのみ）
   reset_position:
     title: 位置をリセット
     content: オーバーレイを画面上部中央に戻します
-    button: リセット
+    reset: リセット
+    horizontal: 水平位置のみリセット
+    horizontal_content: 現在の高さを維持し、水平方向のみ中央へ戻します

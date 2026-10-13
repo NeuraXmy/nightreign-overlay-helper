@@ -8,11 +8,11 @@ input updates the item, and external changes to the item update the widget.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QSignalBlocker, Qt
-from PyQt6.QtGui import QColor, QIcon
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtGui import QCloseEvent, QColor, QIcon
+from PyQt6.QtWidgets import QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 from qfluentwidgets import (
     BodyLabel,
     ColorPickerButton,
@@ -26,6 +26,11 @@ from qfluentwidgets import (
 
 from nightreign_overlay.core.config import ConfigItem, RangeOption
 from nightreign_overlay.core.i18n import tr
+from nightreign_overlay.core.input import HotkeyBinding, InputDevice
+
+if TYPE_CHECKING:
+    from nightreign_overlay.plugins.input.api import HotkeyApi
+
 
 Icon = str | QIcon | FluentIconBase
 
@@ -71,6 +76,27 @@ class ConfigSwitchCard(_ConfigCard):
             self.switchButton.setChecked(value)
 
 
+class MultiButtonSettingCard(SettingCard):
+    """One setting card with several compact action buttons."""
+
+    def __init__(
+        self,
+        buttons: Sequence[tuple[str, Callable[[], None]]],
+        icon: Icon,
+        title: str,
+        content: str | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(icon, title, content, parent)
+        for index, (label, callback) in enumerate(buttons):
+            if index:
+                self.hBoxLayout.addSpacing(8)
+            button = QPushButton(label, self)
+            button.clicked.connect(callback)
+            self.hBoxLayout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+
 class ConfigChoiceCard(_ConfigCard):
     """Combo box over ``(value, label)`` pairs."""
 
@@ -97,6 +123,163 @@ class ConfigChoiceCard(_ConfigCard):
     def _sync(self, value: Any) -> None:
         with QSignalBlocker(self.comboBox):
             self.comboBox.setCurrentIndex(max(self.comboBox.findData(value), 0))
+
+
+_DEVICE_LABELS = {
+    InputDevice.KEYBOARD: "Keyboard",
+    InputDevice.MOUSE: "Mouse",
+    InputDevice.JOYSTICK: "Controller",
+}
+#: Controller labels from the legacy tool; unknown buttons fall back to ``Btn<index>``.
+_JOYSTICK_KEY_LABELS = {
+    "button_0": "B",
+    "button_1": "A",
+    "button_2": "Y",
+    "button_3": "X",
+    "button_4": "LB",
+    "button_5": "RB",
+    "button_6": "Select",
+    "button_7": "Start",
+    "button_8": "LStick",
+    "button_9": "RStick",
+    "lt": "LT",
+    "rt": "RT",
+    "dpad_right": "Right",
+    "dpad_left": "Left",
+    "dpad_down": "Down",
+    "dpad_up": "Up",
+}
+
+
+def _binding_key_sort_key(key: str) -> tuple[int, str]:
+    return {"ctrl": 0, "alt": 1, "shift": 2, "cmd": 3}.get(key, 10), key
+
+
+def _format_key(device: InputDevice, key: str) -> str:
+    if device != InputDevice.JOYSTICK:
+        return key.upper()
+    return _JOYSTICK_KEY_LABELS.get(key) or f"Btn{key.removeprefix('button_')}"
+
+
+def _format_binding(binding: HotkeyBinding) -> str:
+    if not binding.enabled:
+        return tr("input_dialog.unset")
+    device: InputDevice = binding.device  # type: ignore[assignment]
+    return f"{_DEVICE_LABELS[device]}: {' + '.join(_format_key(device, key) for key in binding.keys)}"
+
+
+class _HotkeySettingDialog(QDialog):
+    """Modal recorder that locks to the first input device, matching the legacy UX."""
+
+    def __init__(self, hotkeys: HotkeyApi, initial: HotkeyBinding, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._hotkeys = hotkeys
+        self.binding = initial
+        self._locked_device: InputDevice | None = None
+        self._pressed_keys: set[str] = set()
+        self._clear_requested = False
+        self.setWindowTitle(tr("input_dialog.title"))
+        self.setMinimumWidth(400)
+
+        layout = QVBoxLayout(self)
+        hint = QLabel(tr("input_dialog.hint"), self)
+        hint.setWordWrap(True)
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.valueLabel = QLabel(tr("input_dialog.waiting"), self)
+        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.valueLabel.setStyleSheet("font-size: 16px; font-weight: bold; padding: 12px; color: #3498db;")
+        layout.addWidget(hint)
+        layout.addWidget(self.valueLabel)
+
+        buttons = QHBoxLayout()
+        clear = QPushButton(tr("input_dialog.clear"), self)
+        cancel = QPushButton(tr("input_dialog.cancel"), self)
+        confirm = QPushButton(tr("input_dialog.confirm"), self)
+        clear.clicked.connect(self._clear)
+        cancel.clicked.connect(self.reject)
+        confirm.clicked.connect(self.accept)
+        buttons.addWidget(clear)
+        buttons.addStretch()
+        buttons.addWidget(cancel)
+        buttons.addWidget(confirm)
+        layout.addLayout(buttons)
+        self._hotkeys.subscribe_capture(self._on_input_state)
+
+    def _on_input_state(self, device: InputDevice, keys: tuple[str, ...]) -> None:
+        if self._locked_device is None and keys:
+            self._locked_device = device
+        if self._locked_device != device:
+            return
+
+        current_keys = set(keys)
+        # The legacy recorder only updates the selected shortcut for press events. Newer
+        # state snapshots also arrive on release, so only a state that adds a key may
+        # replace the binding; a shrinking state merely updates press tracking.
+        if current_keys and not current_keys.issubset(self._pressed_keys):
+            self.binding = HotkeyBinding(device, tuple(sorted(current_keys, key=_binding_key_sort_key)))
+            self.valueLabel.setText(_format_binding(self.binding))
+        self._pressed_keys = current_keys
+
+    def _clear(self) -> None:
+        self._clear_requested = True
+        self.binding = HotkeyBinding(None)
+        self.accept()
+
+    def accept(self) -> None:
+        if self._clear_requested or self.binding.enabled:
+            super().accept()
+
+    def done(self, result: int) -> None:
+        self._hotkeys.unsubscribe_capture(self._on_input_state)
+        super().done(result)
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self._hotkeys.unsubscribe_capture(self._on_input_state)
+        super().closeEvent(event)
+
+
+class HotkeySettingCard(SettingCard):
+    """A large button that opens the legacy-style multi-device shortcut recorder.
+
+    ``actions`` adds buttons before the recorder so a manual trigger can share the card with its shortcut.
+    """
+
+    def __init__(
+        self,
+        hotkeys: HotkeyApi,
+        binding: HotkeyBinding,
+        on_changed: Callable[[HotkeyBinding], None],
+        icon: Icon,
+        title: str,
+        content: str | None = None,
+        parent: QWidget | None = None,
+        *,
+        actions: Sequence[tuple[str, Callable[[], None]]] = (),
+    ) -> None:
+        super().__init__(icon, title, content, parent)
+        self._hotkeys = hotkeys
+        self._binding = binding
+        self._on_changed = on_changed
+        for label, callback in actions:
+            button = QPushButton(label, self)
+            button.setMinimumHeight(34)
+            button.clicked.connect(callback)
+            self.hBoxLayout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
+            self.hBoxLayout.addSpacing(8)
+        self.captureButton = QPushButton(_format_binding(binding), self)
+        self.captureButton.setMinimumWidth(210)
+        self.captureButton.setMinimumHeight(34)
+        self.captureButton.setStyleSheet("font-size: 14px; font-weight: 600; padding: 4px 12px;")
+        self.captureButton.clicked.connect(self._open_dialog)
+        self.hBoxLayout.addWidget(self.captureButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+    def _open_dialog(self) -> None:
+        dialog = _HotkeySettingDialog(self._hotkeys, self._binding, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self._binding = dialog.binding
+            self._on_changed(self._binding)
+            self.captureButton.setText(_format_binding(self._binding))
 
 
 class ConfigRangeCard(_ConfigCard):

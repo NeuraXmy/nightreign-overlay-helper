@@ -9,7 +9,7 @@ from nightreign_overlay.core.log import LOG_LEVELS
 APP_CONFIG_NAMESPACE = "app"
 
 THEMES = ("dark", "light", "auto")
-#: ``auto`` picks a frameless overlay where supported and a regular window elsewhere.
+#: ``auto`` prefers the legacy frameless transparent overlay; users may explicitly select ``window``.
 OVERLAY_MODES = ("auto", "overlay", "window")
 
 

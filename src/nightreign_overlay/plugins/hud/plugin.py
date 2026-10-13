@@ -9,13 +9,7 @@ from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, Settin
 from nightreign_overlay.plugins.hud.api import HudApi
 from nightreign_overlay.plugins.hud.config import HudConfig
 from nightreign_overlay.plugins.hud.overlay import HudOverlay
-from nightreign_overlay.ui.components import (
-    ConfigChoiceCard,
-    ConfigRangeCard,
-    OverlaySettingSection,
-    SettingSection,
-    SettingsPanel,
-)
+from nightreign_overlay.ui.components import ConfigSwitchCard, OverlaySettingSection, SettingsPanel
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager
 
 
@@ -39,7 +33,7 @@ class HudPlugin(Plugin):
         kind=PluginKind.INFRASTRUCTURE,
         icon="LAYOUT",
         settings_scope=SettingsScope.GENERAL,
-        order=30,
+        order=-10,
     )
 
     def on_load(self) -> None:
@@ -64,26 +58,11 @@ class HudPlugin(Plugin):
 
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)
-        panel.addSection(OverlaySettingSection(self.overlay_config))
-        section = SettingSection(self.ctx.tr("settings.layout.title"))
-        section.addCards(
-            ConfigChoiceCard(
-                self.config.direction,
-                [
-                    ("vertical", self.ctx.tr("settings.direction.vertical")),
-                    ("horizontal", self.ctx.tr("settings.direction.horizontal")),
-                ],
-                FluentIcon.TILES,
-                self.ctx.tr("settings.direction.title"),
-                self.ctx.tr("settings.direction.content"),
-            ),
-            ConfigRangeCard(
-                self.config.spacing,
-                FluentIcon.ALIGNMENT,
-                self.ctx.tr("settings.spacing.title"),
-                self.ctx.tr("settings.spacing.content"),
-                formatter=lambda value: self.ctx.tr("settings.spacing.value", pixels=value),
-            ),
+        enabled_card = ConfigSwitchCard(
+            self.config.enabled,
+            FluentIcon.VIEW,
+            self.ctx.tr("settings.enabled.title"),
+            self.ctx.tr("settings.enabled.content"),
         )
-        panel.addSection(section)
+        panel.addSection(OverlaySettingSection(self.overlay_config, leading_cards=(enabled_card,)))
         return panel

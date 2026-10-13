@@ -22,3 +22,10 @@ class PlatformBackend:
 
     def is_admin(self) -> bool:
         return False
+
+    def has_screen_capture_access(self) -> bool:
+        """Whether screenshots contain other applications' windows (macOS gates this behind a permission)."""
+        return True
+
+    def request_screen_capture_access(self) -> None:
+        """Ask the operating system for screen capture permission where it is gated."""

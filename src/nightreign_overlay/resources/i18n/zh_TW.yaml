@@ -50,8 +50,8 @@ plugin_page:
 settings:
   title: 設定
   open: 開啟
-  appearance:
-    title: 個人化
+  general:
+    title: 一般
   language:
     title: 語言
     content: 介面顯示語言，修改後需要重新啟動才會生效
@@ -121,6 +121,16 @@ overlay:
     reset_position: 重設位置
     click_through: 開啟滑鼠穿透
     open_main_window: 開啟主介面
+    quit: 結束程式
+
+input_dialog:
+  title: 設定快速鍵
+  hint: 請按下鍵盤、滑鼠或控制器組合鍵；首次輸入會鎖定裝置類型。
+  waiting: 等待輸入…
+  unset: 未設定
+  clear: 清空
+  cancel: 取消
+  confirm: 確認
 
 overlay_settings:
   title: 懸浮窗
@@ -130,13 +140,18 @@ overlay_settings:
   scale:
     title: 縮放
     content: 懸浮窗內容的大小
-  click_through:
-    title: 滑鼠穿透
-    content: 開啟後滑鼠操作會穿過懸浮窗（僅透明懸浮窗模式有效），需在此處關閉
+  input_mode:
+    title: 滑鼠互動
+    content: 控制滑鼠是否可拖曳懸浮窗或穿透到下方視窗（完全穿透僅透明懸浮窗模式有效）。
+    normal: 不穿透
+    locked: 僅鎖定位置
+    passthrough: 完全穿透
   only_when_game_foreground:
     title: 僅在遊戲位於前景時顯示
     content: 切換到其他視窗時自動隱藏（僅透明懸浮窗模式有效）
   reset_position:
     title: 重設位置
     content: 將懸浮窗移回螢幕頂部中央
-    button: 重設
+    reset: 重設
+    horizontal: 僅水平重設
+    horizontal_content: 保持目前高度，僅移回螢幕水平中央

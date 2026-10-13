@@ -32,17 +32,16 @@ class SettingsPage(ScrollPage):
     def __init__(self, config: AppConfig, plugins: PluginManager, parent: QWidget | None = None) -> None:
         super().__init__("settingsPage", tr("settings.title"), parent)
         self._config = config
-        self._init_appearance()
-        self._init_overlay()
-        self._init_behavior()
+        self._init_general()
         self._init_plugin_settings(plugins)
         self._init_advanced()
 
         config.language.valueChanged.connect(self._on_language_changed)
         config.log_level.valueChanged.connect(set_log_level)
 
-    def _init_appearance(self) -> None:
-        section = SettingSection(tr("settings.appearance.title"), self.view)
+    def _init_general(self) -> None:
+        """Group appearance, overlay presentation, and startup behavior together."""
+        section = SettingSection(tr("settings.general.title"), self.view)
         languages = [("auto", tr("settings.language.auto")), *LANGUAGES.items()]
         section.addCards(
             ConfigChoiceCard(
@@ -65,25 +64,13 @@ class SettingsPage(ScrollPage):
                 tr("settings.theme_color.title"),
                 tr("settings.theme_color.content"),
             ),
-        )
-        self.addWidget(section)
-
-    def _init_overlay(self) -> None:
-        section = SettingSection(tr("settings.overlay.title"), self.view)
-        section.addCard(
             ConfigChoiceCard(
                 self._config.overlay_mode,
                 [(mode, tr(f"settings.overlay_mode.{mode}")) for mode in OVERLAY_MODES],
                 FluentIcon.FIT_PAGE,
                 tr("settings.overlay_mode.title"),
                 tr("settings.overlay_mode.content"),
-            )
-        )
-        self.addWidget(section)
-
-    def _init_behavior(self) -> None:
-        section = SettingSection(tr("settings.behavior.title"), self.view)
-        section.addCards(
+            ),
             ConfigSwitchCard(
                 self._config.close_to_tray,
                 FluentIcon.MINIMIZE,
@@ -101,7 +88,8 @@ class SettingsPage(ScrollPage):
 
     def _init_plugin_settings(self, plugins: PluginManager) -> None:
         """Embed general-scope plugin settings without creating extra navigation pages."""
-        for record in plugins.records():
+        records = sorted(plugins.records(), key=lambda record: record.manifest.order)
+        for record in records:
             if record.manifest.settings_scope != SettingsScope.GENERAL or record.plugin is None:
                 continue
             try:

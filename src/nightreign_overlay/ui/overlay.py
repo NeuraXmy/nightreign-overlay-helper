@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import Action, FluentIcon, RoundMenu
 
 from nightreign_overlay.core.app_config import AppConfig
-from nightreign_overlay.core.config import BoolOption, ConfigGroup, Option, RangeOption
+from nightreign_overlay.core.config import BoolOption, ChoiceOption, ConfigGroup, Option, RangeOption
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
@@ -48,18 +48,18 @@ def _is_position(value: Any) -> bool:
     return value is None or (
         isinstance(value, list)
         and len(value) == 2
-        and all(isinstance(v, int) and not isinstance(v, bool) for v in value)
+        and all(v is None or (isinstance(v, int) and not isinstance(v, bool)) for v in value)
     )
 
 
 class OverlayConfig(ConfigGroup):
     """Options shared by every overlay window. Bind one instance per overlay (usually as a config section)."""
 
-    #: Top-left corner in global coordinates; None places the overlay at the top centre of the primary screen.
-    position = Option[list[int] | None](None, validator=_is_position)
+    #: Top-left corner in global coordinates; None components follow the default position on that axis.
+    position = Option[list[int | None] | None](None, validator=_is_position)
     opacity = RangeOption(100, 20, 100)
     scale = RangeOption(100, 50, 200)
-    click_through = BoolOption(False)
+    input_mode = ChoiceOption("normal", ("normal", "locked", "passthrough"))
     only_when_game_foreground = BoolOption(False)
 
 
@@ -68,6 +68,12 @@ class OverlayManager(QObject):
 
     #: An overlay asked for the main window (e.g. from its context menu).
     mainWindowRequested = pyqtSignal()
+    #: Temporarily hide the main window while a full-screen selector has focus.
+    mainWindowHideRequested = pyqtSignal()
+    #: Restore the main window after a selector that hid it has closed.
+    mainWindowShowRequested = pyqtSignal()
+    #: An overlay requested orderly application shutdown from its context menu.
+    quitRequested = pyqtSignal()
 
     TOPMOST_INTERVAL_MS = 1000
 
@@ -99,7 +105,9 @@ class OverlayManager(QObject):
     @property
     def transparent_mode(self) -> bool:
         mode = self._app_config.overlay_mode.value
-        return mode == "overlay" or (mode == "auto" and self._backend.supports_transparent_overlay)
+        # Automatic mode follows the legacy default: prefer a transparent overlay everywhere.
+        # Users can explicitly select ``window`` if their compositor cannot display it correctly.
+        return mode != "window"
 
     @property
     def game_foreground(self) -> bool:
@@ -171,7 +179,7 @@ class OverlayWindow(QWidget):
 
         config.opacity.valueChanged.connect(self._apply_opacity)
         config.scale.valueChanged.connect(self._on_scale_changed)
-        config.click_through.valueChanged.connect(self._on_click_through_changed)
+        config.input_mode.valueChanged.connect(self._on_input_mode_changed)
         config.only_when_game_foreground.valueChanged.connect(self._on_visibility_rule_changed)
         config.position.valueChanged.connect(self._on_position_changed)
         manager.register(self)
@@ -189,6 +197,9 @@ class OverlayWindow(QWidget):
     def set_base_size(self, size: QSize) -> None:
         self._base_size = QSize(size)
         self._apply_size()
+        if self.config.position.value is None:
+            # Dynamic overlays start small and grow as plugins contribute content.
+            self._move_to(self._default_position())
 
     def show_overlay(self) -> None:
         self._requested = True
@@ -224,7 +235,7 @@ class OverlayWindow(QWidget):
                 | Qt.WindowType.WindowDoesNotAcceptFocus
                 | Qt.WindowType.NoDropShadowWindowHint
             )
-            if self.config.click_through.value:
+            if self.config.input_mode.value == "passthrough":
                 flags |= Qt.WindowType.WindowTransparentForInput
         else:
             flags = (
@@ -247,6 +258,10 @@ class OverlayWindow(QWidget):
 
     def reset_position(self) -> None:
         self.config.position.set(None)
+
+    def reset_horizontal_position(self) -> None:
+        position = self.config.position.value
+        self.config.position.set([None, position[1] if position is not None else None])
 
     def dispose(self) -> None:
         """Close and schedule deletion; the instance must not be used afterwards."""
@@ -274,7 +289,7 @@ class OverlayWindow(QWidget):
         self.paint_overlay(painter)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton and self.config.input_mode.value != "locked":
             self._drag_offset = event.globalPosition().toPoint() - self.pos()
             event.accept()
         else:
@@ -300,30 +315,30 @@ class OverlayWindow(QWidget):
         # Window mode: the user may drag the native title bar, which bypasses our mouse handlers. Moves made
         # by us are recognised by their target so that e.g. a reset keeps following the default position.
         user_move = self.pos() != self._programmatic_pos
-        if user_move and self._drag_offset is None and not self._applying_mode and self.isVisible():
+        if user_move and self.config.input_mode.value == "locked" and not self._applying_mode:
+            # Window mode can still be moved through its native title bar; restore the
+            # configured position so the lock applies outside transparent mode as well.
+            self._on_position_changed(self.config.position.value)
+        elif user_move and self._drag_offset is None and not self._applying_mode and self.isVisible():
             self._save_position()
 
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        """Keep the overlay menu equivalent to the legacy open-settings / quit menu."""
         menu = RoundMenu(parent=self)
-        menu.addAction(
-            Action(FluentIcon.SYNC, tr("overlay.menu.reset_position"), menu, triggered=self.reset_position)
-        )
-        if self.manager.transparent_mode:
-            menu.addAction(
-                Action(
-                    FluentIcon.FILTER,
-                    tr("overlay.menu.click_through"),
-                    menu,
-                    triggered=lambda: self.config.click_through.set(True),
-                )
-            )
-        menu.addSeparator()
         menu.addAction(
             Action(
                 FluentIcon.HOME,
                 tr("overlay.menu.open_main_window"),
                 menu,
-                triggered=lambda: self.manager.mainWindowRequested.emit(),
+                triggered=self.manager.mainWindowRequested.emit,
+            )
+        )
+        menu.addAction(
+            Action(
+                FluentIcon.CLOSE,
+                tr("overlay.menu.quit"),
+                menu,
+                triggered=self.manager.quitRequested.emit,
             )
         )
         menu.exec(event.globalPos())
@@ -340,6 +355,7 @@ class OverlayWindow(QWidget):
     def _apply_size(self) -> None:
         scale = self.scale_factor
         self.setFixedSize(round(self._base_size.width() * scale), round(self._base_size.height() * scale))
+        self.updateGeometry()
         self.update()
 
     def _apply_opacity(self, opacity: int) -> None:
@@ -347,23 +363,30 @@ class OverlayWindow(QWidget):
 
     def _on_scale_changed(self, _scale: int) -> None:
         self._apply_size()
-        if self.config.position.value is None:
+        if self.config.position.value is None or self.config.position.value[0] is None:
             # The default position depends on the width, so keep the overlay centred.
             self._move_to(self._default_position())
         self.on_scale_changed(self.scale_factor)
 
-    def _on_click_through_changed(self, _enabled: bool) -> None:
+    def _on_input_mode_changed(self, _mode: str) -> None:
         if self.manager.transparent_mode:
             self.apply_window_mode()
 
     def _on_visibility_rule_changed(self, _enabled: bool) -> None:
         self.update_visibility()
 
-    def _on_position_changed(self, value: list[int] | None) -> None:
-        if value is None:
-            self._move_to(self._default_position())
-        elif QPoint(*value) != self.pos():
-            self._move_to(QPoint(*value))
+    def _on_position_changed(self, value: list[int | None] | None) -> None:
+        default = self._default_position()
+        position = (
+            default
+            if value is None
+            else QPoint(
+                value[0] if value[0] is not None else default.x(),
+                value[1] if value[1] is not None else default.y(),
+            )
+        )
+        if position != self.pos():
+            self._move_to(position)
 
     def _move_to(self, position: QPoint) -> None:
         """Move without persisting; the position setting only records moves made by the user."""
@@ -375,10 +398,16 @@ class OverlayWindow(QWidget):
 
     def _restore_position(self) -> None:
         value = self.config.position.value
-        if value is not None and self._is_on_screen(QPoint(*value)):
-            self._move_to(QPoint(*value))
-        else:
-            self._move_to(self._default_position())
+        default = self._default_position()
+        position = (
+            default
+            if value is None
+            else QPoint(
+                value[0] if value[0] is not None else default.x(),
+                value[1] if value[1] is not None else default.y(),
+            )
+        )
+        self._move_to(position if self._is_on_screen(position) else default)
 
     def _is_on_screen(self, position: QPoint) -> bool:
         rect = QRect(position, self.size())

@@ -9,7 +9,11 @@ requires-python = ">=3.11"
 dependencies = [
     "PyQt6>=6.7",
     "PyQt6-Fluent-Widgets>=1.11,<1.12",
+    "numpy>=2",
+    "opencv-python>=4.10",
     "platformdirs>=4",
+    "pygame>=2.6",
+    "pynput>=1.7",
     "pyyaml>=6",
 ]
 
