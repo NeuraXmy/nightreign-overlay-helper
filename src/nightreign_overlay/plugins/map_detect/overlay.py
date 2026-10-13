@@ -7,6 +7,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
+from functools import partial
 
 import yaml
 from PIL import Image
@@ -16,6 +17,7 @@ from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QSizePolicy, QVBo
 
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.plugins.map_detect.image_utils import draw_text
+from nightreign_overlay.plugins.map_detect.localization import rendering_translator
 from nightreign_overlay.plugins.map_detect.resources import get_data_path
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
 
@@ -27,15 +29,18 @@ def load_yaml(path: str) -> dict:
         return yaml.safe_load(f)
 
 
-def get_readable_timedelta(t: timedelta) -> str:
+def get_readable_timedelta(t: timedelta, tr: Callable[..., str] | None = None) -> str:
+    if tr is None:
+        localized = rendering_translator()
+        tr = partial(localized.tr, "map_detect")
     seconds = int(t.total_seconds())
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     if hours > 0:
-        return f"{hours}小时{minutes}分钟{seconds}秒"
+        return tr("overlay.duration.hours", hours=hours, minutes=minutes, seconds=seconds)
     if minutes > 0:
-        return f"{minutes}分钟{seconds}秒"
-    return f"{seconds}秒"
+        return tr("overlay.duration.minutes", minutes=minutes, seconds=seconds)
+    return tr("overlay.duration.seconds", seconds=seconds)
 
 
 @dataclass
@@ -219,7 +224,7 @@ class MapInfoOverlay(OverlayWindow):
                 draw_text(
                     img,
                     (sx + icon_size[0] + 5, sy),
-                    "水晶点位",
+                    self._tr("overlay.legend.crystal"),
                     20,
                     color=(255, 255, 255, 220),
                     outline_width=2,
@@ -229,7 +234,7 @@ class MapInfoOverlay(OverlayWindow):
                 draw_text(
                     img,
                     (sx + icon_size[0] + 5, sy + icon_size[1]),
-                    "地下水晶点位",
+                    self._tr("overlay.legend.underground"),
                     20,
                     color=(255, 255, 255, 220),
                     outline_width=2,
@@ -239,7 +244,7 @@ class MapInfoOverlay(OverlayWindow):
                 draw_text(
                     img,
                     (sx + icon_size[0] + 5, sy + 2 * (icon_size[1])),
-                    "额外水晶点位",
+                    self._tr("overlay.legend.extra"),
                     20,
                     color=(255, 255, 255, 220),
                     outline_width=2,
@@ -250,7 +255,7 @@ class MapInfoOverlay(OverlayWindow):
                 draw_text(
                     img,
                     (sx + icon_size[0] + 5, sy + icon_size[1]),
-                    "水晶点位",
+                    self._tr("overlay.legend.crystal"),
                     20,
                     color=(255, 255, 255, 220),
                     outline_width=2,
@@ -260,7 +265,7 @@ class MapInfoOverlay(OverlayWindow):
                 draw_text(
                     img,
                     (sx + icon_size[0] + 5, sy + 2 * (icon_size[1])),
-                    "地下水晶点位",
+                    self._tr("overlay.legend.underground"),
                     20,
                     color=(255, 255, 255, 220),
                     outline_width=2,
@@ -357,7 +362,7 @@ class MapInfoOverlay(OverlayWindow):
         elif self.map_pattern_match_time > 0:
             elapsed = time.time() - self.map_pattern_match_time
             match_time_text = self._tr(
-                "overlay.elapsed", elapsed=get_readable_timedelta(timedelta(seconds=elapsed))
+                "overlay.elapsed", elapsed=get_readable_timedelta(timedelta(seconds=elapsed), self._tr)
             )
         self.match_time_label.setText(match_time_text)
         self.match_time_label.setStyleSheet(f"color: white; font-size: {font_size}px;")

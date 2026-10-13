@@ -60,6 +60,10 @@ class PluginContext:
     def tr(self, key: str, **kwargs: Any) -> str:
         return self._translator.tr(self.plugin_id, key, **kwargs)
 
+    @property
+    def language(self) -> str:
+        return self._translator.language
+
     def resource(self, *parts: str) -> Path:
         return self.root_dir.joinpath(*parts)
 

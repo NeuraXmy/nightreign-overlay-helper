@@ -7,6 +7,28 @@ overlay:
   all: 所有
   matching: "正在识别中... {spinner}"
   elapsed: "识别时间：{elapsed}前"
+  duration:
+    hours: "{hours}小时{minutes}分钟{seconds}秒"
+    minutes: "{minutes}分钟{seconds}秒"
+    seconds: "{seconds}秒"
+  legend:
+    crystal: 水晶点位
+    underground: 地下水晶点位
+    extra: 额外水晶点位
+drawing:
+  unknown_boss: 未知BOSS
+  day_boss: "Day{day} {name}"
+  extra_boss: "额外Boss:{name}"
+  rooftop: "楼顶:{name}"
+  basement: "地下室:{name}"
+  flask: 血瓶
+  floor_boss: "{floor}F: {name}"
+  blessing: 庇佑
+  hidden_nightlord: " (隐藏夜王)"
+  upper_left: 左上
+  lower_right: 右下
+  day2_circle: "Day2第一次缩圈位置：{position}"
+  event: "特殊事件: {name}"
 settings:
   basic: 地图识别与快捷键
   advanced: 高级检测选项

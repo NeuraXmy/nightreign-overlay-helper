@@ -22,6 +22,7 @@ from nightreign_overlay.plugins.map_detect.image_utils import (
     match_template,
     paste_cv2,
 )
+from nightreign_overlay.plugins.map_detect.localization import I18N_DIR, load_names, rendering_translator
 from nightreign_overlay.plugins.map_detect.map_info import (
     STD_MAP_SIZE,
     Construct,
@@ -276,15 +277,18 @@ class MapDetectResult:
 
 
 class MapDetector:
-    def __init__(self, config: MapDetectionSettings | None = None) -> None:
+    def __init__(self, config: MapDetectionSettings | None = None, *, language: str | None = None) -> None:
         self.config = config or MapDetectionSettings()
+        localized = rendering_translator(language)
+        self._tr = lambda key, **kwargs: localized.tr("map_detect", key, **kwargs)
         # 地图信息
         self.info = load_map_info(
             get_data_path("csv/map_patterns.csv"),
             get_data_path("csv/constructs.csv"),
-            get_data_path("csv/names.csv"),
+            str(I18N_DIR / "zh_CN-names.csv"),
             get_data_path("csv/positions.csv"),
         )
+        self.info.name_dict = load_names(localized.language)
 
         # 初始化POI信息
         all_poi_construct_types = set()
@@ -773,13 +777,13 @@ class MapDetector:
 
         # day1 boss
         x, y = scale_size(pattern.day1_pos)
-        name = get_name(pattern.day1_boss) or "未知BOSS"
+        name = get_name(pattern.day1_boss) or self._tr("drawing.unknown_boss")
         extra_name = get_name(pattern.day1_extra_boss) if pattern.day1_extra_boss != -1 else None
         icons.append(((x, y), night_circle_icon))
         texts.append(
             (
                 (x, y + scale_size(40)),
-                f"Day1 {name}",
+                self._tr("drawing.day_boss", day=1, name=name),
                 font_size_large,
                 (210, 210, 255, 255),
                 outline_w_large,
@@ -790,7 +794,7 @@ class MapDetector:
             texts.append(
                 (
                     (x, y + scale_size(60)),
-                    f"额外Boss:{extra_name}",
+                    self._tr("drawing.extra_boss", name=extra_name),
                     font_size_large,
                     (255, 255, 255, 255),
                     outline_w_large,
@@ -800,13 +804,13 @@ class MapDetector:
 
         # day2 boss
         x, y = scale_size(pattern.day2_pos)
-        name = get_name(pattern.day2_boss) or "未知BOSS"
+        name = get_name(pattern.day2_boss) or self._tr("drawing.unknown_boss")
         extra_name = get_name(pattern.day2_extra_boss) if pattern.day2_extra_boss != -1 else None
         icons.append(((x, y), night_circle_icon))
         texts.append(
             (
                 (x, y + scale_size(40)),
-                f"Day2 {name}",
+                self._tr("drawing.day_boss", day=2, name=name),
                 font_size_large,
                 (210, 210, 255, 255),
                 outline_w_large,
@@ -817,7 +821,7 @@ class MapDetector:
             texts.append(
                 (
                     (x, y + scale_size(60)),
-                    f"额外Boss:{extra_name}",
+                    self._tr("drawing.extra_boss", name=extra_name),
                     font_size_large,
                     (255, 255, 255, 255),
                     outline_w_large,
@@ -855,11 +859,11 @@ class MapDetector:
                 if pos == main_castle_upperfloor_pos:
                     y -= scale_size(10)
                     x += scale_size(13)
-                    name = "楼顶:" + name
+                    name = self._tr("drawing.rooftop", name=name)
                 elif pos == main_castle_basement_pos:
                     y += scale_size(10)
                     x -= scale_size(13)
-                    name = "地下室:" + name
+                    name = self._tr("drawing.basement", name=name)
                 else:
                     y += scale_size(15)
                     if ctype in boss1_ctypes:
@@ -975,7 +979,7 @@ class MapDetector:
                 texts.append(
                     (
                         (x, y),
-                        process_underground_name("血瓶"),
+                        process_underground_name(self._tr("drawing.flask")),
                         font_size_small,
                         (255, 255, 0, 255),
                         outline_w_small,
@@ -991,7 +995,7 @@ class MapDetector:
                 texts.append(
                     (
                         (x, y),
-                        f"{floor_num}F: {get_name(ctype)}",
+                        self._tr("drawing.floor_boss", floor=floor_num, name=get_name(ctype)),
                         font_size_large,
                         color,
                         outline_w_large,
@@ -1018,7 +1022,7 @@ class MapDetector:
             texts.append(
                 (
                     (pos[0], pos[1] + scale_size(20)),
-                    "庇佑",
+                    self._tr("drawing.blessing"),
                     font_size_small,
                     (255, 200, 200, 255),
                     outline_w_small,
@@ -1033,7 +1037,7 @@ class MapDetector:
             text += f" (#{result_index + 1} E:{match_result.error})"
         text += f"  {get_name(pattern.earth_shifting + 200000)} - {get_name(pattern.nightlord + 100000)}"
         if match_result.nightlord is None:
-            text += " (隐藏夜王)"
+            text += self._tr("drawing.hidden_nightlord")
         texts.append(
             (
                 scale_size((20, 10)),
@@ -1049,8 +1053,8 @@ class MapDetector:
 
         # 大空洞第二天缩圈位置
         if pattern.earth_shifting == 4:
-            text = "左上" if day2_lefttop else "右下"
-            text = f"Day2第一次缩圈位置：{text}"
+            text = self._tr("drawing.upper_left" if day2_lefttop else "drawing.lower_right")
+            text = self._tr("drawing.day2_circle", position=text)
             texts.append(
                 (
                     scale_size((20, 10 + info_text_y_offset)),
@@ -1069,7 +1073,7 @@ class MapDetector:
             texts.append(
                 (
                     scale_size((20, 10 + info_text_y_offset)),
-                    f"特殊事件: {event_text}",
+                    self._tr("drawing.event", name=event_text),
                     scale_size(22),
                     (255, 255, 255, 255),
                     scale_size(3),
