@@ -45,15 +45,22 @@ class _RegionService(RegionApi):
     def __init__(self, plugin: RegionPlugin) -> None:
         self._plugin = plugin
 
-    def request_region(self, key: str, label: str | None = None, color: str | None = None) -> QRect | None:
+    def request_region(
+        self,
+        key: str,
+        label: str | None = None,
+        color: str | None = None,
+        *,
+        screenshot_path: str | None = None,
+    ) -> QRect | None:
         ctx = self._plugin.ctx
         target = RegionTarget(key, label or ctx.tr("selection.annotate"), color)
-        result = self._select([target], require_freeze=False)
+        result = self._select([target], require_freeze=False, screenshot_path=screenshot_path)
         selected = result[0].get(0) if result is not None else None
         if selected is None:
             ctx.log.warning("Region %s setting canceled", key)
             return None
-        self.save_region_for_test(key, selected)
+        self.save_region(key, selected)
         ctx.log.info("Region %s saved: %s", key, list(selected.getRect()))
         return selected
 
@@ -71,7 +78,7 @@ class _RegionService(RegionApi):
         return samples
 
     def _select(
-        self, targets: Sequence[RegionTarget], *, require_freeze: bool
+        self, targets: Sequence[RegionTarget], *, require_freeze: bool, screenshot_path: str | None = None
     ) -> tuple[dict[int, QRect], _SelectionDialog] | None:
         """Hide the main window, run the selector and return its rectangles, or ``None`` on cancel."""
         ctx = self._plugin.ctx
@@ -98,6 +105,7 @@ class _RegionService(RegionApi):
             )
             annotations = [(target.label, target.color or _RECT_COLOR) for target in targets]
             window = _SelectionDialog(texts, freeze, ctx.log, annotations)
+            window.screenshot_path = screenshot_path if freeze else None
             selections = window.run()
         finally:
             if overlays is not None:
@@ -126,7 +134,7 @@ class _RegionService(RegionApi):
     def hide_preview(self) -> None:
         self._plugin.hide_preview()
 
-    def save_region_for_test(self, key: str, rect: QRect) -> None:
+    def save_region(self, key: str, rect: QRect) -> None:
         if rect.width() <= 0 or rect.height() <= 0:
             raise ValueError("a calibrated region must have a positive size")
         region_value = [rect.x(), rect.y(), rect.width(), rect.height()]
@@ -345,6 +353,7 @@ class _SelectionDialog(QDialog):
     ) -> None:
         super().__init__()
         self._log = log
+        self.screenshot_path: str | None = None
         self._annotations = list(annotations) if annotations else [(texts.annotate, _RECT_COLOR)]
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
@@ -455,6 +464,8 @@ class _SelectionDialog(QDialog):
         if not self.items:
             self._log.warning("No region drawn; nothing to save")
             return
+        if self.screenshot_path is not None:
+            self.screen().grabWindow(0).save(self.screenshot_path)
         # Like the legacy dialog, the last rectangle drawn for the colour wins.
         self._local_selections = {item.annotation: QRect(item.rect) for item in self.items}
         self.selections = {}

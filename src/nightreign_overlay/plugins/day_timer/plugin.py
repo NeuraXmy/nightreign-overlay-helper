@@ -12,11 +12,18 @@ from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
-from nightreign_overlay.plugins.day_timer.api import DayPhaseChanged, DayTimerApi, Phase, format_period
+from nightreign_overlay.plugins.day_timer.api import (
+    DayPhaseChanged,
+    DayStarted,
+    DayTimerApi,
+    Phase,
+    format_period,
+)
 from nightreign_overlay.plugins.day_timer.config import DayTimerConfig
 from nightreign_overlay.plugins.day_timer.detector import DayDetector
 from nightreign_overlay.plugins.hud.api import HudApi
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice
+from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
@@ -235,6 +242,7 @@ class DayTimerPlugin(Plugin):
             and time.monotonic() - self._phase_started < _BANNER_REFRESH_SECONDS
         ):
             self._phase_started = time.monotonic()
+            self.ctx.publish(DayStarted(day))
             return
         self._start_day(day)
         self.ctx.log.info("Day %d started.", day)
@@ -261,6 +269,7 @@ class DayTimerPlugin(Plugin):
         self.day = day
         self.phase = _initial_phase(day)
         self._phase_started = time.monotonic()
+        self.ctx.publish(DayStarted(day))
         self.ctx.publish(DayPhaseChanged(self.day, self.phase))
         self._update_timer()
 
@@ -324,6 +333,9 @@ class DayTimerPlugin(Plugin):
                 action=self.ctx.tr("hud.action.start" if index % 2 == 0 else "hud.action.end"),
             )
             progress = int((index + elapsed / duration) * 100)
+        maps = self.ctx.services.get(MapRecognitionApi)
+        if maps is not None and maps.ready():
+            text += self.ctx.tr("hud.map_ready")
         if self._label is not None:
             self._label.setText(text)
         for index, segment in enumerate(self._progress):

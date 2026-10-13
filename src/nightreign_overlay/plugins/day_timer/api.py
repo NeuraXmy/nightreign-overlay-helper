@@ -30,3 +30,10 @@ class DayTimerApi:
 
 def format_period(seconds: int) -> str:
     return f"{max(seconds, 0) // 60}:{max(seconds, 0) % 60:02d}"
+
+
+@dataclass(frozen=True)
+class DayStarted:
+    """A DAY countdown started/refreshed; phase rewind alone does not start a new expedition."""
+
+    day: int

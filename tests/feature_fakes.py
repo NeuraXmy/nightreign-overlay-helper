@@ -52,7 +52,14 @@ class FakeRegion(RegionApi):
         self.samples: dict[str, QImage] | None = None
         self.previews: list[tuple[str, str | None] | None] = []
 
-    def request_region(self, key: str, label: str | None = None, color: str | None = None) -> QRect | None:
+    def request_region(
+        self,
+        key: str,
+        label: str | None = None,
+        color: str | None = None,
+        *,
+        screenshot_path: str | None = None,
+    ) -> QRect | None:
         self.requests.append((key, label, color))
         return self.regions.get(key)
 
@@ -73,7 +80,7 @@ class FakeRegion(RegionApi):
     def hide_preview(self) -> None:
         self.previews.append(None)
 
-    def save_region_for_test(self, key: str, rect: QRect) -> None:
+    def save_region(self, key: str, rect: QRect) -> None:
         self.regions[key] = rect
 
 
