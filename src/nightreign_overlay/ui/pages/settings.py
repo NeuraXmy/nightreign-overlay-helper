@@ -13,13 +13,14 @@ from nightreign_overlay.core.app_config import OVERLAY_MODES, THEMES, AppConfig
 from nightreign_overlay.core.i18n import language_names, tr
 from nightreign_overlay.core.log import LOG_LEVELS, get_logger, set_log_level
 from nightreign_overlay.core.paths import log_dir, user_data_dir
-from nightreign_overlay.plugin import PluginManager, SettingsScope
+from nightreign_overlay.plugin import Plugin, PluginManager, SettingsScope
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigColorCard,
     ConfigSwitchCard,
     ScrollPage,
     SettingSection,
+    create_reset_button,
 )
 
 log = get_logger(__name__)
@@ -32,9 +33,14 @@ class SettingsPage(ScrollPage):
     def __init__(self, config: AppConfig, plugins: PluginManager, parent: QWidget | None = None) -> None:
         super().__init__("settingsPage", tr("settings.title"), parent)
         self._config = config
+        self._plugins: list[Plugin] = []
         self._init_general()
         self._init_plugin_settings(plugins)
         self._init_advanced()
+        self.resetButton = create_reset_button(
+            self._reset_settings, self.view, tr("settings_reset.general_content"), self.view
+        )
+        self.headerLayout.addWidget(self.resetButton)
 
         config.language.valueChanged.connect(self._on_language_changed)
         config.log_level.valueChanged.connect(set_log_level)
@@ -104,6 +110,7 @@ class SettingsPage(ScrollPage):
                 log.exception("Plugin %s failed to create its general settings widget", record.id)
                 continue
             if content is not None:
+                self._plugins.append(record.plugin)
                 self.addWidget(content)
 
     def _init_advanced(self) -> None:
@@ -134,6 +141,18 @@ class SettingsPage(ScrollPage):
             log_card,
         )
         self.addWidget(section)
+
+    def _reset_settings(self) -> None:
+        for item in self._config.items().values():
+            # Internal bookkeeping, not a setting shown on this page.
+            if item is not self._config.tray_hint_shown:
+                item.reset()
+        for plugin in self._plugins:
+            try:
+                plugin.reset_settings()
+            except Exception:
+                log.exception("Plugin %s failed to reset its general settings", plugin.id)
+        log.info("General settings reset to defaults.")
 
     def _on_language_changed(self, _language: str) -> None:
         bar = InfoBar.warning(

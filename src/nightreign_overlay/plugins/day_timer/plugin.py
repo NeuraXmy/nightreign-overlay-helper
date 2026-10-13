@@ -29,6 +29,16 @@ from nightreign_overlay.ui.components import (
 )
 
 _REGION_KEY = "day_timer.detect_region"
+_NEXT_DAY = "day_timer.next_day"
+_FORWARD = "day_timer.forward"
+_BACKWARD = "day_timer.backward"
+_CALIBRATE_REGION = "day_timer.calibrate_region"
+_DEFAULT_HOTKEYS = {
+    _NEXT_DAY: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "d")),
+    _FORWARD: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "right")),
+    _BACKWARD: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "left")),
+    _CALIBRATE_REGION: HotkeyBinding(None),
+}
 # Hits of the same DAY banner within this window refresh the start time instead of starting a new day.
 _BANNER_REFRESH_SECONDS = 3.0
 _DAY_PROGRESS_STYLE = """
@@ -170,30 +180,15 @@ class DayTimerPlugin(Plugin):
             self.ctx.on_cleanup(lambda item=item, slot=slot: item.valueChanged.disconnect(slot))
 
     def _register_hotkeys(self, hotkeys: HotkeyApi) -> None:
-        hotkeys.register(
-            "day_timer.next_day",
-            HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "d")),
-            self._start_next_day,
-        )
-        hotkeys.register(
-            "day_timer.forward",
-            HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "right")),
-            self._forward,
-        )
-        hotkeys.register(
-            "day_timer.backward",
-            HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "left")),
-            self._backward,
-        )
-        hotkeys.register(
-            "day_timer.calibrate_region",
-            HotkeyBinding(None),
-            self._calibrate_region,
-        )
-        self.ctx.on_cleanup(lambda: hotkeys.unregister("day_timer.next_day"))
-        self.ctx.on_cleanup(lambda: hotkeys.unregister("day_timer.forward"))
-        self.ctx.on_cleanup(lambda: hotkeys.unregister("day_timer.backward"))
-        self.ctx.on_cleanup(lambda: hotkeys.unregister("day_timer.calibrate_region"))
+        callbacks = {
+            _NEXT_DAY: self._start_next_day,
+            _FORWARD: self._forward,
+            _BACKWARD: self._backward,
+            _CALIBRATE_REGION: self._calibrate_region,
+        }
+        for action, callback in callbacks.items():
+            hotkeys.register(action, _DEFAULT_HOTKEYS[action], callback)
+            self.ctx.on_cleanup(lambda action=action: hotkeys.unregister(action))
 
     def _create_hud(self, hud: HudApi) -> None:
         widget = _DayTimerHud(
@@ -338,6 +333,18 @@ class DayTimerPlugin(Plugin):
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)
         hotkeys = self.ctx.services.require(HotkeyApi)
+
+        def hotkey_card(action: str, key: str, **kwargs: Any) -> HotkeySettingCard:
+            return HotkeySettingCard(
+                hotkeys,
+                action,
+                _DEFAULT_HOTKEYS[action],
+                FluentIcon.SYNC,
+                self.ctx.tr(f"settings.{key}.title"),
+                self.ctx.tr(f"settings.{key}.content"),
+                **kwargs,
+            )
+
         basic = SettingSection(self.ctx.tr("settings.basic.title"))
         basic.addCards(
             ConfigSwitchCard(
@@ -352,13 +359,9 @@ class DayTimerPlugin(Plugin):
                 FluentIcon.LANGUAGE,
                 self.ctx.tr("settings.language.title"),
             ),
-            HotkeySettingCard(
-                hotkeys,
-                hotkeys.binding("day_timer.calibrate_region", HotkeyBinding(None)),
-                lambda binding: hotkeys.set_binding("day_timer.calibrate_region", binding),
-                FluentIcon.SYNC,
-                self.ctx.tr("settings.calibrate.title"),
-                self.ctx.tr("settings.calibrate.content"),
+            hotkey_card(
+                _CALIBRATE_REGION,
+                "calibrate",
                 actions=[(self.ctx.tr("settings.calibrate.button"), self._calibrate_region)],
             ),
             MultiButtonSettingCard(
@@ -374,39 +377,9 @@ class DayTimerPlugin(Plugin):
         )
         shortcuts = SettingSection(self.ctx.tr("settings.shortcuts.title"))
         shortcuts.addCards(
-            HotkeySettingCard(
-                hotkeys,
-                hotkeys.binding(
-                    "day_timer.next_day",
-                    HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "d")),
-                ),
-                lambda binding: hotkeys.set_binding("day_timer.next_day", binding),
-                FluentIcon.SYNC,
-                self.ctx.tr("settings.shortcuts.next_day.title"),
-                self.ctx.tr("settings.shortcuts.next_day.content"),
-            ),
-            HotkeySettingCard(
-                hotkeys,
-                hotkeys.binding(
-                    "day_timer.forward",
-                    HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "right")),
-                ),
-                lambda binding: hotkeys.set_binding("day_timer.forward", binding),
-                FluentIcon.SYNC,
-                self.ctx.tr("settings.shortcuts.forward.title"),
-                self.ctx.tr("settings.shortcuts.forward.content"),
-            ),
-            HotkeySettingCard(
-                hotkeys,
-                hotkeys.binding(
-                    "day_timer.backward",
-                    HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "left")),
-                ),
-                lambda binding: hotkeys.set_binding("day_timer.backward", binding),
-                FluentIcon.SYNC,
-                self.ctx.tr("settings.shortcuts.backward.title"),
-                self.ctx.tr("settings.shortcuts.backward.content"),
-            ),
+            hotkey_card(_NEXT_DAY, "shortcuts.next_day"),
+            hotkey_card(_FORWARD, "shortcuts.forward"),
+            hotkey_card(_BACKWARD, "shortcuts.backward"),
         )
         advanced = SettingSection(self.ctx.tr("settings.advanced.title"))
         advanced.addCards(
@@ -427,6 +400,15 @@ class DayTimerPlugin(Plugin):
         panel.addSection(shortcuts)
         panel.addSection(advanced)
         return panel
+
+    def reset_settings(self) -> None:
+        super().reset_settings()
+        hotkeys = self.ctx.services.require(HotkeyApi)
+        for action, default in _DEFAULT_HOTKEYS.items():
+            hotkeys.set_binding(action, default)
+        if (regions := self.ctx.services.get(RegionApi)) is not None:
+            regions.clear_region(_REGION_KEY)
+        self.ctx.log.info("Settings reset to defaults.")
 
 
 def _initial_phase(day: int) -> Phase:

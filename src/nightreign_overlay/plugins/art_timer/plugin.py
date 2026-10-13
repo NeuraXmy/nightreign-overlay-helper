@@ -21,6 +21,8 @@ from nightreign_overlay.ui.components import ConfigRangeCard, HotkeySettingCard,
 _REGION_KEY = "art_timer.art_region"
 _USE_ART = "art_timer.use_art"
 _CALIBRATE_REGION = "art_timer.calibrate_region"
+# The legacy app shipped both shortcuts unbound.
+_HOTKEYS = (_USE_ART, _CALIBRATE_REGION)
 # Legacy colour of the selector annotation.
 _REGION_COLOR = "#3235eb"
 
@@ -88,9 +90,9 @@ class ArtTimerPlugin(Plugin):
         self._detector = None
 
     def _register_hotkeys(self, hotkeys: HotkeyApi) -> None:
-        # The legacy app shipped both shortcuts unbound.
-        for action, callback in ((_USE_ART, self._use_art), (_CALIBRATE_REGION, self._calibrate_region)):
-            hotkeys.register(action, HotkeyBinding(None), callback)
+        callbacks = {_USE_ART: self._use_art, _CALIBRATE_REGION: self._calibrate_region}
+        for action in _HOTKEYS:
+            hotkeys.register(action, HotkeyBinding(None), callbacks[action])
             self.ctx.on_cleanup(lambda action=action: hotkeys.unregister(action))
 
     def _create_hud(self, hud: HudApi) -> None:
@@ -180,8 +182,8 @@ class ArtTimerPlugin(Plugin):
         basic.addCards(
             HotkeySettingCard(
                 hotkeys,
-                hotkeys.binding(_CALIBRATE_REGION, HotkeyBinding(None)),
-                lambda binding: hotkeys.set_binding(_CALIBRATE_REGION, binding),
+                _CALIBRATE_REGION,
+                HotkeyBinding(None),
                 FluentIcon.SYNC,
                 tr("settings.region.title"),
                 tr("settings.region.content"),
@@ -189,8 +191,8 @@ class ArtTimerPlugin(Plugin):
             ),
             HotkeySettingCard(
                 hotkeys,
-                hotkeys.binding(_USE_ART, HotkeyBinding(None)),
-                lambda binding: hotkeys.set_binding(_USE_ART, binding),
+                _USE_ART,
+                HotkeyBinding(None),
                 FluentIcon.CALORIES,
                 tr("settings.use_art.title"),
                 tr("settings.use_art.content"),
@@ -216,3 +218,12 @@ class ArtTimerPlugin(Plugin):
         panel.addSection(basic)
         panel.addSection(advanced)
         return panel
+
+    def reset_settings(self) -> None:
+        super().reset_settings()
+        hotkeys = self.ctx.services.require(HotkeyApi)
+        for action in _HOTKEYS:
+            hotkeys.set_binding(action, HotkeyBinding(None))
+        if (regions := self.ctx.services.get(RegionApi)) is not None:
+            regions.clear_region(_REGION_KEY)
+        self.ctx.log.info("Settings reset to defaults.")

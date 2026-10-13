@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import ScrollArea, StrongBodyLabel, TitleLabel
 
 
 class ScrollPage(ScrollArea):
-    """A vertically scrolling page; use :meth:`addWidget` to append content."""
+    """A vertically scrolling page; use :meth:`addWidget` to append content.
+
+    With a title, page-level actions can be appended to the right of it through ``headerLayout``.
+    """
 
     def __init__(self, object_name: str, title: str | None = None, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -19,7 +22,10 @@ class ScrollPage(ScrollArea):
         self.contentLayout.setSpacing(24)
         self.contentLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         if title:
-            self.contentLayout.addWidget(TitleLabel(title, self.view))
+            self.headerLayout = QHBoxLayout()
+            self.headerLayout.addWidget(TitleLabel(title, self.view))
+            self.headerLayout.addStretch(1)
+            self.contentLayout.addLayout(self.headerLayout)
 
         self.setWidget(self.view)
         self.setWidgetResizable(True)

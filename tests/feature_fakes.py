@@ -62,6 +62,9 @@ class FakeRegion(RegionApi):
     def region(self, key: str) -> QRect | None:
         return self.regions.get(key)
 
+    def clear_region(self, key: str) -> None:
+        self.regions.pop(key, None)
+
     def save_region_for_test(self, key: str, rect: QRect) -> None:
         self.regions[key] = rect
 

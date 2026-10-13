@@ -1,4 +1,7 @@
-"""Per plugin page: header with status / enable switch, plus "Settings" and "Tutorial" tabs."""
+"""Per plugin page: header with status / enable switch, plus "Settings" and "Tutorial" tabs.
+
+The "Settings" tab carries a page-level reset button that restores the plugin's defaults after confirmation.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ from qfluentwidgets import (
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.plugin import PluginManager, PluginRecord
+from nightreign_overlay.ui.components import create_reset_button
 from nightreign_overlay.ui.components.plugin_widgets import PluginSwitch
 from nightreign_overlay.ui.plugin_actions import state_text
 from nightreign_overlay.ui.theme import fluent_icon
@@ -45,10 +49,22 @@ class PluginPage(QWidget):
 
         self.segmented = SegmentedWidget(self)
         self.stack = QStackedWidget(self)
-        self._add_tab("settings", tr("plugin_page.tab.settings"), self._create_settings())
+        self.resetButton: QWidget | None = None
+        settings = self._create_settings()
+        self._add_tab("settings", tr("plugin_page.tab.settings"), settings)
         self._add_tab("tutorial", tr("plugin_page.tab.tutorial"), self._create_tutorial())
         self.segmented.setCurrentItem("settings")
-        layout.addWidget(self.segmented, 0, Qt.AlignmentFlag.AlignLeft)
+        tabs = QHBoxLayout()
+        tabs.addWidget(self.segmented, 0, Qt.AlignmentFlag.AlignLeft)
+        tabs.addStretch(1)
+        if self.resetButton is not None:
+            reset = self.resetButton
+            tabs.addWidget(reset)
+            # The reset only concerns the settings tab, so it is hidden while another tab is shown.
+            self.stack.currentChanged.connect(
+                lambda _index: reset.setVisible(self.stack.currentWidget() is settings)
+            )
+        layout.addLayout(tabs)
         layout.addWidget(self.stack, 1)
 
         self._update_state()
@@ -92,13 +108,18 @@ class PluginPage(QWidget):
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         content: QWidget | None = None
-        if self._record.plugin is not None:
+        plugin = self._record.plugin
+        if plugin is not None:
             try:
-                content = self._record.plugin.create_settings_widget(scroll)
+                content = plugin.create_settings_widget(scroll)
             except Exception:
                 log.exception("Plugin %s failed to create its settings widget", self._record.id)
-        if content is None:
+        if plugin is None or content is None:
             content = self._placeholder(tr("plugin_page.no_settings"), scroll)
+        else:
+            self.resetButton = create_reset_button(
+                plugin.reset_settings, content, tr("settings_reset.plugin_content"), self
+            )
         scroll.setWidget(content)
         # Must run after ``setWidget`` so the content widget is made transparent as well.
         scroll.enableTransparentBackground()

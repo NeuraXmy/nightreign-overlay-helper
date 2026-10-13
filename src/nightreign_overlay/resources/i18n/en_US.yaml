@@ -50,6 +50,15 @@ plugin_page:
   no_settings: This feature has no options.
   no_tutorial: No tutorial is available for this feature yet.
 
+settings_reset:
+  button: Reset
+  title: Reset settings
+  plugin_content: Restore every setting on this page to its default? Shortcuts on this page return to their defaults and calibrated detection regions are cleared. This cannot be undone.
+  general_content: Restore every setting on this page to its default? This cannot be undone.
+  confirm: Reset
+  cancel: Cancel
+  done: Default settings restored
+
 settings:
   title: Settings
   open: Open

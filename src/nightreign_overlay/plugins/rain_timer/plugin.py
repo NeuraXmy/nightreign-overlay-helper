@@ -36,6 +36,8 @@ _REGION_KEY = "rain_timer.hp_region"
 _TOGGLE = "rain_timer.toggle"
 _CALIBRATE_REGION = "rain_timer.calibrate_region"
 _CALIBRATE_COLOR = "rain_timer.calibrate_color"
+# The legacy app shipped all three shortcuts unbound.
+_HOTKEYS = (_TOGGLE, _CALIBRATE_REGION, _CALIBRATE_COLOR)
 # Legacy colours of the progress bar and of the selector annotations.
 _BAR_COLOR = "#f766ba"
 _REGION_COLOR = "#a84747"
@@ -147,13 +149,13 @@ class RainTimerPlugin(Plugin):
         self.ctx.on_cleanup(lambda: self.config.auto_detect.valueChanged.disconnect(on_auto_detect))
 
     def _register_hotkeys(self, hotkeys: HotkeyApi) -> None:
-        # The legacy app shipped all three shortcuts unbound.
-        for action, callback in (
-            (_TOGGLE, self._toggle),
-            (_CALIBRATE_REGION, self._calibrate_region),
-            (_CALIBRATE_COLOR, self._calibrate_color),
-        ):
-            hotkeys.register(action, HotkeyBinding(None), callback)
+        callbacks = {
+            _TOGGLE: self._toggle,
+            _CALIBRATE_REGION: self._calibrate_region,
+            _CALIBRATE_COLOR: self._calibrate_color,
+        }
+        for action in _HOTKEYS:
+            hotkeys.register(action, HotkeyBinding(None), callbacks[action])
             self.ctx.on_cleanup(lambda action=action: hotkeys.unregister(action))
 
     def _create_hud(self, hud: HudApi) -> None:
@@ -324,8 +326,8 @@ class RainTimerPlugin(Plugin):
         ) -> HotkeySettingCard:
             return HotkeySettingCard(
                 hotkeys,
-                hotkeys.binding(action, HotkeyBinding(None)),
-                lambda binding: hotkeys.set_binding(action, binding),
+                action,
+                HotkeyBinding(None),
                 icon,
                 tr(f"settings.{key}.title"),
                 tr(f"settings.{key}.content"),
@@ -377,3 +379,12 @@ class RainTimerPlugin(Plugin):
         panel.addSection(color)
         panel.addSection(advanced)
         return panel
+
+    def reset_settings(self) -> None:
+        super().reset_settings()
+        hotkeys = self.ctx.services.require(HotkeyApi)
+        for action in _HOTKEYS:
+            hotkeys.set_binding(action, HotkeyBinding(None))
+        if (regions := self.ctx.services.get(RegionApi)) is not None:
+            regions.clear_region(_REGION_KEY)
+        self.ctx.log.info("Settings reset to defaults.")

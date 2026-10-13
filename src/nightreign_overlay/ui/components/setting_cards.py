@@ -239,7 +239,7 @@ class _HotkeySettingDialog(QDialog):
 
 
 class HotkeySettingCard(SettingCard):
-    """A large button that opens the legacy-style multi-device shortcut recorder.
+    """A large button that opens the legacy-style multi-device shortcut recorder for ``action_id``.
 
     ``actions`` adds buttons before the recorder so a manual trigger can share the card with its shortcut.
     """
@@ -247,8 +247,8 @@ class HotkeySettingCard(SettingCard):
     def __init__(
         self,
         hotkeys: HotkeyApi,
-        binding: HotkeyBinding,
-        on_changed: Callable[[HotkeyBinding], None],
+        action_id: str,
+        default: HotkeyBinding,
         icon: Icon,
         title: str,
         content: str | None = None,
@@ -258,28 +258,36 @@ class HotkeySettingCard(SettingCard):
     ) -> None:
         super().__init__(icon, title, content, parent)
         self._hotkeys = hotkeys
-        self._binding = binding
-        self._on_changed = on_changed
+        self._action_id = action_id
+        self._default = default
         for label, callback in actions:
             button = QPushButton(label, self)
             button.setMinimumHeight(34)
             button.clicked.connect(callback)
             self.hBoxLayout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
             self.hBoxLayout.addSpacing(8)
-        self.captureButton = QPushButton(_format_binding(binding), self)
+        self.captureButton = QPushButton(self)
         self.captureButton.setMinimumWidth(210)
         self.captureButton.setMinimumHeight(34)
         self.captureButton.setStyleSheet("font-size: 14px; font-weight: 600; padding: 4px 12px;")
         self.captureButton.clicked.connect(self._open_dialog)
         self.hBoxLayout.addWidget(self.captureButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
+        self.refresh()
+
+    @property
+    def binding(self) -> HotkeyBinding:
+        return self._hotkeys.binding(self._action_id, self._default)
+
+    def refresh(self) -> None:
+        """Re-read the persisted binding, e.g. after the page was reset to its defaults."""
+        self.captureButton.setText(_format_binding(self.binding))
 
     def _open_dialog(self) -> None:
-        dialog = _HotkeySettingDialog(self._hotkeys, self._binding, self)
+        dialog = _HotkeySettingDialog(self._hotkeys, self.binding, self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
-            self._binding = dialog.binding
-            self._on_changed(self._binding)
-            self.captureButton.setText(_format_binding(self._binding))
+            self._hotkeys.set_binding(self._action_id, dialog.binding)
+            self.refresh()
 
 
 class ConfigRangeCard(_ConfigCard):
