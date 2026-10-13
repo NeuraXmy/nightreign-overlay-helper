@@ -11,12 +11,13 @@ import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
 
+from nightreign_overlay.plugins.capture.api import hdr_to_sdr
+
 LANGUAGES = ("chs", "cht", "eng", "jp")
 TEMPLATE_HEIGHT = 30
 _MASK_LOWER_WHITE = np.array([0, 0, 200])
 _MASK_UPPER_WHITE = np.array([179, 90, 255])
 _SCALES = np.linspace(0.8, 1.2, 20)
-_HDR_GAMMA = 2.2
 
 
 @dataclass(frozen=True)
@@ -71,7 +72,7 @@ class DayDetector:
                 scores.append(float("inf"))
                 continue
             if hdr:
-                image = _hdr_to_sdr(image)
+                image = hdr_to_sdr(image)
             scores.append(_match_mask(_white_mask(_resize_height(image, TEMPLATE_HEIGHT)), mask))
         # Legacy order: the first day under the threshold wins.
         day = next((index for index, score in enumerate(scores, 1) if score < threshold), None)
@@ -96,11 +97,6 @@ def _resize_height(image: np.ndarray, height: int) -> np.ndarray:
     width = max(1, int(image.shape[1] * height / image.shape[0]))
     interpolation = cv2.INTER_AREA if image.shape[0] > height else cv2.INTER_LANCZOS4
     return cv2.resize(image, (width, height), interpolation=interpolation)
-
-
-def _hdr_to_sdr(image: np.ndarray) -> np.ndarray:
-    """Legacy gamma tone mapping for captures that come back in an HDR colour space."""
-    return (np.power(image.astype(np.float32) / 255.0, 1.0 / _HDR_GAMMA) * 255).astype(np.uint8)
 
 
 def _white_mask(image: np.ndarray) -> np.ndarray:
