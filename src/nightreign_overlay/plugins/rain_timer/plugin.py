@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QShowEvent
@@ -23,7 +23,7 @@ from nightreign_overlay.plugins.rain_timer.detector import (
     dominant_hls,
     hls_to_rgb,
 )
-from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
+from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus, RegionTarget
 from nightreign_overlay.ui.components import (
     ConfigRangeCard,
     ConfigSwitchCard,
@@ -322,7 +322,11 @@ class RainTimerPlugin(Plugin):
         hotkeys = self.ctx.services.require(HotkeyApi)
 
         def hotkey_card(
-            action: str, icon: FluentIcon, key: str, callback: Callable[[], None]
+            action: str,
+            icon: FluentIcon,
+            key: str,
+            callback: Callable[[], None],
+            accessories: Sequence[QWidget] = (),
         ) -> HotkeySettingCard:
             return HotkeySettingCard(
                 hotkeys,
@@ -332,6 +336,7 @@ class RainTimerPlugin(Plugin):
                 tr(f"settings.{key}.title"),
                 tr(f"settings.{key}.content"),
                 actions=[(tr(f"settings.{key}.button"), callback)],
+                accessories=accessories,
             )
 
         basic = SettingSection(tr("settings.basic.title"))
@@ -342,7 +347,13 @@ class RainTimerPlugin(Plugin):
                 tr("settings.auto.title"),
                 tr("settings.auto.content"),
             ),
-            hotkey_card(_CALIBRATE_REGION, FluentIcon.SYNC, "region", self._calibrate_region),
+            hotkey_card(
+                _CALIBRATE_REGION,
+                FluentIcon.SYNC,
+                "region",
+                self._calibrate_region,
+                [RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)],
+            ),
             hotkey_card(_TOGGLE, FluentIcon.STOP_WATCH, "toggle", lambda: self._toggle("button")),
         )
         color = SettingSection(tr("settings.color.title"))

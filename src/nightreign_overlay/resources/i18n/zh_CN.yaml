@@ -59,6 +59,12 @@ settings_reset:
   cancel: 取消
   done: 已恢复默认设置
 
+region_preview:
+  calibrated: 已标定
+  uncalibrated: 未标定
+  current: "显示当前区域：({x}, {y})，{width} × {height} 像素"
+  unset: 尚未标定区域
+
 settings:
   title: 设置
   open: 打开
@@ -142,7 +148,7 @@ input_dialog:
   title: 设置快捷键
   hint: 请按下键盘、鼠标或手柄组合键；首次输入会锁定设备类型。
   waiting: 等待输入…
-  unset: 未设置
+  unset: 快捷键未设置
   clear: 清空
   cancel: 取消
   confirm: 确认

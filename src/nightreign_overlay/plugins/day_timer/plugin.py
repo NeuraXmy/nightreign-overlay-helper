@@ -17,7 +17,7 @@ from nightreign_overlay.plugins.day_timer.config import DayTimerConfig
 from nightreign_overlay.plugins.day_timer.detector import DayDetector
 from nightreign_overlay.plugins.hud.api import HudApi
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice
-from nightreign_overlay.plugins.region.api import RegionApi
+from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigRangeCard,
@@ -363,6 +363,7 @@ class DayTimerPlugin(Plugin):
                 _CALIBRATE_REGION,
                 "calibrate",
                 actions=[(self.ctx.tr("settings.calibrate.button"), self._calibrate_region)],
+                accessories=[RegionStatus(self.ctx.services, _REGION_KEY)],
             ),
             MultiButtonSettingCard(
                 [

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Sequence
 
-from PyQt6.QtCore import QEventLoop, QPoint, QRect, Qt, QTimer
+from PyQt6.QtCore import QEventLoop, QPoint, QRect, QRectF, Qt, QTimer
 from PyQt6.QtGui import (
     QBrush,
     QColor,
@@ -18,6 +18,7 @@ from PyQt6.QtGui import (
     QPaintEvent,
     QPen,
     QPixmap,
+    QScreen,
 )
 from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QWidget
 
@@ -36,6 +37,8 @@ _RECT_COLOR = "#686435"
 _ANNOTATE_STYLE = (
     "background-color: {color}; color: white; border-radius: 4px; padding: 8px; font-size: 16px;"
 )
+#: Outline width of the region preview, drawn outside the region so its pixels stay visible.
+_PREVIEW_BORDER = 3
 
 
 class _RegionService(RegionApi):
@@ -112,6 +115,17 @@ class _RegionService(RegionApi):
         if key in regions:
             self._plugin.config.regions.set({name: rect for name, rect in regions.items() if name != key})
 
+    def show_preview(self, key: str, color: str | None = None) -> bool:
+        rect = self.region(key)
+        if rect is None:
+            self.hide_preview()
+            return False
+        self._plugin.preview().show_region(_pixels_to_logical(rect), QColor(color or _RECT_COLOR))
+        return True
+
+    def hide_preview(self) -> None:
+        self._plugin.hide_preview()
+
     def save_region_for_test(self, key: str, rect: QRect) -> None:
         if rect.width() <= 0 or rect.height() <= 0:
             raise ValueError("a calibrated region must have a positive size")
@@ -131,9 +145,98 @@ class RegionPlugin(Plugin):
 
     def on_load(self) -> None:
         self.config = self.ctx.config(RegionConfig)
+        self._preview: _RegionPreview | None = None
 
     def on_activate(self) -> None:
         self.ctx.provide(RegionApi, _RegionService(self))
+        self.ctx.on_cleanup(self._close_preview)
+
+    def preview(self) -> _RegionPreview:
+        """The single preview window, created on first use and reused by every caller."""
+        if self._preview is None:
+            self._preview = _RegionPreview()
+        return self._preview
+
+    def hide_preview(self) -> None:
+        if self._preview is not None:
+            self._preview.hide()
+
+    def _close_preview(self) -> None:
+        if self._preview is not None:
+            self._preview.close()
+            self._preview.deleteLater()
+            self._preview = None
+
+
+class _RegionPreview(QWidget):
+    """Click-through, non-activating window outlining one calibrated region above every other window."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            None,
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
+            | Qt.WindowType.WindowTransparentForInput
+            | Qt.WindowType.WindowDoesNotAcceptFocus,
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        self._color = QColor(_RECT_COLOR)
+
+    @property
+    def color(self) -> QColor:
+        return QColor(self._color)
+
+    def region_geometry(self) -> QRect:
+        """The outlined region in logical coordinates (the window minus its border)."""
+        border = _PREVIEW_BORDER
+        return self.geometry().adjusted(border, border, -border, -border)
+
+    def show_region(self, rect: QRect, color: QColor) -> None:
+        border = _PREVIEW_BORDER
+        self._color = color
+        self.setGeometry(rect.adjusted(-border, -border, border, border))
+        self.show()
+        self.raise_()
+        self.update()
+
+    def paintEvent(self, _event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        border = _PREVIEW_BORDER
+        fill = QColor(self._color)
+        fill.setAlpha(60)
+        painter.fillRect(self.rect().adjusted(border, border, -border, -border), fill)
+        painter.setPen(QPen(self._color, border))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        half = border / 2
+        painter.drawRect(QRectF(self.rect()).adjusted(half, half, -half, -half))
+
+
+def _pixels_to_logical(rect: QRect) -> QRect:
+    """Invert the selector's ``local * dpr + screen offset`` so the rectangle can be drawn by Qt."""
+    screens = QGuiApplication.screens()
+    primary = QGuiApplication.primaryScreen()
+
+    def contains(screen: QScreen) -> bool:
+        geometry = screen.geometry()
+        ratio = screen.devicePixelRatio()
+        x = (rect.x() - geometry.x()) / ratio
+        y = (rect.y() - geometry.y()) / ratio
+        return 0 <= x < geometry.width() and 0 <= y < geometry.height()
+
+    screen = next((screen for screen in screens if contains(screen)), primary)
+    if screen is None:
+        return QRect(rect)
+    geometry = screen.geometry()
+    ratio = screen.devicePixelRatio()
+    return QRect(
+        geometry.x() + round((rect.x() - geometry.x()) / ratio),
+        geometry.y() + round((rect.y() - geometry.y()) / ratio),
+        max(1, round(rect.width() / ratio)),
+        max(1, round(rect.height() / ratio)),
+    )
 
 
 def _wait(milliseconds: int) -> None:
