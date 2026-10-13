@@ -73,6 +73,9 @@ settings:
     auto: 自動
     overlay: 透過オーバーレイ
     window: 通常ウィンドウ
+  only_when_game_foreground:
+    title: ゲームが前面のときのみ表示・検出
+    content: ゲームが前面にないときはすべてのオーバーレイを非表示にし、検出を停止してホットキーを無効にします。メイン画面やメニューを開いている間は利用できます
   behavior:
     title: 動作
   close_to_tray:
@@ -146,9 +149,6 @@ overlay_settings:
     normal: 透過しない
     locked: 位置のみ固定
     passthrough: 完全透過
-  only_when_game_foreground:
-    title: ゲームが前面のときのみ表示
-    content: 他のウィンドウに切り替えると自動で非表示にします（透過モードのみ）
   reset_position:
     title: 位置をリセット
     content: オーバーレイを画面上部中央に戻します

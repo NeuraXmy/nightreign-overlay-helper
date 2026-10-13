@@ -10,7 +10,7 @@ from PyQt6.QtGui import QGuiApplication, QImage
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
-from nightreign_overlay.core.game_window import GameWindowMonitor
+from nightreign_overlay.core.game_window import ForegroundPolicy
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
@@ -108,8 +108,8 @@ class CapturePlugin(Plugin):
         self._stream_owners.clear()
 
     def capture_now(self) -> FrameCaptured | None:
-        monitor = self.ctx.services.require(GameWindowMonitor)
-        if self.config.only_when_game_foreground.value and not monitor.is_foreground:
+        # Legacy "仅在游戏时显示和检测": no detection while the game is in the background.
+        if not self.ctx.services.require(ForegroundPolicy).detection_allowed:
             return None
         image = self._native.grab() if self._native is not None else _grab_primary_screen()
         if image is None or image.isNull():
@@ -129,12 +129,6 @@ class CapturePlugin(Plugin):
                 self.ctx.tr("settings.interval.title"),
                 self.ctx.tr("settings.interval.content"),
                 formatter=lambda value: self.ctx.tr("settings.interval.value", milliseconds=value),
-            ),
-            ConfigSwitchCard(
-                self.config.only_when_game_foreground,
-                FluentIcon.GAME,
-                self.ctx.tr("settings.foreground.title"),
-                self.ctx.tr("settings.foreground.content"),
             ),
             ConfigSwitchCard(
                 self.config.hdr_processing,

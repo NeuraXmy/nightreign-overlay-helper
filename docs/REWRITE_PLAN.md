@@ -114,7 +114,7 @@ manifest = PluginManifest(
 
 ### 3.5 插件分层规划
 
-- **基础插件（infrastructure）**：`capture`（截图引擎 / 检测频率 / 仅游戏前台检测）、`input`（全局热键 / 手柄）、`hud`（共享悬浮窗）、`region`（区域标定）。默认启用，首页中归类为“基础功能”。
+- **基础插件（infrastructure）**：`capture`（截图引擎 / 检测频率 / HDR 处理）、`input`（全局热键 / 手柄）、`hud`（共享悬浮窗）、`region`（区域标定）。默认启用，首页中归类为“基础功能”。
 - **功能插件（feature）**：`day_timer` 缩圈倒计时、`rain_timer` 雨中冒险计时、`map_detect` 地图识别、`hp_marker` 血条比例标记、`art_timer` 绝招倒计时、`p2p_latency` 队友延迟。
 - **调试插件**：`overlay_test` 测试悬浮窗（本阶段实现，用于验证底座、悬浮窗与跨平台行为）。
 
@@ -151,7 +151,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - `day_timer`、`rain_timer`、`art_timer` 对 `hud` 使用强依赖，需要显示时向 `HudApi` 注册组件。
 - `map_detect` 创建并管理独立的 `MapInfoOverlay`，对 `capture` 使用强依赖，对 `day_timer` 使用弱依赖；缩圈阶段只用于优化地图识别时机。
 - `hp_marker` 创建并管理独立的 `HpMarkerOverlay`，只依赖截图或血条检测能力，不依赖 HUD 和地图插件。
-- `hud`、`map_detect`、`hp_marker` 都通过核心 `OverlayManager` 接入统一的置顶、显示模式和游戏前台可见性管理。
+- `hud`、`map_detect`、`hp_marker` 都通过核心 `OverlayManager` 接入统一的置顶、显示模式和游戏前台可见性管理（规则见 3.9）。
 
 配置归属保持在能力拥有者一侧：`hud` 保存共享窗口的位置、缩放、透明度、排列与间距；倒计时内容和检测参数保存在各自功能插件；地图窗口配置归 `map_detect`；血量阈值、颜色和线宽归 `hp_marker`。这样既能共享窗口基础能力，也不会把功能配置重新耦合到一个巨型 Overlay 插件中。
 
@@ -164,6 +164,46 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - 在完整 worker 线程模型迁移前，DAY 标定期间暂停该插件的模板匹配；识别前把用户选区缩放到旧版同样的模板标准高度（30 px），防止误框大区域时在 GUI 线程进行高分辨率匹配而持续卡顿。
 - 功能插件使用 HUD 时，调用方在自己的 `PluginContext` 中注册清理回调移除组件，保证热停用不会影响其他 HUD 内容。`HudOverlay` 在添加组件后重新激活布局、按最终 size hint 调整窗口并显式展示/置顶，避免初始空容器尺寸导致内容不可见。HUD 提供独立启用开关，关闭时调用窗口隐藏流程而不是将透明度设为零，确保不留下透明顶层窗口。`day_timer` 还原旧版固定 400px、按四段时长比例分配的蓝紫色分段进度条和带阴影白色粗体文字；容器基准尺寸必须包含全部边距，缩放时内容的宽度、进度条高度、文字、圆角和间距同步缩放。HUD 右键菜单仅提供打开主界面与安全退出程序。
 - HUD 提供与旧版相同的「隐藏文字」开关（`plugins.hud.hide_text`）：只隐藏各组件的文字标签，进度条保持显示。贡献组件实现可选钩子 `set_hud_text_hidden(hidden)`（与 `set_hud_scale(scale)` 同为鸭子类型约定），添加组件时和开关切换时由 `HudOverlay` 统一调用并重新计算窗口尺寸；后续雨中/绝招等 HUD 组件按同一约定接入即可。
+
+### 3.9 「仅在游戏时显示和检测」与悬浮窗隐藏优先级
+
+#### 旧版行为（复原依据）
+
+旧版只有一个开关「仅在游戏时显示和检测」（`settings.py` 性能设置组，默认关闭，日志 `Overlay only show when game foreground: ...`），同时作用于：
+
+- **显示**：`overlay`（缩圈/雨中/绝招）、`map_overlay`、`p2p_overlay` 的 `timerEvent` 统一计算 `visible = 自身可见 and opacity > 0.01`，开启时再 `and (is_game_foreground or is_menu_opened or is_setting_opened)`。即自身隐藏原因优先，前台规则只能进一步隐藏；设置窗口打开（`showEvent`/`closeEvent`）或托盘/悬浮窗右键菜单弹出期间视为“正在使用本程序”，悬浮窗保持可见以便调整。
+- **检测**：`updater` 中 `if not only_detect or is_game_foreground` 才执行截图检测，**没有**设置窗口/菜单例外。
+- **快捷键**：`input.blockSignals(only_detect and not (fg or setting or menu))`，与显示使用相同的例外。
+- 地图悬浮窗：地图打开/关闭时将目标透明度设为 1/0 并渐变，透明度 ≤ 0.01 时隐藏；快捷键可手动切换。血量悬浮窗：未检测到血条时隐藏。旧版缺陷：`hp_overlay` 从未接收该开关，不受前台规则约束。
+
+#### 重写版实现
+
+- 开关为核心配置 `app.only_when_game_foreground`（默认 `False`，与旧版一致），位于「通用」设置组，不再属于单个悬浮窗或 `capture`。
+- 核心 `ForegroundPolicy`（`core/game_window.py`，由 `OverlayManager` 创建并注册为服务）是唯一的判定来源，开关或前台状态或 UI 活跃状态变化时发出 `changed`：
+  - `display_allowed = not enabled or 游戏在前台 or ui_active`
+  - `input_allowed = display_allowed`（`input` 插件分发热键前检查）
+  - `detection_allowed = not enabled or 游戏在前台`（`capture` 定时截图和 `capture_now()` 检查，无 UI 例外）
+  - `ui_active` 由来源集合 `set_ui_active(source, active)` 维护：`main_window`（主界面可见且未最小化）、`tray_menu`、`overlay_menu`（悬浮窗右键菜单）、`region_selection`（区域标定期间）。
+- `OverlayWindow.should_be_visible()` 的优先级：**自身请求（`show_overlay`/`hide_overlay`）AND 子类条件 AND 全局前台门控**。子类以 `自身条件 and super().should_be_visible()` 叠加，前台门控只能隐藏，永远不能把一个自身要求隐藏的悬浮窗显示出来。普通窗口模式下豁免前台门控（窗口本身会获得焦点，按前台隐藏会导致无法操作）。
+- 任何影响可见性的条件变化后调用 `update_visibility()`；`OverlayManager` 在策略变化时对所有已注册窗口统一刷新。
+
+#### 后续悬浮窗接入约定
+
+| 悬浮窗 | 自身隐藏原因（优先） | 接入方式 |
+|-------|------------------|---------|
+| `HudOverlay` | HUD 启用开关关闭；无组件 | 已实现：`enabled and super().should_be_visible()` |
+| `MapInfoOverlay` | 地图未打开 / 透明度渐变到 0；快捷键手动关闭 | 地图状态和手动切换作为子类条件或 `show_overlay`/`hide_overlay`；渐变结束（≤ 0.01）后才真正隐藏，渐变期间仍受前台门控 |
+| `HpMarkerOverlay` | 未检测到血条 | 作为子类条件；修复旧版缺陷，同样受前台门控 |
+
+新悬浮窗不得自行读取前台状态或开关，也不得用透明度为 0 代替隐藏；检测插件不需要自行判断前台，`capture` 不产出帧即可。
+
+#### 与旧版的差异
+
+- `hp_marker` 同样受前台规则约束（修复旧版遗漏）。
+- 主界面最小化不再视为“设置已打开”（旧版仅在关闭时清除），避免最小化后悬浮窗在后台常驻。
+- 普通窗口模式豁免前台门控（重写版新增的显示模式）。
+- 区域标定期间视为 UI 活跃，保证标定时悬浮窗和快捷键可用。
+- 早期重写版的 `*.overlay.only_when_game_foreground` 与 `plugins.capture.only_when_game_foreground` 键不再读取，不做迁移（未发布版本）。
 
 ## 4. 配置系统
 
@@ -191,9 +231,9 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
   - 底部：通用设置（包含 `settings_scope=general` 的插件设置）、关于
 - **首页**：应用信息横幅（名称 / 版本 / 平台）、运行状态卡片（游戏窗口是否前台、悬浮窗模式、已启用插件数）、`settings_scope=page` 插件的快捷开关列表。
 - **插件页**：页头（图标 / 名称 / 描述 / 启用开关 / 依赖状态），下方 `SegmentedWidget` 选项卡：「设置」「教程」，插件可以追加自定义选项卡。
-- **通用设置**：语言、主题（浅色 / 深色 / 跟随系统）、主题色、悬浮窗显示模式（自动 / 悬浮窗 / 普通窗口）、关闭主界面时最小化到托盘、`settings_scope=general` 的插件设置、日志级别、打开配置 / 日志目录。
+- **通用设置**：语言、主题（浅色 / 深色 / 跟随系统）、主题色、悬浮窗显示模式（自动 / 悬浮窗 / 普通窗口）、仅在游戏时显示和检测、关闭主界面时最小化到托盘、`settings_scope=general` 的插件设置、日志级别、打开配置 / 日志目录。
 - **托盘**：显示主界面、退出；双击托盘图标打开主界面。
-- **悬浮窗基类 `OverlayWindow`**：统一处理无边框 / 透明 / 置顶 / 鼠标穿透 / 不抢焦点 / 拖动 / 位置持久化 / 透明度 / “仅游戏前台显示”，以及普通窗口 fallback。
+- **悬浮窗基类 `OverlayWindow`**：统一处理无边框 / 透明 / 置顶 / 鼠标穿透 / 不抢焦点 / 拖动 / 位置持久化 / 透明度 / 全局前台门控（见 3.9），以及普通窗口 fallback。
 
 ## 7. 平台层
 

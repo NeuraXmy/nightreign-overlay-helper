@@ -7,9 +7,6 @@ settings:
     title: 检测间隔
     content: 每个间隔最多捕获一帧，所有检测插件共享该帧。
     value: "{milliseconds} ms"
-  foreground:
-    title: 仅游戏前台截图
-    content: 游戏不在前台时暂停截图。
   hdr:
     title: 启用 HDR 图像处理
     content: HDR 显示模式下启用可提高识别准确性，各检测功能会自动选用合适的处理方式；遇到识别问题可尝试关闭。
