@@ -11,7 +11,7 @@ import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
 
-from nightreign_overlay.plugins.capture.api import hdr_to_sdr
+from nightreign_overlay.plugins.capture.api import crop_rgb, hdr_to_sdr, resize_to_height
 
 LANGUAGES = ("chs", "cht", "eng", "jp")
 TEMPLATE_HEIGHT = 30
@@ -44,7 +44,7 @@ class DayDetector:
                 if image is None:
                     break
                 masks.append(
-                    _white_mask(cv2.cvtColor(_resize_height(image, TEMPLATE_HEIGHT), cv2.COLOR_BGR2RGB))
+                    _white_mask(cv2.cvtColor(resize_to_height(image, TEMPLATE_HEIGHT), cv2.COLOR_BGR2RGB))
                 )
             if len(masks) == 3:
                 width = masks[0].shape[1]
@@ -67,36 +67,18 @@ class DayDetector:
         for mask, ratio in zip(templates.masks, templates.width_ratios, strict=True):
             width = int(region.width() * ratio)
             day_region = QRect(center_x - width // 2, region.y(), width, region.height())
-            image = _crop_rgb(frame, day_region)
+            image = crop_rgb(frame, day_region)
             if image is None:
                 scores.append(float("inf"))
                 continue
             if hdr:
                 image = hdr_to_sdr(image)
-            scores.append(_match_mask(_white_mask(_resize_height(image, TEMPLATE_HEIGHT)), mask))
+            # Normalizing to the template height also keeps an accidental full-screen selection from
+            # stalling the GUI thread with a native-resolution match.
+            scores.append(_match_mask(_white_mask(resize_to_height(image, TEMPLATE_HEIGHT)), mask))
         # Legacy order: the first day under the threshold wins.
         day = next((index for index, score in enumerate(scores, 1) if score < threshold), None)
         return DayDetectResult(day, (scores[0], scores[1], scores[2]), time.perf_counter() - started)
-
-
-def _crop_rgb(frame: QImage, region: QRect) -> np.ndarray | None:
-    region = region.intersected(frame.rect())
-    if region.isEmpty():
-        return None
-    crop = frame.copy(region).convertToFormat(QImage.Format.Format_RGB888)
-    ptr = crop.bits()
-    ptr.setsize(crop.sizeInBytes())
-    # Rows are padded to 4-byte boundaries, so slice each scanline before splitting channels.
-    rows = np.frombuffer(ptr, np.uint8).reshape(crop.height(), crop.bytesPerLine())
-    return rows[:, : crop.width() * 3].reshape(crop.height(), crop.width(), 3).copy()
-
-
-def _resize_height(image: np.ndarray, height: int) -> np.ndarray:
-    # The legacy detector normalizes the selected DAY label to the template height.
-    # Matching an accidental full-screen selection at native resolution stalls the GUI thread.
-    width = max(1, int(image.shape[1] * height / image.shape[0]))
-    interpolation = cv2.INTER_AREA if image.shape[0] > height else cv2.INTER_LANCZOS4
-    return cv2.resize(image, (width, height), interpolation=interpolation)
 
 
 def _white_mask(image: np.ndarray) -> np.ndarray:

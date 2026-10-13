@@ -1,0 +1,29 @@
+plugin:
+  name: 绝招倒计时
+  description: 按下绝招键后识别绝招图标，显示绝招效果的倒计时。
+hud:
+  text: "{name} {remaining}"
+  duchess: 落幕之章隐身时间
+  recluse: 血魂歌标记时间
+  revenant: 不死行军无敌时间
+  scholar: 共感术标记时间
+  executor: 熔炉百相变身时间
+settings:
+  basic:
+    title: 基本设置
+  region:
+    title: 绝招图标区域
+    content: 框选绝招图标所在的区域，框的边缘与图标的圆形边缘贴合；可点击「标定」或在游戏中按快捷键开始。
+    button: 标定
+    annotate: 点我并框出 绝招图标 的区域
+  use_art:
+    title: 绝招快捷键
+    content: 设置为游戏中使用绝招的按键，按下后识别绝招图标并开始倒计时。
+  advanced:
+    title: 高级选项
+  delay:
+    title: 识别延迟
+    content: 按下绝招键后等待多久再截图识别绝招图标。
+  threshold:
+    title: 匹配阈值
+    content: 图标匹配差异低于此值才认为识别成功，数值越小越严格。

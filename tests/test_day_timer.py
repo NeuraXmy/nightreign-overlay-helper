@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from PyQt6.QtCore import QEvent, QPointF, QRect, Qt
-from PyQt6.QtGui import QImage, QMouseEvent, QPainter
+from PyQt6.QtGui import QColor, QImage, QMouseEvent, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QDialog, QPushButton, QWidget
 
 from nightreign_overlay.core.app_config import AppConfig
@@ -25,7 +25,7 @@ from nightreign_overlay.plugins.day_timer.plugin import DayTimerPlugin
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice
 from nightreign_overlay.plugins.input.plugin import InputPlugin
 from nightreign_overlay.plugins.region import plugin as region_plugin
-from nightreign_overlay.plugins.region.api import RegionApi
+from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
 from nightreign_overlay.plugins.region.plugin import RegionPlugin
 from nightreign_overlay.ui.components import MultiButtonSettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -253,11 +253,11 @@ def test_region_request_hides_and_restores_main_window(
     overlays.mainWindowShowRequested.connect(lambda: calls.append("show"))
     monkeypatch.setattr(region_plugin, "_HIDE_SETTLE_MS", 0)
 
-    def fake_run(dialog: region_plugin._SelectionDialog) -> QRect:
+    def fake_run(dialog: region_plugin._SelectionDialog) -> dict[int, QRect]:
         # The selector must only appear after the main window has been asked to hide.
         calls.append("select")
         assert dialog.annotateButton.text() == "点我并框出 DAY I 图标 的区域"
-        return QRect(10, 20, 30, 40)
+        return {0: QRect(10, 20, 30, 40)}
 
     monkeypatch.setattr(region_plugin._SelectionDialog, "run", fake_run)
 
@@ -329,3 +329,93 @@ def test_selection_dialog_cancel_and_empty_save(qapp: QApplication) -> None:
     dialog.cancelButton.click()
     assert dialog.result() == QDialog.DialogCode.Rejected
     assert dialog.selected is None
+
+
+def test_selection_dialog_keeps_the_last_box_per_annotation_and_samples_frozen_pixels(
+    qapp: QApplication,
+) -> None:
+    texts = region_plugin._SelectionTexts("annotate", "hint", "cancel", "save")
+    annotations = [("normal", "#b83232"), ("rain", "#c03184")]
+    dialog = region_plugin._SelectionDialog(texts, False, logging.getLogger("test.region"), annotations)
+    ratio = dialog._device_pixel_ratio
+    pixmap = QPixmap(dialog._screen_geometry.size() * ratio)
+    pixmap.setDevicePixelRatio(ratio)
+    pixmap.fill(QColor(10, 200, 30))
+    dialog._pixmap = pixmap
+    assert [button.text() for button in dialog.annotateButtons] == ["normal", "rain"]
+
+    dialog.annotateButtons[1].click()
+    _drag(dialog, (10, 10), (40, 30))
+    dialog.annotateButtons[0].click()
+    _drag(dialog, (100, 100), (130, 120))
+    dialog.annotateButtons[0].click()
+    _drag(dialog, (200, 100), (260, 140))
+    dialog.saveButton.click()
+
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    origin = dialog._screen_geometry.topLeft()
+    assert dialog.selections == {
+        0: region_plugin._scale_rect(QRect(200, 100, 61, 41), ratio).translated(origin),
+        1: region_plugin._scale_rect(QRect(10, 10, 31, 21), ratio).translated(origin),
+    }
+    sample = dialog.sample(1)
+    assert sample is not None and sample.pixelColor(0, 0) == QColor(10, 200, 30)
+    assert dialog.sample(2) is None
+
+
+def test_request_samples_needs_a_frozen_screen(
+    store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _NoPermissionBackend(_FakeBackend):
+        requested = 0
+
+        def has_screen_capture_access(self) -> bool:
+            return False
+
+        def request_screen_capture_access(self) -> None:
+            self.requested += 1
+
+    services = ServiceRegistry()
+    backend = _NoPermissionBackend()
+    services.register(PlatformBackend, backend)
+    region = RegionPlugin(PluginContext("region", tmp_path, store, Translator("zh_CN"), services, EventBus()))
+    region.on_load()
+    region.on_activate()
+    monkeypatch.setattr(region_plugin, "_HIDE_SETTLE_MS", 0)
+    opened: list[object] = []
+    monkeypatch.setattr(region_plugin._SelectionDialog, "run", lambda dialog: opened.append(dialog) or {})
+
+    api = services.require(RegionApi)
+    assert api.request_samples([RegionTarget("a", "A")]) is None
+    assert backend.requested == 1 and opened == []
+
+    # Region selection still works over the live screen without the permission.
+    assert api.request_region("key", "A") is None
+    assert len(opened) == 1
+
+
+def test_request_samples_returns_the_frozen_pixels_of_boxed_targets(
+    store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    services = ServiceRegistry()
+    region = RegionPlugin(PluginContext("region", tmp_path, store, Translator("zh_CN"), services, EventBus()))
+    region.on_load()
+    region.on_activate()
+    monkeypatch.setattr(region_plugin, "_HIDE_SETTLE_MS", 0)
+    sample = QImage(2, 2, QImage.Format.Format_RGB32)
+    labels: list[list[str]] = []
+
+    def fake_run(dialog: region_plugin._SelectionDialog) -> dict[int, QRect]:
+        labels.append([button.text() for button in dialog.annotateButtons])
+        return {1: QRect(1, 2, 3, 4)}
+
+    monkeypatch.setattr(region_plugin._SelectionDialog, "run", fake_run)
+    monkeypatch.setattr(region_plugin._SelectionDialog, "sample", lambda _dialog, index: sample)
+
+    samples = services.require(RegionApi).request_samples(
+        [RegionTarget("normal", "N", "#b83232"), RegionTarget("rain", "R")]
+    )
+    assert labels == [["N", "R"]]
+    assert samples == {"rain": sample}
+    # Sampling never persists a region.
+    assert region.config.regions.value == {}

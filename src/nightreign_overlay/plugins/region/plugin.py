@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from PyQt6.QtCore import QEventLoop, QPoint, QRect, Qt, QTimer
 from PyQt6.QtGui import (
@@ -11,6 +11,7 @@ from PyQt6.QtGui import (
     QColor,
     QCursor,
     QGuiApplication,
+    QImage,
     QKeyEvent,
     QMouseEvent,
     QPainter,
@@ -22,7 +23,7 @@ from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QWidget
 
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
-from nightreign_overlay.plugins.region.api import RegionApi
+from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
 from nightreign_overlay.plugins.region.config import RegionConfig
 from nightreign_overlay.ui.overlay import OverlayManager
 
@@ -30,10 +31,10 @@ from nightreign_overlay.ui.overlay import OverlayManager
 _HIDE_SETTLE_MS = 250
 #: Size of the legacy corner/center resize handles.
 _HANDLE_SIZE = 8
-#: Legacy colour of the "DAY I" annotation button and rectangle.
+#: Legacy colour of the "DAY I" annotation button and rectangle; the default for other targets.
 _RECT_COLOR = "#686435"
 _ANNOTATE_STYLE = (
-    f"background-color: {_RECT_COLOR}; color: white; border-radius: 4px; padding: 8px; font-size: 16px;"
+    "background-color: {color}; color: white; border-radius: 4px; padding: 8px; font-size: 16px;"
 )
 
 
@@ -41,37 +42,66 @@ class _RegionService(RegionApi):
     def __init__(self, plugin: RegionPlugin) -> None:
         self._plugin = plugin
 
-    def request_region(self, key: str, label: str | None = None) -> QRect | None:
+    def request_region(self, key: str, label: str | None = None, color: str | None = None) -> QRect | None:
         ctx = self._plugin.ctx
-        overlays = ctx.services.get(OverlayManager)
-        backend = ctx.services.get(PlatformBackend)
-        if overlays is not None:
-            overlays.mainWindowHideRequested.emit()
-        try:
-            _wait(_HIDE_SETTLE_MS)
-            freeze = backend is None or backend.has_screen_capture_access()
-            if not freeze and backend is not None:
-                # Without permission the frozen frame would only show this app's own windows, so the
-                # selector stays translucent over the live screen instead.
-                ctx.log.warning("Screen capture permission missing; selecting over the live screen")
-                backend.request_screen_capture_access()
-            texts = _SelectionTexts(
-                annotate=label or ctx.tr("selection.annotate"),
-                hint=ctx.tr("selection.hint"),
-                cancel=ctx.tr("selection.cancel"),
-                save=ctx.tr("selection.save"),
-            )
-            window = _SelectionDialog(texts, freeze, ctx.log)
-            selected = window.run()
-        finally:
-            if overlays is not None:
-                overlays.mainWindowShowRequested.emit()
+        target = RegionTarget(key, label or ctx.tr("selection.annotate"), color)
+        result = self._select([target], require_freeze=False)
+        selected = result[0].get(0) if result is not None else None
         if selected is None:
             ctx.log.warning("Region %s setting canceled", key)
             return None
         self.save_region_for_test(key, selected)
         ctx.log.info("Region %s saved: %s", key, list(selected.getRect()))
         return selected
+
+    def request_samples(self, targets: Sequence[RegionTarget]) -> dict[str, QImage] | None:
+        result = self._select(targets, require_freeze=True)
+        if result is None:
+            return None
+        selections, dialog = result
+        samples = {}
+        for index, rect in selections.items():
+            sample = dialog.sample(index)
+            if sample is not None:
+                samples[targets[index].id] = sample
+                self._plugin.ctx.log.info("Sampled %s at %s", targets[index].id, list(rect.getRect()))
+        return samples
+
+    def _select(
+        self, targets: Sequence[RegionTarget], *, require_freeze: bool
+    ) -> tuple[dict[int, QRect], _SelectionDialog] | None:
+        """Hide the main window, run the selector and return its rectangles, or ``None`` on cancel."""
+        ctx = self._plugin.ctx
+        overlays = ctx.services.get(OverlayManager)
+        backend = ctx.services.get(PlatformBackend)
+        freeze = backend is None or backend.has_screen_capture_access()
+        if not freeze and backend is not None:
+            backend.request_screen_capture_access()
+            if require_freeze:
+                ctx.log.error("Screen capture permission missing; cannot sample the frozen screen")
+                return None
+            # Without permission the frozen frame would only show this app's own windows, so the
+            # selector stays translucent over the live screen instead.
+            ctx.log.warning("Screen capture permission missing; selecting over the live screen")
+        if overlays is not None:
+            overlays.mainWindowHideRequested.emit()
+        try:
+            _wait(_HIDE_SETTLE_MS)
+            texts = _SelectionTexts(
+                annotate=ctx.tr("selection.annotate"),
+                hint=ctx.tr("selection.hint"),
+                cancel=ctx.tr("selection.cancel"),
+                save=ctx.tr("selection.save"),
+            )
+            annotations = [(target.label, target.color or _RECT_COLOR) for target in targets]
+            window = _SelectionDialog(texts, freeze, ctx.log, annotations)
+            selections = window.run()
+        finally:
+            if overlays is not None:
+                overlays.mainWindowShowRequested.emit()
+        if selections is None:
+            return None
+        return selections, window
 
     def region(self, key: str) -> QRect | None:
         value = self._plugin.config.regions.value.get(key)
@@ -136,9 +166,10 @@ _HANDLE_CURSORS = {
 class _ResizableRect:
     """A drawn rectangle with legacy corner/center handles."""
 
-    def __init__(self, rect: QRect, color: QColor) -> None:
+    def __init__(self, rect: QRect, color: QColor, annotation: int = 0) -> None:
         self.rect = rect.normalized()
         self.color = color
+        self.annotation = annotation
         self.handles: dict[str, QRect] = {}
         self._update_handles()
 
@@ -187,16 +218,26 @@ class _ResizableRect:
 
 
 class _SelectionDialog(QDialog):
-    """Full-screen selector: click the annotation button, drag a box, adjust it, then save or cancel.
+    """Full-screen selector: click an annotation button, drag a box, adjust it, then save or cancel.
 
     With ``freeze`` the screen is captured first and shown dimmed (legacy behaviour); otherwise the
-    selector is a translucent layer over the live screen so other windows stay visible. The saved
-    rectangle is in device pixels (local * dpr + screen offset), matching the legacy selector.
+    selector is a translucent layer over the live screen so other windows stay visible. Saved
+    rectangles are in device pixels (local * dpr + screen offset), matching the legacy selector.
+
+    ``annotations`` lists ``(label, colour)`` buttons; by default one button with ``texts.annotate``.
+    Like the legacy dialog, every button is optional and the last box drawn for a button wins.
     """
 
-    def __init__(self, texts: _SelectionTexts, freeze: bool, log: logging.Logger) -> None:
+    def __init__(
+        self,
+        texts: _SelectionTexts,
+        freeze: bool,
+        log: logging.Logger,
+        annotations: Sequence[tuple[str, str]] | None = None,
+    ) -> None:
         super().__init__()
         self._log = log
+        self._annotations = list(annotations) if annotations else [(texts.annotate, _RECT_COLOR)]
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool
         )
@@ -217,18 +258,30 @@ class _SelectionDialog(QDialog):
             self._device_pixel_ratio,
         )
         self.setGeometry(self._screen_geometry)
-        self.setWindowTitle(texts.annotate)
+        self.setWindowTitle(self._annotations[0][0])
 
         self.items: list[_ResizableRect] = []
         self._color: QColor | None = None
+        self._annotation = 0
         self._drawing = False
         self._start: QPoint | None = None
         self._current: QPoint | None = None
         self._active_item: _ResizableRect | None = None
         self._active_handle: str | None = None
         self._drag_pos: QPoint | None = None
-        self.selected: QRect | None = None
+        #: Saved rectangles in global device pixels, keyed by annotation index.
+        self.selections: dict[int, QRect] = {}
+        self._local_selections: dict[int, QRect] = {}
         self._setup_ui(texts)
+
+    @property
+    def selected(self) -> QRect | None:
+        """The saved rectangle of the first annotation."""
+        return self.selections.get(0)
+
+    @property
+    def annotateButton(self) -> QPushButton:
+        return self.annotateButtons[0]
 
     def _setup_ui(self, texts: _SelectionTexts) -> None:
         size = self._screen_geometry.size()
@@ -236,11 +289,14 @@ class _SelectionDialog(QDialog):
         def place(widget: QWidget, x: float, y: float) -> None:
             widget.move(int(size.width() * x), int(size.height() * y))
 
-        self.annotateButton = QPushButton(texts.annotate, self)
-        self.annotateButton.setFixedHeight(32)
-        self.annotateButton.setStyleSheet(_ANNOTATE_STYLE)
-        self.annotateButton.clicked.connect(self._start_annotation)
-        place(self.annotateButton, 0.8, 0.1)
+        self.annotateButtons: list[QPushButton] = []
+        for index, (label, color) in enumerate(self._annotations):
+            button = QPushButton(label, self)
+            button.setFixedHeight(32)
+            button.setStyleSheet(_ANNOTATE_STYLE.format(color=color))
+            button.clicked.connect(lambda _checked=False, index=index: self._start_annotation(index))
+            place(button, 0.8, 0.1 + 0.1 * index)
+            self.annotateButtons.append(button)
 
         self.hintLabel = QLabel(texts.hint, self)
         self.hintLabel.setWordWrap(True)
@@ -249,7 +305,7 @@ class _SelectionDialog(QDialog):
             "background-color: rgba(0, 0, 0, 160); color: white; border-radius: 4px; padding: 8px; "
             "font-size: 14px;"
         )
-        place(self.hintLabel, 0.8, 0.2)
+        place(self.hintLabel, 0.8, 0.1 + 0.1 * len(self._annotations))
 
         self.cancelButton = self._control_button(texts.cancel, "#b3b3b3", self._cancel)
         place(self.cancelButton, 0.8, 0.5)
@@ -265,7 +321,7 @@ class _SelectionDialog(QDialog):
         button.clicked.connect(slot)
         return button
 
-    def run(self) -> QRect | None:
+    def run(self) -> dict[int, QRect] | None:
         """Show without application modality and block until the user saves or cancels."""
         loop = QEventLoop()
         self.finished.connect(loop.quit)
@@ -273,10 +329,18 @@ class _SelectionDialog(QDialog):
         self.raise_()
         self.activateWindow()
         loop.exec()
-        return self.selected if self.result() == QDialog.DialogCode.Accepted else None
+        return dict(self.selections) if self.result() == QDialog.DialogCode.Accepted else None
 
-    def _start_annotation(self) -> None:
-        self._color = QColor(_RECT_COLOR)
+    def sample(self, index: int) -> QImage | None:
+        """Frozen-screen pixels inside the saved box of annotation ``index``."""
+        local = self._local_selections.get(index)
+        if self._pixmap is None or local is None:
+            return None
+        return self._pixmap.copy(_scale_rect(local, self._pixmap.devicePixelRatio())).toImage()
+
+    def _start_annotation(self, index: int = 0) -> None:
+        self._annotation = index
+        self._color = QColor(self._annotations[index][1])
         self.setCursor(Qt.CursorShape.CrossCursor)
 
     def _save(self) -> None:
@@ -284,13 +348,21 @@ class _SelectionDialog(QDialog):
             self._log.warning("No region drawn; nothing to save")
             return
         # Like the legacy dialog, the last rectangle drawn for the colour wins.
-        local = self.items[-1].rect
-        self.selected = self._to_pixels(local).translated(self._screen_geometry.topLeft())
-        self._log.info("Saved rect %s -> %s", local.getRect(), self.selected.getRect())
+        self._local_selections = {item.annotation: QRect(item.rect) for item in self.items}
+        self.selections = {}
+        for index, local in sorted(self._local_selections.items()):
+            self.selections[index] = self._to_pixels(local).translated(self._screen_geometry.topLeft())
+            self._log.info(
+                "Saved rect %s -> %s for %s",
+                local.getRect(),
+                self.selections[index].getRect(),
+                self._annotations[index][1],
+            )
         self.accept()
 
     def _cancel(self) -> None:
-        self.selected = None
+        self.selections = {}
+        self._local_selections = {}
         self.reject()
 
     def paintEvent(self, _event: QPaintEvent) -> None:
@@ -370,7 +442,7 @@ class _SelectionDialog(QDialog):
         elif self._drawing and self._start is not None:
             rect = QRect(self._start, event.position().toPoint()).normalized()
             if rect.width() > 5 and rect.height() > 5 and self._color is not None:
-                self.items.append(_ResizableRect(rect, self._color))
+                self.items.append(_ResizableRect(rect, self._color, self._annotation))
             self._drawing = False
             self._start = None
             self._current = None

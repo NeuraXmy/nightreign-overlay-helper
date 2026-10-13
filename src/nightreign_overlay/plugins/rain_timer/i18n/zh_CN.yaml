@@ -1,0 +1,57 @@
+plugin:
+  name: 雨中冒险计时
+  description: 根据血条颜色识别雨中冒险并显示倒计时。
+hud:
+  text: "雨中冒险倒计时 {remaining} - {percent}%"
+settings:
+  basic:
+    title: 基本设置
+  auto:
+    title: 雨中冒险自动计时
+    content: 根据标定区域内的血条颜色自动开始或停止雨中冒险倒计时。
+  region:
+    title: 血条检测区域
+    content: 框选血条最左边一小段的纯色内部，可点击「标定」或在游戏中按快捷键开始。
+    button: 标定
+    annotate: 点我并框出 血条 的区域
+  toggle:
+    title: 开始/停止雨中冒险
+    content: 手动开始或停止雨中冒险倒计时，自动计时失效时可作为备用。
+    button: 开始/停止
+  color:
+    title: 血条颜色校准
+    calibrate:
+      title: 校准血条颜色
+      content: 自动计时因色差失效时，框选正常血条和雨中血条以记录实际颜色。
+      button: 校准
+    not_in_rain_annotate: 点我并框出 正常颜色血条 的区域
+    in_rain_annotate: 点我并框出 雨中颜色血条 的区域
+    status:
+      title: 血条颜色
+      content: 普通模式与 HDR 模式分别保存，显示的是当前图像模式的设置。
+    not_in_rain: "正常血条颜色:"
+    in_rain: "雨中血条颜色:"
+    default: 默认
+    set: 已设置
+    hdr_prefix: "HDR:"
+    reset: 重置
+    reset_title: 确认
+    reset_confirm: 确定要重置{mode}下的血条颜色设置为默认吗？
+    mode_hdr: HDR模式
+    mode_normal: 普通模式
+  advanced:
+    title: 高级选项
+  duration:
+    title: 雨中冒险持续时间
+  h_tolerance:
+    title: 色相容差
+  l_tolerance:
+    title: 亮度容差
+  s_tolerance:
+    title: 饱和度容差
+  min_area_percent:
+    title: 颜色面积最小占比
+    content: 另一种颜色的面积占比不高于此值时才进行判定。
+  max_area_percent:
+    title: 颜色面积最大占比
+    content: 某种颜色的面积占比达到此值时，认为血条为该颜色。
