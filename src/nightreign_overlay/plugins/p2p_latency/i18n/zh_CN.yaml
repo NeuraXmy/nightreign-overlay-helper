@@ -1,0 +1,36 @@
+plugin:
+  name: 联机状态
+  description: 显示 Steam 联机队友、延迟和稳定度，旧 P2P 接口通过 ETW 补充测量。
+settings:
+  window: 悬浮窗
+  scale: 悬浮窗大小
+  opacity: 悬浮窗透明度
+  reset_position: 重置悬浮窗位置
+  reset_button: 重置
+  foreground: 遵循全局前台显示规则；该规则暂停截图检测，但不会暂停 Steam / ETW 网络查询。普通窗口模式遵循与主悬浮窗相同的显示规则。
+  thresholds: Ping 分色阈值
+  good_ping: 良好延迟上限（小于此值为绿色）
+  warning_ping: 警告延迟上限（小于此值为黄色，否则红色）
+  status: 运行状态
+  simulation: macOS 使用模拟子进程，约 32 秒循环演示等待、未知指标、延迟变化和换队；这些数值不是实际网络测量。
+overlay:
+  title: 联机状态 · Ping / 稳定度
+  waiting: 等待队友 / 等待 Steam 同步
+  legacy_unavailable: 旧 Steam P2P 接口不提供延迟
+  legacy_no_fields: 旧 Steam P2P 接口没有 Ping/稳定度字段
+  etw_source: 延迟来源：ETW STUN 往返时间
+status:
+  disabled: 联机信息已关闭
+  running: 已运行
+  stopped: 未启动
+  waiting: 等待
+  connected: 已连接
+  failed: 失败
+  detail: "状态：{message}\n黑夜君临：{game}\n联机组件：{helper}\nSteamAPI：{steam}\nETW 延迟：{etw}\n当前队友：{count}"
+  etw:
+    disabled: 已关闭
+    waiting: 等待游戏
+    starting: 正在启动
+    ready: 已启用
+    error: 不可用，请以管理员身份运行
+    simulated: 模拟数据（未启用 ETW）

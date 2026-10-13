@@ -23,6 +23,8 @@ SHADOW_COLOR = QColor(0, 0, 0, 200)
 
 
 class OverlayTestWindow(OverlayWindow):
+    drag_hint_enabled = True
+
     def __init__(
         self,
         manager: OverlayManager,

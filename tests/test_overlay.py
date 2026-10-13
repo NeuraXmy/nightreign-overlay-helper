@@ -88,6 +88,36 @@ def test_opacity(window: OverlayWindow) -> None:
     assert window.windowOpacity() == pytest.approx(0.4, abs=0.01)
 
 
+def test_drag_hint_background_tracks_main_window_and_input_mode(core: Core, window: OverlayWindow) -> None:
+    window.drag_hint_enabled = True
+
+    def pixel(x: int, y: int):
+        process_events()
+        image = window.grab().toImage()
+        ratio = image.devicePixelRatio()
+        return image.pixelColor(round(x * ratio), round(y * ratio))
+
+    assert pixel(20, 20).alpha() == 0
+    core.overlays.foreground.set_ui_active("tray_menu", True)
+    assert pixel(20, 20).alpha() == 0
+    core.overlays.foreground.set_ui_active("main_window", True)
+    fill = pixel(20, 20)
+    assert fill.red() == 255
+    assert 0 < fill.alpha() < 100
+    assert pixel(0, 20).alpha() > fill.alpha()
+    for mode in ("locked", "passthrough"):
+        window.config.input_mode.set(mode)
+        assert pixel(20, 20).alpha() == 0
+    window.config.input_mode.set("normal")
+    assert pixel(20, 20).alpha() > 0
+    core.overlays.foreground.set_ui_active("main_window", False)
+    assert pixel(20, 20).alpha() == 0
+    # Windows following detected geometry (map / HP) leave the opt-in disabled.
+    window.drag_hint_enabled = False
+    core.overlays.foreground.set_ui_active("main_window", True)
+    assert pixel(20, 20).alpha() == 0
+
+
 def test_window_mode_switch(core: Core, window: OverlayWindow) -> None:
     assert core.overlays.transparent_mode
     assert window.windowFlags() & Qt.WindowType.FramelessWindowHint

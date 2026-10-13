@@ -135,6 +135,7 @@ class OverlayManager(QObject):
     def _on_foreground_changed(self) -> None:
         for window in self.windows():
             window.update_visibility()
+            window.update()
 
     def _reassert_topmost(self) -> None:
         # Borderless full screen games tend to push other topmost windows down; re-assert periodically.
@@ -153,6 +154,9 @@ class OverlayWindow(QWidget):
     Call :meth:`show_overlay` / :meth:`hide_overlay` instead of ``show`` / ``hide`` so that visibility rules
     keep applying, and :meth:`dispose` when the overlay is no longer needed.
     """
+
+    #: Subclasses that users position directly opt into the temporary drag affordance.
+    drag_hint_enabled = False
 
     def __init__(
         self,
@@ -294,6 +298,15 @@ class OverlayWindow(QWidget):
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing)
         if not self.manager.transparent_mode:
             painter.fillRect(self.rect(), WINDOW_MODE_BACKGROUND)
+        elif (
+            self.drag_hint_enabled
+            and self.config.input_mode.value == "normal"
+            and self.manager.foreground.is_ui_active("main_window")
+        ):
+            # Keep the normal transparent overlay invisible until the main window is open for positioning.
+            painter.fillRect(self.rect(), QColor(255, 255, 255, 20))
+            painter.setPen(QColor(255, 255, 255, 50))
+            painter.drawRect(self.rect().adjusted(0, 0, -1, -1))
         painter.scale(self.scale_factor, self.scale_factor)
         self.paint_overlay(painter)
 
