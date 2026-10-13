@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from PyQt6.QtCore import QPointF, QRect
+from PyQt6.QtCore import QPointF, QRect, Qt
 from PyQt6.QtGui import QColor, QEnterEvent
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -54,6 +54,7 @@ def test_preview_outlines_the_calibrated_region_in_one_reused_window(
     assert regions.show_preview("a") is True
     preview = plugin._preview
     assert preview is not None and preview.isVisible()
+    assert preview.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
     assert preview.region_geometry() == QRect(10, 20, 30, 40)
     assert preview.color == QColor(region_plugin._RECT_COLOR)
 

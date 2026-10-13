@@ -189,6 +189,9 @@ class _RegionPreview(QWidget):
             | Qt.WindowType.WindowDoesNotAcceptFocus,
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        # Keep the hover preview from intercepting clicks even on platforms where
+        # the native WindowTransparentForInput flag is not applied to child widgets.
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self._color = QColor(_RECT_COLOR)
 
