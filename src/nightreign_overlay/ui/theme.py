@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import sys
+
 from PyQt6.QtGui import QColor, QIcon
-from qfluentwidgets import FluentIcon, Theme, setTheme, setThemeColor
+from qfluentwidgets import FluentIcon, Theme, setFontFamilies, setTheme, setThemeColor
 
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.paths import resource_path
 
 _THEMES = {"dark": Theme.DARK, "light": Theme.LIGHT, "auto": Theme.AUTO}
+#: qfluentwidgets defaults to Windows fonts; a missing family makes Qt build its alias table at startup.
+_MACOS_FONT_FAMILIES = ["PingFang SC", "Helvetica Neue"]
 
 
 def apply_theme(config: AppConfig) -> None:
     """Apply the configured theme now and whenever it changes."""
+    if sys.platform == "darwin":
+        setFontFamilies(_MACOS_FONT_FAMILIES)
     setTheme(_THEMES[config.theme.value])
     setThemeColor(QColor(config.theme_color.value))
     config.theme.valueChanged.connect(lambda value: setTheme(_THEMES[value], lazy=True))

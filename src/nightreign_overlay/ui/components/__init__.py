@@ -7,6 +7,8 @@ from nightreign_overlay.ui.components.setting_cards import (
     ConfigColorCard,
     ConfigRangeCard,
     ConfigSwitchCard,
+    HotkeySettingCard,
+    MultiButtonSettingCard,
 )
 
 __all__ = [
@@ -14,6 +16,8 @@ __all__ = [
     "ConfigColorCard",
     "ConfigRangeCard",
     "ConfigSwitchCard",
+    "HotkeySettingCard",
+    "MultiButtonSettingCard",
     "OverlaySettingSection",
     "ScrollPage",
     "SettingSection",

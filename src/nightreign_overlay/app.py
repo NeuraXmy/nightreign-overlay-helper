@@ -55,6 +55,7 @@ class Application(QObject):
         self._instance = instance
         self._args = args
         self._shut_down = False
+        self._window_hidden_for_selection = False
 
         self.store = ConfigStore(settings_file(), self)
         self.config = self.store.bind(AppConfig, APP_CONFIG_NAMESPACE)
@@ -95,6 +96,9 @@ class Application(QObject):
     def _connect_signals(self) -> None:
         self._instance.activationRequested.connect(self.window.bring_to_front)
         self.overlays.mainWindowRequested.connect(self.window.bring_to_front)
+        self.overlays.mainWindowHideRequested.connect(self._hide_window_for_selection)
+        self.overlays.mainWindowShowRequested.connect(self._restore_window_after_selection)
+        self.overlays.quitRequested.connect(self.quit)
         self.window.quitRequested.connect(self.quit)
         self.window.hiddenToTray.connect(self._on_hidden_to_tray)
         self.window.settingsPage.restartRequested.connect(self.restart)
@@ -148,6 +152,18 @@ class Application(QObject):
             self.tray.hide()
         self.store.flush()
         log.info("Shut down")
+
+    def _hide_window_for_selection(self) -> None:
+        # Only the main window leaves the screen; overlays stay so their position can be referenced.
+        self._window_hidden_for_selection = self.window.isVisible() and not self.window.isMinimized()
+        if self._window_hidden_for_selection:
+            self.window.hide()
+
+    def _restore_window_after_selection(self) -> None:
+        # A selection started from the game via hotkey must not pull the main window over it.
+        if self._window_hidden_for_selection:
+            self._window_hidden_for_selection = False
+            self.window.bring_to_front()
 
     def _on_hidden_to_tray(self) -> None:
         if self.tray is None or self.config.tray_hint_shown.value:

@@ -1,0 +1,59 @@
+plugin:
+  name: 缩圈计时
+  description: 自动识别 DAY I/II/III 并显示缩圈倒计时。
+hud:
+  waiting: 等待识别 DAY
+  phase: "DAY {day} - {remaining} 后第{circle}圈{action}"
+  circle:
+    first: 一
+    second: 二
+  action:
+    start: 开始缩圈
+    end: 缩圈结束
+  boss: "DAY {day} - 夜晚BOSS战 {elapsed}"
+  day3: "DAY {day} - {elapsed}"
+settings:
+  basic:
+    title: 基本设置
+  auto:
+    title: 自动识别
+    content: 根据标定区域识别 DAY I/II/III。
+  language:
+    title: 游戏语言
+    chs: 简体中文
+    cht: 繁體中文
+    eng: English
+    jp: 日本語
+  calibrate:
+    button: 标定
+    annotate: 点我并框出 DAY I 图标 的区域
+    title: DAY 图标区域
+    content: 框选 DAY I 图标所在区域，可点击「标定」或在游戏中按快捷键开始。
+  manual:
+    title: 手动调整
+    content: 识别不准时手动校正缩圈计时，快进/快退秒数可在高级选项中设置。
+    next_day: 开始下一天
+    backward: 快退
+    forward: 快进
+  shortcuts:
+    title: 快捷键
+    next_day:
+      title: 开始下一天
+      content: 按 DAY I → DAY II → DAY I（新一局）的顺序切换并重新计时。
+    forward:
+      title: 快进计时
+      content: 按设定秒数快进当前倒计时。
+    backward:
+      title: 回退计时
+      content: 按设定秒数回退当前倒计时。
+  advanced:
+    title: 高级选项
+  forward:
+    title: 快进秒数
+  backward:
+    title: 回退秒数
+  threshold:
+    title: 模板匹配阈值
+  hdr:
+    title: 启用 HDR 图像处理
+    content: HDR 显示模式下对截图做 HDR 到 SDR 转换以提高识别准确性，遇到识别问题可尝试关闭。
