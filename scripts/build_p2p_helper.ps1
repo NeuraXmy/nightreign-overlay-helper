@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $projectRoot "native/NightreignP2PHelper/NightreignP2PHelper.csproj"
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $projectRoot "bin" }
-dotnet restore $project --locked-mode
+dotnet restore $project -r win-x64 -p:SelfContained=true --locked-mode
 if ($LASTEXITCODE -ne 0) { throw "P2P helper restore failed" }
 $singleFile = if ($NoSingleFile) { "false" } else { "true" }
 dotnet publish $project -c Release -r win-x64 --self-contained true "-p:PublishSingleFile=$singleFile" "-p:IncludeNativeLibrariesForSelfExtract=$singleFile" -p:PublishTrimmed=false -o $OutputDirectory --no-restore
