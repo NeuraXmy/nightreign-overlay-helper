@@ -19,6 +19,7 @@ from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.day_timer.plugin import _DayTimerHud
+from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.hud.config import HudConfig
 from nightreign_overlay.plugins.hud.overlay import HudOverlay
 from nightreign_overlay.plugins.overlay_test.api import OverlayTestApi
@@ -279,6 +280,28 @@ def test_hud_hide_text_hides_labels_but_keeps_progress(core: Core, store: Config
     config.hide_text.set(False)
     process_events()
     assert widget.label.isVisible() and late.label.isVisible()
+
+
+def test_hud_refits_when_a_contributed_bar_hides_itself(core: Core, store: ConfigStore) -> None:
+    overlay = HudOverlay(
+        core.overlays, store.bind(OverlayConfig, "hud.overlay"), store.bind(HudConfig, "plugins.hud"), "HUD"
+    )
+    overlay.show_overlay()
+    overlay.add_widget("day_timer", _DayTimerHud([270, 180, 210, 180], "Waiting"), order=0)
+    bar = HudTimerBar("#f766ba")
+    overlay.add_widget("rain_timer", bar, order=10)
+    bar.set_progress(0.5, "rain")
+    process_events()
+    full_height = overlay.height()
+
+    bar.set_progress(0.0, "")
+    process_events()
+    assert bar.isHidden()
+    assert overlay.height() < full_height
+
+    bar.set_progress(0.5, "rain")
+    process_events()
+    assert overlay.height() == full_height
 
 
 def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:

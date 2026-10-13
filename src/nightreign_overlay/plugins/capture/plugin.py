@@ -33,6 +33,9 @@ class _CaptureService(CaptureApi):
     def release_stream(self, owner: str) -> None:
         self._plugin.release_stream(owner)
 
+    def hdr_enabled(self) -> bool:
+        return self._plugin.config.hdr_processing.value
+
 
 class CapturePlugin(Plugin):
     manifest = PluginManifest(

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QEvent, QObject, QSize, Qt
 from PyQt6.QtWidgets import QBoxLayout, QWidget
 
 from nightreign_overlay.plugins.hud.config import HudConfig
@@ -48,6 +48,8 @@ class HudOverlay(OverlayWindow):
             set_scale(self.scale_factor)
         _set_text_hidden(widget, self._config.hide_text.value)
         widget.show()
+        # Contributed widgets may hide while idle (rain / art bars); the overlay re-fits around them.
+        widget.installEventFilter(self)
         self._apply_layout()
         self.show_overlay()
         self.raise_()
@@ -56,6 +58,7 @@ class HudOverlay(OverlayWindow):
     def remove_widget(self, token: str) -> None:
         entry = self._entries.pop(token, None)
         if entry is not None:
+            entry.widget.removeEventFilter(self)
             self._layout.removeWidget(entry.widget)
             entry.widget.setParent(None)
             entry.widget.deleteLater()
@@ -64,6 +67,15 @@ class HudOverlay(OverlayWindow):
     def remove_owner(self, owner: str) -> None:
         for token in [token for token, entry in self._entries.items() if entry.owner == owner]:
             self.remove_widget(token)
+
+    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
+        if (
+            event is not None
+            and event.type() in (QEvent.Type.ShowToParent, QEvent.Type.HideToParent)
+            and any(entry.widget is watched for entry in self._entries.values())
+        ):
+            self._apply_layout()
+        return super().eventFilter(watched, event)
 
     def should_be_visible(self) -> bool:
         return self._config.enabled.value and super().should_be_visible()

@@ -108,7 +108,7 @@ manifest = PluginManifest(
 | 所有 detector 各自截图、重复转换整帧 | `capture` 基础插件每个检测 tick 只截一帧，发布 `FrameCaptured`；各检测插件订阅后裁剪自己的区域 |
 | 缩圈 / 雨中 / 绝招 共用一个悬浮窗 | `hud` 基础插件提供 `HudApi.add_widget(...)`，各功能向同一 HUD 悬浮窗贡献自己的进度条组件，顺序可配置 |
 | 地图识别依赖缩圈时间 | `map_detect` 对 `day_timer` 声明 `optional`，通过 `DayTimerApi` 读取阶段 / 订阅 `DayPhaseChanged` |
-| 雨中检测与血条检测共享 HLS 颜色配置 | 颜色校准作为 `hp_color` 能力由一个插件提供服务，其余插件通过 API 读取 |
+| 雨中检测与血条检测共享 HLS 颜色配置 | 旧版 `hp_detector` 实际不使用 HLS 颜色，只有雨中检测使用；颜色校准因此归 `rain_timer` 自身（普通 / HDR 两套），不单独设 `hp_color` 插件。`region` 提供通用的冻结屏幕取样 `RegionApi.request_samples(targets)`，后续插件如需取色可复用 |
 | 快捷键散落在各处 | `input` 基础插件提供 `HotkeyApi.register(action_id, default_combo, callback)`，统一在其设置页编辑所有快捷键 |
 | 检测区域标定 | `region` 服务：`RegionApi.request_region(key)` 统一弹出截图选区窗口，结果存入调用方配置 |
 
@@ -163,7 +163,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - 平台差异与外设能力必须保持可调用的服务契约和可注入测试接口。macOS 使用 Qt 截图作开发调试降级；“自动”悬浮窗模式优先使用透明悬浮窗，若 macOS 合成器存在显示问题，用户可显式切换普通窗口；Windows 原生 DLL 打包、`pynput` 权限行为和 pygame 手柄实机验证在 Windows 环境执行。
 - 在完整 worker 线程模型迁移前，DAY 标定期间暂停该插件的模板匹配；识别前把用户选区缩放到旧版同样的模板标准高度（30 px），防止误框大区域时在 GUI 线程进行高分辨率匹配而持续卡顿。
 - 功能插件使用 HUD 时，调用方在自己的 `PluginContext` 中注册清理回调移除组件，保证热停用不会影响其他 HUD 内容。`HudOverlay` 在添加组件后重新激活布局、按最终 size hint 调整窗口并显式展示/置顶，避免初始空容器尺寸导致内容不可见。HUD 提供独立启用开关，关闭时调用窗口隐藏流程而不是将透明度设为零，确保不留下透明顶层窗口。`day_timer` 还原旧版固定 400px、按四段时长比例分配的蓝紫色分段进度条和带阴影白色粗体文字；容器基准尺寸必须包含全部边距，缩放时内容的宽度、进度条高度、文字、圆角和间距同步缩放。HUD 右键菜单仅提供打开主界面与安全退出程序。
-- HUD 提供与旧版相同的「隐藏文字」开关（`plugins.hud.hide_text`）：只隐藏各组件的文字标签，进度条保持显示。贡献组件实现可选钩子 `set_hud_text_hidden(hidden)`（与 `set_hud_scale(scale)` 同为鸭子类型约定），添加组件时和开关切换时由 `HudOverlay` 统一调用并重新计算窗口尺寸；后续雨中/绝招等 HUD 组件按同一约定接入即可。
+- HUD 提供与旧版相同的「隐藏文字」开关（`plugins.hud.hide_text`）：只隐藏各组件的文字标签，进度条保持显示。贡献组件实现可选钩子 `set_hud_text_hidden(hidden)`（与 `set_hud_scale(scale)` 同为鸭子类型约定），添加组件时和开关切换时由 `HudOverlay` 统一调用并重新计算窗口尺寸；雨中/绝招的 HUD 组件已按同一约定接入（见 3.10）。
 
 ### 3.9 「仅在游戏时显示和检测」与悬浮窗隐藏优先级
 
@@ -204,6 +204,45 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - 普通窗口模式豁免前台门控（重写版新增的显示模式）。
 - 区域标定期间视为 UI 活跃，保证标定时悬浮窗和快捷键可用。
 - 早期重写版的 `*.overlay.only_when_game_foreground` 与 `plugins.capture.only_when_game_foreground` 键不再读取，不做迁移（未发布版本）。
+
+### 3.10 P3：`rain_timer` 与 `art_timer` 实施记录
+
+#### 共享能力（新增）
+
+- `hud.api.HudTimerBar(color)`：旧版单条倒计时样式（400px 进度条 + 带阴影白色粗体文字），`set_progress(progress, text, color=None)`；`progress <= 0` 时整个组件隐藏，对应旧版 `*_progress_visible`。实现 `set_hud_scale` / `set_hud_text_hidden` 钩子。
+- `HudOverlay` 对贡献组件安装事件过滤器，组件自行显示 / 隐藏时重新计算窗口尺寸。
+- `RegionApi.request_region(key, label, color)` 支持自定义标注颜色；`RegionApi.request_samples([RegionTarget(id, label, color), ...])` 在同一冻结画面上提供多个标注按钮，返回各框内的冻结像素且不保存区域；无屏幕录制权限（冻结画面不可信）时直接返回 `None`。选区对话框每个按钮各保留最后一个框，旧版“每次框选前需重新点击按钮”的交互保持不变。
+- `capture.api` 新增 `crop_rgb(frame, region)`（处理行对齐与越界裁剪）、`resize_to_height(image, height)` 与 `CaptureApi.hdr_enabled()`（供设置页显示当前图像模式）。
+
+#### `rain_timer`
+
+- 复原旧版 `RainDetector`：裁剪血条区域转 HLS，按正常色 / 雨中色（各自 `(亮, 暗)` 两端 ± H/L/S 容差）统计像素占比；雨中占比 ≥ 最大占比且正常占比 ≤ 最小占比判为雨中，反之判为非雨中，其余不改变状态。颜色采样始终用原图（HDR 不做色调映射），普通 / HDR 模式各有内置默认色，校准值替换两端。
+- 状态机与旧版一致：识别为雨中且未计时则开始，识别为非雨中且正在计时则停止；倒计时到期只隐藏进度条，不自动停止。文字 `雨中冒险倒计时 m:ss - xx%`，颜色 `#f766ba`。
+- 颜色校准：一次冻结画面中提供“正常颜色血条 / 雨中颜色血条”两个按钮（旧版标注颜色），取框内出现次数最多的 HLS，只写入当前图像模式（`plugins.capture.hdr_processing`）的两项；“重置”经确认后只重置当前模式。设置页显示两种颜色的“默认 / 已设置”及色块，HDR 模式带 `HDR:` 前缀。
+- 配置：`auto_detect`（关闭后只停止自动识别，手动计时仍可用）、四个校准色；高级选项为持续时间（110 s）、H/L/S 容差（5/30/30）、最小 / 最大面积占比（10%/50%）。
+- 日志沿用旧版文案：`In Rain detect enabled`、`Started in rain.` / `Stopped in rain.`、`Started in rain by shortcut/button.`、`Updated hp color: ...`、`align hp color setting canceled`。
+
+#### `art_timer`
+
+- 复原旧版 `ArtDetector`：五个绝招图标（RGBA，缩放到 50px 后取中心一半，alpha 作为掩码），截图区域缩放到 50px，在 0.95–1.05 五个尺度上做带掩码的 `TM_SQDIFF` 并按像素数归一化，最小分数低于阈值（默认 0.02）判为该绝招。HDR 时先 `hdr_to_sdr()`。
+- 旧版 `art_info` 原样保留：女爵 / 隐士 / 复仇者延迟 2 s、持续 13 s，学者 20 s，执行者 15 s，及各自颜色与文案；延迟期间进度条保持满格，持续时间结束后清空并隐藏。
+- 按下绝招键后等待识别延迟（默认 500 ms）再识别；延迟期间再次按下重新计时，与旧版“记录最后一次按键时间”一致。
+- 日志沿用旧版：`Will detect art in ... seconds.`、每种绝招的 `Art type: ..., score: ...`、`Detected art type` / `No art detected`、`detected art: ...`。
+
+#### 与旧版的差异
+
+| 差异 | 理由 | 影响 |
+|-----|-----|-----|
+| 血条检测区域、绝招图标区域与 DAY I 区域分别由各插件标定（`rain_timer.hp_region`、`art_timer.art_region`） | 插件独立启停，区域归属各自插件 | 旧版配置迁移时需分别映射 |
+| 选区按钮统一布局在右侧（旧版绝招按钮在屏幕中央、取消/保存在 0.3 高度） | 选区对话框统一由 `region` 提供 | 仅按钮位置不同 |
+| 绝招识别在延迟到期时用 `capture_now()` 单次截图，不保持周期帧流；无帧（如前台规则禁止检测）时本次按键直接放弃 | 不需要为偶发识别常驻截图；旧版会挂起等待下一次可检测的 tick | 游戏不在前台时按键不会在回到前台后补识别 |
+| 不再保存 `last_art_sc.png` / `art_region_screenshot.jpg` 调试截图 | 调试图写入应用目录，重写版统一用日志诊断 | 排查绝招识别需看日志中的分数 |
+| 旧版「启用绝招倒计时」开关由插件启用开关代替 | 插件化后二者等价 | 无 |
+| `rain_timer` 设置页新增手动「开始/停止」按钮 | 与 `day_timer` 的手动调整按钮一致，便于无快捷键时操作 | 新增入口，不改变快捷键行为 |
+| 识别阈值、延迟、容差、面积占比、持续时间进入「高级选项」 | 第 4 节约定：用户可能调整的参数归入高级选项 | 默认值与旧版相同 |
+| 图像缩放用 OpenCV（缩小 `INTER_AREA`、放大 `INTER_LANCZOS4`）代替 PIL `LANCZOS` | 重写版不依赖 PIL | 分数可能有细微差异，阈值保持旧版默认 |
+| HUD 高度随组件显隐自适应（旧版固定 400×140） | 多组件共享 HUD 时避免空白区域 | 进度条隐藏时 HUD 收缩 |
+| 教程只保留游戏画面类配图 | 旧版设置界面截图与新 UI 不符 | 文字说明改为新 UI 的入口名称 |
 
 ## 4. 配置系统
 
@@ -264,7 +303,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 | P0 | 计划文档 | ✅ |
 | P1 | 底座：core / platform / plugin / 主界面 / 托盘 / 悬浮窗基类 / i18n；`overlay_test` 测试插件；单元测试 | ✅ 本次完成 |
 | P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 🚧 进行中：服务契约、Qt 降级实现和单元测试已完成；Windows DLL 打包与真实手柄验证留待 Windows 环境 |
-| P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 待开始 |
+| P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 🚧 进行中：三个插件已实现并有非视觉单元测试；雨中 / 绝招的视觉识别待实机手动验证 |
 | P4 | `map_detect`、`hp_marker`、`p2p_latency`（含 NightreignP2PHelper 原生组件） | 待开始 |
 | P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 待开始 |
 
