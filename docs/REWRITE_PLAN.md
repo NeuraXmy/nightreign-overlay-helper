@@ -278,6 +278,10 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
   - 插件页调用 `Plugin.reset_settings()`，默认实现为 `ctx.reset_configs()`：重置该插件通过 `ctx.config()` 绑定的全部配置组。由其他插件代存的设置需要插件覆写：`day_timer`、`rain_timer`、`art_timer` 同时把自身快捷键恢复为旧版默认（DAY 三个默认组合键，其余未绑定），并通过 `RegionApi.clear_region(key)` 清除自己标定的区域（region 未激活时跳过）。确认框文案中明确提示快捷键和标定区域会被重置。
   - 通用设置页重置 `AppConfig` 的全部用户选项（跳过内部状态 `tray_hint_shown`，避免再次弹出托盘提示），并依次调用嵌入的 `settings_scope=general` 插件（`capture`、`hud`）的 `reset_settings()`；`hud` 的重置包括悬浮窗位置等窗口配置。
   - 不重置插件启用状态（`plugin_manager.*`），启停仍由页头开关单独管理；语言等需重启生效的选项重置后同样提示重启。
+- **标定区域状态与预览（重写版新增，旧版无此功能）**：`day_timer`、`rain_timer`、`art_timer` 的「标定区域」卡片在「标定」按钮左侧显示眼睛图标及带颜色的“已标定”/“未标定”状态（`region.api.RegionStatus`，经 `HotkeySettingCard(accessories=...)` 放入卡片），标定、页面重置或页面再次显示后刷新状态。鼠标悬停时，若已标定，则由 `RegionApi.show_preview(key, color)` 在屏幕上框出该区域，移出或状态部件被隐藏（如切换页面）时 `hide_preview()`；提示文字显示区域坐标与尺寸，未标定时提示“尚未标定区域”。
+  - 预览窗口由 `region` 插件持有、全局唯一并复用：无边框、置顶、鼠标穿透、不抢焦点，颜色与该插件选区标注颜色一致；`region` 停用时随上下文销毁。它只在主界面悬停期间出现，不注册到 `OverlayManager`，也不受前台门控影响。
+  - 坐标按选区保存约定（`local * dpr + 屏幕偏移`）反算为 Qt 逻辑坐标：取物理范围包含区域左上角的屏幕，找不到时按主屏换算。
+  - 状态部件每次刷新或悬停时查找 `RegionApi`，因为设置页可能先于 `region` 激活而构造；服务不可用时按“未标定”显示且不显示预览。
 - **托盘**：显示主界面、退出；双击托盘图标打开主界面。
 - **悬浮窗基类 `OverlayWindow`**：统一处理无边框 / 透明 / 置顶 / 鼠标穿透 / 不抢焦点 / 拖动 / 位置持久化 / 透明度 / 全局前台门控（见 3.9），以及普通窗口 fallback。
 

@@ -15,7 +15,7 @@ from nightreign_overlay.plugins.art_timer.detector import ArtDetector
 from nightreign_overlay.plugins.capture.api import CaptureApi
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
-from nightreign_overlay.plugins.region.api import RegionApi
+from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import ConfigRangeCard, HotkeySettingCard, SettingSection, SettingsPanel
 
 _REGION_KEY = "art_timer.art_region"
@@ -188,6 +188,7 @@ class ArtTimerPlugin(Plugin):
                 tr("settings.region.title"),
                 tr("settings.region.content"),
                 actions=[(tr("settings.region.button"), self._calibrate_region)],
+                accessories=[RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)],
             ),
             HotkeySettingCard(
                 hotkeys,

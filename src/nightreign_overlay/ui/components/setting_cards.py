@@ -241,7 +241,9 @@ class _HotkeySettingDialog(QDialog):
 class HotkeySettingCard(SettingCard):
     """A large button that opens the legacy-style multi-device shortcut recorder for ``action_id``.
 
-    ``actions`` adds buttons before the recorder so a manual trigger can share the card with its shortcut.
+    ``actions`` adds buttons before the recorder so a manual trigger can share the card with its shortcut;
+    ``accessories`` are small widgets (e.g. a status icon) placed before those buttons. Accessories with a
+    ``refresh()`` method are refreshed together with the card and after each action.
     """
 
     def __init__(
@@ -255,15 +257,21 @@ class HotkeySettingCard(SettingCard):
         parent: QWidget | None = None,
         *,
         actions: Sequence[tuple[str, Callable[[], None]]] = (),
+        accessories: Sequence[QWidget] = (),
     ) -> None:
         super().__init__(icon, title, content, parent)
         self._hotkeys = hotkeys
         self._action_id = action_id
         self._default = default
+        self._accessories = list(accessories)
+        for widget in self._accessories:
+            widget.setParent(self)
+            self.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
+            self.hBoxLayout.addSpacing(8)
         for label, callback in actions:
             button = QPushButton(label, self)
             button.setMinimumHeight(34)
-            button.clicked.connect(callback)
+            button.clicked.connect(lambda _checked=False, callback=callback: self._run_action(callback))
             self.hBoxLayout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
             self.hBoxLayout.addSpacing(8)
         self.captureButton = QPushButton(self)
@@ -280,8 +288,18 @@ class HotkeySettingCard(SettingCard):
         return self._hotkeys.binding(self._action_id, self._default)
 
     def refresh(self) -> None:
-        """Re-read the persisted binding, e.g. after the page was reset to its defaults."""
+        """Re-read the persisted binding and accessory state, e.g. after the page was reset."""
         self.captureButton.setText(_format_binding(self.binding))
+        for widget in self._accessories:
+            if callable(refresh := getattr(widget, "refresh", None)):
+                refresh()
+
+    def _run_action(self, callback: Callable[[], None]) -> None:
+        try:
+            callback()
+        finally:
+            # An action such as "calibrate" may change what the accessories display.
+            self.refresh()
 
     def _open_dialog(self) -> None:
         dialog = _HotkeySettingDialog(self._hotkeys, self.binding, self)

@@ -59,6 +59,12 @@ settings_reset:
   cancel: キャンセル
   done: 既定の設定に戻しました
 
+region_preview:
+  calibrated: 設定済み
+  uncalibrated: 未設定
+  current: "現在の範囲を表示中：({x}, {y})、{width} × {height} px"
+  unset: 範囲はまだ設定されていません
+
 settings:
   title: 設定
   open: 開く
@@ -142,7 +148,7 @@ input_dialog:
   title: ショートカットを設定
   hint: キーボード、マウス、またはコントローラーの組み合わせを押してください。最初の入力でデバイス種類が固定されます。
   waiting: 入力待ち…
-  unset: 未設定
+  unset: ショートカット未設定
   clear: クリア
   cancel: キャンセル
   confirm: 確定

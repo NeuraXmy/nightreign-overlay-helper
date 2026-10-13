@@ -59,6 +59,12 @@ settings_reset:
   cancel: Cancel
   done: Default settings restored
 
+region_preview:
+  calibrated: Calibrated
+  uncalibrated: Not calibrated
+  current: "Showing the current region: ({x}, {y}), {width} × {height} px"
+  unset: No region calibrated yet
+
 settings:
   title: Settings
   open: Open
@@ -142,7 +148,7 @@ input_dialog:
   title: Set shortcut
   hint: Press a keyboard, mouse, or controller combination. The first input locks the device type.
   waiting: Waiting for input…
-  unset: Not set
+  unset: Shortcut not set
   clear: Clear
   cancel: Cancel
   confirm: Confirm
