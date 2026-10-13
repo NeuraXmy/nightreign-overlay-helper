@@ -1,12 +1,16 @@
 # Run on Windows with the .NET 8 SDK. Runtime behaviour and publish options match the legacy project.
-param([string]$OutputDirectory = "")
+param(
+    [string]$OutputDirectory = "",
+    [switch]$NoSingleFile
+)
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $project = Join-Path $projectRoot "native/NightreignP2PHelper/NightreignP2PHelper.csproj"
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $projectRoot "bin" }
 dotnet restore $project --locked-mode
 if ($LASTEXITCODE -ne 0) { throw "P2P helper restore failed" }
-dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o $OutputDirectory --no-restore
+$singleFile = if ($NoSingleFile) { "false" } else { "true" }
+dotnet publish $project -c Release -r win-x64 --self-contained true "-p:PublishSingleFile=$singleFile" "-p:IncludeNativeLibrariesForSelfExtract=$singleFile" -p:PublishTrimmed=false -o $OutputDirectory --no-restore
 if ($LASTEXITCODE -ne 0) { throw "P2P helper publish failed" }
 $requiredFiles = @("NightreignP2PHelper.exe", "amd64/KernelTraceControl.dll", "amd64/msdia140.dll")
 foreach ($file in $requiredFiles) {
