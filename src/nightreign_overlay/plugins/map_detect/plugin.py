@@ -279,7 +279,9 @@ class MapDetectPlugin(Plugin):
         self._manual_auto_in_flight = False
         self._manual_overlay.clear_poi_choices()
         self._manual_overlay.refresh_positions()
-        if self._manual_overlay.earth_shifting is not None:
+        if self._manual_overlay.earth_shifting is None:
+            self._manual_overlay.show_select_earth_shifting()
+        else:
             self._rematch_manual_filter()
 
     def _on_manual_poi_choice(self, pos: Position, choice: PoiChoice) -> None:
@@ -287,7 +289,6 @@ class MapDetectPlugin(Plugin):
             return
         explicit = dict(self._manual_overlay.explicit_choices)
         explicit[pos] = choice
-        self._manual_overlay.clear_status()
         self._manual_overlay.set_filter_state(explicit, {})
         self._rematch_manual_filter()
 
@@ -299,6 +300,7 @@ class MapDetectPlugin(Plugin):
         earth_shifting = overlay.earth_shifting
         if earth_shifting is None:
             overlay.set_filter_state(overlay.explicit_choices, {})
+            overlay.show_select_earth_shifting()
             return
         candidates = catalog.candidates(earth_shifting, overlay.nightlord, overlay.explicit_choices)
         if not candidates:
@@ -317,6 +319,7 @@ class MapDetectPlugin(Plugin):
             overlay.explicit_choices,
         )
         overlay.set_filter_state(overlay.explicit_choices, inferred)
+        overlay.show_candidate_count(len(candidates))
 
     def _request_manual_auto_recognition(self, pos: Position) -> None:
         overlay = self._manual_overlay
@@ -330,7 +333,6 @@ class MapDetectPlugin(Plugin):
         ):
             return
         self._manual_auto_in_flight = True
-        overlay.clear_status()
         overlay.close_popup()
         overlay.set_auto_recognizing(pos)
         overlay.set_capture_hidden(True)

@@ -75,6 +75,16 @@ class ManualFilterOverlay(OverlayWindow):
             self.nightlord_combo.addItem(name, nightlord)
         self.nightlord_combo.currentIndexChanged.connect(self._on_nightlord_changed)
 
+        combo_style = (
+            "QComboBox { color: white; background: rgba(53, 69, 87, 235);"
+            " border: 1px solid #92bde3; border-radius: 4px; padding: 2px 24px 2px 8px; }"
+            "QComboBox:hover { background: rgba(72, 102, 129, 245); }"
+            "QComboBox QAbstractItemView { color: white; background: #354557;"
+            " selection-background-color: #486681; }"
+        )
+        self.earth_shifting_combo.setStyleSheet(combo_style)
+        self.nightlord_combo.setStyleSheet(combo_style)
+
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
@@ -84,15 +94,12 @@ class ManualFilterOverlay(OverlayWindow):
         row.addWidget(self.nightlord_combo)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setContentsMargins(10, 10, 6, 6)
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         layout.addLayout(row)
         layout.addStretch(1)
 
-        self.status_label = QLabel(tr("manual_filter.no_match"), self)
-        self.status_label.setStyleSheet(
-            "color: #ff4242; background: rgba(0, 0, 0, 150); padding: 3px; font-weight: bold;"
-        )
+        self.status_label = QLabel("", self)
         self.status_label.hide()
         self._apply_control_size()
 
@@ -129,6 +136,7 @@ class ManualFilterOverlay(OverlayWindow):
         del earth_blocker, nightlord_blocker
         self.clear_poi_choices()
         self.refresh_positions()
+        self.show_select_earth_shifting()
 
     def clear_poi_choices(self) -> None:
         self.explicit_choices.clear()
@@ -159,7 +167,20 @@ class ManualFilterOverlay(OverlayWindow):
         self._recognizing_pos = pos
         self._refresh_buttons()
 
+    def show_select_earth_shifting(self) -> None:
+        self._show_status(self._tr("manual_filter.select_earth_shifting"), "#ff4242")
+
+    def show_candidate_count(self, count: int) -> None:
+        self._show_status(self._tr("manual_filter.remaining_candidates", count=count), "white")
+
     def show_no_match(self) -> None:
+        self._show_status(self._tr("manual_filter.no_match"), "#ff4242")
+
+    def _show_status(self, text: str, color: str) -> None:
+        self.status_label.setText(text)
+        self.status_label.setStyleSheet(
+            f"color: {color}; background: rgba(0, 0, 0, 150); padding: 3px; font-weight: bold;"
+        )
         self.status_label.show()
         self.status_label.raise_()
         self._layout_status()
@@ -333,9 +354,9 @@ class ManualFilterOverlay(OverlayWindow):
 
     def _apply_control_size(self) -> None:
         scale = max(0.1, self.width() / 750)
-        height = max(1, round(29 * scale))
+        height = max(1, round(35 * scale))
         font = self.font()
-        font.setPixelSize(max(1, round(13 * scale)))
+        font.setPixelSize(max(1, round(16 * scale)))
         for label in self.findChildren(QLabel):
             label.setFont(font)
         for combo in (self.earth_shifting_combo, self.nightlord_combo):
@@ -344,7 +365,7 @@ class ManualFilterOverlay(OverlayWindow):
                 (combo.fontMetrics().horizontalAdvance(combo.itemText(i)) for i in range(combo.count())),
                 default=0,
             )
-            combo.setFixedSize(max(round(180 * scale), content_width + round(48 * scale)), height)
+            combo.setFixedSize(max(round(216 * scale), content_width + round(58 * scale)), height)
         self._layout_position_buttons()
         self._layout_status()
 
