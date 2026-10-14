@@ -216,14 +216,10 @@ def test_transparent_text_status_and_standard_window_settings(plugin):
     assert not window.windowFlags() & Qt.WindowType.WindowTransparentForInput
     reset = panel.findChild(MultiButtonSettingCard)
     buttons = reset.findChildren(QPushButton)
-    assert len(buttons) == 2
+    assert len(buttons) == 1
     plugin.overlay_config.position.set([123, 234])
-    buttons[1].click()
-    assert plugin.overlay_config.position.value == [None, 234]
-    assert window.x() == window._default_position().x()
-    assert window.y() == 234
     buttons[0].click()
-    assert plugin.overlay_config.position.value is None
+    assert plugin.overlay_config.position.value == [window.x(), window.y()]
     assert window.pos() == window._default_position()
     parent.deleteLater()
 

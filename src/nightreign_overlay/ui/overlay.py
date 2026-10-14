@@ -13,6 +13,7 @@ implementing :meth:`OverlayWindow.paint_overlay` in unscaled coordinates.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from PyQt6.QtCore import QObject, QPoint, QRect, QSize, Qt, QTimer, pyqtSignal
@@ -60,6 +61,24 @@ class OverlayConfig(ConfigGroup):
     opacity = RangeOption(100, 20, 100)
     scale = RangeOption(100, 50, 200)
     input_mode = ChoiceOption("normal", ("normal", "locked", "passthrough"))
+    _reset_position_handler: Callable[[], None] | None = None
+    _reset_horizontal_position_handler: Callable[[], None] | None = None
+
+    def reset_position(self) -> None:
+        """Reset through the live window so its default coordinates are saved immediately."""
+        handler = self._reset_position_handler
+        if handler is not None:
+            handler()
+        else:
+            self.position.reset()
+
+    def reset_horizontal_position(self) -> None:
+        handler = self._reset_horizontal_position_handler
+        if handler is not None:
+            handler()
+        else:
+            value = self.position.value
+            self.position.set([None, value[1] if value is not None else None])
 
 
 class OverlayManager(QObject):
@@ -167,6 +186,8 @@ class OverlayWindow(QWidget):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        config._reset_position_handler = self.reset_position
+        config._reset_horizontal_position_handler = self.reset_horizontal_position
         self.manager = manager
         self.config = config
         self._base_size = QSize(base_size)
@@ -270,14 +291,17 @@ class OverlayWindow(QWidget):
         self.update()
 
     def reset_position(self) -> None:
-        self.config.position.set(None)
+        default = self._default_position()
+        self.config.position.set([default.x(), default.y()])
 
     def reset_horizontal_position(self) -> None:
-        position = self.config.position.value
-        self.config.position.set([None, position[1] if position is not None else None])
+        default = self._default_position()
+        self.config.position.set([default.x(), self.y()])
 
     def dispose(self) -> None:
         """Close and schedule deletion; the instance must not be used afterwards."""
+        self.config._reset_position_handler = None
+        self.config._reset_horizontal_position_handler = None
         self._disposing = True
         self.manager.unregister(self)
         self.close()
@@ -335,7 +359,7 @@ class OverlayWindow(QWidget):
     def moveEvent(self, event: QMoveEvent) -> None:
         super().moveEvent(event)
         # Window mode: the user may drag the native title bar, which bypasses our mouse handlers. Moves made
-        # by us are recognised by their target so that e.g. a reset keeps following the default position.
+        # by us are recognised by their target so automatic layout moves do not overwrite saved positions.
         user_move = self.pos() != self._programmatic_pos
         if user_move and self.config.input_mode.value == "locked" and not self._applying_mode:
             # Window mode can still be moved through its native title bar; restore the
@@ -413,7 +437,7 @@ class OverlayWindow(QWidget):
             self._move_to(position)
 
     def _move_to(self, position: QPoint) -> None:
-        """Move without persisting; the position setting only records moves made by the user."""
+        """Move without persisting; callers that change saved positions update the setting explicitly."""
         self._programmatic_pos = QPoint(position)
         self.move(position)
 
