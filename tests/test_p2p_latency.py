@@ -147,7 +147,7 @@ def test_scaling_layout_position_opacity_and_modes(plugin):
     for scale in (50, 100, 200, 125, 57):
         plugin.overlay_config.scale.set(scale)
         process_events()
-        assert window.width() == int(310 * scale / 100)
+        assert window.width() == int(240 * scale / 100)
         assert window.height() > 30 * scale / 100
         last_row = _row(window, 2, 2)
         assert last_row.mapTo(window, QPoint(0, last_row.height())).y() <= window.height()
@@ -317,3 +317,22 @@ def test_real_mock_subprocess_hot_toggle_and_shutdown(plugin, monkeypatch):
     assert second.process.state() == second.process.ProcessState.NotRunning
     assert second.process.exitCode() == 0
     parent.deleteLater()
+
+
+def test_long_peer_names_are_elided_and_metrics_stay_inside_window(plugin):
+    window = _window(plugin)
+    window.set_status(P2PStatus("steam_ready", "模拟"))
+    long_name = "这是一个非常非常长的玩家名字 Long player name"
+    window.set_peers([P2PPeer("1", long_name, 999, 1.0, "messages", "connected")])
+    for scale in (50, 100, 125, 200):
+        plugin.overlay_config.scale.set(scale)
+        process_events()
+        name = _row(window, 0, 0)
+        assert name.width() == int(110 * scale / 100)
+        assert name.text().endswith("…")
+        assert long_name in name.toolTip()
+        for column in (1, 2):
+            label = _row(window, 0, column)
+            assert label.mapTo(window, QPoint(label.width(), 0)).x() <= window.width()
+    window.set_peers([P2PPeer("1", "Alice", 80, 0.9, "messages", "connected")])
+    assert _row(window, 0, 0).text() == "Alice"
