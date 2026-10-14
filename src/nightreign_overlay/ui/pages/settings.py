@@ -84,12 +84,6 @@ class SettingsPage(ScrollPage):
                 tr("settings.only_when_game_foreground.content"),
             ),
             ConfigSwitchCard(
-                self._config.close_to_tray,
-                FluentIcon.MINIMIZE,
-                tr("settings.close_to_tray.title"),
-                tr("settings.close_to_tray.content"),
-            ),
-            ConfigSwitchCard(
                 self._config.start_minimized,
                 FluentIcon.HIDE,
                 tr("settings.start_minimized.title"),

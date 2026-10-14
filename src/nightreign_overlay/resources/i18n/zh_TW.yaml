@@ -134,9 +134,10 @@ about:
     fluent_widgets: Fluent Design 風格介面元件庫
 
 tray:
+  toggle: 顯示／隱藏主介面
   show: 顯示主介面
   quit: 結束
-  hidden_hint: 程式已最小化至系統匣，可在設定中關閉此行為。
+  hidden_hint: 主介面已隱藏，程式仍在執行。點擊系統匣圖示可重新顯示主介面。
 
 overlay:
   menu:

@@ -133,9 +133,10 @@ about:
     fluent_widgets: Fluent Design widget library
 
 tray:
+  toggle: Show / hide main window
   show: Show main window
   quit: Quit
-  hidden_hint: Still running in the system tray. You can change this in Settings.
+  hidden_hint: The main window is hidden; the app is still running. Click the tray icon to show it again.
 
 overlay:
   menu:
