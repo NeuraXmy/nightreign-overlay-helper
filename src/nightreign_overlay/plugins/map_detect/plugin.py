@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any
 
 import numpy as np
-from PyQt6.QtCore import QRect, Qt, pyqtSignal
+from PyQt6.QtCore import QRect, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
@@ -22,6 +22,10 @@ from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.config import MapDetectConfig, MapDetectionSettings
 from nightreign_overlay.plugins.map_detect.controls import MapControlsOverlay
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam, MapDetectResult
+from nightreign_overlay.plugins.map_detect.localization import load_names
+from nightreign_overlay.plugins.map_detect.manual_catalog import ManualFilterCatalog, PoiChoice
+from nightreign_overlay.plugins.map_detect.manual_filter import ManualFilterOverlay
+from nightreign_overlay.plugins.map_detect.map_info import MapPattern, Position
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOverlayState
 from nightreign_overlay.plugins.map_detect.resources import get_appdata_path
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
@@ -44,7 +48,9 @@ _ACTIONS = (
     "previous_result",
     "next_crystal",
     "previous_crystal",
+    "manual_filter",
 )
+_EARTH_SHIFTING_IDS = tuple(range(6))
 
 
 class MatchFlag(Enum):
@@ -64,6 +70,11 @@ class _Job:
     settings: MapDetectionSettings
     topk: int
     stage: str
+    manual_revision: int = 0
+    poi_position: Position | None = None
+    earth_shifting: int | None = None
+    nightlord: int | None = None
+    pattern_id: int | None = None
 
 
 class _RecognitionService(MapRecognitionApi):
@@ -71,7 +82,11 @@ class _RecognitionService(MapRecognitionApi):
         self._plugin = plugin
 
     def ready(self) -> bool:
-        return self._plugin._active and self._plugin._flag != MatchFlag.FALSE
+        return (
+            self._plugin._active
+            and not self._plugin._manual_filtering
+            and self._plugin._flag != MatchFlag.FALSE
+        )
 
 
 class MapDetectPlugin(Plugin):
@@ -90,6 +105,7 @@ class MapDetectPlugin(Plugin):
         self._window_config = self.ctx.config(OverlayConfig, "window")
         self._window_config.input_mode.set("passthrough")
         self._overlay: MapInfoOverlay | None = None
+        self._manual_overlay: ManualFilterOverlay | None = None
         self._controls: MapControlsOverlay | None = None
         self._detector: MapDetector | None = None
         self._executor: ThreadPoolExecutor | None = None
@@ -102,6 +118,11 @@ class MapDetectPlugin(Plugin):
         self._flag = MatchFlag.TRUE
         self._current_is_full_map = False
         self._map_overlay_visible = False
+        self._manual_filtering = False
+        self._manual_catalog: ManualFilterCatalog | None = None
+        self._manual_revision = 0
+        self._manual_auto_in_flight = False
+        self._manual_capture_in_progress = False
         self._last_match = 0.0
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
 
@@ -111,11 +132,25 @@ class MapDetectPlugin(Plugin):
         self._region = None
         self._flag = MatchFlag.PREPARE
         self._current_is_full_map = self._map_overlay_visible = False
-        self._overlay = MapInfoOverlay(
-            self.ctx.services.require(OverlayManager), self._window_config, self.ctx.tr
-        )
+        self._manual_filtering = False
+        manager = self.ctx.services.require(OverlayManager)
+        self._overlay = MapInfoOverlay(manager, self._window_config, self.ctx.tr)
         self.ctx.on_cleanup(self._overlay.dispose)
-        self._controls = MapControlsOverlay(self._overlay, self.ctx.tr, self._callbacks())
+        names = load_names(self.ctx.language)
+        earth_shiftings = [
+            (earth_shifting, names.get(200000 + earth_shifting, str(earth_shifting)))
+            for earth_shifting in _EARTH_SHIFTING_IDS
+        ]
+        nightlords = [(nightlord, names.get(100000 + nightlord, str(nightlord))) for nightlord in range(10)]
+        self._manual_overlay = ManualFilterOverlay(manager, self.ctx.tr, earth_shiftings, nightlords)
+        self._manual_overlay.earthShiftingChanged.connect(self._on_manual_parameters_changed)
+        self._manual_overlay.nightlordChanged.connect(self._on_manual_parameters_changed)
+        self._manual_overlay.poiChoiceChanged.connect(self._on_manual_poi_choice)
+        self._manual_overlay.autoRecognizeRequested.connect(self._request_manual_auto_recognition)
+        self.ctx.on_cleanup(self._manual_overlay.dispose)
+        self._controls = MapControlsOverlay(
+            self._overlay, self._manual_overlay, self.ctx.tr, self._callbacks()
+        )
         self.ctx.on_cleanup(self._controls.dispose)
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="map-detect")
         self.ctx.on_cleanup(self._stop_worker)
@@ -135,7 +170,12 @@ class MapDetectPlugin(Plugin):
         self._active = False
         self._generation += 1
         self._overlay = None
+        self._manual_overlay = None
         self._controls = None
+        self._manual_filtering = False
+        self._manual_revision += 1
+        self._manual_auto_in_flight = False
+        self._manual_capture_in_progress = False
 
     def _stop_worker(self) -> None:
         self._active = False
@@ -155,6 +195,7 @@ class MapDetectPlugin(Plugin):
             "previous_result": lambda: self._cycle("last_overlay_image"),
             "next_crystal": lambda: self._cycle("next_crystal_layout"),
             "previous_crystal": lambda: self._cycle("last_crystal_layout"),
+            "manual_filter": self._toggle_manual_filter,
         }
 
     def _overlay_accepts_hotkeys(self) -> bool:
@@ -165,6 +206,8 @@ class MapDetectPlugin(Plugin):
             self._request_match()
 
     def _request_match(self) -> None:
+        if self._manual_filtering:
+            return
         self._generation += 1
         self._flag = MatchFlag.PREPARE
         if self._overlay is not None and self._overlay.map_pattern_matching:
@@ -186,14 +229,242 @@ class MapDetectPlugin(Plugin):
     def _toggle_overlay(self) -> None:
         self._set_overlay_visible(not self._map_overlay_visible)
 
+    def _toggle_manual_filter(self) -> None:
+        if self._manual_filtering:
+            self._exit_manual_filter()
+            return
+        if not self._active or self._overlay is None or self._manual_overlay is None:
+            return
+        region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
+        if region is None:
+            self.ctx.log.warning("Cannot enter manual map filtering before the map region is calibrated.")
+            return
+        self._generation += 1
+        self._manual_revision += 1
+        self._region = QRect(region)
+        self._manual_filtering = True
+        if self._manual_catalog is None:
+            self._manual_catalog = ManualFilterCatalog.load(self.ctx.language)
+        self._manual_overlay.set_catalog(self._manual_catalog)
+        self._manual_overlay.reset_selection()
+        self._manual_overlay.set_map_region(self._region)
+        self._manual_overlay.set_map_open(self._current_is_full_map)
+        self._overlay.set_suppressed(True)
+        self._manual_overlay.show_overlay()
+        if self._controls is not None:
+            self._controls.set_manual_filtering(True)
+
+    def _exit_manual_filter(self) -> None:
+        if not self._manual_filtering:
+            return
+        self._generation += 1
+        self._manual_revision += 1
+        self._manual_filtering = False
+        self._manual_auto_in_flight = False
+        self._manual_capture_in_progress = False
+        if self._manual_overlay is not None:
+            self._manual_overlay.set_capture_hidden(False)
+            self._manual_overlay.set_auto_recognizing(None)
+            self._manual_overlay.close_popup()
+            self._manual_overlay.hide_overlay()
+        if self._overlay is not None:
+            self._overlay.set_suppressed(False)
+        if self._controls is not None:
+            self._controls.set_manual_filtering(False)
+
+    def _on_manual_parameters_changed(self, _value: object) -> None:
+        if not self._manual_filtering or self._manual_overlay is None:
+            return
+        self._manual_revision += 1
+        self._manual_auto_in_flight = False
+        self._manual_overlay.clear_poi_choices()
+        self._manual_overlay.refresh_positions()
+        if self._manual_overlay.earth_shifting is not None:
+            self._rematch_manual_filter()
+
+    def _on_manual_poi_choice(self, pos: Position, choice: PoiChoice) -> None:
+        if not self._manual_filtering or self._manual_overlay is None:
+            return
+        explicit = dict(self._manual_overlay.explicit_choices)
+        explicit[pos] = choice
+        self._manual_overlay.clear_status()
+        self._manual_overlay.set_filter_state(explicit, {})
+        self._rematch_manual_filter()
+
+    def _rematch_manual_filter(self) -> None:
+        overlay = self._manual_overlay
+        catalog = self._manual_catalog
+        if not self._manual_filtering or overlay is None or catalog is None:
+            return
+        earth_shifting = overlay.earth_shifting
+        if earth_shifting is None:
+            overlay.set_filter_state(overlay.explicit_choices, {})
+            return
+        candidates = catalog.candidates(earth_shifting, overlay.nightlord, overlay.explicit_choices)
+        if not candidates:
+            self._manual_revision += 1
+            self._manual_auto_in_flight = False
+            overlay.clear_poi_choices()
+            overlay.refresh_positions()
+            overlay.show_no_match()
+            return
+        if len(candidates) == 1:
+            self._finish_manual_filter(candidates[0], overlay.nightlord)
+            return
+        inferred = catalog.inferred(
+            candidates,
+            catalog.positions(earth_shifting, overlay.nightlord),
+            overlay.explicit_choices,
+        )
+        overlay.set_filter_state(overlay.explicit_choices, inferred)
+
+    def _request_manual_auto_recognition(self, pos: Position) -> None:
+        overlay = self._manual_overlay
+        if (
+            self._manual_auto_in_flight
+            or not self._active
+            or not self._manual_filtering
+            or overlay is None
+            or not overlay.map_open
+            or overlay.earth_shifting is None
+        ):
+            return
+        self._manual_auto_in_flight = True
+        overlay.clear_status()
+        overlay.close_popup()
+        overlay.set_auto_recognizing(pos)
+        overlay.set_capture_hidden(True)
+        revision = self._manual_revision
+        QTimer.singleShot(150, lambda: self._capture_manual_poi(pos, revision))
+
+    def _capture_manual_poi(self, pos: Position, revision: int) -> None:
+        overlay = self._manual_overlay
+        if (
+            not self._active
+            or not self._manual_filtering
+            or revision != self._manual_revision
+            or overlay is None
+            or not overlay.map_open
+            or overlay.earth_shifting is None
+        ):
+            self._abort_manual_auto_recognition()
+            return
+        current_region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
+        if current_region is None or self._region is None or current_region != self._region:
+            self.ctx.log.warning("Manual POI recognition aborted because the map region changed.")
+            self._abort_manual_auto_recognition()
+            return
+
+        self._manual_capture_in_progress = True
+        try:
+            frame = self.ctx.services.require(CaptureApi).capture_now()
+        finally:
+            self._manual_capture_in_progress = False
+            overlay.set_capture_hidden(False)
+        if frame is None:
+            self.ctx.log.warning("Manual POI recognition capture returned no image.")
+            self._abort_manual_auto_recognition()
+            return
+        image = crop_rgb(frame.image, current_region)
+        if image is None or image.shape[:2] != (current_region.height(), current_region.width()):
+            self.ctx.log.warning("Manual POI recognition capture did not match the map region.")
+            self._abort_manual_auto_recognition()
+            return
+        self._submit(
+            _Job(
+                self._generation,
+                current_region.getRect(),
+                image,
+                frame.hdr,
+                self.config.snapshot(),
+                self.config.return_topk.value,
+                "poi",
+                manual_revision=revision,
+                poi_position=pos,
+                earth_shifting=overlay.earth_shifting,
+                nightlord=overlay.nightlord,
+            )
+        )
+
+    def _abort_manual_auto_recognition(self) -> None:
+        self._manual_auto_in_flight = False
+        self._manual_capture_in_progress = False
+        if self._manual_overlay is not None:
+            self._manual_overlay.set_capture_hidden(False)
+            self._manual_overlay.set_auto_recognizing(None)
+
+    def _complete_manual_auto_recognition(self, job: _Job, result: MapDetectResult) -> None:
+        overlay = self._manual_overlay
+        catalog = self._manual_catalog
+        if (
+            not self._manual_filtering
+            or job.manual_revision != self._manual_revision
+            or overlay is None
+            or catalog is None
+            or job.poi_position is None
+        ):
+            self._abort_manual_auto_recognition()
+            return
+        ctype = (result.poi_types or {}).get(job.poi_position)
+        if ctype is None:
+            self.ctx.log.warning("Manual POI recognition returned no type for %s.", job.poi_position)
+            self._abort_manual_auto_recognition()
+            return
+        explicit = dict(overlay.explicit_choices)
+        explicit[job.poi_position] = catalog.choice_from_ctype(ctype)
+        self._manual_auto_in_flight = False
+        overlay.set_filter_state(explicit, {})
+        self._rematch_manual_filter()
+
+    def _finish_manual_filter(self, pattern: MapPattern, nightlord: int | None) -> None:
+        if self._overlay is None or self._region is None:
+            return
+        earth_shifting = pattern.earth_shifting
+        region = QRect(self._region)
+        self._exit_manual_filter()
+        self._flag = MatchFlag.FALSE
+        self._last_match = time.monotonic()
+        self._map_overlay_visible = self._current_is_full_map
+        self._overlay.set_map_region(region)
+        self._overlay.update_ui_state(
+            MapOverlayState(
+                clear_image=True,
+                map_pattern_matching=True,
+                opacity=1.0 if self._current_is_full_map else 0.0,
+                display_crystal_layout=False,
+            )
+        )
+        self._submit(
+            _Job(
+                self._generation,
+                region.getRect(),
+                np.empty((0, 0, 3), dtype=np.uint8),
+                False,
+                self.config.snapshot(),
+                self.config.return_topk.value,
+                "draw",
+                earth_shifting=earth_shifting,
+                nightlord=nightlord,
+                pattern_id=pattern.id,
+            )
+        )
+
     def _cycle(self, method: str) -> None:
         if self._overlay_accepts_hotkeys():
             getattr(self._overlay, method)()
 
     def _on_frame(self, frame: FrameCaptured) -> None:
-        if not self._active or self._calibrating:
+        if not self._active or self._calibrating or self._manual_capture_in_progress:
             return
         region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
+        if self._manual_filtering:
+            if region is None:
+                self._exit_manual_filter()
+                return
+            if region != self._region:
+                self._region = QRect(region)
+                if self._manual_overlay is not None:
+                    self._manual_overlay.set_map_region(self._region)
         if region != self._region:
             self._region = QRect(region) if region is not None else None
             self._request_match()
@@ -240,7 +511,7 @@ class MapDetectPlugin(Plugin):
         if self._detector is None:
             self._detector = MapDetector(job.settings, language=self.ctx.language)
         self._detector.config = job.settings
-        image = normalize_image(job.image) if job.hdr and job.stage == "check" else job.image
+        image = normalize_image(job.image) if job.hdr and job.stage in ("check", "poi") else job.image
         if job.stage == "check":
             return self._detector.detect(
                 MapDetectParam(map_region=job.region, img=image, do_match_full_map=True)
@@ -248,6 +519,24 @@ class MapDetectPlugin(Plugin):
         if job.stage == "terrain":
             return self._detector.detect(
                 MapDetectParam(map_region=job.region, img=image, do_match_earth_shifting=True)
+            )
+        if job.stage == "poi":
+            return self._detector.detect(
+                MapDetectParam(
+                    map_region=job.region,
+                    img=image,
+                    earth_shifting=job.earth_shifting,
+                    poi_positions=[job.poi_position],
+                    nightlord=job.nightlord,
+                )
+            )
+        if job.stage == "draw":
+            return self._detector.detect(
+                MapDetectParam(
+                    map_region=job.region,
+                    draw_pattern_id=job.pattern_id,
+                    nightlord=job.nightlord,
+                )
             )
         return self._detector.detect(
             MapDetectParam(
@@ -269,17 +558,39 @@ class MapDetectPlugin(Plugin):
             return
         current_region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
         if current_region is None or current_region.getRect() != job.region:
-            self._request_match()
+            if job.stage == "poi":
+                self._abort_manual_auto_recognition()
+            else:
+                self._request_match()
             return
         if error is not None or result is None:
             self.ctx.log.error("Map detection failed in %s: %s", job.stage, error)
             self._overlay.update_ui_state(MapOverlayState(map_pattern_matching=False))
+            if job.stage == "poi" and self._manual_overlay is not None:
+                self._manual_auto_in_flight = False
+                self._manual_overlay.set_auto_recognizing(None)
             return
-        if job.stage == "check":
+        if job.stage == "poi":
+            self._complete_manual_auto_recognition(job, result)
+        elif job.stage == "draw":
+            self._last_match = time.monotonic()
+            self._overlay.update_ui_state(
+                MapOverlayState(
+                    overlay_images=result.overlay_images,
+                    map_pattern_match_time=time.time(),
+                    map_pattern_matching=False,
+                    display_crystal_layout=(job.earth_shifting == 4),
+                )
+            )
+        elif job.stage == "check":
             full_map = bool(result.is_full_map)
             if full_map != self._current_is_full_map:
                 self._current_is_full_map = full_map
                 self._set_overlay_visible(full_map)
+            if self._manual_filtering:
+                if self._manual_overlay is not None:
+                    self._manual_overlay.set_map_open(full_map)
+                return
             now = time.monotonic()
             if now - self._last_match > self.config.map_pattern_match_interval.value:
                 self._request_match()
@@ -371,6 +682,8 @@ class MapDetectPlugin(Plugin):
         basic = SettingSection(self.ctx.tr("settings.basic"))
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action, callback in self._callbacks().items():
+            if action == "manual_filter":
+                continue
             kwargs: dict[str, Any] = {}
             if action == "calibrate_region":
                 kwargs["accessories"] = [RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)]
@@ -395,6 +708,19 @@ class MapDetectPlugin(Plugin):
             )
         )
         panel.addSection(basic)
+        manual_filter = SettingSection(self.ctx.tr("settings.manual_filter.section"))
+        manual_filter.addCards(
+            HotkeySettingCard(
+                hotkeys,
+                f"{self.id}.manual_filter",
+                HotkeyBinding(None),
+                FluentIcon.FILTER,
+                self.ctx.tr("settings.manual_filter.title"),
+                self.ctx.tr("settings.manual_filter.content"),
+                actions=[(self.ctx.tr("settings.action"), self._toggle_manual_filter)],
+            )
+        )
+        panel.addSection(manual_filter)
         advanced = SettingSection(self.ctx.tr("settings.advanced"))
         advanced.addCards(
             ConfigRangeCard(
@@ -461,4 +787,5 @@ class MapDetectPlugin(Plugin):
             hotkeys.set_binding(f"{self.id}.{action}", HotkeyBinding(None))
         if (regions := self.ctx.services.get(RegionApi)) is not None:
             regions.clear_region(_REGION_KEY)
+        self._exit_manual_filter()
         self._request_match()

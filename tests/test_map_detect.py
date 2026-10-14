@@ -23,8 +23,9 @@ from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.map_detect import plugin as module
 from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.detector import MapDetectResult
+from nightreign_overlay.plugins.map_detect.manual_catalog import PoiChoice
 from nightreign_overlay.plugins.map_detect.plugin import MapDetectPlugin, MatchFlag, _Job
-from nightreign_overlay.ui.components import ConfigDoubleSpinCard
+from nightreign_overlay.ui.components import ConfigDoubleSpinCard, HotkeySettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
 from test_overlay import FakeBackend
 
@@ -93,11 +94,13 @@ def test_lifecycle_settings_and_resources(maps):
     plugin.config.subicon_template_match_threshold.reset()
     assert advanced["subicon_template_match_threshold"].spinBox.value() == pytest.approx(0.06)
     assert plugin.config.snapshot().subicon_template_match_threshold == pytest.approx(0.06)
+    hotkey_cards = {card._action_id: card for card in panel.findChildren(HotkeySettingCard)}
+    assert "map_detect.manual_filter" in hotkey_cards
     plugin.on_activate()
     overlay = plugin._overlay
     assert overlay is not None and len(overlay.crystal_layout_imgs) == 5
     assert not overlay.isVisible()
-    assert manager.windows() == [overlay, plugin._controls]
+    assert manager.windows() == [overlay, plugin._manual_overlay, plugin._controls]
     assert fakes.capture.streams == {plugin.id}
     assert fakes.services.require(MapRecognitionApi).ready()
     hotkeys = fakes.services.require(HotkeyApi)
@@ -222,6 +225,167 @@ def test_controls_clicks_share_shortcuts_without_showing_main_window(maps, monke
     QTest.mouseClick(controls.recognize, Qt.MouseButton.LeftButton)
     assert plugin._flag == MatchFlag.PREPARE and plugin._generation == generation + 1
     assert not main.isVisible() and len(requested) == len(restored) == 0
+
+
+def test_manual_filter_mode_hides_map_blocks_detection_and_toggles_from_controls(maps, monkeypatch):
+    plugin, fakes, submitted = _ready(maps, monkeypatch)
+    overlay, manual, controls = plugin._overlay, plugin._manual_overlay, plugin._controls
+    plugin._set_overlay_visible(True)
+    plugin._current_is_full_map = True
+    overlay._tick()
+    assert overlay.isVisible() and not manual.isVisible()
+
+    generation = plugin._generation
+    QTest.mouseClick(controls.manual_filter, Qt.MouseButton.LeftButton)
+    assert plugin._manual_filtering and plugin._generation == generation + 1
+    assert manual.isVisible() and not overlay.isVisible() and controls.isVisible()
+    assert manual.pos() == overlay.pos() and manual.size() == overlay.size()
+    assert not manual.windowFlags() & Qt.WindowType.WindowTransparentForInput
+    assert controls.manual_filter.text() == "退出筛选"
+    assert controls.candidate_group.isHidden() and controls.crystal_group.isHidden()
+    assert not controls.recognize.isEnabled()
+    assert not fakes.services.require(MapRecognitionApi).ready()
+
+    frame = FrameCaptured(solid_image(100, 100, (0, 0, 0)), 1.0)
+    plugin._on_frame(frame)
+    assert [job.stage for job in submitted] == ["check"]
+    blocked_generation = plugin._generation
+    fakes.events.publish(DayStarted(1))
+    assert plugin._generation == blocked_generation
+
+    labels = [manual.earth_shifting_combo.itemText(index) for index in range(6)]
+    assert labels == ["无地形", "雪山", "火山", "腐败森林", "大空洞", "隐城"]
+    assert manual.nightlord_combo.itemText(0) == "所有"
+    assert [manual.nightlord_combo.itemText(index) for index in range(1, 11)] == [
+        "三头野兽",
+        "碎身巨鳄",
+        "慧心虫",
+        "征兆",
+        "平衡律法的魔物",
+        "暗中飞驰的猎人",
+        "雾中裂缝",
+        "黑夜化形者",
+        "安定者们",
+        "废弃物之王",
+    ]
+    changed = QSignalSpy(manual.earthShiftingChanged)
+    manual.earth_shifting_combo.setCurrentIndex(4)
+    assert manual.earth_shifting == 4 and len(changed) == 1
+    visible_position = next(button for button in manual.position_buttons.values() if not button.isHidden())
+    visible_position.click()
+    assert manual._popup is not None and manual._popup.isVisible()
+    manual.close_popup()
+    boss_changed = QSignalSpy(manual.nightlordChanged)
+    manual.nightlord_combo.setCurrentIndex(3)
+    assert manual.nightlord == 2 and len(boss_changed) == 1
+
+    manual.set_map_open(False)
+    assert not manual.isVisible() and not controls.isVisible()
+    assert manual.earth_shifting == 4 and manual.nightlord == 2
+    manual.set_map_open(True)
+    assert manual.isVisible() and controls.isVisible()
+    assert manual.earth_shifting == 4 and manual.nightlord == 2
+
+    QTest.mouseClick(controls.manual_filter, Qt.MouseButton.LeftButton)
+    assert not plugin._manual_filtering
+    assert not manual.isVisible() and overlay.isVisible() and controls.isVisible()
+    assert controls.manual_filter.text() == "手动筛选"
+    assert controls.recognize.isEnabled()
+
+    QTest.mouseClick(controls.manual_filter, Qt.MouseButton.LeftButton)
+    assert manual.earth_shifting_combo.currentIndex() == -1
+    assert manual.earth_shifting is None
+    assert manual.nightlord_combo.currentIndex() == 0
+    assert manual.nightlord is None
+
+
+def test_manual_filter_hotkey_is_a_toggle_and_requires_a_region(maps, monkeypatch):
+    plugin, fakes, _ = _ready(maps, monkeypatch)
+    hotkeys = fakes.services.require(HotkeyApi)
+    hotkeys.set_binding("map_detect.manual_filter", HotkeyBinding(InputDevice.KEYBOARD, ("f9",)))
+
+    def press():
+        hotkeys.trigger_for_test(InputDevice.KEYBOARD, ("f9",))
+        hotkeys.trigger_for_test(InputDevice.KEYBOARD, ())
+
+    press()
+    assert plugin._manual_filtering
+    press()
+    assert not plugin._manual_filtering
+    fakes.region.regions.pop(_REGION)
+    press()
+    assert not plugin._manual_filtering
+
+
+def test_manual_poi_constraints_converge_or_reset_without_losing_filters(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._current_is_full_map = True
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    catalog = plugin._manual_catalog
+    assert all(button.isHidden() for button in manual.position_buttons.values())
+    manual.earth_shifting_combo.setCurrentIndex(0)
+    manual.nightlord_combo.setCurrentIndex(1)
+    assert manual.earth_shifting == 0 and manual.nightlord == 0
+
+    badge_pos, badge_base = next(
+        (pos, base)
+        for pos in catalog.positions(0, 0)
+        for base in catalog.base_options(0, 0, {}, pos)
+        if base and any(value is not None for value in catalog.subicon_options(0, 0, {}, pos, base))
+    )
+    manual.set_filter_state({badge_pos: PoiChoice(badge_base)}, {})
+    assert not manual.badge_buttons[badge_pos].isHidden()
+    manual.badge_buttons[badge_pos].click()
+    assert manual._popup is not None and manual._popup.isVisible()
+    manual.close_popup()
+
+    target = catalog.candidates(0, 0, {})[0]
+    explicit = {pos: PoiChoice(*catalog.value(target, pos)) for pos in catalog.positions(0, 0)}
+    manual.set_filter_state(explicit, {})
+    plugin._rematch_manual_filter()
+    assert not plugin._manual_filtering
+    assert submitted[-1].stage == "draw" and submitted[-1].pattern_id == target.id
+
+    # Re-entering starts clean; an impossible setting resets only strongholds and shows the warning.
+    plugin._toggle_manual_filter()
+    manual.earth_shifting_combo.setCurrentIndex(0)
+    manual.nightlord_combo.setCurrentIndex(1)
+    pos = catalog.positions(0, 0)[0]
+    impossible_base = next(
+        base for base in catalog.groups() if base not in catalog.base_options(0, 0, {}, pos)
+    )
+    revision = plugin._manual_revision
+    plugin._on_manual_poi_choice(pos, PoiChoice(impossible_base))
+    assert plugin._manual_filtering and not manual.explicit_choices
+    assert manual.status_label.isVisible()
+    assert manual.earth_shifting == 0 and manual.nightlord == 0
+    assert plugin._manual_revision == revision + 1
+
+
+def test_manual_single_poi_auto_recognition_submits_and_applies_choice(maps, monkeypatch):
+    plugin, fakes, submitted = _ready(maps, monkeypatch)
+    plugin._current_is_full_map = True
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    catalog = plugin._manual_catalog
+    manual.earth_shifting_combo.setCurrentIndex(0)
+    manual.nightlord_combo.setCurrentIndex(1)
+    pos = catalog.positions(0, 0)[0]
+    ctype = next(ctype for ctype in catalog.info.possible_poi_types[(0, 0, pos)] if ctype != 0)
+    fakes.capture.frame = FrameCaptured(solid_image(100, 100, (20, 30, 40)), 1.0, hdr=True)
+    monkeypatch.setattr(module.QTimer, "singleShot", lambda _delay, callback: callback())
+
+    plugin._request_manual_auto_recognition(pos)
+    assert fakes.capture.captures == 1
+    assert not manual._capture_hidden
+    poi_job = submitted[-1]
+    assert poi_job.stage == "poi" and poi_job.poi_position == pos
+    assert poi_job.earth_shifting == 0 and poi_job.nightlord == 0 and poi_job.hdr
+
+    _finish(plugin, poi_job, MapDetectResult(poi_types={pos: ctype}))
+    assert manual.explicit_choices[pos] == catalog.choice_from_ctype(ctype)
+    assert not plugin._manual_auto_in_flight
 
 
 def test_controls_follow_geometry_scale_fade_and_hidden_state(maps, monkeypatch):

@@ -26,6 +26,7 @@ from nightreign_overlay.plugins.map_detect.localization import I18N_DIR, load_na
 from nightreign_overlay.plugins.map_detect.map_info import (
     STD_MAP_SIZE,
     Construct,
+    MapInfo,
     MapPattern,
     Position,
     load_map_info,
@@ -248,6 +249,87 @@ class PoiCategoryInfo:
         return self.resized_images[size]
 
 
+def get_poi_image(construct_type: int, with_subicon: bool = False) -> Image.Image:
+    poi_key = construct_type // 100 if construct_type // 100 in POI_ICONS else construct_type // 1000
+    offset_x, offset_y = POI_ICON_OFFSET.get(poi_key, (0, 0))
+    x, y = STD_POI_SIZE[0] // 2, STD_POI_SIZE[1] // 2
+    img = Image.new("RGBA", STD_POI_SIZE, (0, 0, 0, 0))
+    if construct_type:
+        icon, icon_scale = POI_ICONS[poi_key], POI_ICON_SCALE[poi_key]
+        icon_size = (
+            int(icon.size[0] * icon_scale * STD_MAP_SIZE[0] / 750),
+            int(icon.size[1] * icon_scale * STD_MAP_SIZE[1] / 750),
+        )
+        icon = icon.resize(icon_size, resample=PIL_RESAMPLE_METHOD)
+        icon_pos = (x - icon_size[0] // 2 + offset_x, y - icon_size[1] // 2 + offset_y)
+        img.alpha_composite(icon, icon_pos)
+        if with_subicon and construct_type in CTYPE_SUBICON_MAP:
+            subicon = CTYPE_SUBICON_MAP[construct_type]
+            subicon = SUBICON_IMAGES.get(subicon)
+            subicon_size = (
+                int(STD_MAP_SIZE[0] * 0.0195),
+                int(STD_MAP_SIZE[1] * 0.0195),
+            )
+            subicon = subicon.resize(subicon_size, resample=PIL_RESAMPLE_METHOD)
+            subicon_pos = (
+                int(x - subicon_size[0] / 2 + STD_MAP_SIZE[0] * 0.013),
+                int(y + subicon_size[1] / 2 + STD_MAP_SIZE[1] * -0.007),
+            )
+            img.alpha_composite(subicon, subicon_pos)
+    return img
+
+
+def load_default_map_info(language: str = "zh_CN") -> MapInfo:
+    """Bundled map CSVs with display names in ``language``."""
+    info = load_map_info(
+        get_data_path("csv/map_patterns.csv"),
+        get_data_path("csv/constructs.csv"),
+        str(I18N_DIR / "zh_CN-names.csv"),
+        get_data_path("csv/positions.csv"),
+    )
+    info.name_dict = load_names(language)
+    return info
+
+
+def build_poi_categories(info: MapInfo) -> tuple[dict[int, Image.Image], dict[int, PoiCategoryInfo]]:
+    """POI icons per construct type and per base-icon category (``0`` is the empty category)."""
+    all_poi_construct_types = set()
+    for es in info.all_earth_shiftings:
+        for nl in info.all_nightlords:
+            all_poi_construct_types.update(info.all_poi_construct_type.get((es, nl), set()))
+
+    all_poi_images: dict[int, Image.Image] = {}  # 所有POI类型对应图标
+    poi_cate_info: dict[int, PoiCategoryInfo] = {}  # POI大类别对应图标信息
+    for ctype in all_poi_construct_types:
+        if poi_key := get_poi_key(ctype):
+            if poi_key not in poi_cate_info:
+                poi_cate_info[poi_key] = PoiCategoryInfo(
+                    base_image=get_poi_image(ctype, with_subicon=False),
+                    subtypes={},
+                )
+            cate = poi_cate_info[poi_key]
+            subicon = CTYPE_SUBICON_MAP.get(ctype)
+            if subicon not in cate.subtypes:
+                cate.subtypes[subicon] = SubPoiInfo(
+                    ctypes=set(),
+                    image=get_poi_image(ctype, with_subicon=True),
+                )
+            cate.subtypes[subicon].ctypes.add(ctype)
+            all_poi_images[ctype] = cate.subtypes[subicon].image
+    # 无建筑
+    all_poi_images[0] = Image.new("RGBA", STD_POI_SIZE, (0, 0, 0, 0))
+    poi_cate_info[0] = PoiCategoryInfo(
+        base_image=all_poi_images[0],
+        subtypes={
+            None: SubPoiInfo(
+                ctypes={0},
+                image=all_poi_images[0],
+            )
+        },
+    )
+    return all_poi_images, poi_cate_info
+
+
 @dataclass
 class MapPatternMatchResult:
     pattern: MapPattern
@@ -265,6 +347,11 @@ class MapDetectParam:
     do_match_earth_shifting: bool = False
     do_match_pattern: bool = False
     return_pattern_topk: int | None = None
+    # Recognize only these POI positions; ``nightlord`` narrows their possible types.
+    poi_positions: list[Position] | None = None
+    nightlord: int | None = None
+    # Draw a known pattern without matching; needs no image.
+    draw_pattern_id: int | None = None
 
 
 @dataclass
@@ -275,6 +362,7 @@ class MapDetectResult:
     earth_shifting_score: float | None = None
     patterns: list[MapPattern] | None = None
     overlay_images: list[Image.Image] | None = None
+    poi_types: dict[Position, int] | None = None
 
 
 class MapDetector:
@@ -283,49 +371,10 @@ class MapDetector:
         localized = rendering_translator(language)
         self._tr = lambda key, **kwargs: localized.tr("map_detect", key, **kwargs)
         # 地图信息
-        self.info = load_map_info(
-            get_data_path("csv/map_patterns.csv"),
-            get_data_path("csv/constructs.csv"),
-            str(I18N_DIR / "zh_CN-names.csv"),
-            get_data_path("csv/positions.csv"),
-        )
-        self.info.name_dict = load_names(localized.language)
+        self.info = load_default_map_info(localized.language)
 
         # 初始化POI信息
-        all_poi_construct_types = set()
-        for es in self.info.all_earth_shiftings:
-            for nl in self.info.all_nightlords:
-                all_poi_construct_types.update(self.info.all_poi_construct_type.get((es, nl), set()))
-
-        self.all_poi_images: dict[int, Image.Image] = {}  # 所有POI类型对应图标
-        self.poi_cate_info: dict[int, PoiCategoryInfo] = {}  # POI大类别对应图标信息
-        for ctype in all_poi_construct_types:
-            if poi_key := get_poi_key(ctype):
-                if poi_key not in self.poi_cate_info:
-                    self.poi_cate_info[poi_key] = PoiCategoryInfo(
-                        base_image=self._get_poi_image(ctype, with_subicon=False),
-                        subtypes={},
-                    )
-                info = self.poi_cate_info[poi_key]
-                subicon = CTYPE_SUBICON_MAP.get(ctype)
-                if subicon not in info.subtypes:
-                    info.subtypes[subicon] = SubPoiInfo(
-                        ctypes=set(),
-                        image=self._get_poi_image(ctype, with_subicon=True),
-                    )
-                info.subtypes[subicon].ctypes.add(ctype)
-                self.all_poi_images[ctype] = info.subtypes[subicon].image
-        # 无建筑
-        self.all_poi_images[0] = Image.new("RGBA", STD_POI_SIZE, (0, 0, 0, 0))
-        self.poi_cate_info[0] = PoiCategoryInfo(
-            base_image=self.all_poi_images[0],
-            subtypes={
-                None: SubPoiInfo(
-                    ctypes={0},
-                    image=self.all_poi_images[0],
-                )
-            },
-        )
+        self.all_poi_images, self.poi_cate_info = build_poi_categories(self.info)
 
         # 初始化夜王图标
         nightlords = [(None, UNKNOWN_NIGHTLORD_ICON)]
@@ -429,33 +478,7 @@ class MapDetector:
         return best_nightlord, best_score
 
     def _get_poi_image(self, construct_type: int, with_subicon: bool = False) -> Image.Image:
-        poi_key = construct_type // 100 if construct_type // 100 in POI_ICONS else construct_type // 1000
-        offset_x, offset_y = POI_ICON_OFFSET.get(poi_key, (0, 0))
-        x, y = STD_POI_SIZE[0] // 2, STD_POI_SIZE[1] // 2
-        img = Image.new("RGBA", STD_POI_SIZE, (0, 0, 0, 0))
-        if construct_type:
-            icon, icon_scale = POI_ICONS[poi_key], POI_ICON_SCALE[poi_key]
-            icon_size = (
-                int(icon.size[0] * icon_scale * STD_MAP_SIZE[0] / 750),
-                int(icon.size[1] * icon_scale * STD_MAP_SIZE[1] / 750),
-            )
-            icon = icon.resize(icon_size, resample=PIL_RESAMPLE_METHOD)
-            icon_pos = (x - icon_size[0] // 2 + offset_x, y - icon_size[1] // 2 + offset_y)
-            img.alpha_composite(icon, icon_pos)
-            if with_subicon and construct_type in CTYPE_SUBICON_MAP:
-                subicon = CTYPE_SUBICON_MAP[construct_type]
-                subicon = SUBICON_IMAGES.get(subicon)
-                subicon_size = (
-                    int(STD_MAP_SIZE[0] * 0.0195),
-                    int(STD_MAP_SIZE[1] * 0.0195),
-                )
-                subicon = subicon.resize(subicon_size, resample=PIL_RESAMPLE_METHOD)
-                subicon_pos = (
-                    int(x - subicon_size[0] / 2 + STD_MAP_SIZE[0] * 0.013),
-                    int(y + subicon_size[1] / 2 + STD_MAP_SIZE[1] * -0.007),
-                )
-                img.alpha_composite(subicon, subicon_pos)
-        return img
+        return get_poi_image(construct_type, with_subicon)
 
     def _match_poi(
         self,
@@ -560,18 +583,10 @@ class MapDetector:
         best_ctype = sorted(list(self.poi_cate_info[best_poi_key].subtypes.get(best_subicon).ctypes))[0]
         return best_ctype, best_poi_key_score * best_subicon_score
 
-    def _match_map_pattern(
-        self, img: np.ndarray, earth_shifting: int, topk: int
-    ) -> list[MapPatternMatchResult]:
-        assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
-
-        t = time.time()
-        img = cv2.resize(img, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
-
-        # 识别夜王
-        nightlord, _ = self._match_nightlord(img)
-
-        # 校准偏移
+    def _prepare_poi_image(self, img: np.ndarray, earth_shifting: int) -> tuple[np.ndarray, np.ndarray]:
+        """Standard-size map aligned to its POI-matching background, and that background."""
+        if img.shape[:2] != (STD_MAP_SIZE[1], STD_MAP_SIZE[0]):
+            img = cv2.resize(img, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
         map_bg = open_cv2_image(f"maps_poi_match/{MAG_BG_FOR_POI_MATCH_INDEX_MAP[earth_shifting]}.jpg")
         map_bg = cv2.resize(map_bg, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
         try:
@@ -586,6 +601,21 @@ class MapDetector:
             log.info(f"MapDetector: Align map image time cost: {time.time() - align_t:.4f}s")
         except Exception as e:
             log.warning(f"MapDetector: Align map image failed: {e}")
+        return img, map_bg
+
+    def _match_map_pattern(
+        self, img: np.ndarray, earth_shifting: int, topk: int
+    ) -> list[MapPatternMatchResult]:
+        assert earth_shifting is not None, "earth_shifing should be provided when matching map pattern"
+
+        t = time.time()
+        img = cv2.resize(img, STD_MAP_SIZE, interpolation=CV2_RESIZE_METHOD)
+
+        # 识别夜王
+        nightlord, _ = self._match_nightlord(img)
+
+        # 校准偏移
+        img, map_bg = self._prepare_poi_image(img, earth_shifting)
 
         # 识别POI
         poi_result: dict[Position, int] = {}
@@ -1096,11 +1126,34 @@ class MapDetector:
 
         return img
 
+    def _overlay_draw_size(self, param: MapDetectParam) -> tuple[int, int]:
+        config = self.config
+        if config.fixed_map_overlay_draw_size is not None:
+            return tuple(config.fixed_map_overlay_draw_size)
+        if config.map_overlay_draw_size_ratio is not None:
+            return (
+                int(param.map_region[2] * config.map_overlay_draw_size_ratio),
+                int(param.map_region[3] * config.map_overlay_draw_size_ratio),
+            )
+        return STD_MAP_SIZE
+
     def detect(self, param: MapDetectParam | None) -> MapDetectResult:
         config = self.config
         ret = MapDetectResult()
         if param is None or param.map_region is None:
             return ret
+
+        # 绘制已知地图模式
+        if param.draw_pattern_id is not None:
+            pattern = next((p for p in self.info.patterns if p.id == param.draw_pattern_id), None)
+            ret.patterns = []
+            ret.overlay_images = []
+            if pattern is None:
+                log.error(f"MapDetector: Unknown map pattern {param.draw_pattern_id}")
+            else:
+                result = MapPatternMatchResult(pattern=pattern, nightlord=param.nightlord, score=0, error=0)
+                ret.overlay_images.append(self._draw_overlay_image(result, self._overlay_draw_size(param), 0))
+                ret.patterns.append(pattern)
 
         if param.img is None:
             return ret
@@ -1125,15 +1178,7 @@ class MapDetector:
             results = self._match_map_pattern(img, param.earth_shifting, topk=param.return_pattern_topk)
 
             # 决定信息绘制大小
-            if config.fixed_map_overlay_draw_size is not None:
-                draw_size = tuple(config.fixed_map_overlay_draw_size)
-            elif config.map_overlay_draw_size_ratio is not None:
-                draw_size = (
-                    int(param.map_region[2] * config.map_overlay_draw_size_ratio),
-                    int(param.map_region[3] * config.map_overlay_draw_size_ratio),
-                )
-            else:
-                draw_size = STD_MAP_SIZE
+            draw_size = self._overlay_draw_size(param)
 
             ret.patterns = []
             ret.overlay_images = []
@@ -1146,5 +1191,14 @@ class MapDetector:
                     gc.collect()
                 except Exception as e:
                     log.error(f"MapDetector: Draw overlay image of pattern {result.pattern.id} failed: {e}")
+
+        # 识别指定位置的POI
+        if param.poi_positions:
+            assert param.earth_shifting is not None, "earth_shifting should be provided when matching POIs"
+            aligned, map_bg = self._prepare_poi_image(img, param.earth_shifting)
+            ret.poi_types = {}
+            for pos in param.poi_positions:
+                ctype, _ = self._match_poi(aligned, map_bg, pos, param.earth_shifting, param.nightlord)
+                ret.poi_types[pos] = ctype
 
         return ret
