@@ -101,7 +101,9 @@ class P2PLatencyPlugin(Plugin):
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         tr = self.ctx.tr
         panel = SettingsPanel(parent)
-        window = OverlaySettingSection(self.overlay_config, tr("settings.window"))
+        window = OverlaySettingSection(
+            self.overlay_config, tr("settings.window"), include_horizontal_reset=False
+        )
         thresholds = SettingSection(tr("settings.thresholds"))
         for name in ("good_ping", "warning_ping"):
             thresholds.addCard(

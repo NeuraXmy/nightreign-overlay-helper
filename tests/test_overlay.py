@@ -229,7 +229,7 @@ def test_position_is_persisted_and_reset(window: OverlayWindow) -> None:
 
     window.reset_position()
     process_events()
-    assert window.config.position.value is None
+    assert window.config.position.value == [window.x(), window.y()]
     assert [window.pos().x(), window.pos().y()] != saved
 
     window.move(window.pos().x() + 15, window.pos().y() + 40)
@@ -237,15 +237,15 @@ def test_position_is_persisted_and_reset(window: OverlayWindow) -> None:
     saved_y = window.pos().y()
     window.reset_horizontal_position()
     process_events()
-    assert window.config.position.value == [None, saved_y]
+    assert window.config.position.value == [window.x(), saved_y]
     assert window.pos().y() == saved_y
 
-    # While horizontally reset, the overlay stays centred when resized.
-    center = window.geometry().center().x()
+    # The concrete reset position stays saved when resized.
+    saved_position = window.pos()
     window.config.scale.set(200)
     process_events()
-    assert window.config.position.value == [None, saved_y]
-    assert abs(window.geometry().center().x() - center) <= 1
+    assert window.config.position.value == [window.x(), saved_y]
+    assert window.pos() == saved_position
 
 
 def test_hud_resizes_and_shows_added_widgets(core: Core, store: ConfigStore) -> None:
@@ -366,3 +366,40 @@ def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:
     assert overlay.size() == QSize(600, 264)
     manager.shutdown()
     assert core.overlays.windows() == []
+
+
+@pytest.mark.parametrize("visible", [True, False])
+def test_reset_buttons_persist_without_dragging(window, core, store, visible):
+    from PyQt6.QtWidgets import QPushButton
+
+    from nightreign_overlay.ui.components.overlay_settings import OverlaySettingSection
+
+    section = OverlaySettingSection(window.config)
+    buttons = section.findChildren(QPushButton)
+    window.move(window.x() + 30, window.y() + 60)
+    process_events()
+    if not visible:
+        window.hide()
+    buttons[1].click()
+    process_events()
+    horizontal = [window.x(), window.y()]
+    store.flush()
+    reloaded = ConfigStore(store.path)
+    config = reloaded.bind(OverlayConfig, window.config.namespace)
+    assert config.position.value == horizontal
+    restored = OverlayWindow(core.overlays, config, "restored", window.base_size)
+    assert [restored.x(), restored.y()] == horizontal
+    restored.dispose()
+    reloaded.deleteLater()
+    buttons[0].click()
+    process_events()
+    saved = [window.x(), window.y()]
+    store.flush()
+    reloaded = ConfigStore(store.path)
+    config = reloaded.bind(OverlayConfig, window.config.namespace)
+    assert config.position.value == saved
+    restored = OverlayWindow(core.overlays, config, "restored", window.base_size)
+    assert [restored.x(), restored.y()] == saved
+    restored.dispose()
+    reloaded.deleteLater()
+    section.deleteLater()

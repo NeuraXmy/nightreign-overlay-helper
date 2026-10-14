@@ -22,16 +22,16 @@ class OverlaySettingSection(SettingSection):
         title: str | None = None,
         parent: QWidget | None = None,
         leading_cards: tuple[QWidget, ...] = (),
+        include_horizontal_reset: bool = True,
     ) -> None:
         super().__init__(title or tr("overlay_settings.title"), parent)
+        buttons = [(tr("overlay_settings.reset_position.reset"), config.reset_position)]
+        if include_horizontal_reset:
+            buttons.append(
+                (tr("overlay_settings.reset_position.horizontal"), config.reset_horizontal_position)
+            )
         reset_card = MultiButtonSettingCard(
-            [
-                (tr("overlay_settings.reset_position.reset"), config.position.reset),
-                (
-                    tr("overlay_settings.reset_position.horizontal"),
-                    lambda: _reset_horizontal_position(config),
-                ),
-            ],
+            buttons,
             FluentIcon.SYNC,
             tr("overlay_settings.reset_position.title"),
             tr("overlay_settings.reset_position.content"),
@@ -65,8 +65,3 @@ class OverlaySettingSection(SettingSection):
             ),
             reset_card,
         )
-
-
-def _reset_horizontal_position(config: OverlayConfig) -> None:
-    position = config.position.value
-    config.position.set([None, position[1] if position is not None else None])
