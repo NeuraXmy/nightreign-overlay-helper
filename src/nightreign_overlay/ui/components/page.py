@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget
-from qfluentwidgets import ScrollArea, StrongBodyLabel, TitleLabel
+from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
+from qfluentwidgets import ScrollArea, SettingCard, StrongBodyLabel, TitleLabel
 
 
 class ScrollPage(ScrollArea):
@@ -54,6 +54,22 @@ class SettingSection(QWidget):
 
     def addCard(self, card: QWidget) -> QWidget:
         card.setParent(self)
+        if isinstance(card, SettingCard):
+            # Fluent cards default to a single-line description and a fixed height.
+            # Let the text column use the space left by the controls and grow vertically.
+            card.contentLabel.setWordWrap(True)
+            policy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+            policy.setHeightForWidth(True)
+            card.contentLabel.setSizePolicy(policy)
+            card.vBoxLayout.setAlignment(card.contentLabel, Qt.AlignmentFlag(0))
+            card.vBoxLayout.setAlignment(Qt.AlignmentFlag(0))
+            card.hBoxLayout.setAlignment(Qt.AlignmentFlag(0))
+            card.hBoxLayout.setStretch(2, 1)
+            card.hBoxLayout.setStretch(4, 0)
+            card.hBoxLayout.setContentsMargins(16, 12, 0, 12)
+            card.setMinimumHeight(70 if card.contentLabel.text() else 50)
+            card.setMaximumHeight(16777215)
+            card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.cardLayout.addWidget(card)
         return card
 

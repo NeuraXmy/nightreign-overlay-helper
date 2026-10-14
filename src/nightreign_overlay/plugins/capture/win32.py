@@ -30,13 +30,14 @@ class ImageInfo:
 class Manager:
     """Owns a MaaWSManager handle and copies native pixels before the next capture."""
 
-    METHOD_ALL = (1 << 64) - 1
+    METHOD_FOREGROUND = (1 << 3) | (1 << 5)
+    METHOD_BACKGROUND = (1 << 1) | (1 << 4)
 
-    def __init__(self, dll_dir: Path, hwnd: int | None) -> None:
+    def __init__(self, dll_dir: Path, hwnd: int, methods: int) -> None:
         dll_path = dll_dir / "MaaWin32Screencap.dll"
         self._dll = ctypes.CDLL(str(dll_path))
         self._configure_api()
-        self._handle = self._dll.MaaWSManagerCreate(hwnd or 0, self.METHOD_ALL)
+        self._handle = self._dll.MaaWSManagerCreate(hwnd, methods)
         if not self._handle:
             raise RuntimeError("MaaWSManagerCreate failed")
 
@@ -44,11 +45,19 @@ class Manager:
         self._dll.MaaWSManagerCreate.restype = ctypes.c_void_p
         self._dll.MaaWSManagerCreate.argtypes = [ctypes.c_void_p, ctypes.c_uint64]
         self._dll.MaaWSManagerDestroy.argtypes = [ctypes.c_void_p]
+        self._dll.MaaWSManagerDestroy.restype = None
         self._dll.MaaWSManagerConnect.restype = ctypes.c_ubyte
         self._dll.MaaWSManagerConnect.argtypes = [ctypes.c_void_p]
         self._dll.MaaWSManagerInactive.argtypes = [ctypes.c_void_p]
+        self._dll.MaaWSManagerInactive.restype = None
         self._dll.MaaWSManagerScreencap.restype = ctypes.c_ubyte
         self._dll.MaaWSManagerScreencap.argtypes = [ctypes.c_void_p, ctypes.POINTER(_ImageBuffer)]
+        self._dll.MaaWSManagerSelectedUnitName.restype = ctypes.c_char_p
+        self._dll.MaaWSManagerSelectedUnitName.argtypes = [ctypes.c_void_p]
+
+    def selected_unit_name(self) -> str | None:
+        name = self._dll.MaaWSManagerSelectedUnitName(self._handle)
+        return name.decode("utf-8") if name else None
 
     def connect(self) -> bool:
         return bool(self._dll.MaaWSManagerConnect(self._handle))
@@ -76,6 +85,10 @@ class Manager:
 def find_window_by_title(title: str) -> int | None:
     """Find the first top-level window whose title contains ``title``."""
     user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+    user32.GetWindowTextLengthW.restype = ctypes.c_int
+    user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    user32.GetWindowTextW.restype = ctypes.c_int
     matches: list[int] = []
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
@@ -88,5 +101,7 @@ def find_window_by_title(title: str) -> int | None:
                 matches.append(int(hwnd))
         return True
 
+    user32.EnumWindows.argtypes = [type(callback), wintypes.LPARAM]
+    user32.EnumWindows.restype = wintypes.BOOL
     user32.EnumWindows(callback, 0)
     return matches[0] if matches else None

@@ -1,5 +1,18 @@
 # 黑夜君临悬浮助手 · 重写计划
 
+旧版路径：./nightreign-overlay-helper
+新版路径：./nightreign-overlay-helper-rewrite
+
+## 截图方式核对与补迁移（2026-10-14）
+
+- 对照提交 `a7d4d6838a17f08f532e84273036dbab4f3cbd7c`，已独立克隆到 `../nightreign-overlay-helper-mss-a7d4d68`。该版本以 mss 按物理屏幕坐标截图，BGRA 的第四通道作为未使用的 X 通道处理，不操作游戏窗口。
+- 重写版截图设置恢复为三个选项：**旧版 / 仅前台 / 仅后台**，默认“旧版”（配置 `plugins.capture.mode=legacy`）。不保留 DLL 自动模式。“仅前台”只允许 `DXGI_DESKTOP_DUP_WINDOW | SCREENDC`；“仅后台”只允许 `FRAMEPOOL | PRINTWINDOW`，与迁移前 DLL 版本一致。
+- “旧版”只使用 mss，不加载、连接或测速截图 DLL，因此不触发 DLL 的窗口调整或 WGC 黄色边框机制。沿用重写架构，每 tick 抓取一张虚拟桌面共享帧，检测插件各自裁剪；不同于 a7d4d68 每个 detector 分别抓取区域。用 `QImage.offset()` 记录物理桌面原点，统一裁剪兼容副屏负坐标。代价是多屏时整帧像素和内存开销较大，桌面遮挡也会进入截图。
+- Windows 后端在允许检测且实际请求帧时延迟初始化；切换模式释放原资源、清空缓存，下一帧使用新模式。未找到游戏窗口或取帧失败时返回无帧并在后续请求重试，不静默切换为另一种截图方式。记录 DLL 最终所选方式。macOS 继续使用 Qt 开发调试降级，不验证 Windows 后端效果。
+- mss 已加入运行依赖和 Windows 打包动态导入。新增测试覆盖默认模式 DLL 隔离、切换释放、初始化失败重试、DLL 两种掩码及 BGRA/负坐标裁剪。
+- 本次验证：截图后端、基础插件和设置重置相关测试 **29 项通过**；全量测试 **208 项通过、1 项失败**。失败为 `test_full_map_terrain_nightlord_poi_and_candidate_parity[5]` 的叠加图像逐像素对比，在修改前 `HEAD` 的独立副本中复现同一位置差异，属于现有问题，本次未调整地图绘制。`ruff check .`、`ruff format --check .`、`git diff --check` 均通过。
+- Windows 仍需验证：管理员/普通权限下默认模式不改变游戏窗口、无黄色框；三种模式热切换；真实多显示器与 DPI 标定对齐；HDR 检测与多屏整帧性能。DLL 两种模式仍可能调整窗口，后台捕获仍可能显示黄色边框。
+
 ## 1. 背景与目标
 
 旧版（`nightreign-overlay-helper`）功能完整，但存在以下问题，本次重写逐一对应解决：

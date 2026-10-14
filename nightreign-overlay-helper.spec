@@ -27,6 +27,7 @@ a = Analysis(
     ],
     # Plugin discovery and pynput's platform backends use dynamic imports.
     hiddenimports=[
+        "mss.windows",
         *collect_submodules("nightreign_overlay.plugins"),
         "pynput.keyboard._win32",
         "pynput.mouse._win32",
