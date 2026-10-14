@@ -8,7 +8,8 @@ from threading import Event
 import numpy as np
 import pytest
 from PIL import Image
-from PyQt6.QtCore import QRect
+from PyQt6.QtCore import QPoint, QRect, Qt
+from PyQt6.QtTest import QSignalSpy, QTest
 from PyQt6.QtWidgets import QWidget
 
 from conftest import process_events
@@ -96,7 +97,7 @@ def test_lifecycle_settings_and_resources(maps):
     overlay = plugin._overlay
     assert overlay is not None and len(overlay.crystal_layout_imgs) == 5
     assert not overlay.isVisible()
-    assert manager.windows() == [overlay]
+    assert manager.windows() == [overlay, plugin._controls]
     assert fakes.capture.streams == {plugin.id}
     assert fakes.services.require(MapRecognitionApi).ready()
     hotkeys = fakes.services.require(HotkeyApi)
@@ -187,6 +188,124 @@ def test_cycle_wraps_and_opacity_fades(maps, monkeypatch):
     for _ in range(10):
         overlay._tick()
     assert not overlay.isVisible() and overlay._real_opacity == 0
+
+
+def test_controls_clicks_share_shortcuts_without_showing_main_window(maps, monkeypatch):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    overlay, controls = plugin._overlay, plugin._controls
+    main = QWidget()
+    requested = QSignalSpy(overlay.manager.mainWindowRequested)
+    restored = QSignalSpy(overlay.manager.mainWindowShowRequested)
+    overlay.manager.mainWindowRequested.connect(main.show)
+    overlay.manager.mainWindowShowRequested.connect(main.show)
+    overlay.set_overlay_images([Image.new("RGBA", (10, 10)) for _ in range(3)])
+    overlay.crystal_layout_idx = 0
+    plugin._set_overlay_visible(True)
+    overlay._tick()
+    controls.sync_from_map()
+    assert controls.isVisible()
+    assert overlay.config.input_mode.value == "passthrough"
+    assert controls.windowFlags() & Qt.WindowType.WindowDoesNotAcceptFocus
+    assert not controls.windowFlags() & Qt.WindowType.WindowTransparentForInput
+    assert controls.next_candidate.text() == "" and not controls.next_candidate.icon().isNull()
+    QTest.mouseClick(controls.previous_candidate, Qt.MouseButton.LeftButton)
+    controls.sync_from_map()
+    assert overlay.map_pattern_idx == 2 and controls.candidate_index.text() == "#3/3"
+    QTest.mouseClick(controls.next_candidate, Qt.MouseButton.LeftButton)
+    assert overlay.map_pattern_idx == 0
+    QTest.mouseClick(controls.previous_crystal, Qt.MouseButton.LeftButton)
+    assert overlay.crystal_layout_idx == 4
+    QTest.mouseClick(controls.next_crystal, Qt.MouseButton.LeftButton)
+    assert overlay.crystal_layout_idx == 0
+    plugin._flag = MatchFlag.FALSE
+    generation = plugin._generation
+    QTest.mouseClick(controls.recognize, Qt.MouseButton.LeftButton)
+    assert plugin._flag == MatchFlag.PREPARE and plugin._generation == generation + 1
+    assert not main.isVisible() and len(requested) == len(restored) == 0
+
+
+def test_controls_follow_geometry_scale_fade_and_hidden_state(maps, monkeypatch):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    overlay, controls = plugin._overlay, plugin._controls
+    plugin._region = QRect(30, 40, 750, 750)
+    plugin._set_overlay_visible(True)
+    overlay._tick()
+    controls.sync_from_map()
+    height = controls.height()
+    assert controls.x() == overlay.frameGeometry().left()
+    assert controls.y() == overlay.frameGeometry().bottom() + 1
+    assert controls.width() == overlay.width()
+    assert controls.windowOpacity() == pytest.approx(overlay.windowOpacity())
+    overlay.config.scale.set(150)
+    controls.sync_from_map()
+    assert controls.height() == round(height * 1.5)
+    assert controls.width() == overlay.width()
+    assert controls.y() == overlay.frameGeometry().bottom() + 1
+    plugin._set_overlay_visible(False)
+    for _ in range(10):
+        overlay._tick()
+        controls.sync_from_map()
+        assert controls.isVisible() == overlay.isVisible()
+        assert controls.windowOpacity() == pytest.approx(overlay.windowOpacity())
+    assert not controls.isVisible()
+
+
+@pytest.mark.parametrize("scale", [50, 100, 150, 200])
+def test_controls_scale_every_dimension_proportionally(maps, monkeypatch, scale):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    overlay, controls = plugin._overlay, plugin._controls
+    plugin._region = QRect(0, 0, 750, 750)
+    plugin._set_overlay_visible(True)
+    overlay.config.scale.set(scale)
+    controls.sync_from_map()
+    factor = scale / 100
+    assert controls.width() == round(750 * factor)
+    assert controls.height() == round(45 * factor)
+    assert controls.recognize.height() == round(29 * factor)
+    assert controls.previous_candidate.size().width() == round(36 * factor)
+    assert controls.candidate_index.height() == round(29 * factor)
+    assert controls.previous_candidate.iconSize().height() == round(16 * factor)
+    assert controls.row.spacing() == round(8 * factor)
+
+
+def test_controls_crystals_only_when_applicable_and_no_results_disable_cycling(maps, monkeypatch):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    overlay, controls = plugin._overlay, plugin._controls
+    controls.sync_from_map()
+    assert controls.crystal_group.isHidden()
+    assert controls.candidate_index.text() == "#0/0"
+    assert not controls.previous_candidate.isEnabled() and not controls.next_candidate.isEnabled()
+    overlay.crystal_layout_idx = 1
+    controls.sync_from_map()
+    assert not controls.crystal_group.isHidden() and controls.crystal_index.text() == "#1/4"
+    overlay.crystal_layout_idx = None
+    controls.sync_from_map()
+    assert controls.crystal_group.isHidden()
+
+
+@pytest.mark.parametrize("scale", [50, 67, 85, 100, 115, 125, 150, 175, 200])
+def test_controls_buttons_fit_inside_toolbar_and_groups(maps, monkeypatch, scale):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    overlay, controls = plugin._overlay, plugin._controls
+    plugin._region = QRect(0, 0, 750, 750)
+    overlay.crystal_layout_idx = 1
+    plugin._set_overlay_visible(True)
+    overlay.config.scale.set(scale)
+    overlay._tick()
+    controls.sync_from_map()
+    process_events(1)
+    for button in controls._buttons:
+        top = button.mapTo(controls, QPoint()).y()
+        assert top >= 0
+        assert top + button.height() <= controls.height(), (
+            scale,
+            button.geometry(),
+            button.parentWidget().geometry(),
+            top,
+            controls.height(),
+        )
+        assert button.y() >= 0
+        assert button.geometry().bottom() < button.parentWidget().height()
 
 
 def test_calibration_square_cancel_and_reset(maps, monkeypatch):

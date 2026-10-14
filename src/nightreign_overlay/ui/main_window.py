@@ -20,9 +20,9 @@ MINIMUM_WIDTH = 760
 
 
 class MainWindow(FluentWindow):
-    #: The explicit tray toggle hid the window while the application continues running.
+    #: Closing or the tray toggle hid the window while the application continues running.
     hiddenToTray = pyqtSignal()
-    #: The window was closed and the application should exit.
+    #: An explicit action requested application exit.
     quitRequested = pyqtSignal()
     #: Whether the window is on screen (shown and not minimized); legacy "settings window opened".
     presenceChanged = pyqtSignal(bool)
@@ -127,7 +127,8 @@ class MainWindow(FluentWindow):
             event.accept()
             return
         event.ignore()
-        self.quitRequested.emit()
+        self.hide()
+        self.hiddenToTray.emit()
 
     def _center_on_screen(self) -> None:
         screen = QGuiApplication.primaryScreen()

@@ -20,6 +20,9 @@ class PlatformBackend:
     def ensure_topmost(self, window_id: int) -> None:
         """Re-assert always-on-top for a native window (games in borderless mode may cover overlays)."""
 
+    def configure_overlay_activation(self, window_id: int, non_activating: bool) -> None:
+        """Allow mouse interaction without activating the application for transparent overlays."""
+
     def is_admin(self) -> bool:
         return False
 

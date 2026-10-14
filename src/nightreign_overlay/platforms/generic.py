@@ -31,6 +31,21 @@ class GenericBackend(PlatformBackend):
         if request is not None:
             request()
 
+    def configure_overlay_activation(self, window_id: int, non_activating: bool) -> None:
+        if sys.platform != "darwin":
+            return
+        # Qt's WindowDoesNotAcceptFocus prevents keyboard focus, but Cocoa can still
+        # activate the app on a panel click and bring its main window forward.
+        # Tool windows are NSPanels: this native style also suppresses app activation.
+        import Cocoa
+        import objc
+
+        view = objc.objc_object(c_void_p=ctypes.c_void_p(window_id))
+        window = view.window()
+        mask = Cocoa.NSWindowStyleMaskNonactivatingPanel
+        style = window.styleMask()
+        window.setStyleMask_(style | mask if non_activating else style & ~mask)
+
 
 def _core_graphics_function(name: str) -> Any | None:
     if sys.platform != "darwin":

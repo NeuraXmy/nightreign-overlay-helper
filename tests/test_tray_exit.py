@@ -1,4 +1,4 @@
-"""Closing exits; hiding is a separate tray action."""
+"""Closing hides the main window; explicit exit still shuts down the application."""
 
 from types import SimpleNamespace
 
@@ -55,7 +55,7 @@ def test_tray_toggle_and_exit_are_independent(qapp):
 
 
 @pytest.mark.parametrize("visible", [True, False])
-def test_close_requests_exit_regardless_of_visibility(qapp, visible):
+def test_close_hides_without_exiting_regardless_of_visibility(qapp, visible):
     window = Window()
     if visible:
         window.show()
@@ -64,11 +64,12 @@ def test_close_requests_exit_regardless_of_visibility(qapp, visible):
     window.hiddenToTray.connect(lambda: hidden.append(True))
     event = QCloseEvent()
     window.closeEvent(event)
-    assert exits == [True] and hidden == []
+    assert exits == [] and hidden == [True]
+    assert not window.isVisible()
     assert not event.isAccepted()
     window.prepare_quit()
     window.closeEvent(event)
-    assert event.isAccepted() and exits == [True]
+    assert event.isAccepted() and exits == [] and hidden == [True]
     window.hide()
     window.deleteLater()
 

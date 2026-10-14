@@ -20,6 +20,7 @@ from nightreign_overlay.plugins.day_timer.api import DayStarted
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.config import MapDetectConfig, MapDetectionSettings
+from nightreign_overlay.plugins.map_detect.controls import MapControlsOverlay
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam, MapDetectResult
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOverlayState
 from nightreign_overlay.plugins.map_detect.resources import get_appdata_path
@@ -89,6 +90,7 @@ class MapDetectPlugin(Plugin):
         self._window_config = self.ctx.config(OverlayConfig, "window")
         self._window_config.input_mode.set("passthrough")
         self._overlay: MapInfoOverlay | None = None
+        self._controls: MapControlsOverlay | None = None
         self._detector: MapDetector | None = None
         self._executor: ThreadPoolExecutor | None = None
         self._active = False
@@ -113,6 +115,8 @@ class MapDetectPlugin(Plugin):
             self.ctx.services.require(OverlayManager), self._window_config, self.ctx.tr
         )
         self.ctx.on_cleanup(self._overlay.dispose)
+        self._controls = MapControlsOverlay(self._overlay, self.ctx.tr, self._callbacks())
+        self.ctx.on_cleanup(self._controls.dispose)
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="map-detect")
         self.ctx.on_cleanup(self._stop_worker)
         self.ctx.provide(MapRecognitionApi, _RecognitionService(self))
@@ -131,6 +135,7 @@ class MapDetectPlugin(Plugin):
         self._active = False
         self._generation += 1
         self._overlay = None
+        self._controls = None
 
     def _stop_worker(self) -> None:
         self._active = False
