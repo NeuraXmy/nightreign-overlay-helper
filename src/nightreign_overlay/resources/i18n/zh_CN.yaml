@@ -133,9 +133,10 @@ about:
     fluent_widgets: Fluent Design 风格界面组件库
 
 tray:
+  toggle: 显示／隐藏主界面
   show: 显示主界面
   quit: 退出
-  hidden_hint: 程序已最小化到托盘，可在设置中关闭此行为。
+  hidden_hint: 主界面已隐藏，程序仍在运行。点击托盘图标可重新显示主界面。
 
 overlay:
   menu:

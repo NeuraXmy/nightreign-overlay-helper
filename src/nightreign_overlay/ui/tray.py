@@ -13,6 +13,7 @@ from nightreign_overlay.ui.theme import app_icon
 
 class TrayIcon(QSystemTrayIcon):
     showRequested = pyqtSignal()
+    toggleRequested = pyqtSignal()
     quitRequested = pyqtSignal()
 
     def __init__(self, parent: QWidget) -> None:
@@ -23,7 +24,10 @@ class TrayIcon(QSystemTrayIcon):
         self.menu.addActions(
             [
                 Action(
-                    FluentIcon.HOME, tr("tray.show"), self.menu, triggered=lambda: self.showRequested.emit()
+                    FluentIcon.HOME,
+                    tr("tray.toggle"),
+                    self.menu,
+                    triggered=lambda: self.toggleRequested.emit(),
                 ),
                 Action(
                     FluentIcon.CLOSE, tr("tray.quit"), self.menu, triggered=lambda: self.quitRequested.emit()

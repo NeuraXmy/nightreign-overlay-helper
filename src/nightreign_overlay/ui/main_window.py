@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QEvent, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QGuiApplication, QHideEvent, QShowEvent
-from PyQt6.QtWidgets import QSystemTrayIcon
 from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 
 from nightreign_overlay.core.app_config import AppConfig
@@ -21,7 +20,7 @@ MINIMUM_WIDTH = 760
 
 
 class MainWindow(FluentWindow):
-    #: The window was closed while "close to tray" is enabled and is now hidden.
+    #: The explicit tray toggle hid the window while the application continues running.
     hiddenToTray = pyqtSignal()
     #: The window was closed and the application should exit.
     quitRequested = pyqtSignal()
@@ -94,8 +93,16 @@ class MainWindow(FluentWindow):
         self.activateWindow()
 
     def prepare_quit(self) -> None:
-        """Let the next close event through instead of hiding to the tray."""
+        """Accept subsequent close events without issuing another quit request."""
         self._quitting = True
+
+    def toggle_visibility(self) -> None:
+        """Hide a visible main window, or restore a hidden/minimized one."""
+        if self.is_present:
+            self.hide()
+            self.hiddenToTray.emit()
+        else:
+            self.bring_to_front()
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -116,14 +123,11 @@ class MainWindow(FluentWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if self._quitting:
-            super().closeEvent(event)
+            # The Windows frameless base may hide on Alt+F4 when quit-on-close is disabled.
+            event.accept()
             return
         event.ignore()
-        if self._config.close_to_tray.value and QSystemTrayIcon.isSystemTrayAvailable():
-            self.hide()
-            self.hiddenToTray.emit()
-        else:
-            self.quitRequested.emit()
+        self.quitRequested.emit()
 
     def _center_on_screen(self) -> None:
         screen = QGuiApplication.primaryScreen()

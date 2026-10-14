@@ -107,6 +107,7 @@ class Application(QObject):
         self.window.presenceChanged.connect(lambda present: foreground.set_ui_active("main_window", present))
         if self.tray is not None:
             self.tray.showRequested.connect(self.window.bring_to_front)
+            self.tray.toggleRequested.connect(self.window.toggle_visibility)
             self.tray.quitRequested.connect(self.quit)
             self.tray.menu.aboutToShow.connect(lambda: foreground.set_ui_active("tray_menu", True))
             self.tray.menu.aboutToHide.connect(lambda: foreground.set_ui_active("tray_menu", False))
@@ -129,8 +130,8 @@ class Application(QObject):
             self.window.show()
 
     def quit(self) -> None:
-        self._shutdown()
         self.window.prepare_quit()
+        self._shutdown()
         self._qt_app.quit()
 
     def restart(self) -> None:

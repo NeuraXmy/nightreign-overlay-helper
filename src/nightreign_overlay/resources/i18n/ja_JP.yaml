@@ -133,9 +133,10 @@ about:
     fluent_widgets: Fluent Design ウィジェットライブラリ
 
 tray:
+  toggle: メインウィンドウを表示／非表示
   show: メインウィンドウを表示
   quit: 終了
-  hidden_hint: システムトレイで動作中です。この動作は設定で変更できます。
+  hidden_hint: メインウィンドウを非表示にしました。アプリは動作中です。トレイアイコンをクリックすると再表示できます。
 
 overlay:
   menu:

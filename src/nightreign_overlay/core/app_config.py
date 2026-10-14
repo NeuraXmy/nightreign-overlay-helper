@@ -20,6 +20,7 @@ class AppConfig(ConfigGroup):
     overlay_mode = ChoiceOption("auto", OVERLAY_MODES)
     #: Legacy "仅在游戏时显示和检测": one switch for every overlay, detection and hotkeys.
     only_when_game_foreground = BoolOption(False)
+    # Retained for existing config files; closing now always quits, hiding is an explicit tray action.
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
     log_level = ChoiceOption("INFO", LOG_LEVELS)
