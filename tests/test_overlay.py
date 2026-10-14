@@ -88,6 +88,20 @@ def test_opacity(window: OverlayWindow) -> None:
     assert window.windowOpacity() == pytest.approx(0.4, abs=0.01)
 
 
+def test_all_transparent_overlays_request_native_nonactivation(core, store, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        core.backend, "configure_overlay_activation", lambda hwnd, enabled: calls.append(enabled)
+    )
+    overlay = OverlayWindow(core.overlays, store.bind(OverlayConfig, "activation"), "test", QSize(200, 100))
+    assert calls == [True]
+    overlay.config.input_mode.set("passthrough")
+    overlay.config.input_mode.set("normal")
+    assert calls[-1] is True
+    core.config.overlay_mode.set("window")
+    assert calls[-1] is False
+
+
 def test_drag_hint_background_tracks_main_window_and_input_mode(core: Core, window: OverlayWindow) -> None:
     window.drag_hint_enabled = True
 

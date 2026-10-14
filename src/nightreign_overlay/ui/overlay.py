@@ -292,6 +292,7 @@ class OverlayWindow(QWidget):
         try:
             # Changing flags hides the window and may recreate the native handle.
             self.setWindowFlags(flags)
+            self.manager.backend.configure_overlay_activation(int(self.winId()), transparent)
             self._move_to(position)
         finally:
             self._applying_mode = False
