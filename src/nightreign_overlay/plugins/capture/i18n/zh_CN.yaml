@@ -3,6 +3,12 @@ plugin:
   description: 为检测插件提供统一的游戏画面。
 settings:
   title: 截图设置
+  mode:
+    title: 截图方式
+    content: 默认使用旧版 mss 桌面截图，不调整游戏窗口；画面遮挡会影响检测。仅前台和仅后台使用 DLL，可能调整窗口；仅后台可能出现黄色捕获边框。切换后立即生效。
+    legacy: 旧版
+    foreground: 仅前台
+    background: 仅后台
   interval:
     title: 检测间隔
     content: 每个间隔最多捕获一帧，所有检测插件共享该帧。

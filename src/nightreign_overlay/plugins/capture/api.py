@@ -64,7 +64,8 @@ def crop_rgb(frame: QImage, region: QRect | None = None) -> np.ndarray | None:
 
     The part outside the frame is dropped; ``None`` is returned when nothing remains.
     """
-    region = frame.rect() if region is None else region.intersected(frame.rect())
+    # Capture images carry their physical desktop origin, including negative monitor coordinates.
+    region = frame.rect() if region is None else region.translated(-frame.offset()).intersected(frame.rect())
     if region.isEmpty():
         return None
     crop = frame.copy(region).convertToFormat(QImage.Format.Format_RGB888)
