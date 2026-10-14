@@ -144,13 +144,20 @@ class MapDetectPlugin(Plugin):
     def _callbacks(self) -> dict[str, Any]:
         return {
             "calibrate_region": self._calibrate_region,
-            "recognize": self._request_match,
+            "recognize": self._request_visible_match,
             "toggle": self._toggle_overlay,
             "next_result": lambda: self._cycle("next_overlay_image"),
             "previous_result": lambda: self._cycle("last_overlay_image"),
             "next_crystal": lambda: self._cycle("next_crystal_layout"),
             "previous_crystal": lambda: self._cycle("last_crystal_layout"),
         }
+
+    def _overlay_accepts_hotkeys(self) -> bool:
+        return self._map_overlay_visible and self._overlay is not None and self._overlay.isVisible()
+
+    def _request_visible_match(self) -> None:
+        if self._overlay_accepts_hotkeys():
+            self._request_match()
 
     def _request_match(self) -> None:
         self._generation += 1
@@ -175,7 +182,7 @@ class MapDetectPlugin(Plugin):
         self._set_overlay_visible(not self._map_overlay_visible)
 
     def _cycle(self, method: str) -> None:
-        if self._overlay is not None:
+        if self._overlay_accepts_hotkeys():
             getattr(self._overlay, method)()
 
     def _on_frame(self, frame: FrameCaptured) -> None:

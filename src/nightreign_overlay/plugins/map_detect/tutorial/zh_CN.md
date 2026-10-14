@@ -27,3 +27,5 @@ HDR 归一化使用通用设置中的 HDR 图像处理开关。地图识别使�
 这些参数仍保存在用户 settings.yaml 的 `plugins.map_detect` 中，默认值与旧版 config.yaml 相同。`full_map_hough_circle_thres`（霍夫圆阈值列表）、`fixed_map_overlay_draw_size`（固定绘制尺寸）和 `map_overlay_draw_size_ratio`（绘制比例）继续通过配置文件调整。
 
 标定保存时输出 `map_region_screenshot.jpg`；识别仍输出 `map.jpg`、`map_poi_result.jpg` 和 `map_overlay_result_<序号>.jpg`，便于反馈排查；新版输出到自己的用户数据目录。
+
+「上一张／下一张地图」「上一个／下一个水晶布局」和「重新识别」快捷键仅在地图信息悬浮窗显示时响应；隐藏时按键不会修改候选、布局或识别状态。自动识别仍按 Day1、标定及匹配间隔等条件触发。

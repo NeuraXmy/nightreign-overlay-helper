@@ -15,6 +15,7 @@ from conftest import process_events
 from feature_fakes import FeatureServices, solid_image
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
+from nightreign_overlay.core.input import InputDevice
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.day_timer.api import DayStarted
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -168,6 +169,8 @@ def test_cycle_wraps_and_opacity_fades(maps, monkeypatch):
     plugin, _, _ = _ready(maps, monkeypatch)
     overlay = plugin._overlay
     overlay.set_overlay_images([Image.new("RGBA", (10, 10)) for _ in range(2)])
+    plugin._set_overlay_visible(True)
+    overlay._tick()
     plugin._cycle("last_overlay_image")
     assert overlay.map_pattern_idx == 1
     plugin._cycle("next_overlay_image")
@@ -259,3 +262,53 @@ def test_day_timer_start_refresh_rewind_and_hud_readiness(maps):
     finally:
         day.on_deactivate()
         day.ctx.release()
+
+
+@pytest.mark.parametrize(
+    "action", ["previous_result", "next_result", "previous_crystal", "next_crystal", "recognize"]
+)
+@pytest.mark.parametrize("hidden_by", ["manual", "foreground"])
+def test_map_hotkeys_only_respond_when_overlay_is_displayed(maps, monkeypatch, action, hidden_by):
+    plugin, fakes, _ = _ready(maps, monkeypatch)
+    overlay = plugin._overlay
+    overlay.set_overlay_images([Image.new("RGBA", (10, 10)) for _ in range(2)])
+    overlay.crystal_layout_idx = 0
+    plugin._flag = MatchFlag.FALSE
+    plugin._set_overlay_visible(True)
+    overlay._tick()
+    assert overlay.isVisible()
+    hotkeys = fakes.services.require(HotkeyApi)
+    hotkeys.set_binding(f"map_detect.{action}", HotkeyBinding(InputDevice.KEYBOARD, ("f8",)))
+
+    def state():
+        return (overlay.map_pattern_idx, overlay.crystal_layout_idx, plugin._flag, plugin._generation)
+
+    def press():
+        hotkeys.trigger_for_test(InputDevice.KEYBOARD, ("f8",))
+        hotkeys.trigger_for_test(InputDevice.KEYBOARD, ())
+
+    before = state()
+    if hidden_by == "manual":
+        plugin._set_overlay_visible(False)
+        # Ignore shortcuts immediately, including while the window is still fading out.
+        assert overlay.isVisible()
+    else:
+        manager = maps[2]
+        manager._app_config.only_when_game_foreground.set(True)
+        overlay.update_visibility()
+        assert not overlay.isVisible()
+    press()
+    assert state() == before
+    if hidden_by == "manual":
+        for _ in range(10):
+            overlay._tick()
+        assert not overlay.isVisible()
+        press()
+        assert state() == before
+        plugin._set_overlay_visible(True)
+    else:
+        manager._app_config.only_when_game_foreground.set(False)
+    overlay._tick()
+    assert overlay.isVisible()
+    press()
+    assert state() != before
