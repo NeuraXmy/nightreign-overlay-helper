@@ -58,6 +58,10 @@ class OverlayConfig(ConfigGroup):
 
     #: Top-left corner in global coordinates; None components follow the default position on that axis.
     position = Option[list[int | None] | None](None, validator=_is_position)
+    #: Width when position was saved, used to restore the same anchor as content loads.
+    position_width = Option[int | None](
+        None, validator=lambda value: value is None or (type(value) is int and value > 0)
+    )
     opacity = RangeOption(100, 20, 100)
     scale = RangeOption(100, 50, 200)
     input_mode = ChoiceOption("normal", ("normal", "locked", "passthrough"))
@@ -70,6 +74,7 @@ class OverlayConfig(ConfigGroup):
         if handler is not None:
             handler()
         else:
+            self.position_width.reset()
             self.position.reset()
 
     def reset_horizontal_position(self) -> None:
@@ -176,6 +181,7 @@ class OverlayWindow(QWidget):
 
     #: Subclasses that users position directly opt into the temporary drag affordance.
     drag_hint_enabled = False
+    position_anchor = "center"
 
     def __init__(
         self,
@@ -195,6 +201,7 @@ class OverlayWindow(QWidget):
         self._disposing = False
         self._applying_mode = False
         self._programmatic_pos: QPoint | None = None
+        self._position_ready = False
         self._drag_offset: QPoint | None = None
 
         self.setWindowTitle(title)
@@ -205,6 +212,7 @@ class OverlayWindow(QWidget):
         self._apply_size()
         self._apply_opacity(config.opacity.value)
         self._restore_position()
+        self._position_ready = True
 
         config.opacity.valueChanged.connect(self._apply_opacity)
         config.scale.valueChanged.connect(self._on_scale_changed)
@@ -225,9 +233,9 @@ class OverlayWindow(QWidget):
     def set_base_size(self, size: QSize) -> None:
         self._base_size = QSize(size)
         self._apply_size()
-        if self.config.position.value is None:
+        if self.config.position.value is None or self.config.position.value[0] is None:
             # Dynamic overlays start small and grow as plugins contribute content.
-            self._move_to(self._default_position())
+            self._on_position_changed(self.config.position.value)
 
     def show_overlay(self) -> None:
         self._requested = True
@@ -292,10 +300,12 @@ class OverlayWindow(QWidget):
 
     def reset_position(self) -> None:
         default = self._default_position()
+        self.config.position_width.set(self.width())
         self.config.position.set([default.x(), default.y()])
 
     def reset_horizontal_position(self) -> None:
         default = self._default_position()
+        self.config.position_width.set(self.width())
         self.config.position.set([default.x(), self.y()])
 
     def dispose(self) -> None:
@@ -405,9 +415,25 @@ class OverlayWindow(QWidget):
 
     def _apply_size(self) -> None:
         scale = self.scale_factor
-        self.setFixedSize(round(self._base_size.width() * scale), round(self._base_size.height() * scale))
+        self._resize_preserving_anchor(
+            round(self._base_size.width() * scale), round(self._base_size.height() * scale)
+        )
         self.updateGeometry()
         self.update()
+
+    def _anchor_offset(self, width: int) -> int:
+        return width if self.position_anchor == "right" else width // 2
+
+    def _resize_preserving_anchor(self, width: int, height: int) -> None:
+        old_width = self.width()
+        old_x = self.x()
+        self.setFixedSize(width, height)
+        value = self.config.position.value
+        if not self._position_ready or value is None or value[0] is None or old_width == width:
+            return
+        new_x = old_x + self._anchor_offset(old_width) - self._anchor_offset(width)
+        self.config.position_width.set(width)
+        self.config.position.set([new_x, value[1]])
 
     def _apply_opacity(self, opacity: int) -> None:
         self.setWindowOpacity(opacity / 100)
@@ -416,7 +442,7 @@ class OverlayWindow(QWidget):
         self._apply_size()
         if self.config.position.value is None or self.config.position.value[0] is None:
             # The default position depends on the width, so keep the overlay centred.
-            self._move_to(self._default_position())
+            self._on_position_changed(self.config.position.value)
         self.on_scale_changed(self.scale_factor)
 
     def _on_input_mode_changed(self, _mode: str) -> None:
@@ -442,6 +468,7 @@ class OverlayWindow(QWidget):
         self.move(position)
 
     def _save_position(self) -> None:
+        self.config.position_width.set(self.width())
         self.config.position.set([self.x(), self.y()])
 
     def _restore_position(self) -> None:
@@ -455,6 +482,9 @@ class OverlayWindow(QWidget):
                 value[1] if value[1] is not None else default.y(),
             )
         )
+        saved_width = self.config.position_width.value
+        if value is not None and value[0] is not None and saved_width is not None:
+            position.setX(position.x() + self._anchor_offset(saved_width) - self._anchor_offset(self.width()))
         self._move_to(position if self._is_on_screen(position) else default)
 
     def _is_on_screen(self, position: QPoint) -> bool:
