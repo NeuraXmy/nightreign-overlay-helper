@@ -240,12 +240,12 @@ def test_position_is_persisted_and_reset(window: OverlayWindow) -> None:
     assert window.config.position.value == [window.x(), saved_y]
     assert window.pos().y() == saved_y
 
-    # The concrete reset position stays saved when resized.
-    saved_position = window.pos()
+    # Resizing preserves the top-center anchor after a horizontal reset.
+    saved_anchor = (window.x() + window.width() // 2, window.y())
     window.config.scale.set(200)
     process_events()
     assert window.config.position.value == [window.x(), saved_y]
-    assert window.pos() == saved_position
+    assert (window.x() + window.width() // 2, window.y()) == saved_anchor
 
 
 def test_hud_resizes_and_shows_added_widgets(core: Core, store: ConfigStore) -> None:
@@ -403,3 +403,41 @@ def test_reset_buttons_persist_without_dragging(window, core, store, visible):
     restored.dispose()
     reloaded.deleteLater()
     section.deleteLater()
+
+
+@pytest.mark.parametrize("reset", [True, False])
+def test_hud_anchor_survives_content_changes_and_restart(core, store, reset):
+    config = store.bind(OverlayConfig, "hud.anchor")
+    hud_config = store.bind(HudConfig, "plugins.hud")
+    overlay = HudOverlay(core.overlays, config, hud_config, "HUD")
+    overlay.show_overlay()
+    widget = QWidget()
+    widget.setFixedSize(200, 40)
+    overlay.add_widget("test", widget, order=0)
+    process_events()
+    if reset:
+        config.reset_position()
+    else:
+        overlay.move(100, 180)
+        process_events()
+    anchor = (overlay.x() + overlay.width() // 2, overlay.y())
+    wider = QWidget()
+    wider.setFixedSize(300, 70)
+    overlay.add_widget("wider", wider, order=1)
+    process_events()
+    assert (overlay.x() + overlay.width() // 2, overlay.y()) == anchor
+    config.scale.set(125)
+    process_events()
+    assert (overlay.x() + overlay.width() // 2, overlay.y()) == anchor
+    store.flush()
+    overlay.dispose()
+    reloaded = ConfigStore(store.path)
+    restored = HudOverlay(core.overlays, reloaded.bind(OverlayConfig, "hud.anchor"), hud_config, "HUD")
+    restored.show_overlay()
+    replacement = QWidget()
+    replacement.setFixedSize(350, 40)
+    restored.add_widget("test", replacement, order=0)
+    process_events()
+    assert (restored.x() + restored.width() // 2, restored.y()) == anchor
+    restored.dispose()
+    reloaded.deleteLater()

@@ -332,3 +332,29 @@ def test_long_peer_names_are_elided_and_metrics_stay_inside_window(plugin):
             assert label.mapTo(window, QPoint(label.width(), 0)).x() <= window.width()
     window.set_peers([P2PPeer("1", "Alice", 80, 0.9, "messages", "connected")])
     assert _row(window, 0, 0).text() == "Alice"
+
+
+@pytest.mark.parametrize("reset", [True, False])
+def test_top_right_anchor_survives_scale_content_and_restart(plugin, store, reset):
+    window = _window(plugin)
+    if reset:
+        plugin.overlay_config.reset_position()
+    else:
+        window.move(120, 170)
+        process_events()
+    anchor = (window.x() + window.width(), window.y())
+    for scale in (57, 125, 200, 100):
+        plugin.overlay_config.scale.set(scale)
+        window.set_status(P2PStatus("steam_ready", "模拟"))
+        window.set_peers(_peers())
+        process_events()
+        assert (window.x() + window.width(), window.y()) == anchor
+    store.flush()
+    window.dispose()
+    reloaded = ConfigStore(store.path)
+    config = reloaded.bind(P2POverlayConfig, plugin.overlay_config.namespace)
+    restored = P2POverlay(plugin.ctx.services.require(OverlayManager), config, plugin.config, plugin.ctx.tr)
+    process_events()
+    assert (restored.x() + restored.width(), restored.y()) == anchor
+    restored.dispose()
+    reloaded.deleteLater()

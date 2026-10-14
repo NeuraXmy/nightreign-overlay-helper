@@ -25,6 +25,7 @@ def get_ping_color(ping_ms: int | None, good_ping: int, warning_ping: int) -> st
 
 class P2POverlay(OverlayWindow):
     drag_hint_enabled = True
+    position_anchor = "right"
     # Keep player names compact so latency and quality remain visible. This is about 60% of the
     # space the name column previously occupied in the 310 px legacy overlay.
     _NAME_COLUMN_WIDTH = 110
@@ -113,7 +114,7 @@ class P2POverlay(OverlayWindow):
 
     def _apply_size(self) -> None:
         # Truncate width * scale, matching the legacy scaling convention.
-        self.setFixedSize(
+        self._resize_preserving_anchor(
             int(self.base_size.width() * self.scale_factor),
             max(1, int(self.base_size.height() * self.scale_factor)),
         )
