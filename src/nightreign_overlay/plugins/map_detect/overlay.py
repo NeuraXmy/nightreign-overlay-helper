@@ -62,6 +62,7 @@ class MapInfoOverlay(OverlayWindow):
     def __init__(self, manager: OverlayManager, config: OverlayConfig, tr: Callable[..., str]) -> None:
         self._real_opacity = 0.0
         self.visible = True
+        self._suppressed = False
         self._tr = tr
         super().__init__(manager, config, tr("plugin.name"), QSize(10, 10))
         self._timer = QTimer(self)
@@ -383,8 +384,18 @@ class MapInfoOverlay(OverlayWindow):
 
         self.update_visibility()
 
+    def set_suppressed(self, suppressed: bool) -> None:
+        """Temporarily force-hide map information without losing its requested state."""
+        self._suppressed = suppressed
+        self.update_visibility()
+
     def should_be_visible(self) -> bool:
-        return self.visible and self._real_opacity > 0.01 and super().should_be_visible()
+        return (
+            not self._suppressed
+            and self.visible
+            and self._real_opacity > 0.01
+            and super().should_be_visible()
+        )
 
     def set_map_region(self, rect: QRect) -> None:
         # Match the selector's physical-pixel convention, including per-monitor DPI.

@@ -4,10 +4,22 @@ plugin:
 controls:
   title: 地图信息操控栏
   recognize: 重新识别
+  manual_filter: 手动筛选
+  exit_filter: 退出筛选
   candidates: 地图候选
   crystals: 水晶布局
   previous: 上一个
   next: 下一个
+manual_filter:
+  title: 手动筛选
+  earth_shifting: 特殊地形
+  nightlord: BOSS
+  all_nightlords: 所有
+  auto_recognize: 自动识别
+  empty: 空
+  no_match: 筛选为空，请重新设置
+  no_region: 请先标定地图区域
+  selected: "已选择：{name}"
 overlay:
   result: "识别结果: {index}/{total}"
   crystal: "水晶布局: "
@@ -39,6 +51,10 @@ drawing:
 settings:
   basic: 地图识别与快捷键
   advanced: 高级检测选项
+  manual_filter:
+    section: 手动筛选
+    title: 进入／退出手动筛选
+    content: 在地图区域显示可交互的筛选悬浮窗；再次执行会退出筛选并恢复自动识别。
   action: 执行
   calibrate_region:
     title: 地图区域

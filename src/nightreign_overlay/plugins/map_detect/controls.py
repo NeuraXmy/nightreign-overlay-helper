@@ -9,6 +9,7 @@ from PyQt6.QtGui import QPaintEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QLayout, QPushButton, QWidget
 from qfluentwidgets import FluentIcon, Theme
 
+from nightreign_overlay.plugins.map_detect.manual_filter import ManualFilterOverlay
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayWindow
 
@@ -17,9 +18,16 @@ class MapControlsOverlay(OverlayWindow):
     """Own only the toolbar's input; the map retains its mouse passthrough behavior."""
 
     def __init__(
-        self, source: MapInfoOverlay, tr: Callable[..., str], callbacks: dict[str, Callable]
+        self,
+        source: MapInfoOverlay,
+        manual_overlay: ManualFilterOverlay,
+        tr: Callable[..., str],
+        callbacks: dict[str, Callable],
     ) -> None:
         self.source = source
+        self.manual_overlay = manual_overlay
+        self.manual_filtering = False
+        self._tr = tr
         # Position and appearance are derived from the map, never persisted independently.
         config = OverlayConfig("", {"input_mode": "locked"}, lambda *_: None)
         super().__init__(source.manager, config, tr("controls.title"), QSize(1, 1))
@@ -29,6 +37,9 @@ class MapControlsOverlay(OverlayWindow):
         self.recognize = QPushButton(tr("controls.recognize"), self)
         self.recognize.clicked.connect(callbacks["recognize"])
         self.row.addWidget(self.recognize)
+        self.manual_filter = QPushButton(tr("controls.manual_filter"), self)
+        self.manual_filter.clicked.connect(callbacks["manual_filter"])
+        self.row.addWidget(self.manual_filter)
         self.candidate_group, self.candidate_index, self.previous_candidate, self.next_candidate = (
             self._group(tr("controls.candidates"), callbacks["previous_result"], callbacks["next_result"], tr)
         )
@@ -44,8 +55,10 @@ class MapControlsOverlay(OverlayWindow):
             button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             button.setCursor(Qt.CursorShape.PointingHandCursor)
         source.installEventFilter(self)
+        manual_overlay.installEventFilter(self)
         # Connect after the map's tick so opacity/visibility are copied after its fade step.
         source._timer.timeout.connect(self.sync_from_map)
+        manual_overlay.visibilityChanged.connect(self.sync_from_map)
         source.config.scale.valueChanged.connect(self.sync_from_map)
         source.config.opacity.valueChanged.connect(self.sync_from_map)
         self.sync_from_map()
@@ -87,25 +100,40 @@ class MapControlsOverlay(OverlayWindow):
         self.update_visibility()
 
     def should_be_visible(self) -> bool:
-        return self.source.isVisible() and self.source.should_be_visible()
+        source = self.manual_overlay if self.manual_filtering else self.source
+        return source.isVisible() and source.should_be_visible()
+
+    def set_manual_filtering(self, filtering: bool) -> None:
+        self.manual_filtering = filtering
+        self.sync_from_map()
 
     def sync_from_map(self, *_: object) -> None:
         if self._disposing:
             return
-        source = self.source
+        source = self.manual_overlay if self.manual_filtering else self.source
         scale = source.width() / 750
         if self._appearance_scale != scale:
             self._apply_control_scale(scale)
-        total = len(source.overlay_images or [])
-        index = source.map_pattern_idx + 1 if total and source.map_pattern_idx is not None else 0
+        total = len(self.source.overlay_images or [])
+        index = self.source.map_pattern_idx + 1 if total and self.source.map_pattern_idx is not None else 0
         self.candidate_index.setText(f"#{index}/{total}")
         self.previous_candidate.setEnabled(total > 1)
         self.next_candidate.setEnabled(total > 1)
-        self.crystal_group.setVisible(source.crystal_layout_idx is not None)
-        if source.crystal_layout_idx is not None:
+        self.recognize.setEnabled(not self.manual_filtering)
+        self.manual_filter.setText(
+            self._tr("controls.exit_filter") if self.manual_filtering else self._tr("controls.manual_filter")
+        )
+        self.candidate_group.setVisible(not self.manual_filtering)
+        crystal_visible = not self.manual_filtering and self.source.crystal_layout_idx is not None
+        self.crystal_group.setVisible(crystal_visible)
+        if self.source.crystal_layout_idx is not None:
             # Index 0 is the legacy 'all points' layout; layouts 1..4 keep their existing numbering.
-            self.crystal_index.setText(f"#{source.crystal_layout_idx}/{len(source.crystal_layout_imgs) - 1}")
-            self.crystal_index.setToolTip(source._tr("overlay.all") if source.crystal_layout_idx == 0 else "")
+            self.crystal_index.setText(
+                f"#{self.source.crystal_layout_idx}/{len(self.source.crystal_layout_imgs) - 1}"
+            )
+            self.crystal_index.setToolTip(
+                self.source._tr("overlay.all") if self.source.crystal_layout_idx == 0 else ""
+            )
         self.setFixedSize(source.width(), max(1, round(45 * scale)))
         self.row.activate()
         # frameGeometry includes the title bar in ordinary-window mode.
@@ -135,7 +163,8 @@ class MapControlsOverlay(OverlayWindow):
         for button in self._buttons:
             button.setIconSize(QSize(round(16 * scale), round(16 * scale)))
             button.setFixedHeight(control_height)
-            button.setFixedWidth(max(1, round((90 if button is self.recognize else 36) * scale)))
+            wide = button in (self.recognize, self.manual_filter)
+            button.setFixedWidth(max(1, round((90 if wide else 36) * scale)))
         for label in self.findChildren(QLabel):
             label.setFixedHeight(control_height)
         for group in (self.candidate_group, self.crystal_group):
@@ -143,7 +172,7 @@ class MapControlsOverlay(OverlayWindow):
             group.layout().setSpacing(round(6 * scale))
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        if watched is self.source and event.type() in (
+        if watched in (self.source, self.manual_overlay) and event.type() in (
             QEvent.Type.Move,
             QEvent.Type.Resize,
             QEvent.Type.Show,
@@ -159,7 +188,9 @@ class MapControlsOverlay(OverlayWindow):
         if self._disposing:
             return
         self.source.removeEventFilter(self)
+        self.manual_overlay.removeEventFilter(self)
         self.source._timer.timeout.disconnect(self.sync_from_map)
+        self.manual_overlay.visibilityChanged.disconnect(self.sync_from_map)
         self.source.config.scale.valueChanged.disconnect(self.sync_from_map)
         self.source.config.opacity.valueChanged.disconnect(self.sync_from_map)
         super().dispose()

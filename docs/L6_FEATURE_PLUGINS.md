@@ -150,6 +150,8 @@ _detected_day(day)
 - [`src/nightreign_overlay/plugins/map_detect/detector.py`](../src/nightreign_overlay/plugins/map_detect/detector.py)
 - [`src/nightreign_overlay/plugins/map_detect/overlay.py`](../src/nightreign_overlay/plugins/map_detect/overlay.py)
 - [`src/nightreign_overlay/plugins/map_detect/controls.py`](../src/nightreign_overlay/plugins/map_detect/controls.py)
+- [`src/nightreign_overlay/plugins/map_detect/manual_filter.py`](../src/nightreign_overlay/plugins/map_detect/manual_filter.py)
+- [`src/nightreign_overlay/plugins/map_detect/manual_catalog.py`](../src/nightreign_overlay/plugins/map_detect/manual_catalog.py)
 - [`src/nightreign_overlay/plugins/map_detect/map_info.py`](../src/nightreign_overlay/plugins/map_detect/map_info.py)
 
 ### 职责
@@ -183,7 +185,9 @@ FALSE ──检测到完整地图──▶ PREPARE ──下一帧──▶ TRUE
 ### 地图悬浮窗
 
 - `MapInfoOverlay`：显示地图绘制结果、候选 `#x/y`、水晶布局、识别状态。
-- `MapControlsOverlay`：紧贴地图悬浮窗下方，提供重新识别、候选/水晶切换按钮。
+- `ManualFilterOverlay`：覆盖地图区域的透明可交互筛选窗，选择特殊地形与 BOSS 后，可按位置设置据点基础图标和角标，也可对单点自动识别。
+- `ManualFilterCatalog`：纯逻辑候选目录；合并相同基础图标，处理空据点、角标约束、有效选项与唯一值推断。
+- `MapControlsOverlay`：紧贴当前地图类悬浮窗下方，提供重新识别、手动筛选、候选/水晶切换按钮。
 
 ### 快捷键
 
@@ -196,11 +200,17 @@ FALSE ──检测到完整地图──▶ PREPARE ──下一帧──▶ TRUE
 | `map_detect.previous_result` | 未绑定 | 上一个候选 |
 | `map_detect.next_crystal` | 未绑定 | 下一个水晶布局 |
 | `map_detect.previous_crystal` | 未绑定 | 上一个水晶布局 |
+| `map_detect.manual_filter` | 未绑定 | 进入／退出手动筛选模式 |
 
 ### INVARIANT
 
 - 标定区域时截成旧版规则的正方形（按 DPI 截断到整数逻辑像素）。
 - 候选/水晶切换快捷键检查地图悬浮窗可见性门控。
+- 手动筛选期间强制隐藏地图信息、暂停自动识别；退出后恢复原显示状态。
+- 据点约束只使用用户显式设置；候选共同决定的据点或角标仅作为显示推断，避免推断值反向锁死后续修改。
+- 地形或 BOSS 改变、退出/重入、空候选重置都会递增手动筛选 revision；异步单点识别只接受同一 revision 的结果。
+- 候选归零时保留地形与 BOSS、清空据点并提示；候选唯一时退出筛选并直接绘制该地图。
+- 手动筛选窗与标定地图区域重合，背景透明但接收鼠标输入。
 - 地图绘制名称使用 `i18n/<lang>-names.csv`，缺失回退中文。
 
 ---
