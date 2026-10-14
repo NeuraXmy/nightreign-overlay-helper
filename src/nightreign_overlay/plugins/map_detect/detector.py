@@ -166,6 +166,7 @@ CTYPE_SUBICON_MAP: dict[int, Attribute | Condition] = {
     50030: Condition.SLEEP,  # 睡眠沼泽
     50040: Condition.CORRUPTION,  # 腐败沼泽
     50050: Condition.FRENZY,  # 癫火沼泽
+    50060: Condition.BLEED,  # 出血沼泽
     50102: Condition.BLEED,  # 出血锻造村
     50103: Attribute.THUNDER,  # 雷锻造村
     50104: Attribute.HOLY,  # 圣锻造村
