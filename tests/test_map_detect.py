@@ -244,6 +244,11 @@ def test_manual_filter_mode_hides_map_blocks_detection_and_toggles_from_controls
     assert controls.manual_filter.text() == "退出筛选"
     assert controls.candidate_group.isHidden() and controls.crystal_group.isHidden()
     assert not controls.recognize.isEnabled()
+    assert manual.status_label.text() == "请选择特殊地形"
+    assert "#ff4242" in manual.status_label.styleSheet()
+    assert manual.layout().contentsMargins().top() == 10
+    assert manual.layout().contentsMargins().left() == 10
+    assert "rgba(53, 69, 87, 235)" in manual.earth_shifting_combo.styleSheet()
     assert not fakes.services.require(MapRecognitionApi).ready()
 
     frame = FrameCaptured(solid_image(100, 100, (0, 0, 0)), 1.0)
@@ -271,6 +276,9 @@ def test_manual_filter_mode_hides_map_blocks_detection_and_toggles_from_controls
     changed = QSignalSpy(manual.earthShiftingChanged)
     manual.earth_shifting_combo.setCurrentIndex(4)
     assert manual.earth_shifting == 4 and len(changed) == 1
+    expected_candidates = len(plugin._manual_catalog.candidates(4, None, {}))
+    assert manual.status_label.text() == f"剩余候选地图数量：{expected_candidates}"
+    assert "color: white" in manual.status_label.styleSheet()
     visible_position = next(button for button in manual.position_buttons.values() if not button.isHidden())
     visible_position.click()
     assert manual._popup is not None and manual._popup.isVisible()
@@ -359,6 +367,8 @@ def test_manual_poi_constraints_converge_or_reset_without_losing_filters(maps, m
     plugin._on_manual_poi_choice(pos, PoiChoice(impossible_base))
     assert plugin._manual_filtering and not manual.explicit_choices
     assert manual.status_label.isVisible()
+    assert manual.status_label.text() == "筛选为空，请重新设置"
+    assert "#ff4242" in manual.status_label.styleSheet()
     assert manual.earth_shifting == 0 and manual.nightlord == 0
     assert plugin._manual_revision == revision + 1
 
