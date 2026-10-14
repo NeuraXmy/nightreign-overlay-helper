@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PyQt6.QtCore import QPoint, QSize, Qt
-from PyQt6.QtGui import QColor, QGuiApplication
+from PyQt6.QtGui import QColor, QFontMetrics, QGuiApplication
 from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QGridLayout, QLabel, QVBoxLayout
 
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
@@ -25,6 +25,10 @@ def get_ping_color(ping_ms: int | None, good_ping: int, warning_ping: int) -> st
 
 class P2POverlay(OverlayWindow):
     drag_hint_enabled = True
+    # Keep player names compact so latency and quality remain visible. This is about 60% of the
+    # space the name column previously occupied in the 310 px legacy overlay.
+    _NAME_COLUMN_WIDTH = 110
+    _BASE_WIDTH = 240
 
     def __init__(
         self,
@@ -37,7 +41,7 @@ class P2POverlay(OverlayWindow):
         self.peers: list[P2PPeer] = []
         self._metrics_config = metrics_config
         self._tr = tr
-        super().__init__(manager, config, tr("overlay.title"), QSize(310, 80))
+        super().__init__(manager, config, tr("overlay.title"), QSize(self._BASE_WIDTH, 80))
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         self.panel = QFrame(self)
@@ -75,6 +79,7 @@ class P2POverlay(OverlayWindow):
         self._refresh_rows()
 
     def on_scale_changed(self, scale: float) -> None:
+        self.peer_grid.setHorizontalSpacing(max(1, int(12 * scale)))
         self.status_label.setStyleSheet(f"color: white; font-size: {int(13 * scale)}px; font-weight: bold;")
         self.panel_layout.setContentsMargins(
             int(12 * scale), int(9 * scale), int(12 * scale), int(10 * scale)
@@ -92,7 +97,7 @@ class P2POverlay(OverlayWindow):
 
     def _fit_content(self) -> None:
         self.panel_layout.invalidate()
-        width = int(310 * self.scale_factor)
+        width = int(self._BASE_WIDTH * self.scale_factor)
         # The panel's stylesheet border sits outside its layout's margins.
         margins = self.panel.contentsMargins()
         if self.panel_layout.hasHeightForWidth():
@@ -100,14 +105,14 @@ class P2POverlay(OverlayWindow):
         else:
             height = self.panel_layout.sizeHint().height()
         height += margins.top() + margins.bottom()
-        self.set_base_size(QSize(310, max(1, round(height / self.scale_factor))))
+        self.set_base_size(QSize(self._BASE_WIDTH, max(1, round(height / self.scale_factor))))
         # The legacy widget height comes from its layout, not a rounded base-size scale.
         self.setFixedHeight(max(1, height))
         self.layout().activate()
         self.panel_layout.activate()
 
     def _apply_size(self) -> None:
-        # Legacy truncates 310 * scale; the shared base normally rounds it.
+        # Truncate width * scale, matching the legacy scaling convention.
         self.setFixedSize(
             int(self.base_size.width() * self.scale_factor),
             max(1, int(self.base_size.height() * self.scale_factor)),
@@ -136,13 +141,19 @@ class P2POverlay(OverlayWindow):
         font_size = int(13 * self.scale_factor)
         for row, peer in enumerate(self.peers if show_peers else []):
             name_label = QLabel(peer.name)
-            tooltip = f"SteamID: {peer.steam_id}\nAPI: {peer.api}"
+            name_width = max(1, int(self._NAME_COLUMN_WIDTH * self.scale_factor))
+            name_label.setFixedWidth(name_width)
+            tooltip = f"{peer.name}\nSteamID: {peer.steam_id}\nAPI: {peer.api}"
             if peer.api == "legacy" and peer.ping_ms is None:
                 tooltip += "\n" + self._tr("overlay.legacy_no_fields")
             elif peer.api == "legacy":
                 tooltip += "\n" + self._tr("overlay.etw_source")
             name_label.setToolTip(tooltip)
             name_label.setStyleSheet(f"color: white; font-size: {font_size}px;")
+            name_label.ensurePolished()
+            name_label.setText(
+                QFontMetrics(name_label.font()).elidedText(peer.name, Qt.TextElideMode.ElideRight, name_width)
+            )
 
             ping_text = "-- ms" if peer.ping_ms is None else f"{peer.ping_ms} ms"
             ping_color = get_ping_color(
@@ -167,5 +178,5 @@ class P2POverlay(OverlayWindow):
                 label.ensurePolished()
                 label.show()
 
-        self.peer_grid.setColumnStretch(0, 1)
+        self.peer_grid.setColumnStretch(0, 0)
         self._fit_content()
