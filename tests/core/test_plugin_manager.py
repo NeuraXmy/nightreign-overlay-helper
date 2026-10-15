@@ -246,9 +246,10 @@ def test_builtin_plugins_are_discovered(store: ConfigStore, qapp: QApplication) 
     manager = PluginManager(store, translator, ServiceRegistry(), EventBus())
     manager.discover()
     manager.load_all()
-    record = manager.get("overlay_test")
+    record = manager.get("rain_timer")
     assert record is not None and record.state == PluginState.INACTIVE
-    assert manager.display_name("overlay_test") == "Overlay test"
+    assert manager.get("overlay_test") is None
+    assert manager.display_name("rain_timer") == "雨中冒险计时"
     assert record.plugin is not None and record.plugin.ctx.tutorial_file() is not None
 
     capture = manager.get("capture")

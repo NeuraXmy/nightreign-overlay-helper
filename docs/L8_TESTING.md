@@ -36,6 +36,8 @@ tests/
 | `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
 | `legacy/` | `test_hp_marker_legacy_parity.py` | 血条检测与旧版逐帧比较，旧版目录缺失时跳过 |
 
+早期悬浮窗调试插件及其专属生命周期测试已删除；通用悬浮窗和共享 HUD 的行为测试保留在 `ui/test_overlay.py`，插件发现测试验证正式内置插件及调试插件不再被发现。
+
 地图旧版逐像素/评分对照测试已删除；地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)，CNN 部署与验收见 [`POI_CNN.md`](./POI_CNN.md)。
 
 ## 共享支持代码
