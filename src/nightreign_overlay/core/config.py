@@ -160,7 +160,7 @@ class ConfigItem(QObject, Generic[T]):
 
 
 class ConfigGroup:
-    """Base class for a set of options stored under one namespace (e.g. ``plugins.overlay_test``)."""
+    """Base class for a set of options stored under one namespace (e.g. ``plugins.day_timer``)."""
 
     def __init__(self, namespace: str, stored: dict[str, Any], on_change: Callable[[str, Any], None]) -> None:
         self.namespace = namespace

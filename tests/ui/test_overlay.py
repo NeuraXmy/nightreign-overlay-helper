@@ -1,4 +1,4 @@
-"""Overlay window behaviour and the overlay_test plugin running against the real core services."""
+"""Overlay windows and shared HUD behaviour against real core services."""
 
 from __future__ import annotations
 
@@ -12,17 +12,13 @@ from PyQt6.QtWidgets import QApplication, QWidget
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
-from nightreign_overlay.core.game_window import ForegroundPolicy, GameForegroundChanged, GameWindowMonitor
-from nightreign_overlay.core.i18n import Translator
+from nightreign_overlay.core.game_window import ForegroundPolicy, GameWindowMonitor
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.platforms import PlatformBackend
-from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.day_timer.plugin import _DayTimerHud
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.hud.config import HudConfig
 from nightreign_overlay.plugins.hud.overlay import HudOverlay
-from nightreign_overlay.plugins.overlay_test.api import OverlayTestApi
-from nightreign_overlay.plugins.overlay_test.overlay import OverlayTestWindow
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
 from tests.support.platform import FakeBackend
 from tests.support.qt import process_events
@@ -335,40 +331,6 @@ def test_hud_refits_when_a_contributed_bar_hides_itself(core: Core, store: Confi
     bar.set_progress(0.5, "rain")
     process_events()
     assert overlay.height() == full_height
-
-
-def test_overlay_test_plugin_lifecycle(core: Core, store: ConfigStore) -> None:
-    manager = PluginManager(store, Translator("en_US"), core.services, core.events)
-    manager.discover()
-    manager.load_all()
-    manager.start()
-    assert not manager.is_active("overlay_test")
-
-    manager.set_enabled("overlay_test", True)
-    assert manager.is_active("overlay_test")
-    [overlay] = [window for window in core.overlays.windows() if isinstance(window, OverlayTestWindow)]
-    assert overlay.isVisible()
-
-    api = core.services.require(OverlayTestApi)
-    overlay.config.scale.set(200)
-    assert overlay.size() == QSize(600, 264)
-    api.restart_countdown()
-
-    core.events.publish(GameForegroundChanged(False))
-    process_events()
-
-    manager.set_enabled("overlay_test", False)
-    record = manager.get("overlay_test")
-    assert record is not None and record.state == PluginState.INACTIVE
-    assert not any(isinstance(window, OverlayTestWindow) for window in core.overlays.windows())
-    assert core.services.get(OverlayTestApi) is None
-
-    manager.set_enabled("overlay_test", True)
-    [overlay] = [window for window in core.overlays.windows() if isinstance(window, OverlayTestWindow)]
-    # Settings survive a disable / enable cycle.
-    assert overlay.size() == QSize(600, 264)
-    manager.shutdown()
-    assert core.overlays.windows() == []
 
 
 @pytest.mark.parametrize("visible", [True, False])

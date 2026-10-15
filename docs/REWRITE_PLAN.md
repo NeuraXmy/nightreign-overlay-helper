@@ -146,7 +146,7 @@ manifest = PluginManifest(
 
 - **基础插件（infrastructure）**：`capture`（截图引擎 / 检测频率 / HDR 处理）、`input`（全局热键 / 手柄）、`hud`（共享悬浮窗）、`region`（区域标定）。默认启用，首页中归类为“基础功能”。
 - **功能插件（feature）**：`day_timer` 缩圈倒计时、`rain_timer` 雨中冒险计时、`map_detect` 地图识别、`hp_marker` 血条比例标记、`art_timer` 绝招倒计时、`p2p_latency` 队友延迟。
-- **调试插件**：`overlay_test` 测试悬浮窗（本阶段实现，用于验证底座、悬浮窗与跨平台行为）。
+- **调试插件**：早期悬浮窗调试插件已移除；悬浮窗底座通过 `tests/ui/test_overlay.py` 和 `tests/platforms/test_overlay_activation.py` 验证，保留调试插件分类供后续诊断工具使用。
 
 ### 3.6 设置范围与用户入口
 
@@ -341,7 +341,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 | 阶段 | 内容 | 状态 |
 |-----|------|-----|
 | P0 | 计划文档 | ✅ |
-| P1 | 底座：core / platform / plugin / 主界面 / 托盘 / 悬浮窗基类 / i18n；`overlay_test` 测试插件；单元测试 | ✅ 本次完成 |
+| P1 | 底座：core / platform / plugin / 主界面 / 托盘 / 悬浮窗基类 / i18n；早期悬浮窗测试插件（现已移除）；单元测试 | ✅ 本次完成 |
 | P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 🚧 进行中：服务契约、Qt 降级实现和单元测试已完成；Windows DLL 打包与真实手柄验证留待 Windows 环境 |
 | P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 🚧 进行中：三个插件已实现并有非视觉单元测试；雨中 / 绝招的视觉识别待实机手动验证 |
 | P4 | `map_detect`、`hp_marker`、`p2p_latency`（含 NightreignP2PHelper 原生组件） | 🚧 进行中：三个插件均已完成代码迁移与基础测试；地图/血条视觉实机验证及 Windows Steam/ETW 联机验证留待目标环境 |
