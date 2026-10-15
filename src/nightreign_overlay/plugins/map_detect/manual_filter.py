@@ -342,7 +342,7 @@ class ManualFilterOverlay(OverlayWindow):
             button.setEnabled(not recognizing)
             button.setIcon(QIcon())
             button.setText("…" if recognizing else "+" if choice is None else "")
-            button.setStyleSheet(_round_style(choice is None, 15))
+            button.setStyleSheet(_choice_style(choice is None))
             if choice is not None and choice.base != EMPTY:
                 button.setIcon(QIcon(_pil_pixmap(self.catalog.base_image(choice.base))))
                 button.setIconSize(button.size() - QSize(4, 4))
@@ -357,7 +357,7 @@ class ManualFilterOverlay(OverlayWindow):
             if show_badge:
                 badge.setIcon(QIcon())
                 badge.setText("+")
-                badge.setStyleSheet(_round_style(choice.subicon is UNSET, 8))
+                badge.setStyleSheet(_choice_style(choice.subicon is UNSET))
                 if choice.subicon is None:
                     badge.setText("")
                 elif choice.subicon is not UNSET:
@@ -472,12 +472,12 @@ def _pil_pixmap(image: Image.Image) -> QPixmap:
     return QPixmap.fromImage(QImage(data, rgba.width, rgba.height, QImage.Format.Format_RGBA8888).copy())
 
 
-def _round_style(unset: bool, radius: int) -> str:
+def _choice_style(unset: bool) -> str:
     background = "rgba(255, 255, 255, 80)" if unset else "rgba(100, 100, 100, 85)"
     color = "black" if unset else "white"
     return (
         f"QPushButton {{ background: {background}; color: {color}; border: 1px solid rgba(0,0,0,210);"
-        f" border-radius: {radius}px; font-weight: bold; padding: 0; }}"
+        " border-radius: 0; font-weight: bold; padding: 0; }"
         "QPushButton:hover { border: 2px solid white; }"
         "QPushButton:disabled { color: white; background: rgba(90,90,90,95); }"
     )
