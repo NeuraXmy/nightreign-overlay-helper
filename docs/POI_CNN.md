@@ -23,7 +23,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 对比脚本逐种算法调用生产地形、夜王、对齐、POI 和候选评分流程，固定随机种子 42。默认排除 `207_hide.jpg` 的验收统计，仍保留完整预测；`--exclude-from-acceptance` 不带参数可恢复全部样本验收。JSON 分别给出全样本统计及 `acceptance_*` 统计，并保存模型 SHA-256 和软件版本。
 
-仅测试最终部署推理，没有执行训练测试或 PyTorch 推理测试。导出单独使用既有 Conda 环境，部署实测使用 `.venv`（Python 3.11.7、ONNX Runtime 1.20.1、NumPy 2.4.6、macOS 13.2.1），不需要 Conda 库环境变量。Runtime 1.23.2 的 macOS wheel 在此系统存在 libc++ 兼容问题，详见训练 README。
+验收测试仅运行最终部署的 ONNX Runtime CPU 推理，不依赖 PyTorch 或训练、导出工具。训练和 ONNX 导出步骤见 [`训练说明`](../tools/poi_cnn/README.md)。
 
 `test_poi_cnn.py` 验证 CPU 单点/批量一致、边界裁切、概率归一化、类别约束、局部识别入口、模板分派以及 14 张验收截图的地图 ID。地图旧版逐像素/评分对照测试已移除；当前地图回归以标注截图和实际部署推理结果为准。
 

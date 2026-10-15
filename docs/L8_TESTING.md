@@ -68,7 +68,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/legacy 
 git diff --check
 ```
 
-`-p no:capture` 用于规避本机 pytest capture 初始化时的 readline 问题；测试本身不依赖此参数。
+`-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
 
 多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机验证使用 `scripts/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
