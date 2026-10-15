@@ -51,13 +51,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/te
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/test_map_nightlord.py -q
 ```
 
-如果本机 Python 在 pytest 启动阶段的 `_readline_workaround` 导入 `readline` 时发生段错误，可禁用 capture 插件后运行同一组测试：
-
-```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect/test_map_nightlord.py -q
-```
-
-2026-10-15 本地实测结果：
+2026-10-15 回归测试结果：
 
 | 分组 | 正确 / 样本数 | 准确率 |
 |------|---------------|--------|
