@@ -20,6 +20,7 @@ from nightreign_overlay.core.input import InputDevice
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.day_timer.api import DayStarted
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
+from nightreign_overlay.plugins.map_detect import detector as detector_module
 from nightreign_overlay.plugins.map_detect import plugin as module
 from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.detector import MapDetectResult
@@ -362,7 +363,7 @@ def test_manual_poi_constraints_converge_or_reset_without_losing_filters(maps, m
     manual.set_filter_state(explicit, {})
     plugin._rematch_manual_filter()
     assert not plugin._manual_filtering
-    assert submitted[-1].stage == "draw" and submitted[-1].pattern_id == target.id
+    assert submitted[-1].stage == "draw" and submitted[-1].pattern_ids == (target.id,)
 
     # Re-entering starts clean; an impossible setting resets only strongholds and shows the warning.
     plugin._toggle_manual_filter()
@@ -380,6 +381,54 @@ def test_manual_poi_constraints_converge_or_reset_without_losing_filters(maps, m
     assert "#ff4242" in manual.status_label.styleSheet()
     assert manual.earth_shifting == 0 and manual.nightlord == 0
     assert plugin._manual_revision == revision + 1
+
+
+def test_manual_apply_now_draws_up_to_five_candidates_sorted_by_id(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._current_is_full_map = True
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    catalog = plugin._manual_catalog
+    manual.earth_shifting_combo.setCurrentIndex(0)
+    assert manual.status_label.isVisible() and manual.apply_button.isHidden()
+
+    # Narrow with real stronghold values until 2..5 candidates remain.
+    explicit, candidates = None, []
+    for target in catalog.candidates(0, None, {}):
+        constraints = {}
+        for pos in catalog.positions(0, None):
+            constraints[pos] = PoiChoice(*catalog.value(target, pos))
+            candidates = catalog.candidates(0, None, constraints)
+            if len(candidates) <= 5:
+                break
+        if 2 <= len(candidates) <= 5:
+            explicit = constraints
+            break
+    assert explicit is not None
+
+    manual.set_filter_state(explicit, {})
+    plugin._rematch_manual_filter()
+    assert plugin._manual_filtering
+    assert manual.status_label.text() == f"剩余候选地图数量：{len(candidates)}"
+    assert not manual.apply_button.isHidden()
+    assert manual.apply_button.geometry().right() < manual.status_label.geometry().left()
+
+    manual.apply_button.click()
+    assert not plugin._manual_filtering
+    job = submitted[-1]
+    assert job.stage == "draw" and job.earth_shifting == 0 and job.nightlord is None
+    assert job.pattern_ids == tuple(sorted(pattern.id for pattern in candidates))
+
+    drawn = []
+    monkeypatch.setattr(
+        detector_module.MapDetector,
+        "_draw_overlay_image",
+        lambda _self, match, _size, index: drawn.append((match.pattern.id, index)) or index,
+    )
+    result = plugin._run_job(job)
+    assert [pattern.id for pattern in result.patterns] == list(job.pattern_ids)
+    assert drawn == [(pattern_id, index) for index, pattern_id in enumerate(job.pattern_ids)]
+    assert result.overlay_images == list(range(len(job.pattern_ids)))
 
 
 def test_manual_single_poi_auto_recognition_submits_and_applies_choice(maps, monkeypatch):

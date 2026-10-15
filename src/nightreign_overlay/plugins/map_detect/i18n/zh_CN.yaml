@@ -19,6 +19,7 @@ manual_filter:
   empty: 空
   select_earth_shifting: 请选择特殊地形
   remaining_candidates: "剩余候选地图数量：{count}"
+  apply_now: 立刻应用
   no_match: 筛选为空，请重新设置
   no_region: 请先标定地图区域
   selected: "已选择：{name}"

@@ -52,6 +52,8 @@ _ACTIONS = (
     "manual_filter",
 )
 _EARTH_SHIFTING_IDS = tuple(range(6))
+# Manual filtering can be applied early once this few candidate maps remain.
+_MANUAL_APPLY_LIMIT = 5
 
 
 class MatchFlag(Enum):
@@ -75,7 +77,7 @@ class _Job:
     poi_position: Position | None = None
     earth_shifting: int | None = None
     nightlord: int | None = None
-    pattern_id: int | None = None
+    pattern_ids: tuple[int, ...] = ()
 
 
 class _RecognitionService(MapRecognitionApi):
@@ -148,6 +150,7 @@ class MapDetectPlugin(Plugin):
         self._manual_overlay.nightlordChanged.connect(self._on_manual_parameters_changed)
         self._manual_overlay.poiChoiceChanged.connect(self._on_manual_poi_choice)
         self._manual_overlay.autoRecognizeRequested.connect(self._request_manual_auto_recognition)
+        self._manual_overlay.applyRequested.connect(self._apply_manual_candidates)
         self.ctx.on_cleanup(self._manual_overlay.dispose)
         self._controls = MapControlsOverlay(
             self._overlay, self._manual_overlay, self.ctx.tr, self._callbacks()
@@ -312,7 +315,7 @@ class MapDetectPlugin(Plugin):
             overlay.show_no_match()
             return
         if len(candidates) == 1:
-            self._finish_manual_filter(candidates[0], overlay.nightlord)
+            self._finish_manual_filter(candidates, overlay.nightlord)
             return
         inferred = catalog.inferred(
             candidates,
@@ -320,7 +323,16 @@ class MapDetectPlugin(Plugin):
             overlay.explicit_choices,
         )
         overlay.set_filter_state(overlay.explicit_choices, inferred)
-        overlay.show_candidate_count(len(candidates))
+        overlay.show_candidate_count(len(candidates), len(candidates) <= _MANUAL_APPLY_LIMIT)
+
+    def _apply_manual_candidates(self) -> None:
+        overlay = self._manual_overlay
+        catalog = self._manual_catalog
+        if not self._manual_filtering or overlay is None or catalog is None or overlay.earth_shifting is None:
+            return
+        candidates = catalog.candidates(overlay.earth_shifting, overlay.nightlord, overlay.explicit_choices)
+        if 0 < len(candidates) <= _MANUAL_APPLY_LIMIT:
+            self._finish_manual_filter(candidates, overlay.nightlord)
 
     def _request_manual_auto_recognition(self, pos: Position) -> None:
         overlay = self._manual_overlay
@@ -436,10 +448,11 @@ class MapDetectPlugin(Plugin):
         overlay.set_filter_state(explicit, {})
         self._rematch_manual_filter()
 
-    def _finish_manual_filter(self, pattern: MapPattern, nightlord: int | None) -> None:
+    def _finish_manual_filter(self, patterns: list[MapPattern], nightlord: int | None) -> None:
         if self._overlay is None or self._region is None:
             return
-        earth_shifting = pattern.earth_shifting
+        patterns = sorted(patterns, key=lambda pattern: pattern.id)
+        earth_shifting = patterns[0].earth_shifting
         region = QRect(self._region)
         self._exit_manual_filter()
         self._flag = MatchFlag.FALSE
@@ -465,7 +478,7 @@ class MapDetectPlugin(Plugin):
                 "draw",
                 earth_shifting=earth_shifting,
                 nightlord=nightlord,
-                pattern_id=pattern.id,
+                pattern_ids=tuple(pattern.id for pattern in patterns),
             )
         )
 
@@ -554,7 +567,7 @@ class MapDetectPlugin(Plugin):
             return self._detector.detect(
                 MapDetectParam(
                     map_region=job.region,
-                    draw_pattern_id=job.pattern_id,
+                    draw_pattern_ids=list(job.pattern_ids),
                     nightlord=job.nightlord,
                 )
             )
