@@ -405,28 +405,53 @@ class MapDetector:
         self.nightlord_icons: list[tuple[int | None, np.ndarray]] = nightlords
 
     def _match_full_map(self, img: np.ndarray) -> float:
+        """Find the lower-left circular HUD at its calibrated position and scale.
+
+        Normalize local contrast before Hough voting so dark/low-contrast maps
+        retain their edges. Before normalization, reject insufficient contrast
+        and obvious raised/tinted shadow floors from a solid-color backdrop.
+        These checks cannot distinguish every fade from brightness adjustment.
+        """
         config = self.config
+        if img.ndim != 3 or img.shape[2] != 3 or min(img.shape[:2]) < 5:
+            return float("inf")
+        thumbnail = cv2.resize(img, (160, 160), interpolation=cv2.INTER_AREA)
+        shadows = np.percentile(thumbnail.reshape(-1, 3), 1, axis=0)
+        # Broad limits on shadow level and channel imbalance, not a palette match.
+        # Keep these in the original intensity range: normalization would erase
+        # the evidence of a bright or strongly colored compositing background.
+        if shadows.min() > 96 or np.ptp(shadows) > 56:
+            return float("inf")
         img = img[-int(img.shape[0] * 0.22) :, : int(img.shape[1] * 0.22)]
-        img = cv2.resize(img, CHECK_FULL_MAP_STD_SIZE, interpolation=CV2_RESIZE_METHOD)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        circles = []
-        for thres in config.full_map_hough_circle_thres:
-            res = cv2.HoughCircles(
-                gray,
-                cv2.HOUGH_GRADIENT,
-                dp=1,
-                minDist=20,
-                param1=thres,
-                param2=30,
-                minRadius=int(img.shape[0] * 0.4),
-                maxRadius=int(img.shape[0] * 0.5),
-            )
-            if res is not None:
-                circles.extend(res)
+        img = cv2.resize(img, CHECK_FULL_MAP_STD_SIZE, interpolation=cv2.INTER_LINEAR)
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        if np.ptp(gray) < 48:
+            return float("inf")
+        gray = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
         error = float("inf")
-        if circles:
-            _cx, _cy, cr = sorted(list(circles[0]), key=lambda x: x[2], reverse=True)[0]
-            error = abs(cr - img.shape[0] * 0.425) ** 2
+        for smooth in (False, True):
+            # A light fallback suppresses sharpening halos without weakening
+            # the position, radius, or original-contrast requirements.
+            edges = cv2.GaussianBlur(gray, (3, 3), 0.4) if smooth else gray
+            for thres in config.full_map_hough_circle_thres:
+                res = cv2.HoughCircles(
+                    edges,
+                    cv2.HOUGH_GRADIENT,
+                    dp=1,
+                    minDist=20,
+                    param1=thres,
+                    param2=30,
+                    minRadius=int(img.shape[0] * 0.4),
+                    maxRadius=int(img.shape[0] * 0.5),
+                )
+                if res is not None:
+                    for cx, cy, radius in res[0]:
+                        if abs(cx - img.shape[1] * 0.5) <= 8 and abs(cy - img.shape[0] * 0.5) <= 8:
+                            error = min(error, float((radius - img.shape[0] * 0.425) ** 2))
+                if error <= config.full_map_error_threshold:
+                    break
+            if error <= config.full_map_error_threshold:
+                break
         log.debug(f"MapDetector: Full map match error: {error:.4f}")
         return error
 
