@@ -89,6 +89,14 @@ def test_lifecycle_settings_and_resources(maps):
     assert plugin.config.snapshot().earth_shifting_algorithm == "template"
     plugin.config.earth_shifting_algorithm.reset()
     assert algorithm.comboBox.currentData() == "ncc"
+    poi_algorithm = next(
+        card for card in panel.findChildren(ConfigChoiceCard) if card.item.key == "poi_algorithm"
+    )
+    assert poi_algorithm.comboBox.currentData() == "cnn"
+    poi_algorithm.comboBox.setCurrentIndex(0)
+    assert plugin.config.snapshot().poi_algorithm == "template"
+    plugin.config.poi_algorithm.reset()
+    assert poi_algorithm.comboBox.currentData() == "cnn"
     advanced = {card.item.key: card for card in panel.findChildren(ConfigDoubleSpinCard)}
     assert set(advanced) == {
         "full_map_error_threshold",

@@ -31,6 +31,7 @@ from nightreign_overlay.plugins.map_detect.map_info import (
     Position,
     load_map_info,
 )
+from nightreign_overlay.plugins.map_detect.poi_cnn import BASE_CLASSES, PoiCnn
 from nightreign_overlay.plugins.map_detect.resources import get_appdata_path, get_data_path
 
 log = get_logger(__name__)
@@ -373,6 +374,8 @@ class MapDetector:
         # 地图信息
         self.info = load_default_map_info(localized.language)
 
+        self._poi_cnn: PoiCnn | None = None
+
         # 初始化POI信息
         self.all_poi_images, self.poi_cate_info = build_poi_categories(self.info)
 
@@ -521,6 +524,57 @@ class MapDetector:
     def _get_poi_image(self, construct_type: int, with_subicon: bool = False) -> Image.Image:
         return get_poi_image(construct_type, with_subicon)
 
+    def _match_pois(
+        self,
+        map_img: np.ndarray,
+        map_bg: np.ndarray,
+        positions: list[Position],
+        earth_shifting: int,
+        nightlord: int | None = None,
+    ) -> dict[Position, tuple[int, float]]:
+        """Recognize a full batch or a manual selection using the configured backend."""
+        if self.config.poi_algorithm == "template":
+            return {
+                pos: self._match_poi(map_img, map_bg, pos, earth_shifting, nightlord) for pos in positions
+            }
+        if not positions:
+            return {}
+        if self._poi_cnn is None:
+            self._poi_cnn = PoiCnn()
+        base, corner = self._poi_cnn.predict(map_img, positions)
+        nightlords = [nightlord] if nightlord is not None else self.info.all_nightlords
+        results = {}
+        for i, pos in enumerate(positions):
+            possible = set()
+            for nl in nightlords:
+                possible.update(self.info.possible_poi_types.get((earth_shifting, nl, pos), set()))
+            results[pos] = self._select_cnn_poi(base[i], corner[i], possible)
+        return results
+
+    def _select_cnn_poi(self, base: np.ndarray, corner: np.ndarray, possible: set[int]) -> tuple[int, float]:
+        """Constrain base first, then constrain corners to that base at this position."""
+        by_key: dict[int, list[int]] = {}
+        for ctype in sorted(possible):
+            key = get_poi_key(ctype) or 0
+            if key in BASE_CLASSES:
+                by_key.setdefault(key, []).append(ctype)
+        if not by_key:
+            return 0, 0.0
+        key = max(by_key, key=lambda k: float(base[list(BASE_CLASSES[k])].sum()))
+        candidates = by_key[key]
+
+        def corner_index(ctype: int) -> int:
+            subicon = CTYPE_SUBICON_MAP.get(ctype)
+            if isinstance(subicon, Condition):
+                return subicon.value + 1
+            if isinstance(subicon, Attribute):
+                return subicon.value + 8
+            return 0
+
+        best = max(candidates, key=lambda c: float(corner[corner_index(c)]))
+        confidence = float(base[list(BASE_CLASSES[key])].sum() * corner[corner_index(best)])
+        return best, confidence
+
     def _match_poi(
         self,
         map_img: np.ndarray,
@@ -529,6 +583,8 @@ class MapDetector:
         earth_shifting: int,
         nightlord: int | None = None,
     ) -> tuple[int, float]:
+        if self.config.poi_algorithm == "cnn":
+            return self._match_pois(map_img, map_bg, [pos], earth_shifting, nightlord)[pos]
         img = map_img[
             pos[1] - STD_POI_SIZE[1] // 2 : pos[1] - STD_POI_SIZE[1] // 2 + STD_POI_SIZE[1],
             pos[0] - STD_POI_SIZE[0] // 2 : pos[0] - STD_POI_SIZE[1] // 2 + STD_POI_SIZE[0],
@@ -676,8 +732,10 @@ class MapDetector:
         all_poi_pos = list(all_poi_pos)
         random.shuffle(all_poi_pos)
 
-        for x, y in sorted(all_poi_pos[:sample_num]):
-            ctype, score = self._match_poi(img, map_bg, (x, y), earth_shifting, nightlord)
+        positions = sorted(all_poi_pos[:sample_num])
+        matches = self._match_pois(img, map_bg, positions, earth_shifting, nightlord)
+        for x, y in positions:
+            ctype, score = matches[(x, y)]
             poi_result[(x, y)] = ctype
 
             # 绘制调试图
@@ -1243,9 +1301,9 @@ class MapDetector:
         if param.poi_positions:
             assert param.earth_shifting is not None, "earth_shifting should be provided when matching POIs"
             aligned, map_bg = self._prepare_poi_image(img, param.earth_shifting)
-            ret.poi_types = {}
-            for pos in param.poi_positions:
-                ctype, _ = self._match_poi(aligned, map_bg, pos, param.earth_shifting, param.nightlord)
-                ret.poi_types[pos] = ctype
+            matches = self._match_pois(
+                aligned, map_bg, param.poi_positions, param.earth_shifting, param.nightlord
+            )
+            ret.poi_types = {pos: ctype for pos, (ctype, _) in matches.items()}
 
         return ret

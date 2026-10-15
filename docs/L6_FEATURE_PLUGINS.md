@@ -182,6 +182,8 @@ FALSE ──检测到完整地图──▶ PREPARE ──下一帧──▶ TRUE
 2. `terrain`：识别地形（`earth_shifting`）。
 3. `<earth_shifting>`：基于地形匹配候选 POI 与水晶布局。
 
+POI 算法由 `poi_algorithm` 配置选择，默认 `cnn`，保留 `template`。整图与手动筛选单点自动识别共用批量入口，CNN 使用 ONNX Runtime CPU。部署、类别约束、训练复现与验收结果见 [`POI_CNN.md`](./POI_CNN.md)。
+
 ### 地图悬浮窗
 
 - `MapInfoOverlay`：显示地图绘制结果、候选 `#x/y`、水晶布局、识别状态。

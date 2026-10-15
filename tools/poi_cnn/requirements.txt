@@ -1,0 +1,6 @@
+# Training / export only; application runtime requires onnxruntime alone.
+torch>=2.1,<3
+onnx>=1.17,<2
+matplotlib>=3.9,<4
+numpy>=2
+Pillow>=10

@@ -53,7 +53,7 @@ def legacy(monkeypatch, tmp_path):
         "error": logger.error,
         "debug": logger.debug,
         "ScreencapEngine": object,
-        "Config": SimpleNamespace(get=lambda: MapDetectionSettings()),
+        "Config": SimpleNamespace(get=lambda: MapDetectionSettings(poi_algorithm="template")),
         "cv2": cv2,
         "np": np,
         "Image": Image,
@@ -102,6 +102,8 @@ def test_bundled_assets_are_exact_copies():
     for path in root.rglob("*"):
         if path.is_file():
             relative = path.relative_to(root)
+            if relative == Path("poi_cnn/epoch-42.onnx"):
+                continue  # New CNN asset; covered by the production ONNX inference tests.
             assert path.read_bytes() == (_OLD / "data" / relative).read_bytes(), str(relative)
 
 
@@ -109,7 +111,7 @@ def test_hdr_preprocessing_and_csv_models(legacy):
     old, utils = legacy
     image = np.random.default_rng(45).integers(0, 256, (100, 100, 3), dtype=np.uint8)
     assert np.array_equal(normalize_image(image), np.asarray(utils.normalize_image(Image.fromarray(image))))
-    before, after = old.MapDetector(), new.MapDetector()
+    before, after = old.MapDetector(), new.MapDetector(MapDetectionSettings(poi_algorithm="template"))
     assert len(before.info.patterns) == len(after.info.patterns) > 0
     assert before.info.pos_dict == after.info.pos_dict
     assert before.info.tgh_pos_dict == after.info.tgh_pos_dict
@@ -124,7 +126,7 @@ def test_full_map_terrain_nightlord_poi_and_candidate_parity(legacy, terrain):
     old, _ = legacy
     before, after = (
         old.MapDetector(),
-        new.MapDetector(MapDetectionSettings(earth_shifting_algorithm="template")),
+        new.MapDetector(MapDetectionSettings(earth_shifting_algorithm="template", poi_algorithm="template")),
     )
     image = new.MAP_BGS[terrain].copy()
     assert before._match_full_map(image) == after._match_full_map(image)
@@ -154,7 +156,7 @@ def test_all_poi_icon_pixels_and_crystal_layouts(legacy):
     from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay
 
     old, utils = legacy
-    before, after = old.MapDetector(), new.MapDetector()
+    before, after = old.MapDetector(), new.MapDetector(MapDetectionSettings(poi_algorithm="template"))
     assert before.all_poi_images.keys() == after.all_poi_images.keys()
     for key in before.all_poi_images:
         assert before.all_poi_images[key].tobytes() == after.all_poi_images[key].tobytes()

@@ -11,6 +11,7 @@ from nightreign_overlay.core.config import ChoiceOption, ConfigGroup, Option, Ra
 class MapDetectionSettings:
     """Immutable settings snapshot passed to the worker, with legacy config.yaml defaults."""
 
+    poi_algorithm: str = "cnn"
     earth_shifting_algorithm: str = "ncc"
     fixed_map_overlay_draw_size: tuple[int, int] | None = None
     map_overlay_draw_size_ratio: float | None = 1.0
@@ -26,6 +27,7 @@ class MapDetectionSettings:
 class MapDetectConfig(ConfigGroup):
     """Keep the original advanced parameters available in settings.yaml without changing their scale."""
 
+    poi_algorithm = ChoiceOption("cnn", ("template", "cnn"))
     earth_shifting_algorithm = ChoiceOption("ncc", ("ncc", "template"))
     return_topk = RangeOption(5, 1, 10)
     map_pattern_match_interval = RangeOption(2100, 1, 86400)

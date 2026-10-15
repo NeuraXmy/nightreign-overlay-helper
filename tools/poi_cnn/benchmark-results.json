@@ -1,0 +1,493 @@
+{
+  "metadata": {
+    "python": "3.11.7",
+    "system": "macOS-13.2.1-arm64-arm-64bit",
+    "onnxruntime": "1.20.1",
+    "numpy": "2.4.6",
+    "seed": 42,
+    "excluded_from_acceptance": [
+      "207_hide.jpg"
+    ],
+    "sample_ratio_with_nightlord": 1.0,
+    "sample_ratio_without_nightlord": 1.0,
+    "model_sha256": "13acbd8fcaa7bd997e31fa288a4ab4f9b1180a2eb3020ab15e5572d356bf77d1"
+  },
+  "summary": {
+    "template": {
+      "count": 15,
+      "correct": 13,
+      "accuracy": 0.8666666666666667,
+      "poi_error_le_10": 6,
+      "acceptance_count": 14,
+      "acceptance_correct": 13,
+      "acceptance_accuracy": 0.9285714285714286,
+      "acceptance_poi_error_le_10": 6,
+      "meets_target": false
+    },
+    "cnn": {
+      "count": 15,
+      "correct": 14,
+      "accuracy": 0.9333333333333333,
+      "poi_error_le_10": 11,
+      "acceptance_count": 14,
+      "acceptance_correct": 14,
+      "acceptance_accuracy": 1.0,
+      "acceptance_poi_error_le_10": 11,
+      "meets_target": true
+    }
+  },
+  "results": [
+    {
+      "algorithm": "template",
+      "capture": "1088.jpg",
+      "expected_ids": [
+        1088
+      ],
+      "predicted_id": 1088,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 30,
+      "expected_poi_error": 30,
+      "earth_shifting": 0,
+      "nightlord": 8,
+      "seconds": 0.6953
+    },
+    {
+      "algorithm": "template",
+      "capture": "1126-1176_hide.jpg",
+      "expected_ids": [
+        1126,
+        1176
+      ],
+      "predicted_id": 1126,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 4,
+      "nightlord": null,
+      "seconds": 0.1815
+    },
+    {
+      "algorithm": "template",
+      "capture": "1137.jpg",
+      "expected_ids": [
+        1137
+      ],
+      "predicted_id": 1137,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 5,
+      "nightlord": 8,
+      "seconds": 0.4085
+    },
+    {
+      "algorithm": "template",
+      "capture": "1137_2.jpg",
+      "expected_ids": [
+        1137
+      ],
+      "predicted_id": 1137,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 75,
+      "expected_poi_error": 75,
+      "earth_shifting": 5,
+      "nightlord": 8,
+      "seconds": 0.4528
+    },
+    {
+      "algorithm": "template",
+      "capture": "1158.jpg",
+      "expected_ids": [
+        1158
+      ],
+      "predicted_id": 1158,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 40,
+      "expected_poi_error": 40,
+      "earth_shifting": 0,
+      "nightlord": 9,
+      "seconds": 0.6762
+    },
+    {
+      "algorithm": "template",
+      "capture": "1187.jpg",
+      "expected_ids": [
+        1187
+      ],
+      "predicted_id": 1180,
+      "correct": false,
+      "included_in_acceptance": true,
+      "poi_error": 3,
+      "expected_poi_error": 3,
+      "earth_shifting": 4,
+      "nightlord": 9,
+      "seconds": 0.1868
+    },
+    {
+      "algorithm": "template",
+      "capture": "12.jpg",
+      "expected_ids": [
+        12
+      ],
+      "predicted_id": 12,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 89,
+      "expected_poi_error": 89,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.6795
+    },
+    {
+      "algorithm": "template",
+      "capture": "16.jpg",
+      "expected_ids": [
+        16
+      ],
+      "predicted_id": 16,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.6616
+    },
+    {
+      "algorithm": "template",
+      "capture": "187.jpg",
+      "expected_ids": [
+        187
+      ],
+      "predicted_id": 187,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 30,
+      "expected_poi_error": 30,
+      "earth_shifting": 2,
+      "nightlord": 4,
+      "seconds": 0.3877
+    },
+    {
+      "algorithm": "template",
+      "capture": "207_hide.jpg",
+      "expected_ids": [
+        207
+      ],
+      "predicted_id": 249,
+      "correct": false,
+      "included_in_acceptance": false,
+      "poi_error": 88,
+      "expected_poi_error": 142,
+      "earth_shifting": 0,
+      "nightlord": null,
+      "seconds": 0.7364
+    },
+    {
+      "algorithm": "template",
+      "capture": "235.jpg",
+      "expected_ids": [
+        235
+      ],
+      "predicted_id": 235,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 20,
+      "expected_poi_error": 20,
+      "earth_shifting": 5,
+      "nightlord": 5,
+      "seconds": 0.4085
+    },
+    {
+      "algorithm": "template",
+      "capture": "251_hide.jpg",
+      "expected_ids": [
+        251
+      ],
+      "predicted_id": 251,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 13,
+      "expected_poi_error": 13,
+      "earth_shifting": 0,
+      "nightlord": null,
+      "seconds": 0.7618
+    },
+    {
+      "algorithm": "template",
+      "capture": "262.jpg",
+      "expected_ids": [
+        262
+      ],
+      "predicted_id": 262,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 16,
+      "expected_poi_error": 16,
+      "earth_shifting": 1,
+      "nightlord": 6,
+      "seconds": 0.4053
+    },
+    {
+      "algorithm": "template",
+      "capture": "273.jpg",
+      "expected_ids": [
+        273
+      ],
+      "predicted_id": 273,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 3,
+      "nightlord": 6,
+      "seconds": 0.4961
+    },
+    {
+      "algorithm": "template",
+      "capture": "3.jpg",
+      "expected_ids": [
+        3
+      ],
+      "predicted_id": 3,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 10,
+      "expected_poi_error": 10,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.7079
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1088.jpg",
+      "expected_ids": [
+        1088
+      ],
+      "predicted_id": 1088,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 0,
+      "nightlord": 8,
+      "seconds": 0.2161
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1126-1176_hide.jpg",
+      "expected_ids": [
+        1126,
+        1176
+      ],
+      "predicted_id": 1126,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 4,
+      "nightlord": null,
+      "seconds": 0.1339
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1137.jpg",
+      "expected_ids": [
+        1137
+      ],
+      "predicted_id": 1137,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 3,
+      "expected_poi_error": 3,
+      "earth_shifting": 5,
+      "nightlord": 8,
+      "seconds": 0.1347
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1137_2.jpg",
+      "expected_ids": [
+        1137
+      ],
+      "predicted_id": 1137,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 9,
+      "expected_poi_error": 9,
+      "earth_shifting": 5,
+      "nightlord": 8,
+      "seconds": 0.1413
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1158.jpg",
+      "expected_ids": [
+        1158
+      ],
+      "predicted_id": 1158,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 0,
+      "nightlord": 9,
+      "seconds": 0.1375
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "1187.jpg",
+      "expected_ids": [
+        1187
+      ],
+      "predicted_id": 1187,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 4,
+      "nightlord": 9,
+      "seconds": 0.1367
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "12.jpg",
+      "expected_ids": [
+        12
+      ],
+      "predicted_id": 12,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 22,
+      "expected_poi_error": 22,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.1403
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "16.jpg",
+      "expected_ids": [
+        16
+      ],
+      "predicted_id": 16,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.1184
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "187.jpg",
+      "expected_ids": [
+        187
+      ],
+      "predicted_id": 187,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 20,
+      "expected_poi_error": 20,
+      "earth_shifting": 2,
+      "nightlord": 4,
+      "seconds": 0.1294
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "207_hide.jpg",
+      "expected_ids": [
+        207
+      ],
+      "predicted_id": 249,
+      "correct": false,
+      "included_in_acceptance": false,
+      "poi_error": 95,
+      "expected_poi_error": 117,
+      "earth_shifting": 0,
+      "nightlord": null,
+      "seconds": 0.1176
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "235.jpg",
+      "expected_ids": [
+        235
+      ],
+      "predicted_id": 235,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 0,
+      "expected_poi_error": 0,
+      "earth_shifting": 5,
+      "nightlord": 5,
+      "seconds": 0.1503
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "251_hide.jpg",
+      "expected_ids": [
+        251
+      ],
+      "predicted_id": 251,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 13,
+      "expected_poi_error": 13,
+      "earth_shifting": 0,
+      "nightlord": null,
+      "seconds": 0.1299
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "262.jpg",
+      "expected_ids": [
+        262
+      ],
+      "predicted_id": 262,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 6,
+      "expected_poi_error": 6,
+      "earth_shifting": 1,
+      "nightlord": 6,
+      "seconds": 0.1377
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "273.jpg",
+      "expected_ids": [
+        273
+      ],
+      "predicted_id": 273,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 3,
+      "expected_poi_error": 3,
+      "earth_shifting": 3,
+      "nightlord": 6,
+      "seconds": 0.1415
+    },
+    {
+      "algorithm": "cnn",
+      "capture": "3.jpg",
+      "expected_ids": [
+        3
+      ],
+      "predicted_id": 3,
+      "correct": true,
+      "included_in_acceptance": true,
+      "poi_error": 10,
+      "expected_poi_error": 10,
+      "earth_shifting": 0,
+      "nightlord": 0,
+      "seconds": 0.1396
+    }
+  ]
+}

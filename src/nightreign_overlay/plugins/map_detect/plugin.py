@@ -766,6 +766,16 @@ class MapDetectPlugin(Plugin):
                 self.ctx.tr("settings.earth_shifting_algorithm.title"),
                 self.ctx.tr("settings.earth_shifting_algorithm.content"),
             ),
+            ConfigChoiceCard(
+                self.config.poi_algorithm,
+                [
+                    (algorithm, self.ctx.tr(f"settings.poi_algorithm.{algorithm}"))
+                    for algorithm in self.config.poi_algorithm.option.choices
+                ],
+                FluentIcon.GLOBE,
+                self.ctx.tr("settings.poi_algorithm.title"),
+                self.ctx.tr("settings.poi_algorithm.content"),
+            ),
             ConfigRangeCard(
                 self.config.map_pattern_match_interval,
                 FluentIcon.HISTORY,
