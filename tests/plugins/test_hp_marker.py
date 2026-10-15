@@ -10,8 +10,6 @@ import pytest
 from PyQt6.QtCore import QRect, Qt
 from PyQt6.QtWidgets import QWidget
 
-from conftest import process_events
-from feature_fakes import FeatureServices, solid_image
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.plugins.capture.api import FrameCaptured
@@ -20,7 +18,9 @@ from nightreign_overlay.plugins.hp_marker.plugin import HpMarkerPlugin, _Job
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.ui.components import ConfigDoubleSpinCard
 from nightreign_overlay.ui.overlay import OverlayManager
-from test_overlay import FakeBackend
+from tests.support.feature_fakes import FeatureServices, solid_image
+from tests.support.platform import FakeBackend
+from tests.support.qt import process_events
 
 
 @pytest.fixture

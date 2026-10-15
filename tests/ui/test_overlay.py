@@ -9,7 +9,6 @@ import pytest
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from conftest import process_events
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
@@ -25,18 +24,8 @@ from nightreign_overlay.plugins.hud.overlay import HudOverlay
 from nightreign_overlay.plugins.overlay_test.api import OverlayTestApi
 from nightreign_overlay.plugins.overlay_test.overlay import OverlayTestWindow
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
-
-
-class FakeBackend(PlatformBackend):
-    name = "fake"
-    supports_foreground_detection = True
-    supports_transparent_overlay = True
-
-    def __init__(self) -> None:
-        self.title: str | None = None
-
-    def foreground_window_title(self) -> str | None:
-        return self.title
+from tests.support.platform import FakeBackend
+from tests.support.qt import process_events
 
 
 @dataclass

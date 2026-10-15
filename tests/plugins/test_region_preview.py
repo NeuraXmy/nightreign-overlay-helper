@@ -9,7 +9,6 @@ from PyQt6.QtCore import QPointF, QRect, Qt
 from PyQt6.QtGui import QColor, QEnterEvent
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from feature_fakes import FeatureServices
 from nightreign_overlay.core import i18n
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
@@ -28,6 +27,7 @@ from nightreign_overlay.plugins.region import plugin as region_plugin
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.plugins.region.plugin import RegionPlugin
 from nightreign_overlay.ui.components import HotkeySettingCard
+from tests.support.feature_fakes import FeatureServices
 
 
 def _region(store: ConfigStore, tmp_path: Path) -> tuple[RegionPlugin, RegionApi]:

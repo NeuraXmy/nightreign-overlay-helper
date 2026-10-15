@@ -8,7 +8,6 @@ import pytest
 from PyQt6.QtCore import QRect
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from feature_fakes import FeatureServices
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import BoolOption, ConfigGroup, ConfigStore, RangeOption
 from nightreign_overlay.core.events import EventBus
@@ -31,6 +30,7 @@ from nightreign_overlay.ui.components import (
 from nightreign_overlay.ui.components.setting_cards import _format_binding
 from nightreign_overlay.ui.pages.plugin_page import PluginPage
 from nightreign_overlay.ui.pages.settings import SettingsPage
+from tests.support.feature_fakes import FeatureServices
 
 _ALT_X = HotkeyBinding(InputDevice.KEYBOARD, ("alt", "x"))
 

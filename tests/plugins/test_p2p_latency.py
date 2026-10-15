@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 
 import pytest
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QPushButton, QWidget
 
-from conftest import process_events
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
@@ -27,8 +25,10 @@ from nightreign_overlay.plugins.p2p_latency.plugin import P2PLatencyPlugin, _Sta
 from nightreign_overlay.plugins.p2p_latency.service import P2PService
 from nightreign_overlay.ui.components import ConfigRangeCard, MultiButtonSettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
+from tests.support.paths import PROJECT_ROOT
+from tests.support.qt import process_events
 
-_ROOT = Path(__file__).parents[1] / "src/nightreign_overlay/plugins/p2p_latency"
+_ROOT = PROJECT_ROOT / "src/nightreign_overlay/plugins/p2p_latency"
 
 
 class _Backend(PlatformBackend):

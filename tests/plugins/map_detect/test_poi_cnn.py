@@ -1,7 +1,6 @@
 """Constrained CNN decoding, batched CPU inference, and manual recognition regressions."""
 
 from dataclasses import replace
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -10,6 +9,7 @@ from PIL import Image
 from nightreign_overlay.plugins.map_detect.config import MapDetectionSettings
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam
 from nightreign_overlay.plugins.map_detect.poi_cnn import PoiCnn
+from tests.support.paths import MAP_CAPTURE_DIR
 
 
 @pytest.fixture
@@ -96,11 +96,7 @@ def test_cpu_session_batch_single_parity_and_edge_padding():
 
 
 # User-confirmed hard capture remains reported by benchmark_poi.py, outside acceptance.
-_CAPTURES = [
-    path
-    for path in sorted((Path(__file__).parent / "data/map_detect").glob("*.jpg"))
-    if path.name != "207_hide.jpg"
-]
+_CAPTURES = [path for path in sorted((MAP_CAPTURE_DIR).glob("*.jpg")) if path.name != "207_hide.jpg"]
 
 
 @pytest.fixture(scope="module")

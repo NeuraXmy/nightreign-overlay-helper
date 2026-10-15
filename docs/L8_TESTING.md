@@ -2,97 +2,76 @@
 
 ## 职责
 
-保证核心逻辑、插件行为、UI 组件在重构和新增功能时不退化。
+保证核心逻辑、插件行为、UI 组件在修改时不退化。测试按功能归类，运行入口仍为仓库根目录。
 
-## 测试目录
+## 目录结构
 
-[`tests/`](../tests/)
+```text
+tests/
+├── conftest.py              # 全局 fixture：QApplication、临时数据目录、ConfigStore
+├── core/                    # 配置、事件/服务、i18n、插件管理器
+├── plugins/                 # 功能及基础设施插件
+│   └── map_detect/          # 地图状态机、手动筛选、地形/夜王、POI CNN
+├── ui/                      # 悬浮窗、设置重置、托盘退出
+├── platforms/               # 原生平台行为（当前为 macOS 悬浮窗非激活）
+├── legacy/                  # 保留的血条旧版对照测试
+├── support/                 # 共享 fake、Qt 工具、仓库/样本路径
+└── data/map_detect/         # Git 跟踪的地图截图，位置保持稳定
+```
 
-## 关键文件
+每个测试分类都是 Python 包。共享工具通过 `tests.support.*` 导入；测试之间不互相导入，也不导入 `conftest.py` 中的普通函数。全局 fixture 由 pytest 自动发现。
 
-| 文件 | 职责 |
+## 分类与覆盖
+
+| 目录 | 测试模块 | 覆盖内容 |
+|------|----------|----------|
+| `core/` | `test_config.py`、`test_events_services.py`、`test_i18n.py`、`test_plugin_manager.py` | 配置、事件/服务、翻译、插件依赖与生命周期 |
+| `plugins/` | `test_capture_backends.py`、`test_infrastructure_plugins.py`、`test_region_preview.py` | 截图后端、输入/HUD/区域服务、区域预览 |
+| `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
+| `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
+| `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
+| `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
+| `plugins/map_detect/` | `test_poi_cnn.py`、`test_map_localization.py` | ONNX CPU 单点/批量推理、类别约束、14 张地图 ID 验收、名称本地化 |
+| `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
+| `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
+| `legacy/` | `test_hp_marker_legacy_parity.py` | 血条检测与旧版逐帧比较，旧版目录缺失时跳过 |
+
+地图旧版逐像素/评分对照测试已删除；地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)，CNN 部署与验收见 [`POI_CNN.md`](./POI_CNN.md)。
+
+## 共享支持代码
+
+| 文件 | 用途 |
 |------|------|
-| [`tests/conftest.py`](../tests/conftest.py) | pytest fixture（QApplication、临时配置目录等） |
-| [`tests/feature_fakes.py`](../tests/feature_fakes.py) | 插件测试用的 fake 服务/后端 |
-
-## 测试分类
-
-### 核心单元测试
-
-| 测试文件 | 覆盖内容 |
-|---------|---------|
-| `test_config.py` | 配置声明、绑定、持久化、回退、防抖 |
-| `test_events_services.py` | 事件总线、服务注册表、跨线程投递 |
-| `test_i18n.py` | 语言发现、回退链、系统 locale 匹配 |
-| `test_plugin_manager.py` | 插件发现、拓扑排序、依赖解析、启停联动 |
-
-### 插件测试
-
-| 测试文件 | 覆盖内容 |
-|---------|---------|
-| `test_infrastructure_plugins.py` | capture/input/hud/region 基础行为 |
-| `test_day_timer.py` | 阶段推进、快捷键、标定、HUD |
-| `test_rain_timer.py` | 雨中状态机、颜色校准、HUD |
-| `test_art_timer.py` | 绝招识别、状态机、HUD |
-| `test_map_detect.py` | 选区、状态机、后台线程、快捷键、HUD 联动 |
-| `test_poi_cnn.py` | ONNX CPU 单点/批量推理、受限类别解码、手动局部入口、14 张地图 ID 验收 |
-| `test_map_terrain.py` | 地图图片特殊地形回归、算法阈值隔离、NCC 拒识 |
-| `test_map_nightlord.py` | 夜王模板匹配样本准确率，隐藏样本只接受 unk.png（None） |
-| `test_map_localization.py` | 地图名称表 i18n |
-| `test_hp_marker.py` | 检测、标记位置、失败保持、前台门控 |
-| `test_p2p_latency.py` | 服务状态、窗口布局、模拟 helper |
-| `test_overlay.py` | 悬浮窗基类行为、可见性、位置持久化 |
-| `test_overlay_activation.py` | 非激活点击 |
-| `test_region_preview.py` | 区域预览 |
-| `test_settings_reset.py` | 设置重置 |
-| `test_tray_exit.py` | 托盘退出/隐藏行为 |
-
-### 旧版对照测试
-
-| 测试文件 | 覆盖内容 |
-|---------|---------|
-| `test_hp_marker_legacy_parity.py` | 血条检测与旧版逐帧比较 |
-| `test_map_detect_legacy_parity.py` | 地图检测与旧版输出/绘制比较 |
-
-- 隔离加载旧版源码；缺少旧版目录时自动跳过。
-- 保证重写算法与旧版一致。
-
-地图特殊地形样本、文件名 ground truth 规则和测试脚本分工见 [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)。
+| [`tests/conftest.py`](../tests/conftest.py) | pytest fixture、offscreen 环境、隔离运行数据 |
+| [`tests/support/feature_fakes.py`](../tests/support/feature_fakes.py) | capture / region / HUD 等 fake 服务 |
+| [`tests/support/platform.py`](../tests/support/platform.py) | 共享 `FakeBackend` |
+| [`tests/support/qt.py`](../tests/support/qt.py) | `process_events()` |
+| [`tests/support/paths.py`](../tests/support/paths.py) | 仓库路径与地图截图路径，避免目录移动影响路径推导 |
 
 ## 运行测试
 
 ```bash
-# Qt offscreen 平台
-export QT_QPA_PLATFORM=offscreen
-pytest
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture -q
 
-# lint / format / diff
-ruff check .
-ruff format --check .
+# 按类别运行
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/core -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/ui tests/platforms -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/legacy -q
+
+.venv/bin/ruff check src tests scripts tools
+.venv/bin/ruff format --check src tests scripts tools
 git diff --check
 ```
 
-## INVARIANT
+`-p no:capture` 用于规避本机 pytest capture 初始化时的 readline 问题；测试本身不依赖此参数。
 
-- Qt 相关测试在 `QT_QPA_PLATFORM=offscreen` 下运行。
-- 复杂 fixture 必须注册核心服务，避免定时器回调 `require()` 失败导致进程 abort。
-- 核心逻辑（配置、事件、服务、依赖解析）必须有单元测试。
-- 提交前必须通过 `ruff check`、`ruff format --check`、`git diff --check`。
+## 约束与新增测试
 
-## PATTERN：为新增插件写测试
-
-1. 在 `tests/test_<plugin_id>.py` 创建测试模块。
-2. 使用 `conftest.py` 中的 fixture 构造 `PluginContext` 和 fake 服务。
-3. 测试 `on_load()` 后的配置绑定、`on_activate()` 后的资源注册。
-4. 测试事件处理逻辑（可用 `HotkeyApi.trigger_for_test()` 模拟快捷键）。
-5. 测试 `on_deactivate()` 后资源是否释放。
-
-## 常见修改场景
-
-| 场景 | 应查看/修改 |
-|------|------------|
-| 新增核心功能测试 | `tests/test_config.py` / `test_events_services.py` / `test_i18n.py` |
-| 新增插件测试 | `tests/test_<plugin_id>.py` |
-| 新增 UI 测试 fixture | `tests/conftest.py` + `tests/feature_fakes.py` |
-| 调整 ruff 规则 | `pyproject.toml` `[tool.ruff]` |
-| 调整 pytest 配置 | `pyproject.toml` `[tool.pytest.ini_options]` |
+- Qt 测试在 `QT_QPA_PLATFORM=offscreen` 下运行。
+- 每个测试使用临时运行数据目录，不访问用户实际配置。
+- 复杂 fixture 必须注册所需服务，避免定时器回调 `require()` 失败导致进程 abort。
+- 核心逻辑、插件、UI 与平台行为分别放入对应分类；新的地图测试放入 `tests/plugins/map_detect/`。
+- 共用 fake 和工具放入 `tests/support/`；只供单个模块使用的 fixture 留在该模块。
+- 核心逻辑必须有单元测试；插件需覆盖加载、激活、事件处理、停用与资源释放。
+- 提交前运行 pytest、Ruff 检查、格式检查及 `git diff --check`。

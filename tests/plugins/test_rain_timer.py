@@ -11,7 +11,6 @@ import pytest
 from PyQt6.QtCore import QRect
 from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
-from feature_fakes import FeatureServices, solid_image
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
@@ -19,6 +18,7 @@ from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.rain_timer import plugin as rain_plugin
 from nightreign_overlay.plugins.rain_timer.detector import DEFAULT_HLS, RainDetectResult
 from nightreign_overlay.plugins.rain_timer.plugin import RainTimerPlugin
+from tests.support.feature_fakes import FeatureServices, solid_image
 
 _ROOT = Path(rain_plugin.__file__).parent
 _REGION = "rain_timer.hp_region"

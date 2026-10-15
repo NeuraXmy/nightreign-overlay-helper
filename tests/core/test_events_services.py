@@ -6,9 +6,9 @@ from dataclasses import dataclass
 import pytest
 from PyQt6.QtWidgets import QApplication
 
-from conftest import process_events
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.services import ServiceRegistry
+from tests.support.qt import process_events
 
 
 @dataclass(frozen=True)

@@ -12,8 +12,6 @@ from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtTest import QSignalSpy, QTest
 from PyQt6.QtWidgets import QWidget
 
-from conftest import process_events
-from feature_fakes import FeatureServices, solid_image
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.input import InputDevice
@@ -28,7 +26,9 @@ from nightreign_overlay.plugins.map_detect.manual_catalog import PoiChoice
 from nightreign_overlay.plugins.map_detect.plugin import MapDetectPlugin, MatchFlag, _Job
 from nightreign_overlay.ui.components import ConfigChoiceCard, ConfigDoubleSpinCard, HotkeySettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
-from test_overlay import FakeBackend
+from tests.support.feature_fakes import FeatureServices, solid_image
+from tests.support.platform import FakeBackend
+from tests.support.qt import process_events
 
 _REGION = "map_detect.map_region"
 _ROOT = Path(module.__file__).parent

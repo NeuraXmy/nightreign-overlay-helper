@@ -127,7 +127,7 @@ def test_corrupted_file_is_backed_up(tmp_path: Path, qapp: object) -> None:
 
 
 def test_changes_are_saved_after_debounce(store: ConfigStore) -> None:
-    from conftest import process_events
+    from tests.support.qt import process_events
 
     cfg = store.bind(SampleConfig, "sample")
     cfg.enabled.set(False)

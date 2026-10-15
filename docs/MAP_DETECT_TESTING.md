@@ -1,6 +1,6 @@
 # 地图识别测试说明
 
-本项目的地图识别测试覆盖地图插件状态机、特殊地形识别、旧版兼容性和地图数据绘制。测试样本存放在 [`tests/data/map_detect/`](../tests/data/map_detect/)，由 Git 跟踪；测试文档集中放在 `docs/`，便于后续修改算法时查阅和扩展。
+本项目的地图识别测试覆盖地图插件状态机、特殊地形识别、POI CNN 和地图数据绘制。测试样本存放在 [`tests/data/map_detect/`](../tests/data/map_detect/)，由 Git 跟踪；测试文档集中放在 `docs/`，便于后续修改算法时查阅和扩展。
 
 ## 特殊地形样本
 
@@ -16,7 +16,7 @@
 
 ## 测试脚本
 
-### `tests/test_map_terrain.py`
+### `tests/plugins/map_detect/test_map_terrain.py`
 
 这是特殊地形算法的样本回归测试：
 
@@ -32,10 +32,10 @@ NCC 返回原始归一化相关系数，范围是 `[-1, 1]`，越高越匹配；
 运行单项测试：
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_terrain.py -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/test_map_terrain.py -q
 ```
 
-### `tests/test_map_nightlord.py`
+### `tests/plugins/map_detect/test_map_nightlord.py`
 
 这是当前夜王模板匹配算法的准确率测试，复用上述 15 张地图截图，直接调用生产代码的 `MapDetector._match_nightlord()`：
 
@@ -48,13 +48,13 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_terrain.py -
 运行命令（即使不加 `-s`，也会输出准确率和逐样本报告）：
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_nightlord.py -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/test_map_nightlord.py -q
 ```
 
 如果本机 Python 在 pytest 启动阶段的 `_readline_workaround` 导入 `readline` 时发生段错误，可禁用 capture 插件后运行同一组测试：
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/test_map_nightlord.py -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect/test_map_nightlord.py -q
 ```
 
 2026-10-15 本地实测结果：
@@ -75,7 +75,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/test_ma
 
 当前函数将普通和深夜夜王图标映射到相同的数字 ID，因此该测试衡量夜王 ID 和隐藏状态的准确率，不区分普通与深夜图标。该函数没有分数拒识阈值，测试不会额外引入阈值。以上结果仅代表这组固定截图，不代表所有实机截图的准确率或所有夜王类别均已覆盖。
 
-### `tests/test_map_detect.py`
+### `tests/plugins/map_detect/test_map_detect.py`
 
 验证地图插件的常规行为，包括：
 
@@ -85,24 +85,13 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/test_ma
 - 检测结果更新、候选地图切换和水晶布局切换；
 - 插件激活、停用、资源注册与释放。
 
-### `tests/test_map_detect_legacy_parity.py`
-
-在旧版源码目录存在时运行。它会隔离加载旧版检测器，将旧版和重写版放在相同地图数据、随机种子和图像上比较，覆盖：
-
-- 完整地图和夜王检测；
-- 模板匹配模式下的特殊地形检测；
-- 地图候选排序、POI 类型和绘制结果；
-- 地图数据、图标和水晶布局的迁移一致性。
-
-该文件验证的是旧版兼容性，不约束 NCC 与旧模板匹配算法产生相同的分数或排序。旧版目录缺失时，测试会自动跳过。
-
 ## 推荐验证顺序
 
-修改特殊地形算法或阈值时，先运行样本回归，再运行地图插件测试和旧版对照测试：
+修改特殊地形算法或阈值时，先运行样本回归，再运行地图插件测试和 POI CNN 测试：
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_terrain.py tests/test_map_detect.py -q
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_detect_legacy_parity.py -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/test_map_terrain.py tests/plugins/map_detect/test_map_detect.py -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/plugins/map_detect/test_poi_cnn.py -q
 ```
 
 提交前还应运行：
