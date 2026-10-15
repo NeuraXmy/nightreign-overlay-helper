@@ -36,6 +36,7 @@
 | `test_art_timer.py` | 绝招识别、状态机、HUD |
 | `test_map_detect.py` | 选区、状态机、后台线程、快捷键、HUD 联动 |
 | `test_map_terrain.py` | 地图图片特殊地形回归、算法阈值隔离、NCC 拒识 |
+| `test_map_nightlord.py` | 夜王模板匹配样本准确率，隐藏样本只接受 unk.png（None） |
 | `test_map_localization.py` | 地图名称表 i18n |
 | `test_hp_marker.py` | 检测、标记位置、失败保持、前台门控 |
 | `test_p2p_latency.py` | 服务状态、窗口布局、模拟 helper |
