@@ -10,7 +10,7 @@ import pytest
 from PIL import Image
 from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtTest import QSignalSpy, QTest
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QPushButton, QWidget
 
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
@@ -112,7 +112,19 @@ def test_lifecycle_settings_and_resources(maps):
     assert advanced["subicon_template_match_threshold"].spinBox.value() == pytest.approx(0.06)
     assert plugin.config.snapshot().subicon_template_match_threshold == pytest.approx(0.06)
     hotkey_cards = {card._action_id: card for card in panel.findChildren(HotkeySettingCard)}
-    assert "map_detect.manual_filter" in hotkey_cards
+    assert set(hotkey_cards) == {f"map_detect.{action}" for action in module._ACTIONS}
+    calibration = hotkey_cards.pop("map_detect.calibrate_region")
+    assert calibration.parent().titleLabel.text() == "地图识别"
+    action_buttons = [
+        button for button in calibration.findChildren(QPushButton) if button is not calibration.captureButton
+    ]
+    assert [button.text() for button in action_buttons] == ["标定"]
+    shortcut_section = hotkey_cards["map_detect.manual_filter"].parent()
+    assert shortcut_section.titleLabel.text() == "快捷键"
+    for card in hotkey_cards.values():
+        assert card.parent() is shortcut_section
+        assert card.findChildren(QPushButton) == [card.captureButton]
+    assert plugin.config.return_topk.value == 3
     plugin.on_activate()
     overlay = plugin._overlay
     assert overlay is not None and len(overlay.crystal_layout_imgs) == 5
