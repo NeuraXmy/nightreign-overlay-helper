@@ -350,8 +350,8 @@ class MapDetectParam:
     # Recognize only these POI positions; ``nightlord`` narrows their possible types.
     poi_positions: list[Position] | None = None
     nightlord: int | None = None
-    # Draw a known pattern without matching; needs no image.
-    draw_pattern_id: int | None = None
+    # Draw known patterns in this order without matching; needs no image.
+    draw_pattern_ids: list[int] | None = None
 
 
 @dataclass
@@ -1185,15 +1185,18 @@ class MapDetector:
             return ret
 
         # 绘制已知地图模式
-        if param.draw_pattern_id is not None:
-            pattern = next((p for p in self.info.patterns if p.id == param.draw_pattern_id), None)
+        if param.draw_pattern_ids is not None:
+            patterns_by_id = {p.id: p for p in self.info.patterns}
+            draw_size = self._overlay_draw_size(param)
             ret.patterns = []
             ret.overlay_images = []
-            if pattern is None:
-                log.error(f"MapDetector: Unknown map pattern {param.draw_pattern_id}")
-            else:
+            for pattern_id in param.draw_pattern_ids:
+                pattern = patterns_by_id.get(pattern_id)
+                if pattern is None:
+                    log.error(f"MapDetector: Unknown map pattern {pattern_id}")
+                    continue
                 result = MapPatternMatchResult(pattern=pattern, nightlord=param.nightlord, score=0, error=0)
-                ret.overlay_images.append(self._draw_overlay_image(result, self._overlay_draw_size(param), 0))
+                ret.overlay_images.append(self._draw_overlay_image(result, draw_size, len(ret.patterns)))
                 ret.patterns.append(pattern)
 
         if param.img is None:

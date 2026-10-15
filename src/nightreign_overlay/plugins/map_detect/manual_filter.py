@@ -37,6 +37,7 @@ class ManualFilterOverlay(OverlayWindow):
     visibilityChanged = pyqtSignal(bool)
     poiChoiceChanged = pyqtSignal(object, object)
     autoRecognizeRequested = pyqtSignal(object)
+    applyRequested = pyqtSignal()
 
     def __init__(
         self,
@@ -101,6 +102,17 @@ class ManualFilterOverlay(OverlayWindow):
 
         self.status_label = QLabel("", self)
         self.status_label.hide()
+        self.apply_button = QPushButton(tr("manual_filter.apply_now"), self)
+        self.apply_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.apply_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.apply_button.setStyleSheet(
+            "QPushButton { color: white; background: rgba(53, 69, 87, 235); border: 1px solid #92bde3;"
+            " border-radius: 4px; padding: 3px 8px; font-weight: bold; }"
+            "QPushButton:hover { background: rgba(72, 102, 129, 245); }"
+            "QPushButton:pressed { background: #20344a; }"
+        )
+        self.apply_button.clicked.connect(lambda _checked=False: self.applyRequested.emit())
+        self.apply_button.hide()
         self._apply_control_size()
 
     # Catalog and filter state ------------------------------------------------------------------
@@ -170,23 +182,26 @@ class ManualFilterOverlay(OverlayWindow):
     def show_select_earth_shifting(self) -> None:
         self._show_status(self._tr("manual_filter.select_earth_shifting"), "#ff4242")
 
-    def show_candidate_count(self, count: int) -> None:
-        self._show_status(self._tr("manual_filter.remaining_candidates", count=count), "white")
+    def show_candidate_count(self, count: int, can_apply: bool = False) -> None:
+        self._show_status(self._tr("manual_filter.remaining_candidates", count=count), "white", can_apply)
 
     def show_no_match(self) -> None:
         self._show_status(self._tr("manual_filter.no_match"), "#ff4242")
 
-    def _show_status(self, text: str, color: str) -> None:
+    def _show_status(self, text: str, color: str, can_apply: bool = False) -> None:
         self.status_label.setText(text)
         self.status_label.setStyleSheet(
             f"color: {color}; background: rgba(0, 0, 0, 150); padding: 3px; font-weight: bold;"
         )
         self.status_label.show()
         self.status_label.raise_()
+        self.apply_button.setVisible(can_apply)
+        self.apply_button.raise_()
         self._layout_status()
 
     def clear_status(self) -> None:
         self.status_label.hide()
+        self.apply_button.hide()
 
     # Visibility --------------------------------------------------------------------------------
 
@@ -351,6 +366,7 @@ class ManualFilterOverlay(OverlayWindow):
                     badge.setIconSize(badge.size() - QSize(2, 2))
                 badge.raise_()
         self.status_label.raise_()
+        self.apply_button.raise_()
 
     def _apply_control_size(self) -> None:
         scale = max(0.1, self.width() / 750)
@@ -359,6 +375,7 @@ class ManualFilterOverlay(OverlayWindow):
         font.setPixelSize(max(1, round(16 * scale)))
         for label in self.findChildren(QLabel):
             label.setFont(font)
+        self.apply_button.setFont(font)
         for combo in (self.earth_shifting_combo, self.nightlord_combo):
             combo.setFont(font)
             content_width = max(
@@ -387,10 +404,16 @@ class ManualFilterOverlay(OverlayWindow):
 
     def _layout_status(self) -> None:
         self.status_label.adjustSize()
-        margin = max(4, round(8 * max(0.1, self.width() / 750)))
-        self.status_label.move(
-            max(0, self.width() - self.status_label.width() - margin),
-            max(0, self.height() - self.status_label.height() - margin),
+        scale = max(0.1, self.width() / 750)
+        margin = max(4, round(8 * scale))
+        x = max(0, self.width() - self.status_label.width() - margin)
+        y = max(0, self.height() - self.status_label.height() - margin)
+        self.status_label.move(x, y)
+        self.apply_button.adjustSize()
+        self.apply_button.setFixedHeight(self.status_label.height())
+        self.apply_button.move(
+            max(0, x - self.apply_button.width() - round(6 * scale)),
+            y,
         )
 
     def _on_earth_shifting_changed(self, index: int) -> None:
