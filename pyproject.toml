@@ -13,6 +13,7 @@ dependencies = [
     "mss>=10",
     "Pillow>=10",
     "opencv-python>=4.10",
+    "onnxruntime>=1.20,<2",
     "platformdirs>=4",
     "pygame>=2.6",
     "pynput>=1.7",

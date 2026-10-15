@@ -4,7 +4,7 @@
 
 ## 特殊地形样本
 
-样本来自 `sandbox/old_test_data/test_map_image`，目前共 15 张图片。PNG 样本已转换为 RGB JPEG（quality=95、subsampling=0），原有 JPEG 保持原文件内容。此前错误命名的 `12_2.jpg` 已更正为 `1137_2.jpg`。
+样本来自 `sandbox/old_test_data/test_map_image`，目前共 15 张图片。PNG 样本已转换为 RGB JPEG（quality=95、subsampling=0），原有 JPEG 保持原文件内容。此前错误命名的 `12_2.jpg` 已更正为 `1137_2.jpg`。2026-10-15 经人工确认，`7.jpg` 更正为 `16.jpg`，`1180.jpg` 更正为 `1187.jpg`。
 
 文件名按 `_` 分割后的第一段记录 ground truth 地图模式 ID：
 
@@ -114,3 +114,9 @@ git diff --check
 ```
 
 当前样本覆盖六类特殊地形，并要求默认 NCC 在这 15 张图片上全部正确；这属于固定样本回归指标，不代表对所有实机截图的准确率保证。新增截图时，应同时将图片放入 `tests/data/map_detect/`，按照上述命名规则标注，并更新本文件的样本数量或特殊情况说明。
+
+## POI CNN 与模板算法对比
+
+POI 识别默认使用 CNN，可在设置中切换模板算法。部署逻辑、14 张验收截图的回归测试和逐图对比结果见 [`POI_CNN.md`](./POI_CNN.md)，训练与导出说明见 [`tools/poi_cnn/README.md`](../tools/poi_cnn/README.md)。
+
+全部 15 张截图均输出结果；经用户确认，难例 `207_hide.jpg` 仅排除 POI 地图 ID 与误差的验收统计，不从样本目录删除，也不影响地形/夜王测试。CNN 验收地图 ID 为 14/14，11/14 张 POI 总误差 ≤10；包含该难例时全样本正确率为 14/15。

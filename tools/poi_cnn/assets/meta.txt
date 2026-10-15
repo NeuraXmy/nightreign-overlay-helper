@@ -1,0 +1,21 @@
+assets/base 和建筑类型的对应：
+
+00.png:30
+01.png:38,524
+02.png:32
+03.png:34,525
+04.png:501
+05.png:500
+06.png:41,510
+07.png:41,510
+08.png:40,5110
+09.png:40,5110
+10.png:40,5110
+11.png:37
+12.png:535
+13.png:536
+
+assets/corner 和角标类型的对应：
+
+00.png ~ 06.png: condition 0~6
+07.png ~ 10.png: attribute 0~3

@@ -1,0 +1,2 @@
+00.png ~ 06.png: condition 0~6
+07.png ~ 10.png: attribute 0~3

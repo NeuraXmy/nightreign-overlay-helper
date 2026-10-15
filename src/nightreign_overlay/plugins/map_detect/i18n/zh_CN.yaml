@@ -90,10 +90,15 @@ settings:
   full_map_error_threshold:
     title: 完整地图误差阈值
     content: 判断当前画面是否为完整地图的误差上限。数值越大越宽松，也更容易误判。
+  poi_algorithm:
+    title: POI 识别算法
+    content: 整图和手动局部识别共用；CNN 使用 CPU 批量推理
+    template: 模板匹配
+    cnn: CNN
   earth_shifting_algorithm:
     title: 特殊地形识别算法
     content: NCC 比较灰度结构，对亮度和饱和度变化更稳健；模板匹配使用原有颜色匹配方式。
-    ncc: NCC（默认）
+    ncc: NCC
     template: 模板匹配
   earth_shifting_ncc_threshold:
     title: 特殊地形 NCC 阈值
