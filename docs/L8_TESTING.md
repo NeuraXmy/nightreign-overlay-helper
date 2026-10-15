@@ -12,7 +12,7 @@ tests/
 ├── core/                    # 配置、事件/服务、i18n、插件管理器
 ├── plugins/                 # 功能及基础设施插件
 │   └── map_detect/          # 地图状态机、手动筛选、地形/夜王、POI CNN
-├── ui/                      # 悬浮窗、设置重置、托盘退出
+├── ui/                      # 悬浮窗、FAQ 图文、设置重置、托盘退出
 ├── platforms/               # 原生平台行为（当前为 macOS 悬浮窗非激活）
 ├── legacy/                  # 保留的血条旧版对照测试
 ├── support/                 # 共享 fake、Qt 工具、仓库/样本路径
@@ -33,6 +33,7 @@ tests/
 | `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
 | `plugins/map_detect/` | `test_poi_cnn.py`、`test_map_localization.py` | ONNX CPU 单点/批量推理、类别约束、14 张地图 ID 验收、名称本地化 |
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
+| `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图 |
 | `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
 | `legacy/` | `test_hp_marker_legacy_parity.py` | 血条检测与旧版逐帧比较，旧版目录缺失时跳过 |
 

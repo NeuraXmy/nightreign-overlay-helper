@@ -12,7 +12,7 @@ from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME
 from nightreign_overlay.plugin import PLUGIN_KIND_DISPLAY_ORDER, PluginManager, SettingsScope
 from nightreign_overlay.ui.overlay import OverlayManager
-from nightreign_overlay.ui.pages import AboutPage, HomePage, PluginPage, SettingsPage
+from nightreign_overlay.ui.pages import AboutPage, FaqPage, HomePage, PluginPage, SettingsPage
 from nightreign_overlay.ui.theme import app_icon, fluent_icon
 
 DEFAULT_SIZE = (1080, 760)
@@ -51,8 +51,10 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.homePage, FluentIcon.HOME, tr("nav.home"))
         self._init_plugin_pages(plugins)
 
+        self.faqPage = FaqPage(self)
         self.settingsPage = SettingsPage(config, plugins, self)
         self.aboutPage = AboutPage(self)
+        self.addSubInterface(self.faqPage, FluentIcon.HELP, tr("nav.faq"), NavigationItemPosition.BOTTOM)
         self.addSubInterface(
             self.settingsPage, FluentIcon.SETTING, tr("nav.settings"), NavigationItemPosition.BOTTOM
         )
