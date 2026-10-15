@@ -16,8 +16,9 @@ from nightreign_overlay.core.i18n import (
     discover_languages,
     match_language,
 )
+from tests.support.paths import PROJECT_ROOT
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "nightreign_overlay"
+SRC = PROJECT_ROOT / "src" / "nightreign_overlay"
 CORE_I18N_DIR = SRC / "resources" / "i18n"
 PLUGIN_I18N_DIRS = sorted((SRC / "plugins").glob("*/i18n"))
 TUTORIAL_DIRS = sorted((SRC / "plugins").glob("*/tutorial"))

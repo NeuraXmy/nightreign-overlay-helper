@@ -1,7 +1,6 @@
 """Terrain recognition regressions using checked-in game captures."""
 
 from dataclasses import replace
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -9,8 +8,9 @@ from PIL import Image
 
 from nightreign_overlay.plugins.map_detect.config import MapDetectionSettings
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam
+from tests.support.paths import MAP_CAPTURE_DIR
 
-_CAPTURES = sorted((Path(__file__).parent / "data" / "map_detect").glob("*.jpg"))
+_CAPTURES = sorted((MAP_CAPTURE_DIR).glob("*.jpg"))
 
 
 @pytest.fixture(scope="module")

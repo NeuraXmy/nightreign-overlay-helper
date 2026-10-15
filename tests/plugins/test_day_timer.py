@@ -29,8 +29,9 @@ from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
 from nightreign_overlay.plugins.region.plugin import RegionPlugin
 from nightreign_overlay.ui.components import MultiButtonSettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
+from tests.support.paths import PROJECT_ROOT
 
-_TEMPLATES = Path(__file__).parents[1] / "src/nightreign_overlay/plugins/day_timer/templates"
+_TEMPLATES = PROJECT_ROOT / "src/nightreign_overlay/plugins/day_timer/templates"
 
 
 class _FakeBackend(PlatformBackend):

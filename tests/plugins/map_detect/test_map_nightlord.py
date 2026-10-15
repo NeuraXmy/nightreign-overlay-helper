@@ -12,8 +12,9 @@ from PIL import Image
 
 from nightreign_overlay.plugins.map_detect.detector import MapDetector
 from nightreign_overlay.plugins.map_detect.map_info import MapPattern
+from tests.support.paths import MAP_CAPTURE_DIR
 
-_CAPTURE_DIR = Path(__file__).parent / "data" / "map_detect"
+_CAPTURE_DIR = MAP_CAPTURE_DIR
 _CAPTURES = sorted(_CAPTURE_DIR.glob("*.jpg"))
 
 

@@ -16,7 +16,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 with contextlib.redirect_stdout(io.StringIO()):
     import qfluentwidgets  # noqa: F401
 
-from PyQt6.QtCore import QCoreApplication, QEventLoop, QTimer
 from PyQt6.QtWidgets import QApplication
 
 from nightreign_overlay.core.config import ConfigStore
@@ -39,11 +38,3 @@ def store(qapp: QApplication, tmp_path: Path) -> Iterator[ConfigStore]:
     config_store = ConfigStore(tmp_path / "settings.yaml")
     yield config_store
     config_store.deleteLater()
-
-
-def process_events(timeout_ms: int = 50) -> None:
-    """Run the event loop briefly so queued signals and timers are delivered."""
-    loop = QEventLoop()
-    QTimer.singleShot(timeout_ms, loop.quit)
-    loop.exec()
-    QCoreApplication.processEvents()

@@ -9,7 +9,6 @@ import pytest
 from PyQt6.QtCore import QRect
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from feature_fakes import FeatureServices, solid_image
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.plugins.art_timer import plugin as art_plugin
 from nightreign_overlay.plugins.art_timer.detector import ART_TYPES, ArtDetectResult
@@ -18,6 +17,7 @@ from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.ui.components import ConfigRangeCard
+from tests.support.feature_fakes import FeatureServices, solid_image
 
 _ROOT = Path(art_plugin.__file__).parent
 _REGION = "art_timer.art_region"

@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import sys
 from dataclasses import replace
-from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
 import numpy as np
@@ -15,8 +14,9 @@ from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
 from nightreign_overlay.plugins.hp_marker.detector import HpDetector
+from tests.support.paths import PROJECT_ROOT
 
-_OLD = Path(__file__).resolve().parents[2] / "nightreign-overlay-helper"
+_OLD = PROJECT_ROOT.parent / "nightreign-overlay-helper"
 pytestmark = pytest.mark.skipif(not (_OLD / "src/detector/hp_detector.py").exists(), reason="legacy absent")
 
 
