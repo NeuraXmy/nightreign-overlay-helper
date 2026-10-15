@@ -705,23 +705,25 @@ class MapDetectPlugin(Plugin):
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)
         basic = SettingSection(self.ctx.tr("settings.basic"))
+        shortcuts = SettingSection(self.ctx.tr("settings.hotkeys"))
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action, callback in self._callbacks().items():
-            if action == "manual_filter":
-                continue
-            kwargs: dict[str, Any] = {}
-            if action == "calibrate_region":
-                kwargs["accessories"] = [RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)]
-            basic.addCards(
+            calibrate = action == "calibrate_region"
+            section = basic if calibrate else shortcuts
+            section.addCards(
                 HotkeySettingCard(
                     hotkeys,
                     f"{self.id}.{action}",
                     HotkeyBinding(None),
-                    FluentIcon.GLOBE,
+                    FluentIcon.FILTER if action == "manual_filter" else FluentIcon.GLOBE,
                     self.ctx.tr(f"settings.{action}.title"),
                     self.ctx.tr(f"settings.{action}.content"),
-                    actions=[(self.ctx.tr("settings.action"), callback)],
-                    **kwargs,
+                    actions=[(self.ctx.tr("settings.calibrate_region.action"), callback)]
+                    if calibrate
+                    else [],
+                    accessories=[RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)]
+                    if calibrate
+                    else [],
                 )
             )
         basic.addCards(
@@ -733,19 +735,7 @@ class MapDetectPlugin(Plugin):
             )
         )
         panel.addSection(basic)
-        manual_filter = SettingSection(self.ctx.tr("settings.manual_filter.section"))
-        manual_filter.addCards(
-            HotkeySettingCard(
-                hotkeys,
-                f"{self.id}.manual_filter",
-                HotkeyBinding(None),
-                FluentIcon.FILTER,
-                self.ctx.tr("settings.manual_filter.title"),
-                self.ctx.tr("settings.manual_filter.content"),
-                actions=[(self.ctx.tr("settings.action"), self._toggle_manual_filter)],
-            )
-        )
-        panel.addSection(manual_filter)
+        panel.addSection(shortcuts)
         advanced = SettingSection(self.ctx.tr("settings.advanced"))
         advanced.addCards(
             ConfigChoiceCard(

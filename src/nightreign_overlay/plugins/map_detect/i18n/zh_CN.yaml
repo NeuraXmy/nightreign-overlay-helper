@@ -52,14 +52,14 @@ drawing:
   day2_circle: "Day2第一次缩圈位置：{position}"
   event: "特殊事件: {name}"
 settings:
-  basic: 地图识别与快捷键
+  basic: 地图识别
+  hotkeys: 快捷键
   advanced: 高级检测选项
   manual_filter:
-    section: 手动筛选
     title: 进入／退出手动筛选
     content: 在地图区域显示可交互的筛选悬浮窗；再次执行会退出筛选并恢复自动识别。
-  action: 执行
   calibrate_region:
+    action: 标定
     title: 地图区域
     content: 框选完整地图，边缘与地图边框贴合；保存时取左上角的正方形区域。
     annotate: 点我并框出 地图 的区域

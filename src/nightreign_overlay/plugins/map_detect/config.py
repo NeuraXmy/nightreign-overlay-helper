@@ -29,7 +29,7 @@ class MapDetectConfig(ConfigGroup):
 
     poi_algorithm = ChoiceOption("cnn", ("template", "cnn"))
     earth_shifting_algorithm = ChoiceOption("ncc", ("ncc", "template"))
-    return_topk = RangeOption(5, 1, 10)
+    return_topk = RangeOption(3, 1, 10)
     map_pattern_match_interval = RangeOption(2100, 1, 86400)
     fixed_map_overlay_draw_size = Option(
         None,
