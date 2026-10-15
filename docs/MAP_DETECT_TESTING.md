@@ -35,6 +35,46 @@ NCC 返回原始归一化相关系数，范围是 `[-1, 1]`，越高越匹配；
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_terrain.py -q
 ```
 
+### `tests/test_map_nightlord.py`
+
+这是当前夜王模板匹配算法的准确率测试，复用上述 15 张地图截图，直接调用生产代码的 `MapDetector._match_nightlord()`：
+
+1. 使用 PIL 将截图读为 RGB 数组，保留完整地图裁剪；由生产函数完成缩放、左下角夜王区域裁剪和多尺度模板匹配。
+2. 普通样本从文件名解析地图模式 ID，通过 `MapDetector.info.patterns` 取得对应的 `nightlord` 作为期望值；多个模式对应的夜王均可接受。
+3. **文件名含独立 `hide` 标记的样本只接受 `None`，即 `icons/nightlord/unk.png` 对应的隐藏夜王，不使用地图模式的真实夜王作为期望值。**
+4. 不运行地图候选匹配或 POI 推断，不使用地图 ID 修正识别结果。算法返回的夜王 ID 直接与期望值比较，分数必须为有限数。
+5. 输出每张截图的期望值、实际值和匹配误差分数，以及总体、可见夜王和隐藏夜王三组准确率。每张截图独立断言，误识别会导致 pytest 失败，不跳过或标记为预期失败。
+
+运行命令（即使不加 `-s`，也会输出准确率和逐样本报告）：
+
+```bash
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest tests/test_map_nightlord.py -q
+```
+
+如果本机 Python 在 pytest 启动阶段的 `_readline_workaround` 导入 `readline` 时发生段错误，可禁用 capture 插件后运行同一组测试：
+
+```bash
+QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/test_map_nightlord.py -q
+```
+
+2026-10-15 本地实测结果：
+
+| 分组 | 正确 / 样本数 | 准确率 |
+|------|---------------|--------|
+| 总体 | 15 / 15 | 100.00% |
+| 可见夜王 | 12 / 12 | 100.00% |
+| 隐藏夜王（unk.png） | 3 / 3 | 100.00% |
+
+隐藏样本的逐张结果（误差分数越低越匹配）：
+
+| 样本 | 期望值 | 实际值 | 匹配分数 |
+|------|--------|--------|----------|
+| `1126-1176_hide.jpg` | `None`（unk.png） | `None`（unk.png） | 0.091471 |
+| `207_hide.jpg` | `None`（unk.png） | `None`（unk.png） | 0.039759 |
+| `251_hide.jpg` | `None`（unk.png） | `None`（unk.png） | 0.107766 |
+
+当前函数将普通和深夜夜王图标映射到相同的数字 ID，因此该测试衡量夜王 ID 和隐藏状态的准确率，不区分普通与深夜图标。该函数没有分数拒识阈值，测试不会额外引入阈值。以上结果仅代表这组固定截图，不代表所有实机截图的准确率或所有夜王类别均已覆盖。
+
 ### `tests/test_map_detect.py`
 
 验证地图插件的常规行为，包括：
