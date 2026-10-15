@@ -1,0 +1,85 @@
+name: Build Windows ZIP
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v[0-9]*'
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      CI: '1'
+      # Use the public index on GitHub-hosted runners.
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python and uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            .python-version
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build application and P2P helper
+        shell: cmd
+        run: call build.bat
+
+      - name: Check bundle and create ZIP
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path $PWD 'dist/nightreign-overlay-helper'
+          $requiredFiles = @(
+            'nightreign-overlay-helper.exe',
+            '_internal/nightreign_overlay/plugins/capture/native/MaaWin32Screencap.dll',
+            '_internal/nightreign_overlay/plugins/map_detect/data/poi_cnn/epoch-42.onnx',
+            'bin/NightreignP2PHelper.exe',
+            'bin/amd64/KernelTraceControl.dll',
+            'bin/amd64/msdia140.dll',
+            'third-party/THIRD-PARTY-NOTICES.txt',
+            'LICENSE',
+            'README.md'
+          )
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath (Join-Path $bundle $file) -PathType Leaf)) {
+              throw "Missing bundle file: $file"
+            }
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $label = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          } else {
+            $label = 'manual-{0}-{1}' -f $env:GITHUB_SHA.Substring(0, 7), $env:GITHUB_RUN_NUMBER
+          }
+          $name = "nightreign-overlay-helper-$label-windows-x64"
+          $archive = Join-Path $PWD "dist/$name.zip"
+          Compress-Archive -LiteralPath $bundle -DestinationPath $archive -CompressionLevel Optimal
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "path=$archive" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30

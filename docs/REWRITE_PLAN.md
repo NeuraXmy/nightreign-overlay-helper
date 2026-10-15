@@ -345,7 +345,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 | P2 | 基础插件：`capture`（迁移 MaaWin32Screencap）、`input`（pynput + pygame 热键）、`region`（区域标定）、`hud` | 🚧 进行中：服务契约、Qt 降级实现和单元测试已完成；Windows DLL 打包与真实手柄验证留待 Windows 环境 |
 | P3 | 功能插件迁移：`day_timer`、`rain_timer`、`art_timer` | 🚧 进行中：三个插件已实现并有非视觉单元测试；雨中 / 绝招的视觉识别待实机手动验证 |
 | P4 | `map_detect`、`hp_marker`、`p2p_latency`（含 NightreignP2PHelper 原生组件） | 🚧 进行中：三个插件均已完成代码迁移与基础测试；地图/血条视觉实机验证及 Windows Steam/ETW 联机验证留待目标环境 |
-| P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 🚧 已加入 Windows 文件夹构建脚本与 PyInstaller spec；其余发布事项待完成 |
+| P5 | 打包发布：PyInstaller spec、GitHub Actions、管理员权限提示、旧版配置迁移、自动更新检查 | 🚧 已加入 Windows 文件夹构建脚本、PyInstaller spec 与支持手动/tag 触发的 Windows ZIP workflow；其余发布事项待完成 |
 
 ## 10. 风险与应对
 
@@ -440,7 +440,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - 窗口通过 `OverlayWindow` 注册统一管理，沿用旧版三列 QLabel 布局、昵称提示、缺失指标/旧接口提示、状态文案、灰/绿/黄/红颜色、阈值严格小于比较、310px 基准宽度及缩放截断。默认 75% 透明度（10～100%）、50～200% 缩放、80/150ms 分色阈值与主屏右上重置位置保持不变。
 - 接入重写版统一前台规则和普通窗口 fallback。主界面替代旧设置窗口，打开期间允许拖动并显示边框，关闭后锁定；未强制鼠标穿透。新增 `ForegroundPolicy.is_ui_active(source)` 查询指定编辑界面状态，不修改显示或检测门控算法。
 - 配置位于 `plugins.p2p_latency` 与其 `overlay` 子节。保留警告阈值至少大于良好阈值 1ms 的约束；局部设置控件读取最终规范值，避免同步信号嵌套导致滑块显示被拒绝的旧值。这是新架构控件适配，不改变原版阈值规则。
-- `scripts/build_p2p_helper.ps1` 沿用旧 CI 的锁定恢复、自包含单文件发布和禁止裁剪参数，检查 ETW 支持 DLL 并复制许可；README 说明源码构建和 EXE 同级 `bin` 的发布布局。新版完整 PyInstaller/Actions 发布流水线仍属于 P5。
+- `scripts/build_p2p_helper.ps1` 沿用旧 CI 的锁定恢复、自包含单文件发布和禁止裁剪参数，检查 ETW 支持 DLL 并复制许可；README 说明源码构建和 EXE 同级 `bin` 的发布布局。`.github/workflows/build-windows.yml` 复用完整 `build.bat`，支持手动与版本 tag 触发，将完整 Windows x64 发布目录打包为 ZIP 并上传 Actions artifact。
 
 ### macOS 模拟及验证范围
 
