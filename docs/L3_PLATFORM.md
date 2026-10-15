@@ -22,6 +22,7 @@
 | 非激活点击 | 依赖 Qt flags | Cocoa `NSWindowStyleMaskNonactivatingPanel` |
 | 管理员权限 | `IsUserAnAdmin` | 不适用 |
 | 屏幕录制权限 | 无限制 | `CGPreflightScreenCaptureAccess` / `CGRequestScreenCaptureAccess` |
+| `capture` 截图 | mss 虚拟桌面 / MaaWin32Screencap | mss 主屏（Retina 物理像素） |
 | 透明悬浮窗 | 支持 | 默认不支持，可切普通窗口 |
 
 ## create_backend()
@@ -43,6 +44,7 @@ def create_backend() -> PlatformBackend:
 
 - `supports_transparent_overlay = False` 默认，因为 macOS 合成器可能把透明 Tool 窗口置于后台。
 - `has_screen_capture_access()`：检测屏幕录制权限；缺失时 `region` 退化为半透明覆盖层。
+- `capture` 插件在独立 QThread 中创建和使用 mss；macOS 去除 nominal-resolution 选项，确保截图与物理像素区域坐标一致。
 - `configure_overlay_activation(window_id, non_activating)`：macOS 上设置 `NSWindowStyleMaskNonactivatingPanel`，防止点击透明悬浮窗激活整个应用。
 
 ## INVARIANT

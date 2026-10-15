@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from PyQt6.QtCore import QRect
@@ -30,9 +30,9 @@ class FakeCapture(CaptureApi):
     def latest_frame(self) -> FrameCaptured | None:
         return self.frame
 
-    def capture_now(self) -> FrameCaptured | None:
+    def request_frame(self, callback: Callable[[FrameCaptured | None], None]) -> None:
         self.captures += 1
-        return self.frame
+        callback(self.frame)
 
     def acquire_stream(self, owner: str) -> None:
         self.streams.add(owner)

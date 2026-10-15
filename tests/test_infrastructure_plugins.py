@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
-from PyQt6.QtCore import QRect
+from PyQt6.QtCore import QEventLoop, QRect, QTimer
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QApplication
 
@@ -32,6 +32,21 @@ from nightreign_overlay.plugins.region.config import RegionConfig
 from nightreign_overlay.ui.components.setting_cards import _format_binding, _HotkeySettingDialog
 
 
+def _request_frame(plugin: CapturePlugin):
+    result = []
+    loop = QEventLoop()
+
+    def done(frame):
+        result.append(frame)
+        loop.quit()
+
+    plugin.request_frame(done)
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert result, "capture request timed out"
+    return result[0]
+
+
 def test_capture_frame_is_detached() -> None:
     source = QImage(4, 3, QImage.Format.Format_ARGB32)
     source.fill(0xFF112233)
@@ -51,14 +66,19 @@ def test_capture_frames_carry_the_shared_hdr_setting(
     plugin.on_load()
     source = QImage(4, 3, QImage.Format.Format_RGB32)
     source.fill(0xFF808080)
-    monkeypatch.setattr(capture_plugin, "_grab_primary_screen", lambda: source)
+    monkeypatch.setattr(
+        capture_plugin,
+        "_MssCapture",
+        lambda **_kwargs: SimpleNamespace(grab=lambda: source, close=lambda: None),
+    )
 
-    assert plugin.capture_now().hdr is False
+    assert _request_frame(plugin).hdr is False
     plugin.config.hdr_processing.set(True)
-    frame = plugin.capture_now()
+    frame = _request_frame(plugin)
     assert frame.hdr is True
     # The shared frame stays raw; consumers decide how to process it.
     assert frame.image.pixelColor(0, 0).name() == "#808080"
+    plugin.on_deactivate()
 
 
 def test_capture_and_hotkeys_follow_the_foreground_policy(
@@ -72,10 +92,15 @@ def test_capture_and_hotkeys_follow_the_foreground_policy(
     )
     capture.on_load()
     source = QImage(4, 3, QImage.Format.Format_RGB32)
-    monkeypatch.setattr(capture_plugin, "_grab_primary_screen", lambda: source)
-    assert capture.capture_now() is None
+    monkeypatch.setattr(
+        capture_plugin,
+        "_MssCapture",
+        lambda **_kwargs: SimpleNamespace(grab=lambda: source, close=lambda: None),
+    )
+    assert _request_frame(capture) is None
     policy.detection_allowed = True
-    assert capture.capture_now() is not None
+    assert _request_frame(capture) is not None
+    capture.on_deactivate()
 
     service = _HotkeyService(store.bind(InputConfig, "plugins.input"))
     service.foreground = policy
@@ -96,12 +121,14 @@ def test_hdr_to_sdr_matches_legacy_gamma() -> None:
 def test_capture_stream_runs_only_while_leased(
     store: ConfigStore, qapp: QApplication, tmp_path: Path
 ) -> None:
+    services = ServiceRegistry()
+    services.register(ForegroundPolicy, SimpleNamespace(detection_allowed=True))
     context = PluginContext(
         "capture",
         tmp_path,
         store,
         Translator("zh_CN"),
-        ServiceRegistry(),
+        services,
         EventBus(),
     )
     plugin = CapturePlugin(context)
@@ -116,6 +143,7 @@ def test_capture_stream_runs_only_while_leased(
     assert plugin._timer.isActive()
     plugin.release_stream("day_timer")
     assert not plugin._timer.isActive()
+    plugin.on_deactivate()
 
 
 def test_input_exposes_hotkey_configuration_on_load(store: ConfigStore, tmp_path: Path) -> None:

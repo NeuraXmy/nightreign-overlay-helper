@@ -112,6 +112,25 @@ def test_detect_art_captures_one_frame_and_starts_the_matching_countdown(
     plugin.ctx.release()
 
 
+def test_new_art_press_discards_an_in_flight_capture(
+    store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    fakes.region.regions[_REGION] = QRect(5, 6, 50, 50)
+    callbacks = []
+    calls = []
+    fakes.capture.request_frame = callbacks.append
+    monkeypatch.setattr(plugin._detector, "detect", lambda *args, **kwargs: calls.append(args))
+
+    plugin._detect_art()
+    assert len(callbacks) == 1
+    plugin._use_art()
+    callbacks[0](FrameCaptured(solid_image(100, 100, (0, 0, 0)), 0.0))
+    assert calls == []
+    plugin.ctx.release()
+
+
 @pytest.mark.parametrize(
     ("art_type", "name", "duration", "color"),
     [

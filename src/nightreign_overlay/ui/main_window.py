@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QEvent, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QGuiApplication, QHideEvent, QShowEvent
 from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 
@@ -41,8 +41,7 @@ class MainWindow(FluentWindow):
 
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(app_icon())
-        # Plain stay-on-top hint; unlike overlays, it is not actively re-raised.
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        # A normal window: not kept on top. Detection gating ignores the main window's presence.
         self.setMinimumWidth(MINIMUM_WIDTH)
         self.resize(*DEFAULT_SIZE)
         self._center_on_screen()
