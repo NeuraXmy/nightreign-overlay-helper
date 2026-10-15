@@ -684,3 +684,120 @@ def test_map_hotkeys_only_respond_when_overlay_is_displayed(maps, monkeypatch, a
     assert overlay.isVisible()
     press()
     assert state() != before
+
+
+def test_force_display_button_keeps_windows_available_without_faking_full_map(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    parent = QWidget()
+    panel = plugin.create_settings_widget(parent)
+    button = next(b for b in panel.findChildren(QPushButton) if b.text() == "进入强制显示模式")
+    plugin._flag = MatchFlag.TRUE
+    plugin._last_match = 1000.0
+    generation = plugin._generation
+    button.click()
+    assert button.text() == "退出强制显示模式"
+    assert plugin._force_display and plugin._map_overlay_visible
+    assert not plugin._current_is_full_map
+    assert plugin._generation == generation and plugin._flag == MatchFlag.TRUE
+    plugin._overlay._tick()
+    plugin._controls.sync_from_map()
+    assert plugin._overlay.isVisible() and plugin._controls.isVisible()
+    for _ in range(3):
+        job = _job(plugin)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=False))
+        assert not plugin._current_is_full_map and plugin._map_overlay_visible
+        assert plugin._flag == MatchFlag.TRUE and submitted == []
+    plugin._on_frame(FrameCaptured(solid_image(100, 100, (0, 0, 0)), 1.0))
+    assert [job.stage for job in submitted] == ["check"]
+    plugin._toggle_overlay()
+    assert plugin._map_overlay_visible
+    button.click()
+    assert button.text() == "进入强制显示模式"
+    assert not plugin._force_display and not plugin._map_overlay_visible
+    for _ in range(30):
+        plugin._overlay._tick()
+    plugin._controls.sync_from_map()
+    assert not plugin._overlay.isVisible() and not plugin._controls.isVisible()
+
+
+def test_force_display_keeps_manual_filter_open_across_failed_checks(maps, monkeypatch):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    plugin._toggle_force_display()
+    plugin._overlay._tick()
+    plugin._controls.manual_filter.click()
+    manual = plugin._manual_overlay
+    assert plugin._manual_filtering and manual.isVisible()
+    assert manual.map_open and plugin._controls.isVisible()
+    assert not plugin._overlay.isVisible()
+    manual.earth_shifting_combo.setCurrentIndex(1)
+    earth_shifting = manual.earth_shifting
+    job = _job(plugin)
+    _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=False))
+    assert not plugin._current_is_full_map and manual.isVisible() and manual.map_open
+    plugin._toggle_force_display()
+    assert plugin._manual_filtering and not manual.isVisible()
+    assert not plugin._controls.isVisible() and not manual.map_open
+    assert manual.earth_shifting == earth_shifting
+    plugin._toggle_force_display()
+    assert manual.isVisible() and plugin._controls.isVisible()
+    assert manual.earth_shifting == earth_shifting
+    plugin._controls.manual_filter.click()
+    assert not plugin._manual_filtering and plugin._overlay.isVisible()
+    assert plugin._controls.isVisible() and not manual.isVisible()
+
+
+def test_force_display_does_not_change_check_terrain_pattern_pipeline(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._last_match = 1000.0
+    plugin._flag = MatchFlag.TRUE
+    plugin._toggle_force_display()
+    job = _job(plugin)
+    _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    assert plugin._current_is_full_map
+    terrain = submitted.pop()
+    assert terrain.stage == "terrain" and terrain.image is job.image
+    _finish(plugin, terrain, MapDetectResult(img=job.image, earth_shifting=4))
+    pattern = submitted.pop()
+    assert pattern.stage == "4" and pattern.image is job.image
+    plugin._toggle_force_display()
+    assert not plugin._force_display and plugin._map_overlay_visible
+    _finish(plugin, _job(plugin), MapDetectResult(img=job.image, is_full_map=False))
+    assert not plugin._map_overlay_visible
+
+
+def test_force_display_keeps_manually_applied_result_visible(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._toggle_force_display()
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    catalog = plugin._manual_catalog
+    manual.earth_shifting_combo.setCurrentIndex(0)
+    target = catalog.candidates(0, None, {})[0]
+    explicit = {pos: PoiChoice(*catalog.value(target, pos)) for pos in catalog.positions(0, None)}
+    manual.set_filter_state(explicit, {})
+    plugin._rematch_manual_filter()
+    assert not plugin._manual_filtering and not manual.isVisible()
+    assert not plugin._current_is_full_map and plugin._map_overlay_visible
+    job = submitted.pop()
+    assert job.stage == "draw" and job.pattern_ids == (target.id,)
+    images = [Image.new("RGBA", (100, 100))]
+    _finish(plugin, job, MapDetectResult(overlay_images=images))
+    plugin._overlay._tick()
+    plugin._controls.sync_from_map()
+    assert plugin._overlay.isVisible() and plugin._controls.isVisible()
+    assert plugin._overlay.overlay_images == images
+
+
+def test_force_display_requires_region_and_clears_on_reset_and_deactivation(maps, monkeypatch):
+    plugin, fakes, _ = _ready(maps, monkeypatch)
+    plugin._toggle_force_display()
+    assert plugin._force_display
+    plugin.reset_settings()
+    assert not plugin._force_display
+    plugin._toggle_force_display()
+    assert not plugin._force_display
+    fakes.region.regions[_REGION] = QRect(0, 0, 100, 100)
+    plugin._toggle_force_display()
+    assert plugin._force_display
+    plugin.on_deactivate()
+    assert not plugin._force_display

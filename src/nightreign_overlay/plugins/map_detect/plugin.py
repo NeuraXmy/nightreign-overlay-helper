@@ -12,7 +12,7 @@ import numpy as np
 from PyQt6.QtCore import QRect, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon
+from qfluentwidgets import FluentIcon, PushSettingCard
 
 from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
@@ -103,6 +103,7 @@ class MapDetectPlugin(Plugin):
         order=30,
     )
     _completed = pyqtSignal(object, object, object)
+    _force_display_text_changed = pyqtSignal(str)
 
     def on_load(self) -> None:
         self.config = self.ctx.config(MapDetectConfig)
@@ -122,6 +123,7 @@ class MapDetectPlugin(Plugin):
         self._flag = MatchFlag.TRUE
         self._current_is_full_map = False
         self._map_overlay_visible = False
+        self._force_display = False
         self._manual_filtering = False
         self._manual_catalog: ManualFilterCatalog | None = None
         self._manual_revision = 0
@@ -172,6 +174,7 @@ class MapDetectPlugin(Plugin):
         self.ctx.on_cleanup(lambda: capture.release_stream(self.id))
 
     def on_deactivate(self) -> None:
+        self._set_force_display(False)
         self._active = False
         self._generation += 1
         self._overlay = None
@@ -226,10 +229,41 @@ class MapDetectPlugin(Plugin):
     def _set_overlay_visible(self, visible: bool) -> None:
         if self._overlay is None or self._region is None:
             return
+        visible = visible or self._force_display
         if visible:
             self._overlay.set_map_region(self._region)
         self._overlay.update_ui_state(MapOverlayState(opacity=1.0 if visible else 0.0))
         self._map_overlay_visible = visible
+
+    def _force_display_text(self) -> str:
+        action = "exit" if self._force_display else "enter"
+        return self.ctx.tr(f"settings.force_display.{action}")
+
+    def _toggle_force_display(self) -> None:
+        if not self._active:
+            return
+        if not self._force_display:
+            region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
+            if region is None:
+                self.ctx.log.warning("Calibrate the map region before enabling forced display.")
+                return
+            if region != self._region:
+                self._region = QRect(region)
+                self._request_match()
+        self._set_force_display(not self._force_display)
+
+    def _set_force_display(self, enabled: bool) -> None:
+        if enabled == self._force_display:
+            return
+        self._force_display = enabled
+        self._force_display_text_changed.emit(self._force_display_text())
+        # Display gates are separate from _current_is_full_map and the job state
+        # machine. In particular, a failed full-map check must not submit terrain.
+        self._set_overlay_visible(self._current_is_full_map)
+        if self._manual_overlay is not None:
+            self._manual_overlay.set_map_open(self._current_is_full_map or enabled)
+        if self._controls is not None:
+            self._controls.sync_from_map()
 
     def _toggle_overlay(self) -> None:
         self._set_overlay_visible(not self._map_overlay_visible)
@@ -253,7 +287,7 @@ class MapDetectPlugin(Plugin):
         self._manual_overlay.set_catalog(self._manual_catalog)
         self._manual_overlay.reset_selection()
         self._manual_overlay.set_map_region(self._region)
-        self._manual_overlay.set_map_open(self._current_is_full_map)
+        self._manual_overlay.set_map_open(self._current_is_full_map or self._force_display)
         self._overlay.set_suppressed(True)
         self._manual_overlay.show_overlay()
         if self._controls is not None:
@@ -458,13 +492,13 @@ class MapDetectPlugin(Plugin):
         self._exit_manual_filter()
         self._flag = MatchFlag.FALSE
         self._last_match = time.monotonic()
-        self._map_overlay_visible = self._current_is_full_map
+        self._map_overlay_visible = self._current_is_full_map or self._force_display
         self._overlay.set_map_region(region)
         self._overlay.update_ui_state(
             MapOverlayState(
                 clear_image=True,
                 map_pattern_matching=True,
-                opacity=1.0 if self._current_is_full_map else 0.0,
+                opacity=1.0 if self._map_overlay_visible else 0.0,
                 display_crystal_layout=False,
             )
         )
@@ -502,6 +536,8 @@ class MapDetectPlugin(Plugin):
         if region != self._region:
             self._region = QRect(region) if region is not None else None
             self._request_match()
+            if self._force_display and region is not None:
+                self._set_overlay_visible(True)
         if region is None:
             if self._overlay is not None:
                 self._overlay.update_ui_state(
@@ -623,7 +659,7 @@ class MapDetectPlugin(Plugin):
                 self._set_overlay_visible(full_map)
             if self._manual_filtering:
                 if self._manual_overlay is not None:
-                    self._manual_overlay.set_map_open(full_map)
+                    self._manual_overlay.set_map_open(full_map or self._force_display)
                 return
             now = time.monotonic()
             if now - self._last_match > self.config.map_pattern_match_interval.value:
@@ -726,13 +762,22 @@ class MapDetectPlugin(Plugin):
                     else [],
                 )
             )
+        force_display = PushSettingCard(
+            self._force_display_text(),
+            FluentIcon.GLOBE,
+            self.ctx.tr("settings.force_display.title"),
+            self.ctx.tr("settings.force_display.content"),
+        )
+        force_display.button.clicked.connect(self._toggle_force_display)
+        self._force_display_text_changed.connect(force_display.button.setText)
         basic.addCards(
+            force_display,
             ConfigRangeCard(
                 self.config.return_topk,
                 FluentIcon.GLOBE,
                 self.ctx.tr("settings.topk.title"),
                 self.ctx.tr("settings.topk.content"),
-            )
+            ),
         )
         panel.addSection(basic)
         panel.addSection(shortcuts)
@@ -824,6 +869,7 @@ class MapDetectPlugin(Plugin):
         return panel
 
     def reset_settings(self) -> None:
+        self._set_force_display(False)
         super().reset_settings()
         self._window_config.input_mode.set("passthrough")
         hotkeys = self.ctx.services.require(HotkeyApi)

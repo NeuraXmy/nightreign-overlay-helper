@@ -52,6 +52,11 @@ drawing:
   day2_circle: "Day2第一次缩圈位置：{position}"
   event: "特殊事件: {name}"
 settings:
+  force_display:
+    title: 强制显示模式
+    content: 全图识别失败时保持显示地图窗口与操纵栏，可进入手动筛选；后台仍按实际全图识别结果运行。需先启用插件并标定地图区域。
+    enter: 进入强制显示模式
+    exit: 退出强制显示模式
   basic: 地图识别
   hotkeys: 快捷键
   advanced: 高级检测选项
