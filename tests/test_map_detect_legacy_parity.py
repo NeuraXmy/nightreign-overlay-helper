@@ -122,7 +122,10 @@ def test_hdr_preprocessing_and_csv_models(legacy):
 @pytest.mark.parametrize("terrain", range(6))
 def test_full_map_terrain_nightlord_poi_and_candidate_parity(legacy, terrain):
     old, _ = legacy
-    before, after = old.MapDetector(), new.MapDetector()
+    before, after = (
+        old.MapDetector(),
+        new.MapDetector(MapDetectionSettings(earth_shifting_algorithm="template")),
+    )
     image = new.MAP_BGS[terrain].copy()
     assert before._match_full_map(image) == after._match_full_map(image)
     assert before._match_earth_shifting(image) == after._match_earth_shifting(image)

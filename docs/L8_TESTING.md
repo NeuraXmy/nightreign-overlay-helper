@@ -35,6 +35,7 @@
 | `test_rain_timer.py` | 雨中状态机、颜色校准、HUD |
 | `test_art_timer.py` | 绝招识别、状态机、HUD |
 | `test_map_detect.py` | 选区、状态机、后台线程、快捷键、HUD 联动 |
+| `test_map_terrain.py` | 地图图片特殊地形回归、算法阈值隔离、NCC 拒识 |
 | `test_map_localization.py` | 地图名称表 i18n |
 | `test_hp_marker.py` | 检测、标记位置、失败保持、前台门控 |
 | `test_p2p_latency.py` | 服务状态、窗口布局、模拟 helper |
@@ -53,6 +54,8 @@
 
 - 隔离加载旧版源码；缺少旧版目录时自动跳过。
 - 保证重写算法与旧版一致。
+
+地图特殊地形样本、文件名 ground truth 规则和测试脚本分工见 [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)。
 
 ## 运行测试
 

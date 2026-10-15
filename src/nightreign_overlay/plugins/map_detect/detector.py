@@ -427,7 +427,48 @@ class MapDetector:
         log.debug(f"MapDetector: Full map match error: {error:.4f}")
         return error
 
-    def _match_earth_shifting(self, img: np.ndarray) -> tuple[int, float]:
+    def _match_earth_shifting(self, img: np.ndarray) -> tuple[int | None, float]:
+        """Dispatch terrain recognition, returning the selected algorithm's native score."""
+        if self.config.earth_shifting_algorithm == "template":
+            return self._match_earth_shifting_template(img)
+        return self._match_earth_shifting_ncc(img)
+
+    def _match_earth_shifting_ncc(self, img: np.ndarray) -> tuple[int | None, float]:
+        """Compare equalized grayscale centers, following the TGH notebook's NCC matcher.
+
+        Return the raw correlation in [-1, 1], with higher scores indicating a match.
+        Constant images have no structure and cannot identify a terrain.
+        """
+        t = time.time()
+        margin = MATCH_EARTH_SHIFTING_SIZE[0] // 8
+
+        def preprocess(image: np.ndarray) -> np.ndarray:
+            image = cv2.resize(image, MATCH_EARTH_SHIFTING_SIZE, interpolation=CV2_RESIZE_METHOD)
+            gray = cv2.equalizeHist(cv2.cvtColor(image, cv2.COLOR_RGB2GRAY))
+            center = gray[margin:-margin, margin:-margin].astype(np.float32).ravel()
+            return center - center.mean()
+
+        center = preprocess(img)
+        if np.dot(center, center) < 1e-7:
+            return None, 0.0
+        best_map_id, best_correlation = None, -float("inf")
+        for map_id, map_img in MAP_BGS.items():
+            template = preprocess(map_img)
+            denominator = np.sqrt(np.dot(center, center) * np.dot(template, template))
+            correlation = 0.0 if denominator < 1e-7 else float(np.dot(center, template) / denominator)
+            correlation = float(np.clip(correlation, -1.0, 1.0))
+            if correlation > best_correlation:
+                best_map_id, best_correlation = map_id, correlation
+        log.info(
+            "MapDetector: Match earth shifting (NCC): best map %s correlation %.4f, time cost: %.4fs",
+            best_map_id,
+            best_correlation,
+            time.time() - t,
+        )
+        return best_map_id, best_correlation
+
+    def _match_earth_shifting_template(self, img: np.ndarray) -> tuple[int | None, float]:
+        """Legacy color template matcher, retaining its original error scale."""
         t = time.time()
         img = cv2.resize(img, MATCH_EARTH_SHIFTING_SIZE, interpolation=CV2_RESIZE_METHOD)
         x, y, w, h = MATCH_EARTH_SHIFTING_REGION
@@ -1168,7 +1209,10 @@ class MapDetector:
         # 判断特殊地形
         if param.do_match_earth_shifting:
             earth_shifting, earth_shifting_score = self._match_earth_shifting(img)
-            if earth_shifting_score > config.earth_shifting_error_threshold:
+            if config.earth_shifting_algorithm == "ncc":
+                if earth_shifting_score < config.earth_shifting_ncc_threshold:
+                    earth_shifting = None
+            elif earth_shifting_score > config.earth_shifting_error_threshold:
                 earth_shifting = None
             ret.earth_shifting = earth_shifting
             ret.earth_shifting_score = earth_shifting_score

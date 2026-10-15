@@ -25,7 +25,7 @@ from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.detector import MapDetectResult
 from nightreign_overlay.plugins.map_detect.manual_catalog import PoiChoice
 from nightreign_overlay.plugins.map_detect.plugin import MapDetectPlugin, MatchFlag, _Job
-from nightreign_overlay.ui.components import ConfigDoubleSpinCard, HotkeySettingCard
+from nightreign_overlay.ui.components import ConfigChoiceCard, ConfigDoubleSpinCard, HotkeySettingCard
 from nightreign_overlay.ui.overlay import OverlayManager
 from test_overlay import FakeBackend
 
@@ -81,9 +81,17 @@ def test_lifecycle_settings_and_resources(maps):
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)
     assert panel is not None
+    algorithm = panel.findChildren(ConfigChoiceCard)[0]
+    assert algorithm.item.key == "earth_shifting_algorithm"
+    assert algorithm.comboBox.currentData() == "ncc"
+    algorithm.comboBox.setCurrentIndex(1)
+    assert plugin.config.snapshot().earth_shifting_algorithm == "template"
+    plugin.config.earth_shifting_algorithm.reset()
+    assert algorithm.comboBox.currentData() == "ncc"
     advanced = {card.item.key: card for card in panel.findChildren(ConfigDoubleSpinCard)}
     assert set(advanced) == {
         "full_map_error_threshold",
+        "earth_shifting_ncc_threshold",
         "earth_shifting_error_threshold",
         "subicon_template_match_threshold",
         "poi_match_sample_ratio_w_nightlord",
@@ -108,6 +116,7 @@ def test_lifecycle_settings_and_resources(maps):
         assert hotkeys.binding(f"map_detect.{action}", HotkeyBinding(None)) == HotkeyBinding(None)
     plugin.on_deactivate()
     plugin.ctx.release()
+
     assert not overlay._timer.isActive()
     assert manager.windows() == [] and fakes.capture.streams == set()
     assert fakes.services.get(MapRecognitionApi) is None

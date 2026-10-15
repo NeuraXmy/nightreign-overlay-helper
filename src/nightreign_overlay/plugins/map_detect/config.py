@@ -4,17 +4,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from nightreign_overlay.core.config import ConfigGroup, Option, RangeOption
+from nightreign_overlay.core.config import ChoiceOption, ConfigGroup, Option, RangeOption
 
 
 @dataclass(frozen=True)
 class MapDetectionSettings:
     """Immutable settings snapshot passed to the worker, with legacy config.yaml defaults."""
 
+    earth_shifting_algorithm: str = "ncc"
     fixed_map_overlay_draw_size: tuple[int, int] | None = None
     map_overlay_draw_size_ratio: float | None = 1.0
     full_map_hough_circle_thres: tuple[int, ...] = (150, 200, 250)
     full_map_error_threshold: float = 20
+    earth_shifting_ncc_threshold: float = 0.2
     earth_shifting_error_threshold: float = 50
     subicon_template_match_threshold: float = 0.06
     poi_match_sample_ratio_w_nightlord: float = 1.0
@@ -24,6 +26,7 @@ class MapDetectionSettings:
 class MapDetectConfig(ConfigGroup):
     """Keep the original advanced parameters available in settings.yaml without changing their scale."""
 
+    earth_shifting_algorithm = ChoiceOption("ncc", ("ncc", "template"))
     return_topk = RangeOption(5, 1, 10)
     map_pattern_match_interval = RangeOption(2100, 1, 86400)
     fixed_map_overlay_draw_size = Option(
@@ -44,6 +47,7 @@ class MapDetectConfig(ConfigGroup):
         ),
     )
     full_map_error_threshold = RangeOption(20.0, 0.0, 1000.0)
+    earth_shifting_ncc_threshold = RangeOption(0.2, -1.0, 1.0)
     earth_shifting_error_threshold = RangeOption(50.0, 0.0, 1000.0)
     subicon_template_match_threshold = RangeOption(0.06, 0.0, 1.0)
     poi_match_sample_ratio_w_nightlord = RangeOption(1.0, 0.0, 1.0)
