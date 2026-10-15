@@ -13,7 +13,7 @@ import yaml
 from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
-from nightreign_overlay.plugins.hp_marker.detector import HpDetector
+from nightreign_overlay.plugins.hp_marker.detector import LegacyHpDetector
 from tests.support.paths import PROJECT_ROOT
 
 _OLD = PROJECT_ROOT.parent / "nightreign-overlay-helper"
@@ -46,7 +46,11 @@ def _legacy(monkeypatch, config, image_box):
 def test_detection_defaults_match_old_config():
     values = yaml.safe_load((_OLD / "config.yaml").read_text())
     config = HpDetectionSettings()
-    assert all(getattr(config, name) == values[name] for name in config.__dataclass_fields__)
+    assert all(
+        getattr(config, name) == values[name]
+        for name in config.__dataclass_fields__
+        if name != "detection_algorithm"
+    )
 
 
 @pytest.mark.parametrize("height,history", [(15, 10), (9, 6), (23, 15)])
@@ -54,7 +58,7 @@ def test_peak_clustering_smoothing_and_failure_history_parity(monkeypatch, heigh
     settings = replace(HpDetectionSettings(), hpbar_recent_length_count=history)
     box = [None]
     old = _legacy(monkeypatch, settings, box)
-    before, after = old.HpDetector(), HpDetector()
+    before, after = old.HpDetector(), LegacyHpDetector()
     widths = [500] * 14 + [502, 498, 503, 500] * 2 + [650] * 14 + [None] * 22
     outputs = []
     for index, width in enumerate(widths):

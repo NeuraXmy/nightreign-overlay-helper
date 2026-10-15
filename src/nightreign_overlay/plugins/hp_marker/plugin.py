@@ -19,10 +19,10 @@ from nightreign_overlay.plugins.hp_marker.overlay import HpMarkerOverlay
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
+    ConfigChoiceCard,
     ConfigColorCard,
     ConfigDoubleSpinCard,
     ConfigRangeCard,
-    ConfigSwitchCard,
     HotkeySettingCard,
     SettingSection,
     SettingsPanel,
@@ -64,6 +64,8 @@ class HpMarkerPlugin(Plugin):
         self._calibrating = False
         self._generation = 0
         self._region: QRect | None = None
+        self._worker_generation: int | None = None
+        self.config.detection_algorithm.valueChanged.connect(self._on_algorithm_changed)
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
 
     def on_activate(self) -> None:
@@ -109,7 +111,7 @@ class HpMarkerPlugin(Plugin):
         if region is None or self._pending is not None:
             return
         settings = self.config.snapshot()
-        # Legacy ignores the selected width, expanding from its left edge by height * 125.
+        # Both algorithms use the full bar height and right-side context.
         expanded = QRect(
             region.x(), region.y(), region.height() * settings.hpbar_region_aspect_ratio, region.height()
         )
@@ -121,7 +123,15 @@ class HpMarkerPlugin(Plugin):
         future = self._executor.submit(self._run_job, job)
         future.add_done_callback(lambda result: self._deliver(job, result))
 
+    def _on_algorithm_changed(self, _value: str) -> None:
+        # In-flight results must not update the overlay after a selection change.
+        self._generation += 1
+
     def _run_job(self, job: _Job) -> int | None:
+        # Only the serialized worker mutates the detector, including history resets.
+        if self._worker_generation != job.generation:
+            self._detector = HpDetector()
+            self._worker_generation = job.generation
         return self._detector.detect(job.image, job.settings)
 
     def _deliver(self, job: _Job, future: Future[int | None]) -> None:
@@ -141,8 +151,7 @@ class HpMarkerPlugin(Plugin):
         if error is not None:
             self.ctx.log.error("HP detection failed: %s", error)
             return
-        # Faithful to updater.py: None leaves the previous display untouched, independently of
-        # keep_last_valid (an unused parameter in the old detector).
+        # Rejection leaves the previous display untouched until a clear boundary is found.
         if length is not None:
             if length <= 0:
                 self._overlay.hide_overlay()
@@ -171,6 +180,16 @@ class HpMarkerPlugin(Plugin):
         panel = SettingsPanel(parent)
         basic = SettingSection(tr("settings.basic"))
         basic.addCards(
+            ConfigChoiceCard(
+                self.config.detection_algorithm,
+                [
+                    (algorithm, tr(f"settings.detection_algorithm.{algorithm}"))
+                    for algorithm in self.config.detection_algorithm.option.choices
+                ],
+                FluentIcon.HEART,
+                tr("settings.detection_algorithm.title"),
+                tr("settings.detection_algorithm.content"),
+            ),
             HotkeySettingCard(
                 self.ctx.services.require(HotkeyApi),
                 _CALIBRATE,
@@ -181,12 +200,16 @@ class HpMarkerPlugin(Plugin):
                 actions=[(tr("settings.region.button"), self._calibrate_region)],
                 accessories=[RegionStatus(self.ctx.services, _REGION_KEY, _REGION_COLOR)],
             ),
-            ConfigSwitchCard(
-                self.config.keep_last_valid,
-                FluentIcon.HISTORY,
-                tr("settings.keep_last_valid.title"),
-                tr("settings.keep_last_valid.content"),
+            ConfigRangeCard(
+                self.config.marker_size,
+                FluentIcon.HEART,
+                tr("settings.marker_size.title"),
+                tr("settings.marker_size.content"),
             ),
+            ConfigColorCard(self.config.marker_color, FluentIcon.PALETTE, tr("settings.marker_color.title")),
+        )
+        advanced = SettingSection(tr("settings.advanced"))
+        advanced.addCards(
             *(
                 ConfigDoubleSpinCard(
                     self.config.item(name),
@@ -197,10 +220,6 @@ class HpMarkerPlugin(Plugin):
                 )
                 for name in ("hpbar_low_hp_marker", "hpbar_high_hp_marker")
             ),
-            ConfigColorCard(self.config.marker_color, FluentIcon.PALETTE, tr("settings.marker_color.title")),
-        )
-        advanced = SettingSection(tr("settings.advanced"))
-        advanced.addCards(
             *(
                 ConfigRangeCard(
                     self.config.item(name),
@@ -219,7 +238,7 @@ class HpMarkerPlugin(Plugin):
                     "hpbar_border_v_peak_interval",
                     "hpbar_recent_length_count",
                 )
-            )
+            ),
         )
         panel.addSection(basic)
         panel.addSection(advanced)

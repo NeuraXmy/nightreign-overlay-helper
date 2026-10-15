@@ -1,4 +1,4 @@
-"""Legacy HP-border brightness detection and history stabilization, with raw RGB input."""
+"""Selectable HP boundary detection with raw RGB input."""
 
 from __future__ import annotations
 
@@ -7,9 +7,27 @@ import numpy as np
 from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
+from nightreign_overlay.plugins.hp_marker.structural import estimate_boundary
 
 
 class HpDetector:
+    """Dispatch detection; legacy history belongs to one uninterrupted legacy session."""
+
+    def __init__(self) -> None:
+        self._legacy: LegacyHpDetector | None = None
+
+    def detect(self, image: np.ndarray, config: HpDetectionSettings) -> int | None:
+        if config.detection_algorithm == "structural":
+            self._legacy = None
+            return estimate_boundary(image).length
+        if config.detection_algorithm == "legacy":
+            if self._legacy is None:
+                self._legacy = LegacyHpDetector()
+            return self._legacy.detect(image, config)
+        raise ValueError(f"Unknown HP detection algorithm: {config.detection_algorithm}")
+
+
+class LegacyHpDetector:
     def __init__(self) -> None:
         self.recent_lengths: list[int] = []
         self.last_valid_length: int | None = None

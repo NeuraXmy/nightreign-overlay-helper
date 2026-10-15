@@ -1,14 +1,46 @@
-"""Independent HP markers with legacy DPI truncation and 50 ms geometry refresh."""
+"""Independent HP markers with logical drawing sizes and physical capture coordinates."""
 
 from __future__ import annotations
 
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QTimer
-from PyQt6.QtGui import QGuiApplication
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtCore import QPoint, QPointF, QRect, QSize, Qt, QTimer
+from PyQt6.QtGui import QColor, QGuiApplication, QPainter, QPaintEvent, QPolygonF
+from PyQt6.QtWidgets import QWidget
 
 from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugins.hp_marker.config import HpMarkerConfig
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
+
+
+class _WedgeMarker(QWidget):
+    """A flat, blunt top tapering to a downward tip on a transparent background."""
+
+    def __init__(self, parent: QWidget) -> None:
+        super().__init__(parent)
+        self.color = QColor("#ffffff")
+
+    def set_color(self, color: str) -> None:
+        value = QColor(color)
+        if value != self.color:
+            self.color = value
+            self.update()
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(self.color)
+        width, height = self.width(), self.height()
+        painter.drawPolygon(
+            QPolygonF(
+                [
+                    QPointF(0, 0),
+                    QPointF(width, 0),
+                    QPointF(width, height * 0.3),
+                    QPointF(width / 2, height),
+                    QPointF(0, height * 0.3),
+                ]
+            )
+        )
 
 
 class HpMarkerOverlay(OverlayWindow):
@@ -19,7 +51,7 @@ class HpMarkerOverlay(OverlayWindow):
         self._region: QRect | None = None
         super().__init__(manager, window, title, QSize(10, 7))
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.lines = [QLabel(self) for _ in range(3)]
+        self.lines = [_WedgeMarker(self) for _ in range(3)]
         self._timer = QTimer(self)
         self._timer.setInterval(50)
         self._timer.timeout.connect(self._tick)
@@ -54,9 +86,11 @@ class HpMarkerOverlay(OverlayWindow):
         rect = self._region
         logical = mapping_for_rect(rect, QGuiApplication.screens()).to_logical(rect, truncate=True)
         x, y, width = logical.x(), logical.y(), logical.width()
-        # Preserve the old truncation (including zero-width lines at very high DPI).
-        line_height = int(self._config.line_height.value / self.devicePixelRatio())
-        line_width = int(self._config.line_width.value / self.devicePixelRatio())
+        # Capture coordinates need conversion; marker appearance uses Qt logical
+        # pixels so Qt scales it consistently on Retina and other high-DPI screens.
+        size = self._config.marker_size.value / 100
+        line_height = max(1, int(self._config.line_height.value * size))
+        line_width = max(1, int(self._config.line_width.value * size))
         self.setFixedSize(width, line_height)
         self._move_to(QPoint(x, y - line_height))
         positions = (
@@ -66,7 +100,7 @@ class HpMarkerOverlay(OverlayWindow):
         )
         for line, position in zip(self.lines, positions, strict=True):
             line.setGeometry(position, 0, line_width, line_height)
-            line.setStyleSheet(f"background-color: {self._config.marker_color.value};")
+            line.set_color(self._config.marker_color.value)
         self.update_visibility()
 
     def dispose(self) -> None:

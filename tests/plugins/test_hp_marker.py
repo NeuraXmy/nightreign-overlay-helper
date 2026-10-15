@@ -16,7 +16,7 @@ from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hp_marker import plugin as module
 from nightreign_overlay.plugins.hp_marker.plugin import HpMarkerPlugin, _Job
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
-from nightreign_overlay.ui.components import ConfigDoubleSpinCard
+from nightreign_overlay.ui.components import ConfigChoiceCard, ConfigDoubleSpinCard
 from nightreign_overlay.ui.overlay import OverlayManager
 from tests.support.feature_fakes import FeatureServices, solid_image
 from tests.support.platform import FakeBackend
@@ -87,10 +87,8 @@ def test_marker_positions_and_failure_preserves_display(hp):
         QRect(424, 0, 3, 7),
         QRect(497, 0, 3, 7),
     ]
-    for keep in (True, False):
-        plugin.config.keep_last_valid.set(keep)
-        _finish(plugin, region, None)
-        assert overlay.isVisible() and overlay.width() == 500
+    _finish(plugin, region, None)
+    assert overlay.isVisible() and overlay.width() == 500
     assert overlay.config.position.value is None
     assert overlay.windowFlags() & Qt.WindowType.WindowTransparentForInput
     assert overlay.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -115,11 +113,12 @@ def test_foreground_gate_and_appearance_updates(hp):
     plugin.config.hpbar_low_hp_marker.set(0.2)
     plugin.config.line_width.set(5)
     plugin.config.line_height.set(9)
+    plugin.config.marker_size.set(200)
     plugin.config.marker_color.set("#ff0000")
     plugin._overlay._tick()
-    assert plugin._overlay.lines[0].geometry() == QRect(98, 0, 5, 9)
-    assert "#ff0000" in plugin._overlay.lines[0].styleSheet()
-    assert plugin._overlay.y() == 11
+    assert plugin._overlay.lines[0].geometry() == QRect(95, 0, 10, 18)
+    assert plugin._overlay.lines[0].color.name() == "#ff0000"
+    assert plugin._overlay.y() == 2
 
 
 def test_worker_expands_width_keeps_raw_pixels_and_drops_busy_frames(hp, monkeypatch):
@@ -191,7 +190,18 @@ def test_stale_result_does_not_clear_new_activation_job(hp):
     assert plugin._pending is None and plugin._overlay.isVisible()
 
 
-def test_fractional_dpi_uses_old_truncation(hp, monkeypatch):
+@pytest.mark.parametrize(
+    "ratio,geometry,positions",
+    [
+        (1.0, QRect(10, 13, 503, 7), [200, 426, 500]),
+        (1.25, QRect(8, 9, 402, 7), [159, 340, 399]),
+        (1.5, QRect(6, 6, 335, 7), [133, 283, 332]),
+        (2.0, QRect(5, 3, 251, 7), [99, 212, 248]),
+    ],
+)
+def test_dpi_converts_bar_coordinates_but_preserves_logical_marker_size(
+    hp, monkeypatch, ratio, geometry, positions
+):
     from types import SimpleNamespace
 
     from nightreign_overlay.plugins.hp_marker import overlay as overlay_module
@@ -200,13 +210,56 @@ def test_fractional_dpi_uses_old_truncation(hp, monkeypatch):
     region = QRect(10, 20, 15, 15)
     fakes.region.regions[module._REGION_KEY] = region
     plugin.on_activate()
-    screen = SimpleNamespace(geometry=lambda: QRect(0, 0, 1920, 1080), devicePixelRatio=lambda: 1.5)
+    screen = SimpleNamespace(geometry=lambda: QRect(0, 0, 1920, 1080), devicePixelRatio=lambda: ratio)
     monkeypatch.setattr(overlay_module.QGuiApplication, "screens", lambda: [screen])
-    monkeypatch.setattr(plugin._overlay, "devicePixelRatio", lambda: 1.5)
+    monkeypatch.setattr(plugin._overlay, "devicePixelRatio", lambda: ratio)
     _finish(plugin, region, 503)
-    assert plugin._overlay.geometry() == QRect(6, 9, 335, 4)
-    assert [line.geometry() for line in plugin._overlay.lines] == [
-        QRect(133, 0, 2, 4),
-        QRect(283, 0, 2, 4),
-        QRect(333, 0, 2, 4),
-    ]
+    assert plugin._overlay.geometry() == geometry
+    assert [line.geometry() for line in plugin._overlay.lines] == [QRect(x, 0, 3, 7) for x in positions]
+    plugin.config.marker_size.set(175)
+    plugin._overlay._tick()
+    assert all(line.size().width() == 5 and line.size().height() == 12 for line in plugin._overlay.lines)
+    assert plugin._overlay.y() == geometry.y() - 5
+
+
+def test_algorithm_selection_discards_pending_result_and_resets_to_new(hp):
+    plugin, fakes, *_ = hp
+    parent = QWidget()
+    panel = plugin.create_settings_widget(parent)
+    card = next(
+        card for card in panel.findChildren(ConfigChoiceCard) if card.item.key == "detection_algorithm"
+    )
+    assert card.comboBox.currentText() == "新版"
+    assert plugin.config.snapshot().detection_algorithm == "structural"
+    region = QRect(10, 20, 15, 15)
+    fakes.region.regions[module._REGION_KEY] = region
+    plugin.on_activate()
+    _finish(plugin, region, 500)
+    job = _Job(plugin._generation, region, np.zeros((15, 100, 3), np.uint8), plugin.config.snapshot())
+    plugin._pending = job
+    card.comboBox.setCurrentIndex(card.comboBox.findData("legacy"))
+    assert card.comboBox.currentText() == "旧版"
+    assert plugin.config.snapshot().detection_algorithm == "legacy"
+    plugin._on_completed(job, 700, None)
+    assert plugin._pending is None
+    assert plugin._overlay.width() == 500
+    plugin.reset_settings()
+    assert plugin.config.snapshot().detection_algorithm == "structural"
+    assert card.comboBox.currentText() == "新版"
+
+
+def test_worker_resets_legacy_history_after_region_or_algorithm_change(hp):
+    plugin, *_ = hp
+    plugin.config.detection_algorithm.set("legacy")
+    plugin.on_activate()
+    image = np.zeros((15, 1875, 3), np.uint8)
+    image[:, 50:65] = (200, 40, 30)
+    image[:, 500:515] = (50, 230, 60)
+    region = QRect(10, 20, 15, 15)
+    job = _Job(plugin._generation, region, image, plugin.config.snapshot())
+    for _ in range(20):
+        length = plugin._run_job(job)
+    assert length is not None
+    plugin._generation += 1
+    blank = _Job(plugin._generation, region, np.zeros_like(image), plugin.config.snapshot())
+    assert plugin._run_job(blank) is None
