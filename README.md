@@ -78,6 +78,20 @@ dist/nightreign-overlay-helper/
 并保留旧版 Qt VC 运行库收集和 OpenCV/Qt ICU 冲突过滤。
 Windows EXE 必须在 Windows 上构建；macOS 开发环境不能直接生成该产物。
 
+### GitHub Actions 自动构建
+
+[`Build Windows ZIP`](.github/workflows/build-windows.yml) 在 Windows x64 runner 上复用
+`build.bat`，使用 Python 3.13 与 .NET 8 SDK，构建完成后将整个发布目录打包为 ZIP。
+
+- 手动构建：进入仓库 **Actions → Build Windows ZIP → Run workflow**，选择需要构建的分支或 tag。
+- 版本构建：推送版本 tag 自动触发，支持 `v0.11.0`、`0.11.0` 等命名，也支持带版本后缀的 tag。
+- 下载：在成功的 workflow 运行页面的 **Artifacts** 中下载产物，内含最终分发用 ZIP；保留时间为 30 天。
+
+tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v0.11.0-windows-x64.zip`；
+手动构建名称包含提交短 SHA 与运行编号。解压后保留完整的 `nightreign-overlay-helper/` 文件夹，
+运行其中的 EXE。构建会检查主程序、截图 DLL、POI ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
+workflow 文件需存在于所构建的 tag 中；GitHub 的手动运行入口需要该 workflow 先进入默认分支。
+
 ## 联机状态
 
 Windows 使用与旧版相同的独立 Steam/ETW 辅助程序。开发环境需要 .NET 8 SDK，执行：
