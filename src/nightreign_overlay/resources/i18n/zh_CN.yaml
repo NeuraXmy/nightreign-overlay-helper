@@ -6,6 +6,7 @@ common:
   "off": 关
 
 nav:
+  faq: 常见问题
   home: 主页
   settings: 设置
   about: 关于

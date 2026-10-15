@@ -6,6 +6,7 @@ common:
   "off": "Off"
 
 nav:
+  faq: FAQ
   home: Home
   settings: Settings
   about: About

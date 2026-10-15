@@ -35,7 +35,7 @@ from nightreign_overlay.ui.overlay import OverlayManager
 from nightreign_overlay.ui.plugin_actions import state_text
 from nightreign_overlay.ui.theme import app_icon, fluent_icon
 
-BANNER_HEIGHT = 168
+BANNER_HEIGHT = round(168 * 0.6)
 
 
 class Banner(QWidget):
@@ -67,13 +67,14 @@ class Banner(QWidget):
         app_icon().paint(painter, icon_rect.toRect())
 
         text_left = icon_rect.right() + 24
+        text_top = (rect.height() - 80) / 2
         painter.setPen(QColor(255, 255, 255))
         title_font = QFont(self.font())
         title_font.setPixelSize(28)
         title_font.setWeight(QFont.Weight.DemiBold)
         painter.setFont(title_font)
         painter.drawText(
-            QRectF(text_left, 40, rect.width() - text_left, 40), Qt.AlignmentFlag.AlignVCenter, APP_NAME
+            QRectF(text_left, text_top, rect.width() - text_left, 36), Qt.AlignmentFlag.AlignVCenter, APP_NAME
         )
 
         body_font = QFont(self.font())
@@ -81,13 +82,13 @@ class Banner(QWidget):
         painter.setFont(body_font)
         painter.setPen(QColor(255, 255, 255, 200))
         painter.drawText(
-            QRectF(text_left, 84, rect.width() - text_left, 24),
+            QRectF(text_left, text_top + 36, rect.width() - text_left, 24),
             Qt.AlignmentFlag.AlignVCenter,
             tr("home.subtitle"),
         )
         painter.setPen(QColor(255, 255, 255, 150))
         painter.drawText(
-            QRectF(text_left, 110, rect.width() - text_left, 20),
+            QRectF(text_left, text_top + 60, rect.width() - text_left, 20),
             Qt.AlignmentFlag.AlignVCenter,
             tr("home.version", version=APP_VERSION),
         )

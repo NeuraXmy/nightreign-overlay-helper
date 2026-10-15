@@ -11,6 +11,7 @@
 | [`src/nightreign_overlay/ui/main_window.py`](../src/nightreign_overlay/ui/main_window.py) | `FluentWindow` 主窗口、导航、插件页初始化 |
 | [`src/nightreign_overlay/ui/pages/home.py`](../src/nightreign_overlay/ui/pages/home.py) | 首页 |
 | [`src/nightreign_overlay/ui/pages/plugin_page.py`](../src/nightreign_overlay/ui/pages/plugin_page.py) | 插件页（设置/教程/重置） |
+| [`src/nightreign_overlay/ui/pages/faq.py`](../src/nightreign_overlay/ui/pages/faq.py) | 常见问题图文页 |
 | [`src/nightreign_overlay/ui/pages/settings.py`](../src/nightreign_overlay/ui/pages/settings.py) | 通用设置页 |
 | [`src/nightreign_overlay/ui/pages/about.py`](../src/nightreign_overlay/ui/pages/about.py) | 关于页 |
 | [`src/nightreign_overlay/ui/overlay.py`](../src/nightreign_overlay/ui/overlay.py) | `OverlayWindow` 基类 + `OverlayManager` |
@@ -30,7 +31,7 @@
 
 - `FluentWindow` 子类，使用普通窗口层级，不设置 `WindowStaysOnTopHint`。
 - 主窗口层级不参与识别门控；窗口在前台时沿用既有 `ForegroundPolicy.detection_allowed` 规则。
-- 左侧导航顺序：首页 → 功能插件页 → 基础插件页 → 调试插件页 → 通用设置 → 关于。
+- 左侧导航顺序：首页 → 功能插件页 → 基础插件页 → 调试插件页 → 常见问题 → 通用设置 → 关于。
 - 导航项分组由 `PLUGIN_KIND_DISPLAY_ORDER` 决定。
 - 关闭事件默认隐藏到托盘；`prepare_quit()` 后接受关闭。
 
@@ -56,7 +57,7 @@ def closeEvent(self, event):
 
 ### HomePage
 
-- Banner（应用名/版本/渐变背景）。
+- Banner（应用名/版本/渐变背景），与关于页共用；高度为原 168 像素的 60%（取整为 101 像素），文字垂直居中。
 - 状态卡片：游戏前台、悬浮窗模式、已启用插件数。
 - 插件快捷开关列表（仅 `settings_scope=PAGE`）。
 
@@ -66,6 +67,13 @@ def closeEvent(self, event):
 - 选项卡：设置 / 教程。
 - 设置选项卡有重置按钮；重置只在设置选项卡可见。
 - 教程使用 `QTextBrowser` 加载本地化 Markdown，相对图片路径自动解析。
+
+### FaqPage
+
+- 导航位于通用设置上方，使用问号图标。
+- 使用与插件教程相同的 `TextBrowser` 加载本地化 Markdown，支持标题、列表、外链和相对路径图片。
+- 内容放在 `src/nightreign_overlay/resources/faq/<语言>.md`，缺少对应语言时按中文、英文顺序回退。
+- 图片可放在 FAQ 目录下，例如 `images/example.png`，在 Markdown 中写 `![说明](images/example.png)`；资源随应用打包。
 
 ### SettingsPage
 
@@ -206,6 +214,7 @@ class MyOverlay(OverlayWindow):
 | 调整主窗口导航/关闭行为 | `ui/main_window.py` |
 | 调整首页布局 | `ui/pages/home.py` |
 | 调整插件页选项卡/重置 | `ui/pages/plugin_page.py` |
+| 修改常见问题图文 | `resources/faq/`（内容）、`ui/pages/faq.py`（页面） |
 | 调整通用设置 | `ui/pages/settings.py` |
 | 调整悬浮窗通用行为 | `ui/overlay.py` |
 | 新增设置卡片类型 | `ui/components/setting_cards.py` |
