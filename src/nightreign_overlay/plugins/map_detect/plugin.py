@@ -30,6 +30,7 @@ from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOve
 from nightreign_overlay.plugins.map_detect.resources import get_appdata_path
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
+    ConfigChoiceCard,
     ConfigDoubleSpinCard,
     ConfigRangeCard,
     HotkeySettingCard,
@@ -742,6 +743,16 @@ class MapDetectPlugin(Plugin):
         panel.addSection(manual_filter)
         advanced = SettingSection(self.ctx.tr("settings.advanced"))
         advanced.addCards(
+            ConfigChoiceCard(
+                self.config.earth_shifting_algorithm,
+                [
+                    (algorithm, self.ctx.tr(f"settings.earth_shifting_algorithm.{algorithm}"))
+                    for algorithm in self.config.earth_shifting_algorithm.option.choices
+                ],
+                FluentIcon.GLOBE,
+                self.ctx.tr("settings.earth_shifting_algorithm.title"),
+                self.ctx.tr("settings.earth_shifting_algorithm.content"),
+            ),
             ConfigRangeCard(
                 self.config.map_pattern_match_interval,
                 FluentIcon.HISTORY,
@@ -757,6 +768,15 @@ class MapDetectPlugin(Plugin):
                 decimals=1,
                 step=1.0,
                 formatter=lambda value: f"{value:g}",
+            ),
+            ConfigDoubleSpinCard(
+                self.config.earth_shifting_ncc_threshold,
+                FluentIcon.DEVELOPER_TOOLS,
+                self.ctx.tr("settings.earth_shifting_ncc_threshold.title"),
+                self.ctx.tr("settings.earth_shifting_ncc_threshold.content"),
+                decimals=3,
+                step=0.01,
+                formatter=lambda value: f"{value:.3f}",
             ),
             ConfigDoubleSpinCard(
                 self.config.earth_shifting_error_threshold,

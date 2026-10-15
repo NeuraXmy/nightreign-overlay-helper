@@ -89,9 +89,17 @@ settings:
   full_map_error_threshold:
     title: 完整地图误差阈值
     content: 判断当前画面是否为完整地图的误差上限。数值越大越宽松，也更容易误判。
+  earth_shifting_algorithm:
+    title: 特殊地形识别算法
+    content: NCC 比较灰度结构，对亮度和饱和度变化更稳健；模板匹配使用原有颜色匹配方式。
+    ncc: NCC（默认）
+    template: 模板匹配
+  earth_shifting_ncc_threshold:
+    title: 特殊地形 NCC 阈值
+    content: 仅用于 NCC 算法，相关系数低于此值时拒绝识别。范围 −1 至 1，默认 0.4；数值越大越严格。
   earth_shifting_error_threshold:
-    title: 特殊地形误差阈值
-    content: 判断特殊地形类型的误差上限。数值越大越宽松，也更容易误判。
+    title: 特殊地形模板匹配误差阈值
+    content: 仅用于模板匹配算法，误差高于此值时拒绝识别。默认 50；数值越大越宽松。
   subicon_template_match_threshold:
     title: POI 子图标阈值
     content: 子图标模板匹配分数高于此值时视为没有子图标；数值越大越容易保留子图标。

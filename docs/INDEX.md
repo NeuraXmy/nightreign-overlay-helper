@@ -14,6 +14,7 @@
   - day_timer/rain_timer/art_timer/map_detect/hp_marker/p2p_latency → [`L6_FEATURE_PLUGINS.md`](./L6_FEATURE_PLUGINS.md)
   - 主窗口/页面/悬浮窗/设置卡片 → [`L7_UI.md`](./L7_UI.md)
   - 测试策略与 fixture 约定 → [`L8_TESTING.md`](./L8_TESTING.md)
+  - 地图识别样本与回归测试 → [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)
 - 修改代码前对照 [`L9_AI_CHECKLIST.md`](./L9_AI_CHECKLIST.md) 核对约束。
 
 ## 文档约定
