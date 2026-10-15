@@ -17,6 +17,7 @@
   - POI CNN 部署、算法切换与验收 → [`POI_CNN.md`](./POI_CNN.md)
   - 多屏截图、DPI 与实机诊断 → [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)
   - 地图识别样本与回归测试 → [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)
+  - 血条识别算法切换、拒识行为与回归测试 → [`HP_DETECTION.md`](./HP_DETECTION.md)
 - 修改代码前对照 [`L9_AI_CHECKLIST.md`](./L9_AI_CHECKLIST.md) 核对约束。
 
 ## 文档约定
