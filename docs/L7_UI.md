@@ -28,7 +28,8 @@
 
 ### MainWindow
 
-- `FluentWindow` 子类。
+- `FluentWindow` 子类，使用普通窗口层级，不设置 `WindowStaysOnTopHint`。
+- 主窗口层级不参与识别门控；窗口在前台时沿用既有 `ForegroundPolicy.detection_allowed` 规则。
 - 左侧导航顺序：首页 → 功能插件页 → 基础插件页 → 调试插件页 → 通用设置 → 关于。
 - 导航项分组由 `PLUGIN_KIND_DISPLAY_ORDER` 决定。
 - 关闭事件默认隐藏到托盘；`prepare_quit()` 后接受关闭。

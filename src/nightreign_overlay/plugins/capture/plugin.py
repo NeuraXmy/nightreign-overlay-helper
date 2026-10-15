@@ -1,12 +1,25 @@
-"""Shared capture with legacy mss, two DLL modes, and a Qt development fallback."""
+"""Shared capture on a dedicated thread: legacy mss, two DLL modes, and an mss primary-screen fallback.
+
+Threading model (the GUI thread never touches a backend, the capture thread never touches plugin state):
+
+* GUI thread — :class:`CapturePlugin`: stream leases, timer, foreground gating, config snapshots, request
+  bookkeeping, ``latest_frame`` and publishing :class:`FrameCaptured`.
+* Capture thread — :class:`_CaptureWorker`: creates, uses and closes every backend (mss and the Maa DLL are
+  bound to the thread that created them) and detaches each image into an immutable frame.
+
+The two sides only talk through queued signals carrying plain values or immutable frames. Every request
+carries the plugin's ``generation``; results from an older generation are discarded on mode switch or stop.
+"""
 
 from __future__ import annotations
 
+import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import QPoint, QTimer
-from PyQt6.QtGui import QGuiApplication, QImage
+from PyQt6.QtCore import QObject, QPoint, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
@@ -22,6 +35,15 @@ from nightreign_overlay.ui.components import (
     SettingsPanel,
 )
 
+FrameCallback = Callable[[FrameCaptured | None], None]
+
+#: Backend key used off Windows, where the capture mode setting does not apply.
+_SCREEN = "screen"
+#: How long deactivation waits for an in-flight grab before abandoning the capture thread.
+_STOP_TIMEOUT_MS = 3000
+#: Threads that did not stop in time; kept referenced so Qt never destroys a running QThread.
+_abandoned: list[tuple[QThread, QObject]] = []
+
 
 class _CaptureService(CaptureApi):
     def __init__(self, plugin: CapturePlugin) -> None:
@@ -30,8 +52,8 @@ class _CaptureService(CaptureApi):
     def latest_frame(self) -> FrameCaptured | None:
         return self._plugin.latest_frame
 
-    def capture_now(self) -> FrameCaptured | None:
-        return self._plugin.capture_now()
+    def request_frame(self, callback: FrameCallback) -> None:
+        self._plugin.request_frame(callback)
 
     def acquire_stream(self, owner: str) -> None:
         self._plugin.acquire_stream(owner)
@@ -52,6 +74,11 @@ class CapturePlugin(Plugin):
         order=0,
     )
 
+    # GUI thread -> capture thread: (request id, generation, mode, hdr).
+    _grab_requested = pyqtSignal(int, int, str, bool)
+    # GUI thread -> capture thread: release the current backend.
+    _close_requested = pyqtSignal()
+
     def on_load(self) -> None:
         self.config = self.ctx.config(CaptureConfig)
         self._timer = QTimer(self)
@@ -61,10 +88,16 @@ class CapturePlugin(Plugin):
             lambda value: self.ctx.log.info("HDR image processing enabled: %s", value)
         )
         self._latest_frame: FrameCaptured | None = None
-        self._native: _MaaCapture | None = None
-        self._mss: _MssCapture | None = None
         self.config.mode.valueChanged.connect(self._on_mode_changed)
         self._stream_owners: dict[str, int] = {}
+        # All of the following are GUI-thread state only.
+        self._thread: QThread | None = None
+        self._worker: _CaptureWorker | None = None
+        self._generation = 0
+        self._last_request = 0
+        # The stream keeps at most one grab in flight; ticks arriving meanwhile are dropped.
+        self._stream_request: int | None = None
+        self._callbacks: dict[int, FrameCallback] = {}
 
     @property
     def latest_frame(self) -> FrameCaptured | None:
@@ -76,20 +109,21 @@ class CapturePlugin(Plugin):
 
     def on_deactivate(self) -> None:
         self._stop_stream()
-        self._close_backend()
+        self._stop_worker()
 
     def _on_mode_changed(self, mode: str) -> None:
-        self._close_backend()
+        self._invalidate()
+        if self._worker is not None:
+            self._close_requested.emit()
         self.ctx.log.info("Capture mode changed to %s", mode)
 
-    def _close_backend(self) -> None:
+    def _invalidate(self) -> None:
+        """Make every in-flight grab stale; their callbacks receive ``None``."""
+        self._generation += 1
+        self._stream_request = None
         self._latest_frame = None
-        if self._native is not None:
-            self._native.close()
-            self._native = None
-        if self._mss is not None:
-            self._mss.close()
-            self._mss = None
+
+    # -- stream ---------------------------------------------------------------------------------
 
     def acquire_stream(self, owner: str) -> None:
         if not owner:
@@ -114,47 +148,88 @@ class CapturePlugin(Plugin):
             self._timer.stop()
 
     def _capture_stream_tick(self) -> None:
-        if self._stream_owners:
-            self.capture_now()
+        if self._stream_owners and self._stream_request is None:
+            self._stream_request = self._request(None)
 
     def _stop_stream(self) -> None:
         self._timer.stop()
         self._stream_owners.clear()
 
-    def capture_now(self) -> FrameCaptured | None:
+    # -- requests -------------------------------------------------------------------------------
+
+    def request_frame(self, callback: FrameCallback) -> None:
+        self._request(callback)
+
+    def _request(self, callback: FrameCallback | None) -> int | None:
+        """Queue one grab on the capture thread; returns its id, or ``None`` when detection is not allowed."""
+        self._last_request += 1
+        request_id = self._last_request
+        if callback is not None:
+            self._callbacks[request_id] = callback
         # Legacy "仅在游戏时显示和检测": no detection while the game is in the background.
         if not self.ctx.services.require(ForegroundPolicy).detection_allowed:
+            if callback is not None:
+                QTimer.singleShot(0, lambda: self._resolve(request_id, None))
             return None
-        try:
-            image = self._grab()
-        except Exception:
-            self.ctx.log.exception("Capture failed in %s mode; will retry", self.config.mode.value)
-            self._close_backend()
-            return None
-        if image is None or image.isNull():
-            return None
-        frame = make_frame(image, hdr=self.config.hdr_processing.value)
-        self._latest_frame = frame
-        self.ctx.publish(frame)
-        return frame
+        self._ensure_worker()
+        self._grab_requested.emit(
+            request_id, self._generation, self.config.mode.value, self.config.hdr_processing.value
+        )
+        return request_id
 
-    def _grab(self) -> QImage | None:
-        if sys.platform != "win32":
-            return _grab_primary_screen()
-        if self.config.mode.value == "legacy":
-            if self._mss is None:
-                self._mss = _MssCapture()
-                self.ctx.log.info("Capture backend: legacy (mss)")
-            return self._mss.grab()
-        if self._native is None:
-            native = _MaaCapture(self.ctx.root_dir, self.config.mode.value)
-            native.connect()
-            self._native = native
-            self.ctx.log.info("Capture backend: %s (%s)", self.config.mode.value, native.selected_method)
-        image = self._native.grab()
-        if image is None:
-            self._close_backend()
-        return image
+    @pyqtSlot(int, int, object)
+    def _on_grabbed(self, request_id: int, generation: int, frame: FrameCaptured | None) -> None:
+        if request_id == self._stream_request:
+            self._stream_request = None
+        policy = self.ctx.services.require(ForegroundPolicy)
+        if generation != self._generation or not policy.detection_allowed:
+            frame = None
+        else:
+            self._latest_frame = frame
+            if frame is not None:
+                self.ctx.publish(frame)
+        self._resolve(request_id, frame)
+
+    def _resolve(self, request_id: int, frame: FrameCaptured | None) -> None:
+        callback = self._callbacks.pop(request_id, None)
+        if callback is None:
+            return
+        try:
+            callback(frame)
+        except Exception:
+            self.ctx.log.exception("Capture callback %r failed", callback)
+
+    # -- capture thread -------------------------------------------------------------------------
+
+    def _ensure_worker(self) -> None:
+        if self._worker is not None:
+            return
+        thread = QThread()
+        thread.setObjectName("capture")
+        worker = _CaptureWorker(self.ctx.root_dir, self.ctx.log)
+        worker.moveToThread(thread)
+        queued = Qt.ConnectionType.QueuedConnection
+        self._grab_requested.connect(worker.grab, queued)
+        self._close_requested.connect(worker.close, queued)
+        worker.grabbed.connect(self._on_grabbed, queued)
+        # ``finished`` is emitted on the capture thread itself, so backends are closed on their own thread.
+        thread.finished.connect(worker.close, Qt.ConnectionType.DirectConnection)
+        thread.start()
+        self._thread, self._worker = thread, worker
+
+    def _stop_worker(self) -> None:
+        self._invalidate()
+        self._callbacks.clear()
+        thread, worker = self._thread, self._worker
+        if thread is None or worker is None:
+            return
+        self._thread = self._worker = None
+        self._grab_requested.disconnect(worker.grab)
+        self._close_requested.disconnect(worker.close)
+        thread.quit()
+        if not thread.wait(_STOP_TIMEOUT_MS):
+            self.ctx.log.warning("Capture thread did not stop within %d ms; abandoning it", _STOP_TIMEOUT_MS)
+            _abandoned.append((thread, worker))
 
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)
@@ -185,9 +260,67 @@ class CapturePlugin(Plugin):
         return panel
 
 
-def _grab_primary_screen() -> QImage | None:
-    screen = QGuiApplication.primaryScreen()
-    return screen.grabWindow(0).toImage() if screen is not None else None
+class _CaptureWorker(QObject):
+    """Owns the capture backend. Constructed on the GUI thread; every slot then runs on the capture thread."""
+
+    # Capture thread -> GUI thread: (request id, generation, frame or None).
+    grabbed = pyqtSignal(int, int, object)
+
+    def __init__(self, root_dir: Path, log: logging.Logger) -> None:
+        super().__init__()
+        self._root_dir = root_dir
+        self._log = log
+        self._backend: _MaaCapture | _MssCapture | None = None
+        self._backend_key: str | None = None
+
+    @pyqtSlot(int, int, str, bool)
+    def grab(self, request_id: int, generation: int, mode: str, hdr: bool) -> None:
+        frame = None
+        try:
+            image = self._grab(mode)
+        except Exception:
+            self._log.exception("Capture failed in %s mode; will retry", mode)
+            self.close()
+        else:
+            if image is not None and not image.isNull():
+                # Detached copy: nothing on this thread references the frame after it is emitted.
+                frame = make_frame(image, hdr=hdr)
+        self.grabbed.emit(request_id, generation, frame)
+
+    def _grab(self, mode: str) -> QImage | None:
+        key = mode if sys.platform == "win32" else _SCREEN
+        if self._backend_key != key:
+            self.close()
+        if self._backend is None:
+            self._backend = self._open(key)
+            self._backend_key = key
+        image = self._backend.grab()
+        if image is None:
+            self.close()
+        return image
+
+    def _open(self, key: str) -> _MaaCapture | _MssCapture:
+        if key == _SCREEN:
+            backend = _MssCapture(primary=True)
+            self._log.info("Capture backend: primary screen (mss)")
+            return backend
+        if key == "legacy":
+            backend = _MssCapture()
+            self._log.info("Capture backend: legacy (mss)")
+            return backend
+        native = _MaaCapture(self._root_dir, key)
+        native.connect()
+        self._log.info("Capture backend: %s (%s)", key, native.selected_method)
+        return native
+
+    @pyqtSlot()
+    def close(self) -> None:
+        backend, self._backend, self._backend_key = self._backend, None, None
+        if backend is not None:
+            try:
+                backend.close()
+            except Exception:
+                self._log.exception("Closing the capture backend failed")
 
 
 class _MaaCapture:
@@ -237,20 +370,29 @@ class _MaaCapture:
 
 
 class _MssCapture:
-    """Legacy desktop capture, with no game-window operations or WGC sessions.
+    """mss desktop capture, with no game-window operations or WGC sessions.
 
-    Capture the virtual desktop once for all consumers. QImage.offset stores its physical origin so
-    calibrated global rectangles work on monitors left of or above the primary monitor as well.
-    Creation, grabbing and closing all run on the capture plugin's Qt thread (mss is thread-local).
+    By default the virtual desktop is captured once for all consumers (Windows legacy mode). QImage.offset
+    stores its physical origin so calibrated global rectangles work on monitors left of or above the primary
+    monitor as well. ``primary`` captures only the primary monitor (the non-Windows fallback).
+    Creation, grabbing and closing all run on the capture thread (mss instances are thread-bound).
     """
 
-    def __init__(self) -> None:
-        from mss import mss
+    def __init__(self, *, primary: bool = False) -> None:
+        import mss
 
-        self._sct = mss()
+        if sys.platform == "darwin":
+            import mss.darwin
+
+            # Physical (Retina) pixels like the calibrated regions; mss defaults to the nominal resolution.
+            mss.darwin.IMAGE_OPTIONS &= ~mss.darwin.kCGWindowImageNominalResolution
+        # ``MSS`` is the non-deprecated 10.2+ entry point; keep compatibility with mss 10.0/10.1.
+        factory = getattr(mss, "MSS", None)
+        self._sct = factory() if factory is not None else mss.mss()
+        self._monitor_index = 1 if primary else 0
 
     def grab(self) -> QImage:
-        monitor = self._sct.monitors[0]
+        monitor = self._sct.monitors[self._monitor_index]
         screenshot = self._sct.grab(monitor)
         # BGRX: desktop alpha is unused and must not make pixels transparent.
         image = QImage(

@@ -30,7 +30,7 @@
 ```python
 class CaptureApi:
     def latest_frame(self) -> FrameCaptured | None: ...
-    def capture_now(self) -> FrameCaptured | None: ...
+    def request_frame(self, callback: Callable[[FrameCaptured | None], None]) -> None: ...
     def acquire_stream(self, owner: str) -> None: ...
     def release_stream(self, owner: str) -> None: ...
     def hdr_enabled(self) -> bool: ...
@@ -45,13 +45,13 @@ class CaptureApi:
 CapturePlugin._timer 启动
         │
         ▼
-_capture_stream_tick() → capture_now()
+_capture_stream_tick() → 发出 queued 请求（忙时丢弃该 tick）
         │
         ▼
-_grab() (mss / Maa)
+_CaptureWorker._grab()（独立 QThread，mss / Maa）
         │
         ▼
-make_frame(image, hdr=...) 发布 FrameCaptured
+make_frame(image, hdr=...) → queued 回传 GUI 线程 → 发布 FrameCaptured
         │
         ▼
 各订阅者 _on_frame(frame)
@@ -67,9 +67,11 @@ make_frame(image, hdr=...) 发布 FrameCaptured
 ### INVARIANT
 
 - 首个 `acquire_stream` 启动定时截图；最后一个 `release_stream` 停止。
-- `capture_now()` 受 `ForegroundPolicy.detection_allowed` 限制。
-- 切换模式会释放旧后端、清空缓存。
-- mss 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
+- `request_frame()` 提交与结果回传都检查 `ForegroundPolicy.detection_allowed`，回调始终在 GUI 线程执行。
+- mss/Maa 后端的创建、截图和关闭全部位于专用截图线程；GUI 线程只管理定时器和结果。
+- 帧流最多保留一个在途请求；切换模式以 generation 丢弃旧结果、释放旧后端并清空缓存。
+- Windows legacy mss 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
+- macOS 使用 mss 截取主屏，并关闭 nominal-resolution 选项以保留 Retina 物理像素坐标。
 
 ### PATTERN：消费截图
 

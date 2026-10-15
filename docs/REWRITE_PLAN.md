@@ -189,10 +189,10 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 ### 3.8 P2 实施约束
 
 - **实现前先完整审阅旧版，复原优先。** 每项功能须先核对旧版的代码路径、配置项、交互流程、视觉细节和边界行为，再开始重写；不得因局部观察而擅自简化、优化或改变用户已习惯的行为。仅在确认旧版存在明确缺陷、安全风险或平台不兼容时调整，并在实现记录中单独说明差异、理由和影响。
-- `capture` 是唯一的周期性截图提供者：功能插件先订阅 `FrameCaptured`，再以自己的插件 ID 调用 `CaptureApi.acquire_stream(owner)` 申请帧流，并在 `PluginContext.on_cleanup()` 中调用 `release_stream(owner)`。首个租约启动定时截图，最后一个租约释放后立即停止；`capture_now()` 仅用于单次请求。这样没有截图消费者时不会定时抓取屏幕，多个消费者仍共享同一完整帧后各自裁剪区域。
+- `capture` 是唯一的周期性截图提供者：功能插件先订阅 `FrameCaptured`，再以自己的插件 ID 调用 `CaptureApi.acquire_stream(owner)` 申请帧流，并在 `PluginContext.on_cleanup()` 中调用 `release_stream(owner)`。首个租约启动定时截图，最后一个租约释放后立即停止；`request_frame(callback)` 用于异步单次请求，回调在 GUI 线程执行。这样没有截图消费者时不会定时抓取屏幕，多个消费者仍共享同一完整帧后各自裁剪区域。
 - HDR 图像处理是 `capture` 的统一设置（`plugins.capture.hdr_processing`），不再由各功能插件各自配置。`capture` 不修改共享帧，只在 `FrameCaptured.hdr` 上标记截图时的开关状态；各检测插件按旧版约定自行选择处理方式（如 DAY 模板匹配用 `capture.api.hdr_to_sdr()`，血条/雨中颜色采样保持原图），新的通用转换函数也统一放在 `capture.api`。
-- 平台差异与外设能力必须保持可调用的服务契约和可注入测试接口。macOS 使用 Qt 截图作开发调试降级；“自动”悬浮窗模式优先使用透明悬浮窗，若 macOS 合成器存在显示问题，用户可显式切换普通窗口；Windows 原生 DLL 打包、`pynput` 权限行为和 pygame 手柄实机验证在 Windows 环境执行。
-- 在完整 worker 线程模型迁移前，DAY 标定期间暂停该插件的模板匹配；识别前把用户选区缩放到旧版同样的模板标准高度（30 px），防止误框大区域时在 GUI 线程进行高分辨率匹配而持续卡顿。
+- 平台差异与外设能力必须保持可调用的服务契约和可注入测试接口。macOS 使用 mss 主屏截图并保留 Retina 物理像素；“自动”悬浮窗模式优先使用透明悬浮窗，若 macOS 合成器存在显示问题，用户可显式切换普通窗口；Windows 原生 DLL 打包、`pynput` 权限行为和 pygame 手柄实机验证在 Windows 环境执行。
+- `capture` 的 mss/Maa 后端创建、截图和关闭全部位于专用 QThread；GUI 线程仅做前台门控、配置快照、流租约和结果发布。帧流只允许一个请求在途，繁忙 tick 直接丢弃；模式切换和停用递增 generation，过期结果不再发布。DAY 标定期间仍暂停该插件的模板匹配；识别前把用户选区缩放到旧版同样的模板标准高度（30 px）。
 - 功能插件使用 HUD 时，调用方在自己的 `PluginContext` 中注册清理回调移除组件，保证热停用不会影响其他 HUD 内容。`HudOverlay` 在添加组件后重新激活布局、按最终 size hint 调整窗口并显式展示/置顶，避免初始空容器尺寸导致内容不可见。HUD 提供独立启用开关，关闭时调用窗口隐藏流程而不是将透明度设为零，确保不留下透明顶层窗口。`day_timer` 还原旧版固定 400px、按四段时长比例分配的蓝紫色分段进度条和带阴影白色粗体文字；容器基准尺寸必须包含全部边距，缩放时内容的宽度、进度条高度、文字、圆角和间距同步缩放。HUD 右键菜单仅提供打开主界面与安全退出程序。
 - HUD 提供与旧版相同的「隐藏文字」开关（`plugins.hud.hide_text`）：只隐藏各组件的文字标签，进度条保持显示。贡献组件实现可选钩子 `set_hud_text_hidden(hidden)`（与 `set_hud_scale(scale)` 同为鸭子类型约定），添加组件时和开关切换时由 `HudOverlay` 统一调用并重新计算窗口尺寸；雨中/绝招的 HUD 组件已按同一约定接入（见 3.10）。
 
@@ -213,7 +213,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 - 核心 `ForegroundPolicy`（`core/game_window.py`，由 `OverlayManager` 创建并注册为服务）是唯一的判定来源，开关或前台状态或 UI 活跃状态变化时发出 `changed`：
   - `display_allowed = not enabled or 游戏在前台 or ui_active`
   - `input_allowed = display_allowed`（`input` 插件分发热键前检查）
-  - `detection_allowed = not enabled or 游戏在前台`（`capture` 定时截图和 `capture_now()` 检查，无 UI 例外）
+  - `detection_allowed = not enabled or 游戏在前台`（`capture` 定时截图和 `request_frame()` 检查，无 UI 例外）
   - `ui_active` 由来源集合 `set_ui_active(source, active)` 维护：`main_window`（主界面可见且未最小化）、`tray_menu`、`overlay_menu`（悬浮窗右键菜单）、`region_selection`（区域标定期间）。
 - `OverlayWindow.should_be_visible()` 的优先级：**自身请求（`show_overlay`/`hide_overlay`）AND 子类条件 AND 全局前台门控**。子类以 `自身条件 and super().should_be_visible()` 叠加，前台门控只能隐藏，永远不能把一个自身要求隐藏的悬浮窗显示出来。普通窗口模式下豁免前台门控（窗口本身会获得焦点，按前台隐藏会导致无法操作）。
 - 任何影响可见性的条件变化后调用 `update_visibility()`；`OverlayManager` 在策略变化时对所有已注册窗口统一刷新。
@@ -267,7 +267,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 |-----|-----|-----|
 | 血条检测区域、绝招图标区域与 DAY I 区域分别由各插件标定（`rain_timer.hp_region`、`art_timer.art_region`） | 插件独立启停，区域归属各自插件 | 旧版配置迁移时需分别映射 |
 | 选区按钮统一布局在右侧（旧版绝招按钮在屏幕中央、取消/保存在 0.3 高度） | 选区对话框统一由 `region` 提供 | 仅按钮位置不同 |
-| 绝招识别在延迟到期时用 `capture_now()` 单次截图，不保持周期帧流；无帧（如前台规则禁止检测）时本次按键直接放弃 | 不需要为偶发识别常驻截图；旧版会挂起等待下一次可检测的 tick | 游戏不在前台时按键不会在回到前台后补识别 |
+| 绝招识别在延迟到期时用 `request_frame()` 异步单次截图，不保持周期帧流；无帧（如前台规则禁止检测）时本次按键直接放弃 | 不需要为偶发识别常驻截图；旧版会挂起等待下一次可检测的 tick | 游戏不在前台时按键不会在回到前台后补识别 |
 | 不再保存 `last_art_sc.png` / `art_region_screenshot.jpg` 调试截图 | 调试图写入应用目录，重写版统一用日志诊断 | 排查绝招识别需看日志中的分数 |
 | 旧版「启用绝招倒计时」开关由插件启用开关代替 | 插件化后二者等价 | 无 |
 | `rain_timer` 设置页新增手动「开始/停止」按钮 | 与 `day_timer` 的手动调整按钮一致，便于无快捷键时操作 | 新增入口，不改变快捷键行为 |
@@ -325,7 +325,7 @@ P2 的范围：`capture` 与 `hud` 使用 `general`；`input` 与 `region` 使�
 | 鼠标穿透 | `WindowTransparentForInput`（WS_EX_TRANSPARENT） | `WindowTransparentForInput` |
 | 前台窗口标题 | `GetForegroundWindow` + `GetWindowTextW`（ctypes，去除 pywin32 依赖） | 不支持，视为“游戏在前台” |
 | 管理员权限检测 / 提权重启 | `IsUserAnAdmin` / `ShellExecuteW(runas)` | 不适用 |
-| 截图 | MaaWin32Screencap.dll（后续 `capture` 插件迁移） | Qt `QScreen.grabWindow` 调试实现 |
+| 截图 | mss 虚拟桌面 / MaaWin32Screencap.dll | mss 主屏（Retina 物理像素） |
 
 ## 8. 代码规范
 

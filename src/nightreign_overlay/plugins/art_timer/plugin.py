@@ -5,14 +5,14 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QRect, QTimer
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
-from nightreign_overlay.plugins.capture.api import CaptureApi
+from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
@@ -65,6 +65,7 @@ class ArtTimerPlugin(Plugin):
         self._detector: ArtDetector | None = None
         self._hud: HudTimerBar | None = None
         self._calibrating = False
+        self._detect_generation = 0
         self._clock = QTimer(self)
         self._clock.setInterval(100)
         self._clock.timeout.connect(self._update_timer)
@@ -86,6 +87,7 @@ class ArtTimerPlugin(Plugin):
         self.ctx.on_cleanup(self._detect_timer.stop)
 
     def on_deactivate(self) -> None:
+        self._detect_generation += 1
         self._hud = None
         self._detector = None
 
@@ -106,21 +108,30 @@ class ArtTimerPlugin(Plugin):
     # -- detection ----------------------------------------------------------------------------
 
     def _use_art(self) -> None:
+        self._detect_generation += 1
         delay = self.config.detect_delay_ms.value
         self.ctx.log.info("Will detect art in %s seconds.", delay / 1000)
         self._detect_timer.start(delay)
 
     def _detect_art(self) -> None:
-        """Capture one frame after the delay; there is no continuous stream for this feature."""
+        """Request one frame after the delay; there is no continuous stream for this feature."""
         if self._calibrating or self._detector is None:
             return
         region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
-        frame = self.ctx.services.require(CaptureApi).capture_now() if region is not None else None
+        if region is not None:
+            generation = self._detect_generation
+            self.ctx.services.require(CaptureApi).request_frame(
+                lambda frame, region=region: self._on_art_frame(frame, region, generation)
+            )
+
+    def _on_art_frame(self, frame: FrameCaptured | None, region: QRect, generation: int) -> None:
+        if generation != self._detect_generation or self._calibrating or self._detector is None:
+            return
         result = (
             self._detector.detect(
                 frame.image, region, self.config.match_threshold.value / 1000, hdr=frame.hdr
             )
-            if frame is not None and region is not None
+            if frame is not None
             else None
         )
         if result is not None:
@@ -165,6 +176,7 @@ class ArtTimerPlugin(Plugin):
         if self._calibrating:
             return
         self._calibrating = True
+        self._detect_generation += 1
         try:
             self.ctx.services.require(RegionApi).request_region(
                 _REGION_KEY, self.ctx.tr("settings.region.annotate"), _REGION_COLOR

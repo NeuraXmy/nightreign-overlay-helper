@@ -1,9 +1,10 @@
 """Capture backend regression tests without Windows or desktop permissions."""
 
+import threading
 from types import SimpleNamespace
 
 import pytest
-from PyQt6.QtCore import QPoint, QRect
+from PyQt6.QtCore import QEventLoop, QPoint, QRect, QThread, QTimer
 from PyQt6.QtGui import QImage
 
 from nightreign_overlay.core.events import EventBus
@@ -14,6 +15,21 @@ from nightreign_overlay.plugin.context import PluginContext
 from nightreign_overlay.plugins.capture import plugin as capture
 from nightreign_overlay.plugins.capture.api import crop_rgb, make_frame
 from nightreign_overlay.plugins.capture.win32 import Manager
+
+
+def _request(plugin: capture.CapturePlugin):
+    result = []
+    loop = QEventLoop()
+
+    def done(frame):
+        result.append(frame)
+        loop.quit()
+
+    plugin.request_frame(done)
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert result, "capture request timed out"
+    return result[0]
 
 
 @pytest.fixture
@@ -43,10 +59,103 @@ def test_default_mss_never_initializes_dll_and_switch_releases_backend(plugin, m
     monkeypatch.setattr(capture, "_MaaCapture", forbidden)
     plugin.on_activate()
     assert plugin.config.mode.value == "legacy"
-    assert plugin.capture_now().image.pixelColor(0, 0).name() == "#112233"
+    callback_thread = []
+    result = []
+    loop = QEventLoop()
+
+    def done(frame):
+        result.append(frame)
+        callback_thread.append(QThread.currentThread())
+        loop.quit()
+
+    plugin.request_frame(done)
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert result[0].image.pixelColor(0, 0).name() == "#112233"
+    assert callback_thread == [QThread.currentThread()]  # Results are delivered on the GUI thread.
     plugin.config.mode.set("foreground")
+    QTimer.singleShot(100, loop.quit)
+    loop.exec()
     assert closed == [True] and plugin.latest_frame is None
-    assert plugin._native is None  # Switching does not run native connect until a frame is needed.
+    assert plugin._worker is not None  # Switching does not run native connect until a frame is needed.
+
+
+def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
+    main_thread = threading.get_ident()
+    calls = []
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+
+    class Backend:
+        def __init__(self):
+            calls.append(("open", threading.get_ident()))
+
+        def grab(self):
+            calls.append(("grab", threading.get_ident()))
+            return image
+
+        def close(self):
+            calls.append(("close", threading.get_ident()))
+
+    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    assert _request(plugin) is not None
+    plugin.on_deactivate()
+    assert [name for name, _ident in calls] == ["open", "grab", "close"]
+    assert len({ident for _name, ident in calls}) == 1
+    assert calls[0][1] != main_thread
+
+
+def test_mode_switch_discards_an_in_flight_old_generation(plugin, monkeypatch):
+    started = threading.Event()
+    release = threading.Event()
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+
+    class Backend:
+        def grab(self):
+            started.set()
+            assert release.wait(1)
+            return image
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    result = []
+    loop = QEventLoop()
+    plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
+    assert started.wait(1)
+    plugin.config.mode.set("foreground")
+    release.set()
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert result == [None]
+    assert plugin.latest_frame is None
+
+
+def test_result_is_discarded_if_detection_becomes_disallowed(plugin, monkeypatch):
+    started = threading.Event()
+    release = threading.Event()
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+
+    class Backend:
+        def grab(self):
+            started.set()
+            assert release.wait(1)
+            return image
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    result = []
+    loop = QEventLoop()
+    plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
+    assert started.wait(1)
+    plugin.ctx.services.require(ForegroundPolicy).detection_allowed = False
+    release.set()
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert result == [None]
+    assert plugin.latest_frame is None
 
 
 def test_failure_retries_selected_backend_without_desktop_fallback(plugin, monkeypatch):
@@ -58,9 +167,9 @@ def test_failure_retries_selected_backend_without_desktop_fallback(plugin, monke
 
     monkeypatch.setattr(capture, "_MaaCapture", unavailable)
     plugin.config.mode.set("background")
-    assert plugin.capture_now() is None
-    assert plugin.capture_now() is None
-    assert len(attempts) == 2 and plugin._mss is None
+    assert _request(plugin) is None
+    assert _request(plugin) is None
+    assert len(attempts) == 2
 
 
 def test_mss_pixels_and_negative_desktop_origin(monkeypatch):
@@ -71,7 +180,7 @@ def test_mss_pixels_and_negative_desktop_origin(monkeypatch):
     closed = []
     monkeypatch.setattr(
         mss,
-        "mss",
+        "MSS",
         lambda: SimpleNamespace(
             monitors=[monitor], grab=lambda region: screenshot, close=lambda: closed.append(True)
         ),

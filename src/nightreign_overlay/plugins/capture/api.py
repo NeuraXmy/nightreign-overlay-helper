@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import cv2
@@ -37,8 +38,8 @@ class CaptureApi:
     def latest_frame(self) -> FrameCaptured | None:
         raise NotImplementedError
 
-    def capture_now(self) -> FrameCaptured | None:
-        """Capture one frame immediately without starting the continuous stream."""
+    def request_frame(self, callback: Callable[[FrameCaptured | None], None]) -> None:
+        """Capture one frame asynchronously; invoke ``callback`` on the GUI thread when it completes."""
         raise NotImplementedError
 
     def acquire_stream(self, owner: str) -> None:

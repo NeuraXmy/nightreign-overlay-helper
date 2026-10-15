@@ -358,11 +358,28 @@ class MapDetectPlugin(Plugin):
             return
 
         self._manual_capture_in_progress = True
-        try:
-            frame = self.ctx.services.require(CaptureApi).capture_now()
-        finally:
-            self._manual_capture_in_progress = False
+        self.ctx.services.require(CaptureApi).request_frame(
+            lambda frame: self._on_manual_frame(frame, pos, revision, current_region)
+        )
+
+    def _on_manual_frame(
+        self, frame: FrameCaptured | None, pos: Position, revision: int, current_region: QRect
+    ) -> None:
+        if revision != self._manual_revision:
+            return
+        self._manual_capture_in_progress = False
+        overlay = self._manual_overlay
+        if overlay is not None:
             overlay.set_capture_hidden(False)
+        if (
+            not self._active
+            or not self._manual_filtering
+            or overlay is None
+            or not overlay.map_open
+            or overlay.earth_shifting is None
+        ):
+            self._abort_manual_auto_recognition()
+            return
         if frame is None:
             self.ctx.log.warning("Manual POI recognition capture returned no image.")
             self._abort_manual_auto_recognition()
