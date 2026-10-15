@@ -175,6 +175,8 @@ def test_failure_retries_selected_backend_without_desktop_fallback(plugin, monke
 def test_mss_pixels_and_negative_desktop_origin(monkeypatch):
     import mss
 
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
+
     monitor = {"left": -2, "top": -1, "width": 2, "height": 1}
     screenshot = SimpleNamespace(width=2, height=1, bgra=bytes([0x33, 0x22, 0x11, 0, 0x66, 0x55, 0x44, 0]))
     closed = []

@@ -27,6 +27,7 @@ tests/
 |------|----------|----------|
 | `core/` | `test_config.py`、`test_events_services.py`、`test_i18n.py`、`test_plugin_manager.py` | 配置、事件/服务、翻译、插件依赖与生命周期 |
 | `plugins/` | `test_capture_backends.py`、`test_infrastructure_plugins.py`、`test_region_preview.py` | 截图后端、输入/HUD/区域服务、区域预览 |
+| `plugins/` | `test_capture_multiscreen.py`、`test_capture_diagnostic.py` | Windows/macOS 四方向副屏、负坐标、混合 DPI、DLL 客户区、标定/预览/地图叠加坐标一致性 |
 | `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
 | `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
 | `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
@@ -68,6 +69,8 @@ git diff --check
 ```
 
 `-p no:capture` 用于规避本机 pytest capture 初始化时的 readline 问题；测试本身不依赖此参数。
+
+多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机验证使用 `scripts/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
 ## 约束与新增测试
 

@@ -18,10 +18,10 @@ from PyQt6.QtGui import (
     QPaintEvent,
     QPen,
     QPixmap,
-    QScreen,
 )
 from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QWidget
 
+from nightreign_overlay.core.screens import mapping_for_rect, screen_mappings
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
@@ -226,28 +226,8 @@ class _RegionPreview(QWidget):
 
 
 def _pixels_to_logical(rect: QRect) -> QRect:
-    """Invert the selector's ``local * dpr + screen offset`` so the rectangle can be drawn by Qt."""
-    screens = QGuiApplication.screens()
-    primary = QGuiApplication.primaryScreen()
-
-    def contains(screen: QScreen) -> bool:
-        geometry = screen.geometry()
-        ratio = screen.devicePixelRatio()
-        x = (rect.x() - geometry.x()) / ratio
-        y = (rect.y() - geometry.y()) / ratio
-        return 0 <= x < geometry.width() and 0 <= y < geometry.height()
-
-    screen = next((screen for screen in screens if contains(screen)), primary)
-    if screen is None:
-        return QRect(rect)
-    geometry = screen.geometry()
-    ratio = screen.devicePixelRatio()
-    return QRect(
-        geometry.x() + round((rect.x() - geometry.x()) / ratio),
-        geometry.y() + round((rect.y() - geometry.y()) / ratio),
-        max(1, round(rect.width() / ratio)),
-        max(1, round(rect.height() / ratio)),
-    )
+    """Map a calibrated capture rectangle back to its Qt screen."""
+    return mapping_for_rect(rect, QGuiApplication.screens()).to_logical(rect)
 
 
 def _wait(milliseconds: int) -> None:
@@ -341,7 +321,8 @@ class _SelectionDialog(QDialog):
 
     With ``freeze`` the screen is captured first and shown dimmed (legacy behaviour); otherwise the
     selector is a translucent layer over the live screen so other windows stay visible. Saved
-    rectangles are in device pixels (local * dpr + screen offset), matching the legacy selector.
+    rectangles are in device pixels (local * dpr + capture origin). Windows preserves the legacy convention;
+    macOS scales screen origins to avoid overlapping mixed-DPR displays.
 
     ``annotations`` lists ``(label, colour)`` buttons; by default one button with ``texts.annotate``.
     Like the legacy dialog, every button is optional and the last box drawn for a button wins.
@@ -371,6 +352,14 @@ class _SelectionDialog(QDialog):
             self.setScreen(screen)
         self._screen_geometry = screen.geometry() if screen is not None else QRect()
         self._device_pixel_ratio = screen.devicePixelRatio() if screen is not None else 1.0
+        self._pixel_origin = next(
+            (
+                mapping.origin
+                for mapping in screen_mappings(QGuiApplication.screens())
+                if mapping.logical == self._screen_geometry
+            ),
+            self._screen_geometry.topLeft(),
+        )
         self._pixmap: QPixmap | None = screen.grabWindow(0) if freeze and screen is not None else None
         self._log.info(
             "Start to capture region at screen %s with devicePixelRatio %s",
@@ -473,7 +462,7 @@ class _SelectionDialog(QDialog):
         self._local_selections = {item.annotation: QRect(item.rect) for item in self.items}
         self.selections = {}
         for index, local in sorted(self._local_selections.items()):
-            self.selections[index] = self._to_pixels(local).translated(self._screen_geometry.topLeft())
+            self.selections[index] = self._to_pixels(local).translated(self._pixel_origin)
             self._log.info(
                 "Saved rect %s -> %s for %s",
                 local.getRect(),

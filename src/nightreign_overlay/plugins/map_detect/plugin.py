@@ -14,6 +14,7 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
+from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb, normalize_image
 from nightreign_overlay.plugins.day_timer.api import DayStarted
@@ -688,16 +689,7 @@ class MapDetectPlugin(Plugin):
             if rect is not None:
                 # Legacy clamps to a square at the selected top-left, rather than recentering.
                 side = min(rect.width(), rect.height())
-                screen = next(
-                    (
-                        s
-                        for s in QGuiApplication.screens()
-                        if 0 <= (rect.x() - s.geometry().x()) / s.devicePixelRatio() < s.geometry().width()
-                        and 0 <= (rect.y() - s.geometry().y()) / s.devicePixelRatio() < s.geometry().height()
-                    ),
-                    QGuiApplication.primaryScreen(),
-                )
-                ratio = screen.devicePixelRatio() if screen is not None else 1.0
+                ratio = mapping_for_rect(rect, QGuiApplication.screens()).ratio
                 # Preserve the old truncation to whole logical pixels at fractional DPI.
                 side = int(int(side / ratio) * ratio)
                 rect = QRect(rect.x(), rect.y(), side, side)

@@ -1,4 +1,4 @@
-"""Shared capture on a dedicated thread: legacy mss, two DLL modes, and an mss primary-screen fallback.
+"""Shared capture on a dedicated thread: legacy mss, two DLL modes, and a cross-platform mss fallback.
 
 Threading model (the GUI thread never touches a backend, the capture thread never touches plugin state):
 
@@ -18,12 +18,13 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from PyQt6.QtCore import QObject, QPoint, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QImage
+from PyQt6.QtCore import QObject, QPoint, QRect, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.core.game_window import ForegroundPolicy
+from nightreign_overlay.core.screens import capture_origin
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
@@ -301,8 +302,8 @@ class _CaptureWorker(QObject):
 
     def _open(self, key: str) -> _MaaCapture | _MssCapture:
         if key == _SCREEN:
-            backend = _MssCapture(primary=True)
-            self._log.info("Capture backend: primary screen (mss)")
+            backend = _MssCapture()
+            self._log.info("Capture backend: desktop (mss)")
             return backend
         if key == "legacy":
             backend = _MssCapture()
@@ -331,6 +332,7 @@ class _MaaCapture:
         self._mode = mode
         self.selected_method: str | None = None
         self._manager: object | None = None
+        self._hwnd: int | None = None
 
     def connect(self) -> None:
         from nightreign_overlay.meta import GAME_WINDOW_TITLE
@@ -352,21 +354,36 @@ class _MaaCapture:
             manager.close()
             raise
         self._manager = manager
+        self._hwnd = hwnd
 
     def grab(self) -> QImage | None:
         if self._manager is None:
             return None
+        from nightreign_overlay.plugins.capture.win32 import client_geometry
+
+        before = client_geometry(self._hwnd)
         info = self._manager.screencap()  # type: ignore[union-attr]
         if info is None or info.channels not in (3, 4):
             return None
-        image_format = QImage.Format.Format_BGR888 if info.channels == 3 else QImage.Format.Format_ARGB32
+        after = client_geometry(self._hwnd)
+        # A window moving/resizing during a grab has no reliable desktop origin; retry next tick.
+        if before != after or after[2] <= 0 or after[3] <= 0:
+            return None
+        # Desktop/window buffers use BGRX; an unused zero alpha byte must not hide captured pixels.
+        image_format = QImage.Format.Format_BGR888 if info.channels == 3 else QImage.Format.Format_RGB32
         image = QImage(info.data, info.width, info.height, info.step, image_format)
-        return image.copy()
+        image = image.copy()
+        # The DLL captures the client area. Normalize any backend/DPI scaling to native desktop pixels.
+        if image.size().width() != after[2] or image.size().height() != after[3]:
+            image = image.scaled(after[2], after[3], Qt.AspectRatioMode.IgnoreAspectRatio)
+        image.setOffset(QPoint(after[0], after[1]))
+        return image
 
     def close(self) -> None:
         if self._manager is not None:
             self._manager.close()  # type: ignore[union-attr]
             self._manager = None
+        self._hwnd = None
 
 
 class _MssCapture:
@@ -374,11 +391,11 @@ class _MssCapture:
 
     By default the virtual desktop is captured once for all consumers (Windows legacy mode). QImage.offset
     stores its physical origin so calibrated global rectangles work on monitors left of or above the primary
-    monitor as well. ``primary`` captures only the primary monitor (the non-Windows fallback).
+    monitor as well. macOS captures each display separately into a non-overlapping native-pixel atlas.
     Creation, grabbing and closing all run on the capture thread (mss instances are thread-bound).
     """
 
-    def __init__(self, *, primary: bool = False) -> None:
+    def __init__(self) -> None:
         import mss
 
         if sys.platform == "darwin":
@@ -389,10 +406,14 @@ class _MssCapture:
         # ``MSS`` is the non-deprecated 10.2+ entry point; keep compatibility with mss 10.0/10.1.
         factory = getattr(mss, "MSS", None)
         self._sct = factory() if factory is not None else mss.mss()
-        self._monitor_index = 1 if primary else 0
 
     def grab(self) -> QImage:
-        monitor = self._sct.monitors[self._monitor_index]
+        if sys.platform == "darwin":
+            return self._grab_macos()
+        monitor = self._sct.monitors[0]
+        return self._grab_monitor(monitor)
+
+    def _grab_monitor(self, monitor: dict) -> QImage:
         screenshot = self._sct.grab(monitor)
         # BGRX: desktop alpha is unused and must not make pixels transparent.
         image = QImage(
@@ -404,6 +425,39 @@ class _MssCapture:
         ).copy()
         image.setOffset(QPoint(monitor["left"], monitor["top"]))
         return image
+
+    def _grab_macos(self) -> QImage:
+        # A combined CoreGraphics grab uses one scale for the entire desktop. Grab each display
+        # separately instead: mixed Retina / non-Retina screens must keep their native pixels.
+        monitors = self._sct.monitors[1:]
+        if not monitors:
+            raise RuntimeError("No displays available for screen capture")
+        images = [(monitor, self._grab_monitor(monitor)) for monitor in monitors]
+        ratio = max(
+            max(image.width() / monitor["width"], image.height() / monitor["height"])
+            for monitor, image in images
+        )
+        tiles = [
+            (capture_origin(QPoint(monitor["left"], monitor["top"]), ratio), image)
+            for monitor, image in images
+        ]
+        if len(tiles) == 1:
+            origin, image = tiles[0]
+            image.setOffset(origin)
+            return image
+        bounds = QRect()
+        for origin, image in tiles:
+            bounds = bounds.united(QRect(origin, image.size()))
+        result = QImage(bounds.size(), QImage.Format.Format_RGB32)
+        result.fill(Qt.GlobalColor.black)
+        painter = QPainter(result)
+        try:
+            for origin, image in tiles:
+                painter.drawImage(origin - bounds.topLeft(), image)
+        finally:
+            painter.end()
+        result.setOffset(bounds.topLeft())
+        return result
 
     def close(self) -> None:
         self._sct.close()

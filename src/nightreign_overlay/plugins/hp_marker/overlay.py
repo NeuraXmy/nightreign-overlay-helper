@@ -6,6 +6,7 @@ from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QLabel
 
+from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugins.hp_marker.config import HpMarkerConfig
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
 
@@ -51,20 +52,8 @@ class HpMarkerOverlay(OverlayWindow):
         if self._region is None:
             return
         rect = self._region
-        screen = next(
-            (
-                s
-                for s in QGuiApplication.screens()
-                if 0 <= (rect.x() - s.geometry().x()) / s.devicePixelRatio() < s.geometry().width()
-                and 0 <= (rect.y() - s.geometry().y()) / s.devicePixelRatio() < s.geometry().height()
-            ),
-            QGuiApplication.primaryScreen(),
-        )
-        ratio = screen.devicePixelRatio() if screen is not None else 1.0
-        origin = screen.geometry().topLeft() if screen is not None else QPoint()
-        x = origin.x() + int((rect.x() - origin.x()) / ratio)
-        y = origin.y() + int((rect.y() - origin.y()) / ratio)
-        width = int(rect.width() / ratio)
+        logical = mapping_for_rect(rect, QGuiApplication.screens()).to_logical(rect, truncate=True)
+        x, y, width = logical.x(), logical.y(), logical.width()
         # Preserve the old truncation (including zero-width lines at very high DPI).
         line_height = int(self._config.line_height.value / self.devicePixelRatio())
         line_width = int(self._config.line_width.value / self.devicePixelRatio())

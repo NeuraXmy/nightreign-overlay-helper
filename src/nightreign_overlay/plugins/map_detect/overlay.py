@@ -11,11 +11,12 @@ from functools import partial
 
 import yaml
 from PIL import Image
-from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QTimer
+from PyQt6.QtCore import QRect, QSize, Qt, QTimer
 from PyQt6.QtGui import QColor, QGuiApplication, QImage, QPixmap
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QLabel, QSizePolicy, QVBoxLayout
 
 from nightreign_overlay.core.log import get_logger
+from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugins.map_detect.image_utils import draw_text
 from nightreign_overlay.plugins.map_detect.localization import rendering_translator
 from nightreign_overlay.plugins.map_detect.resources import get_data_path
@@ -398,26 +399,9 @@ class MapInfoOverlay(OverlayWindow):
         )
 
     def set_map_region(self, rect: QRect) -> None:
-        # Match the selector's physical-pixel convention, including per-monitor DPI.
-        screen = next(
-            (
-                s
-                for s in QGuiApplication.screens()
-                if 0 <= (rect.x() - s.geometry().x()) / s.devicePixelRatio() < s.geometry().width()
-                and 0 <= (rect.y() - s.geometry().y()) / s.devicePixelRatio() < s.geometry().height()
-            ),
-            QGuiApplication.primaryScreen(),
-        )
-        ratio = screen.devicePixelRatio() if screen is not None else 1.0
-        origin = screen.geometry().topLeft() if screen is not None else QPoint()
-        size = QSize(max(1, int(rect.width() / ratio)), max(1, int(rect.height() / ratio)))
-        self.set_base_size(size)
-        self._move_to(
-            QPoint(
-                origin.x() + int((rect.x() - origin.x()) / ratio),
-                origin.y() + int((rect.y() - origin.y()) / ratio),
-            )
-        )
+        logical = mapping_for_rect(rect, QGuiApplication.screens()).to_logical(rect, truncate=True)
+        self.set_base_size(logical.size())
+        self._move_to(logical.topLeft())
 
     def dispose(self) -> None:
         self._timer.stop()
