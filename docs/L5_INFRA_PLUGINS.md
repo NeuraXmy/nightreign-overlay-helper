@@ -71,7 +71,11 @@ make_frame(image, hdr=...) → queued 回传 GUI 线程 → 发布 FrameCaptured
 - mss/Maa 后端的创建、截图和关闭全部位于专用截图线程；GUI 线程只管理定时器和结果。
 - 帧流最多保留一个在途请求；切换模式以 generation 丢弃旧结果、释放旧后端并清空缓存。
 - Windows legacy mss 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
-- macOS 使用 mss 截取主屏，并关闭 nominal-resolution 选项以保留 Retina 物理像素坐标。
+- macOS 关闭 nominal-resolution 选项，逐屏抓取原生像素并合成共享帧；三个模式都使用这个跨平台 mss 后端。
+- macOS 的屏幕原点按桌面最大 DPR 放置，屏内坐标按本屏 DPR 缩放；`core/screens.py` 统一标定、预览和地图/血条悬浮窗的转换。
+- Windows DLL 图像使用当前客户区的物理桌面原点，抓取前后检查窗口位置/尺寸，变化时丢弃该帧并重试；DLL 尺寸与物理客户区不一致时按客户区尺寸归一化。
+- Windows 客户区几何查询临时启用线程 per-monitor DPI awareness，并在结束时恢复原上下文。
+- 多屏验证范围、实机诊断脚本及 macOS 副屏重新标定要求见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
 ### PATTERN：消费截图
 

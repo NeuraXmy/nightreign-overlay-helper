@@ -560,7 +560,8 @@ def test_calibration_square_cancel_and_reset(maps, monkeypatch):
     assert plugin._flag == MatchFlag.PREPARE and not plugin._overlay.map_pattern_matching
     plugin.config.return_topk.set(10)
     plugin.reset_settings()
-    assert plugin.config.return_topk.value == 5 and fakes.region.region(_REGION) is None
+    assert plugin.config.return_topk.value == plugin.config.return_topk.option.default
+    assert fakes.region.region(_REGION) is None
 
 
 def test_worker_drops_busy_frames_and_queued_results_after_deactivation(maps, monkeypatch):

@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from PyQt6.QtCore import QPointF, QRect, Qt
 from PyQt6.QtGui import QColor, QEnterEvent
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from nightreign_overlay.core import i18n
+from nightreign_overlay.core import i18n, screens
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
@@ -86,7 +87,8 @@ class _Screen:
 
 
 def test_preview_inverts_the_selector_pixel_convention(monkeypatch: pytest.MonkeyPatch) -> None:
-    # The selector stores ``local * dpr + screen offset``; Qt on Windows reports native screen origins.
+    monkeypatch.setattr(screens, "sys", SimpleNamespace(platform="win32"))
+    # Qt on Windows reports native screen origins.
     primary = _Screen(QRect(0, 0, 1440, 900), 2.0)
     secondary = _Screen(QRect(2880, 0, 1920, 1080), 1.0)
 

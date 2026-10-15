@@ -15,6 +15,7 @@
   - 主窗口/页面/悬浮窗/设置卡片 → [`L7_UI.md`](./L7_UI.md)
   - 测试策略与 fixture 约定 → [`L8_TESTING.md`](./L8_TESTING.md)
   - POI CNN 部署、算法切换与验收 → [`POI_CNN.md`](./POI_CNN.md)
+  - 多屏截图、DPI 与实机诊断 → [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)
   - 地图识别样本与回归测试 → [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)
 - 修改代码前对照 [`L9_AI_CHECKLIST.md`](./L9_AI_CHECKLIST.md) 核对约束。
 
