@@ -32,6 +32,7 @@ tests/
 | `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
 | `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
 | `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
+| `plugins/map_detect/` | `test_map_full_map.py` | 全图原图、颜色与清晰度增强、半透明与裁剪拒绝率、额外增强参数和无效输入 |
 | `plugins/map_detect/` | `test_poi_cnn.py`、`test_map_localization.py` | ONNX CPU 单点/批量推理、类别约束、14 张地图 ID 验收、名称本地化 |
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
 | `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图 |
