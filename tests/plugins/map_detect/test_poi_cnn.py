@@ -95,7 +95,7 @@ def test_cpu_session_batch_single_parity_and_edge_padding():
     np.testing.assert_allclose(corner.sum(axis=1), 1, atol=1e-6)
 
 
-# User-confirmed hard capture remains reported by benchmark_poi.py, outside acceptance.
+# User-confirmed hard capture remains reported by the benchmark, outside acceptance.
 _CAPTURES = [path for path in sorted((MAP_CAPTURE_DIR).glob("*.jpg")) if path.name != "207_hide.jpg"]
 
 

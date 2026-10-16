@@ -40,8 +40,7 @@
 复现：
 
 ```bash
-python scripts/evaluate_hp_rectangle.py
 python -m pytest tests/plugins/test_hp_rectangle_experiment.py -q
 ```
 
-评估脚本输出连续播放及每组独立启动的完整记录；出现误判、连续播放拒识不低于 20%、连续拒识超过 5 秒，或独立启动五秒内无输出时返回失败。独立启动超过 20% 的窗口仍在报告中保留，不能据脚本返回成功将其忽略。
+固定样本结果为历史实验记录；当前回归测试覆盖代表性识别行为，不重新生成连续播放和独立启动的完整评估报告。

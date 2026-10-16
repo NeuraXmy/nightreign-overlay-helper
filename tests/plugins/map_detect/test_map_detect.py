@@ -50,15 +50,16 @@ def maps(store, tmp_path, monkeypatch):
     fakes.input.ctx.release()
 
 
-def _job(plugin, stage="check"):
+def _job(plugin, stage="check", *, captured_at=1000.0, image=None):
     return _Job(
         plugin._generation,
         (0, 0, 100, 100),
-        np.zeros((100, 100, 3), np.uint8),
+        np.zeros((100, 100, 3), np.uint8) if image is None else image,
         False,
         plugin.config.snapshot(),
         5,
         stage,
+        captured_at=captured_at,
     )
 
 
@@ -100,6 +101,8 @@ def test_lifecycle_settings_and_resources(maps):
     advanced = {card.item.key: card for card in panel.findChildren(ConfigDoubleSpinCard)}
     assert set(advanced) == {
         "full_map_error_threshold",
+        "map_stability_change_threshold",
+        "map_stability_duration",
         "earth_shifting_ncc_threshold",
         "earth_shifting_error_threshold",
         "subicon_template_match_threshold",
@@ -111,6 +114,8 @@ def test_lifecycle_settings_and_resources(maps):
     plugin.config.subicon_template_match_threshold.reset()
     assert advanced["subicon_template_match_threshold"].spinBox.value() == pytest.approx(0.06)
     assert plugin.config.snapshot().subicon_template_match_threshold == pytest.approx(0.06)
+    assert plugin.config.snapshot().map_stability_change_threshold == pytest.approx(2.0)
+    assert plugin.config.snapshot().map_stability_duration == pytest.approx(0.6)
     hotkey_cards = {card._action_id: card for card in panel.findChildren(HotkeySettingCard)}
     assert set(hotkey_cards) == {f"map_detect.{action}" for action in module._ACTIONS}
     calibration = hotkey_cards.pop("map_detect.calibrate_region")
@@ -151,14 +156,21 @@ def test_prepare_clears_then_reuses_snapshot_for_terrain_and_pattern(maps, monke
     _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
     assert plugin._flag == MatchFlag.TRUE and overlay.overlay_images is None
     assert submitted == []
+    for offset in (0.25, 0.5, 0.75):
+        job = _job(plugin, captured_at=1000.0 + offset)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+        assert submitted == []
+    job = _job(plugin, captured_at=1001.0)
     _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
     terrain = submitted.pop()
     assert terrain.stage == "terrain" and terrain.image is job.image
+    assert terrain.captured_at == job.captured_at
     _finish(plugin, terrain, MapDetectResult(img=job.image, earth_shifting=None))
     assert plugin._flag == MatchFlag.TRUE and submitted == []
     _finish(plugin, terrain, MapDetectResult(img=job.image, earth_shifting=4))
     pattern = submitted.pop()
     assert pattern.stage == "4" and pattern.image is job.image
+    assert pattern.captured_at == job.captured_at
     assert plugin._flag == MatchFlag.FALSE and overlay.map_pattern_matching
     images = [Image.new("RGBA", (10, 10)) for _ in range(3)]
     _finish(plugin, pattern, MapDetectResult(overlay_images=images))
@@ -180,6 +192,70 @@ def test_manual_visibility_survives_until_full_map_transition(maps, monkeypatch)
     _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=False))
     _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
     assert plugin._map_overlay_visible
+
+
+def test_stability_uses_capture_time_even_when_callbacks_arrive_late(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._flag = MatchFlag.TRUE
+    for offset in (0.0, 0.1, 0.2):
+        maps[3][0] += 10
+        job = _job(plugin, captured_at=1000.0 + offset)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+        assert submitted == []
+    job = _job(plugin, captured_at=1000.75)
+    _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    assert [task.stage for task in submitted] == ["terrain"]
+    assert submitted[0].image is job.image
+
+
+def test_stability_uses_raw_pixels_when_hdr_normalization_hides_fades(maps, monkeypatch):
+    plugin, _, submitted = _ready(maps, monkeypatch)
+    plugin._flag = MatchFlag.TRUE
+    normalized = np.full((100, 100, 3), 120, np.uint8)
+    for index in range(8):
+        raw = np.full((100, 100, 3), index * 10, np.uint8)
+        job = _job(plugin, captured_at=1000.0 + index * 0.25, image=raw)
+        _finish(plugin, job, MapDetectResult(img=normalized, is_full_map=True))
+        assert submitted == []
+    for offset in (2.0, 2.25, 2.5):
+        job = _job(plugin, captured_at=1000.0 + offset, image=raw)
+        _finish(plugin, job, MapDetectResult(img=normalized, is_full_map=True))
+    assert [task.stage for task in submitted] == ["terrain"]
+    assert submitted[0].image is normalized
+    assert submitted[0].captured_at == 1002.5
+
+
+@pytest.mark.parametrize("interrupt", ["request", "manual", "region", "check_error"])
+def test_stability_window_is_discarded_when_recognition_context_changes(maps, monkeypatch, interrupt):
+    plugin, fakes, submitted = _ready(maps, monkeypatch)
+    plugin._flag = MatchFlag.TRUE
+    for offset in (0.0, 0.25, 0.5):
+        job = _job(plugin, captured_at=1000.0 + offset)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    assert submitted == []
+    if interrupt == "request":
+        plugin._request_match()
+    elif interrupt == "manual":
+        plugin._toggle_manual_filter()
+        plugin._exit_manual_filter()
+    elif interrupt == "region":
+        fakes.region.regions[_REGION] = None
+        plugin._on_frame(FrameCaptured(solid_image(100, 100, (0, 0, 0)), 1000.6))
+        fakes.region.regions[_REGION] = plugin._region = QRect(0, 0, 100, 100)
+    else:
+        job = _job(plugin, captured_at=1000.6)
+        plugin._pending_job = job
+        plugin._on_completed(job, None, RuntimeError("capture check failed"))
+    if plugin._flag == MatchFlag.PREPARE:
+        job = _job(plugin, captured_at=1000.65)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    job = _job(plugin, captured_at=1000.75)
+    _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    assert submitted == []
+    for offset in (1.0, 1.25, 1.5):
+        job = _job(plugin, captured_at=1000.0 + offset)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+    assert [task.stage for task in submitted] == ["terrain"]
 
 
 def test_day_one_interval_and_stale_results(maps, monkeypatch):
@@ -469,6 +545,7 @@ def test_manual_single_poi_auto_recognition_submits_and_applies_choice(maps, mon
     assert not manual._capture_hidden
     poi_job = submitted[-1]
     assert poi_job.stage == "poi" and poi_job.poi_position == pos
+    assert poi_job.captured_at == fakes.capture.frame.captured_at
     assert poi_job.earth_shifting == 0 and poi_job.nightlord == 0 and poi_job.hdr
 
     _finish(plugin, poi_job, MapDetectResult(poi_types={pos: ctype}))
@@ -595,6 +672,7 @@ def test_worker_drops_busy_frames_and_queued_results_after_deactivation(maps, mo
     assert started.wait(5)
     plugin._on_frame(frame)
     assert len(calls) == 1 and plugin._busy
+    assert calls[0].captured_at == frame.captured_at
     release.set()
     process_events()
     assert not plugin._busy and plugin._flag == MatchFlag.TRUE
@@ -751,7 +829,11 @@ def test_force_display_does_not_change_check_terrain_pattern_pipeline(maps, monk
     plugin._last_match = 1000.0
     plugin._flag = MatchFlag.TRUE
     plugin._toggle_force_display()
-    job = _job(plugin)
+    for offset in (0.0, 0.25, 0.5):
+        job = _job(plugin, captured_at=1000.0 + offset)
+        _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
+        assert submitted == []
+    job = _job(plugin, captured_at=1000.75)
     _finish(plugin, job, MapDetectResult(img=job.image, is_full_map=True))
     assert plugin._current_is_full_map
     terrain = submitted.pop()

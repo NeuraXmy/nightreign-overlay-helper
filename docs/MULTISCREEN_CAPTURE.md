@@ -59,9 +59,9 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 测试替换原生取图和 Win32 API，运行生产后端的图像构造、坐标转换和裁剪代码。它们无法覆盖驱动、DLL 内部裁剪或操作系统录屏权限。
 
-## 实机诊断脚本
+## 实机诊断工具
 
-使用应用运行环境执行 `scripts/diagnose_capture.py`。脚本经生产 `_CaptureWorker` 及 Qt queued 信号在独立线程抓取，不修改用户配置，不切换失败的截图模式。
+使用应用运行环境执行 `tools/diagnose_capture.py`。脚本经生产 `_CaptureWorker` 及 Qt queued 信号在独立线程抓取，不修改用户配置，不切换失败的截图模式。
 
 输出目录包含：
 
@@ -77,7 +77,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 在具有屏幕录制权限的终端执行：
 
 ```bash
-.venv/bin/python scripts/diagnose_capture.py --mode all --markers \
+.venv/bin/python tools/diagnose_capture.py --mode all --markers \
   --output .tmp/capture-macos
 ```
 
@@ -90,13 +90,13 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 先验证整个桌面的 mss 多屏定位：
 
 ```powershell
-.venv\Scripts\python.exe scripts\diagnose_capture.py --mode legacy --markers --output .tmp\capture-windows-desktop
+.venv\Scripts\python.exe tools\diagnose_capture.py --mode legacy --markers --output .tmp\capture-windows-desktop
 ```
 
 启动游戏后，在每块屏幕上分别运行三种模式：
 
 ```powershell
-.venv\Scripts\python.exe scripts\diagnose_capture.py --mode all --output .tmp\capture-windows-game
+.venv\Scripts\python.exe tools\diagnose_capture.py --mode all --output .tmp\capture-windows-game
 ```
 
 也可以从程序的已标定区域状态中读取 `X Y W H`，追加 `--region X Y W H`，检查三种截图方式裁出的游戏内容是否一致。DLL 抓客户区，整帧尺寸小于桌面是正常行为，比较的是相同全局区域的内容。

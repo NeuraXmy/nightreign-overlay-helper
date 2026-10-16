@@ -34,6 +34,7 @@ tests/
 | `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
 | `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
 | `plugins/map_detect/` | `test_map_full_map.py` | 全图原图、颜色与清晰度增强、半透明与裁剪拒绝率、额外增强参数和无效输入 |
+| `plugins/map_detect/` | `test_map_stability.py` | 地图开启／关闭稳定窗口、实际视频采样相位、渐变期间全图误放行、时间戳及局部动画 |
 | `plugins/map_detect/` | `test_poi_cnn.py`、`test_map_localization.py` | ONNX CPU 单点/批量推理、类别约束、14 张地图 ID 验收、名称本地化 |
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
 | `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图，以及页面销毁后的垃圾回收与事件循环 |
@@ -57,7 +58,7 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 | [`tests/support/platform.py`](../tests/support/platform.py) | 共享 `FakeBackend` |
 | [`tests/support/qt.py`](../tests/support/qt.py) | `process_events()`、`delete_qobjects()` |
 | [`tests/support/paths.py`](../tests/support/paths.py) | 仓库路径与地图截图路径，避免目录移动影响路径推导 |
-| [`tests/support/hp_video.py`](../tests/support/hp_video.py) | 血条视频逐帧评估及检测耗时统计；复测入口为 `scripts/evaluate_hp_videos.py` |
+| [`tests/support/hp_video.py`](../tests/support/hp_video.py) | 血条视频逐帧评估及检测耗时统计，供视频回归测试使用 |
 
 ## 运行测试
 
@@ -69,8 +70,8 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/core -q
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect -q
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/ui tests/platforms -q
 
-.venv/bin/ruff check src tests scripts tools
-.venv/bin/ruff format --check src tests scripts tools
+.venv/bin/ruff check src tests scripts tools benchmark
+.venv/bin/ruff format --check src tests scripts tools benchmark
 git diff --check
 ```
 
@@ -82,7 +83,7 @@ git diff --check
 
 FAQ 测试通过 `delete_qobjects(*objects)` 清理页面及相关服务：保留 Python 强引用，逐个调用 `deleteLater()`，再立即处理指定根对象的 `DeferredDelete`，确保其对象树在返回之前销毁。该辅助函数不处理其它排队回调，不能在对象自己的事件回调中使用，也不要同时传入一个父对象和它的子对象。`test_faq_teardown_survives_collection_before_next_event_loop` 主动触发垃圾回收与后续事件循环，验证页面与浏览器均已销毁。无需通过拆分测试进程或屏蔽系统崩溃弹窗来运行完整测试。
 
-多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机验证使用 `scripts/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
+多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机诊断使用 `tools/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
 ## 约束与新增测试
 

@@ -29,6 +29,7 @@ from nightreign_overlay.plugins.map_detect.manual_catalog import ManualFilterCat
 from nightreign_overlay.plugins.map_detect.manual_filter import ManualFilterOverlay
 from nightreign_overlay.plugins.map_detect.map_info import MapPattern, Position
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOverlayState
+from nightreign_overlay.plugins.map_detect.stability import MapStability, map_stability_sample
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
@@ -65,7 +66,7 @@ _MANUAL_APPLY_LIMIT = 5
 
 
 class MatchFlag(Enum):
-    """Legacy FALSE / PREPARE / TRUE: clear existing pixels before taking the matching frame."""
+    """Clear existing pixels in PREPARE, then wait for stable full-map frames in TRUE."""
 
     FALSE = 0
     PREPARE = 1
@@ -81,6 +82,7 @@ class _Job:
     settings: MapDetectionSettings
     topk: int
     stage: str
+    captured_at: float
     manual_revision: int = 0
     poi_position: Position | None = None
     earth_shifting: int | None = None
@@ -128,6 +130,7 @@ class MapDetectPlugin(Plugin):
         self._generation = 0
         self._region: QRect | None = None
         self._flag = MatchFlag.TRUE
+        self._stability = MapStability()
         self._current_is_full_map = False
         self._map_overlay_visible = False
         self._force_display = False
@@ -144,6 +147,7 @@ class MapDetectPlugin(Plugin):
         self._generation += 1
         self._region = None
         self._flag = MatchFlag.PREPARE
+        self._stability.reset()
         self._current_is_full_map = self._map_overlay_visible = False
         self._manual_filtering = False
         manager = self.ctx.services.require(OverlayManager)
@@ -184,6 +188,7 @@ class MapDetectPlugin(Plugin):
         self._set_force_display(False)
         self._active = False
         self._generation += 1
+        self._stability.reset()
         self._overlay = None
         self._manual_overlay = None
         self._controls = None
@@ -195,6 +200,7 @@ class MapDetectPlugin(Plugin):
     def _stop_worker(self) -> None:
         self._active = False
         self._generation += 1
+        self._stability.reset()
         if self._executor is not None:
             # Finish the single running native OpenCV call before disposing its resources.
             self._executor.shutdown(wait=True, cancel_futures=True)
@@ -225,6 +231,7 @@ class MapDetectPlugin(Plugin):
             return
         self._generation += 1
         self._flag = MatchFlag.PREPARE
+        self._stability.reset()
         if self._overlay is not None and self._overlay.map_pattern_matching:
             self._overlay.update_ui_state(MapOverlayState(map_pattern_matching=False))
         self.ctx.log.info("Set to detect map pattern once.")
@@ -289,6 +296,7 @@ class MapDetectPlugin(Plugin):
         self._manual_revision += 1
         self._region = QRect(region)
         self._manual_filtering = True
+        self._stability.reset()
         if self._manual_catalog is None:
             self._manual_catalog = ManualFilterCatalog.load(self.ctx.language)
         self._manual_overlay.set_catalog(self._manual_catalog)
@@ -306,6 +314,7 @@ class MapDetectPlugin(Plugin):
         self._generation += 1
         self._manual_revision += 1
         self._manual_filtering = False
+        self._stability.reset()
         self._manual_auto_in_flight = False
         self._manual_capture_in_progress = False
         if self._manual_overlay is not None:
@@ -453,6 +462,7 @@ class MapDetectPlugin(Plugin):
                 self.config.snapshot(),
                 self.config.return_topk.value,
                 "poi",
+                captured_at=frame.captured_at,
                 manual_revision=revision,
                 poi_position=pos,
                 earth_shifting=overlay.earth_shifting,
@@ -518,6 +528,7 @@ class MapDetectPlugin(Plugin):
                 self.config.snapshot(),
                 self.config.return_topk.value,
                 "draw",
+                captured_at=time.monotonic(),
                 earth_shifting=earth_shifting,
                 nightlord=nightlord,
                 pattern_ids=tuple(pattern.id for pattern in patterns),
@@ -546,6 +557,7 @@ class MapDetectPlugin(Plugin):
             if self._force_display and region is not None:
                 self._set_overlay_visible(True)
         if region is None:
+            self._stability.reset()
             if self._overlay is not None:
                 self._overlay.update_ui_state(
                     MapOverlayState(opacity=0.0, clear_image=True, display_crystal_layout=False)
@@ -556,6 +568,7 @@ class MapDetectPlugin(Plugin):
             return
         image = crop_rgb(frame.image, region)
         if image is None or image.shape[:2] != (region.height(), region.width()):
+            self._stability.reset()
             return
         self._submit(
             _Job(
@@ -566,6 +579,7 @@ class MapDetectPlugin(Plugin):
                 self.config.snapshot(),
                 self.config.return_topk.value,
                 "check",
+                captured_at=frame.captured_at,
             )
         )
 
@@ -641,6 +655,7 @@ class MapDetectPlugin(Plugin):
                 self._request_match()
             return
         if error is not None or result is None:
+            self._stability.reset()
             self.ctx.log.error("Map detection failed in %s: %s", job.stage, error)
             self._overlay.update_ui_state(MapOverlayState(map_pattern_matching=False))
             if job.stage == "poi" and self._manual_overlay is not None:
@@ -719,6 +734,7 @@ class MapDetectPlugin(Plugin):
                 self._last_match = now
             if self._flag == MatchFlag.PREPARE:
                 self._flag = MatchFlag.TRUE
+                self._stability.reset()
                 self._overlay.update_ui_state(
                     MapOverlayState(
                         clear_image=True,
@@ -727,13 +743,34 @@ class MapDetectPlugin(Plugin):
                         display_crystal_layout=False,
                     )
                 )
-            elif self._flag == MatchFlag.TRUE and full_map:
-                self._submit(
-                    _Job(self._generation, job.region, result.img, False, job.settings, job.topk, "terrain")
-                )
+            elif self._flag == MatchFlag.TRUE:
+                # Compare raw pixels: HDR normalization can erase the fade's
+                # luminance changes. Reuse the newest normalized image only
+                # after its capture history confirms that the map is stable.
+                sample = map_stability_sample(job.image) if full_map else None
+                if self._stability.observe(
+                    sample,
+                    job.captured_at,
+                    full_map,
+                    job.settings.map_stability_change_threshold,
+                    job.settings.map_stability_duration,
+                ):
+                    self._submit(
+                        _Job(
+                            self._generation,
+                            job.region,
+                            result.img,
+                            False,
+                            job.settings,
+                            job.topk,
+                            "terrain",
+                            captured_at=job.captured_at,
+                        )
+                    )
         elif job.stage == "terrain":
             if result.earth_shifting is not None:
                 self._flag = MatchFlag.FALSE
+                self._stability.reset()
                 self._overlay.set_map_region(QRect(*job.region))
                 self._overlay.update_ui_state(
                     MapOverlayState(clear_image=True, map_pattern_matching=True, opacity=1.0)
@@ -747,6 +784,7 @@ class MapDetectPlugin(Plugin):
                         job.settings,
                         job.topk,
                         str(result.earth_shifting),
+                        captured_at=job.captured_at,
                     )
                 )
         else:
@@ -765,6 +803,7 @@ class MapDetectPlugin(Plugin):
             return
         self._calibrating = True
         self._generation += 1
+        self._stability.reset()
         rect = None
         try:
             regions = self.ctx.services.require(RegionApi)
@@ -869,6 +908,24 @@ class MapDetectPlugin(Plugin):
                 decimals=1,
                 step=1.0,
                 formatter=lambda value: f"{value:g}",
+            ),
+            ConfigDoubleSpinCard(
+                self.config.map_stability_change_threshold,
+                FluentIcon.DEVELOPER_TOOLS,
+                self.ctx.tr("settings.map_stability_change_threshold.title"),
+                self.ctx.tr("settings.map_stability_change_threshold.content"),
+                decimals=1,
+                step=0.5,
+                formatter=lambda value: f"{value:g}",
+            ),
+            ConfigDoubleSpinCard(
+                self.config.map_stability_duration,
+                FluentIcon.HISTORY,
+                self.ctx.tr("settings.map_stability_duration.title"),
+                self.ctx.tr("settings.map_stability_duration.content"),
+                decimals=2,
+                step=0.05,
+                formatter=lambda value: f"{value:.2f}s",
             ),
             ConfigDoubleSpinCard(
                 self.config.earth_shifting_ncc_threshold,

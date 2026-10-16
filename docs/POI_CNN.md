@@ -15,7 +15,7 @@
 ## 复测
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python scripts/benchmark_poi.py \
+QT_QPA_PLATFORM=offscreen .venv/bin/python benchmark/benchmark_poi.py \
   --output tools/poi_cnn/benchmark-results.json
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
   tests/plugins/map_detect/test_poi_cnn.py tests/plugins/map_detect/test_map_detect.py tests/plugins/map_detect/test_map_terrain.py -q

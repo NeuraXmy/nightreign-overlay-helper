@@ -8,7 +8,7 @@ import mss
 import pytest
 from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QImage
-from scripts import diagnose_capture as diagnostic
+from tools import diagnose_capture as diagnostic
 
 
 @pytest.mark.parametrize("fail", [False, True])

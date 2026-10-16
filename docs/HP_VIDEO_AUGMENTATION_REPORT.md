@@ -122,12 +122,10 @@
 ## 复现与原始结果
 
 ```bash
-python scripts/evaluate_hp_videos.py --augmentations --output hp-augmentation-full.json
-python scripts/evaluate_hp_videos.py --augmentations --interval 0.25 --output hp-augmentation-250ms.json
 python -m pytest tests/plugins/test_hp_video_evaluation.py tests/plugins/test_hp_detection_video.py -q
 ```
 
-评估命令在存在不达标组时退出码为 1；这表示评估发现算法未达标。每组完成后写入 JSON 并记录简短进度，最终 JSON 为完整报告。
+下列 JSON 保存了此前离线评估的完整结果；当前回归测试不重新生成整组增强报告。
 
 - [全帧 JSON](../tests/data/hp_detect/videos/augmentation_full_report.json)
 - [250 ms JSON](../tests/data/hp_detect/videos/augmentation_250ms_report.json)

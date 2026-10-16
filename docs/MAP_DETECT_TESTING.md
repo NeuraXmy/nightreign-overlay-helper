@@ -4,12 +4,12 @@
 
 ## 全图检测鲁棒性评测
 
-运行 [`scripts/benchmark_full_map.py`](../scripts/benchmark_full_map.py)：
+运行 [`benchmark/benchmark_full_map.py`](../benchmark/benchmark_full_map.py)：
 
 ```bash
-.venv/bin/python scripts/benchmark_full_map.py
+.venv/bin/python benchmark/benchmark_full_map.py
 # 需要任一误判即返回失败状态时：
-.venv/bin/python scripts/benchmark_full_map.py --fail-on-error
+.venv/bin/python benchmark/benchmark_full_map.py --fail-on-error
 ```
 
 脚本默认排除已自带增强的 `12.jpg`、`1137_2.jpg`、`207_hide.jpg`，使用其余 12 张 JPEG，直接调用生产代码 `MapDetector._match_full_map`，使用默认阈值 `error <= 20` 判定全图。不调整 RGB 输入、算法或阈值。默认输出 `.tmp/full_map_benchmark.json`，可通过 `--captures` 和 `--output` 指定输入目录和报告文件。报告记录排除列表及原因，并包含每个样本的预期、预测、误差、每图与每种变换的统计、源图片 SHA-256、配置和依赖版本；误差为无穷大时用 JSON `null` 表示。
@@ -85,6 +85,23 @@ OpenCV 5.0.0、NumPy 2.4.6、Pillow 12.3.0；默认霍夫圆阈值 `(150, 200, 2
 ```bash
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect/test_map_full_map.py -q
 ```
+
+## 地图渐变稳定性回归
+
+`TRUE` 状态仅在完整地图持续通过检查、主体画面稳定至少 0.6 秒且至少有 3 张有效截图时放行地形识别。默认 250 ms 采样间隔下，稳定确认通常需要 4 张截图、跨度 0.75 秒。使用原始截图而非 HDR 归一化图判断亮度变化；比较相邻图与窗口起始图，避免慢速累计渐变被当作稳定。
+
+[`test_map_stability.py`](../tests/plugins/map_detect/test_map_stability.py) 覆盖开启和关闭渐变、低速累计变化、局部动态标记、重复或倒退的采集时间、采样断档和全图失败后的历史清除。插件测试同时覆盖采集时间跨任务传递、后台回调延迟、HDR 归一化掩盖渐变及识别上下文切换。
+
+真实时序样本位于 [`tests/data/map_detect/transitions/`](../tests/data/map_detect/transitions/README.md)。测试遍历每一帧作为重新识别起点，并以 1/30、0.05、0.1、0.25、0.5、1、2 秒采样，要求所有放行结果位于独立标注的完全开启窗口内；常规采样间隔还要求存在成功放行，避免全部拒识造成虚假通过。紧凑样本保存预处理图像和录制时的全图结果，不依赖未跟踪的原视频。
+
+运行稳定性回归：
+
+```bash
+python -m pytest tests/plugins/map_detect/test_map_stability.py \
+  tests/plugins/map_detect/test_map_detect.py -q
+```
+
+标注仅用于验收，不参与检测。此样本验证渐变门控，不验证 POI 或地图 ID 准确率，也不能替代更多实机视频，尤其是不同亮度、HDR 和动态地图内容下的验证。
 
 ## 特殊地形样本
 
