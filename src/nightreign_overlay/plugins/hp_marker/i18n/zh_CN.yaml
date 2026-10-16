@@ -6,7 +6,7 @@ settings:
   advanced: 高级检测与绘制选项
   detection_algorithm:
     title: 血条识别算法
-    content: 新版仅根据水平中线的边界结构识别，证据不足时等待；旧版使用亮度峰和历史平滑。检测失败时均保留已有标记。
+    content: 新版根据水平中线的边界结构和连续帧证据识别，初次确认需等待数帧；旧版使用亮度峰和历史平滑。检测失败时均保留已有标记。
     legacy: 旧版
     structural: 新版
   region:

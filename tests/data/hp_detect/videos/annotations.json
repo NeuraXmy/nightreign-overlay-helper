@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "pixel_format": "RGB24",
+  "codec": "FFV1",
+  "crop_xywh": [
+    0,
+    0,
+    1250,
+    10
+  ],
+  "tolerance_px": 3,
+  "max_rejection_ratio": 0.5,
+  "max_rejection_seconds": 5.0,
+  "annotations": [
+    {
+      "id": "constant_length_1",
+      "video": "constant_length_1.mkv",
+      "source_file": "2026-10-16 17-02-30.mp4",
+      "source_sha256": "062d34be5566af11baeee8a951856c871fc789474390b324091d46e08fa13718",
+      "video_sha256": "63831783909a097431d5f46f1616a25b10d26272d9619dd14e55716e23ab4516",
+      "fps": 30.0,
+      "decoded_frame_count": 1773,
+      "gt_length_px": 396,
+      "gt_image": "constant_length_1_gt.png",
+      "reference_frames": [
+        {
+          "frame_index": 360,
+          "image": "constant_length_1_frame_360.png"
+        },
+        {
+          "frame_index": 700,
+          "image": "constant_length_1_frame_700.png"
+        }
+      ],
+      "annotation_method": "Manually locate the stationary outer end cap in full/near-full and depleted frames, then annotate its center as the usable bar endpoint. The label is independent of detector predictions. The cap includes antialiasing; allow +/-3 source pixels. Empty HP inside this endpoint remains usable HP, not a gray limit-loss segment."
+    },
+    {
+      "id": "constant_length_2",
+      "video": "constant_length_2.mkv",
+      "source_file": "2026-10-16 17-04-14.mp4",
+      "source_sha256": "31e2878f3887cc1945b4ec5ac5812e8fa2622f3fac860d6dcc669d511300dce6",
+      "video_sha256": "7addb828cb277c9841a7ba8bfa7f46415c55d66051ee602d3cf9780b4775c3f3",
+      "fps": 30.0,
+      "decoded_frame_count": 1276,
+      "gt_length_px": 424,
+      "gt_image": "constant_length_2_gt.png",
+      "reference_frames": [
+        {
+          "frame_index": 0,
+          "image": "constant_length_2_frame_0.png"
+        },
+        {
+          "frame_index": 700,
+          "image": "constant_length_2_frame_700.png"
+        }
+      ],
+      "annotation_method": "Manually locate the stationary outer end cap in full/near-full and depleted frames, then annotate its center as the usable bar endpoint. The label is independent of detector predictions. The cap includes antialiasing; allow +/-3 source pixels. Empty HP inside this endpoint remains usable HP, not a gray limit-loss segment."
+    }
+  ]
+}

@@ -29,15 +29,20 @@ def _width(name: str) -> int:
 
 @pytest.mark.parametrize("name", [f"{number}.jpg" for number in (1, 4, 5, 7, 8, 9, 10, 11, 12)])
 def test_clear_boundaries_exclude_limit_loss_and_scene(name):
-    length = HpDetector().detect(np.array(_image(name)), HpDetectionSettings())
-    assert length is not None
-    assert abs(length - _width(name)) <= 3
+    detector = HpDetector()
+    image = np.array(_image(name))
+    results = [detector.detect(image, HpDetectionSettings()) for _ in range(12)]
+    assert results[0] is None  # Streaming detection confirms evidence across frames.
+    assert results[-1] is not None
+    assert all(length is None or abs(length - _width(name)) <= 3 for length in results)
 
 
 @pytest.mark.parametrize("name", ["2.jpg", "3.jpg", "6.jpg"])
 def test_ambiguous_or_missing_outer_context_is_rejected(name):
     # In 6.jpg the supplied image ends exactly at the GT width, without right context.
-    assert HpDetector().detect(np.array(_image(name)), HpDetectionSettings()) is None
+    detector = HpDetector()
+    for _ in range(12):
+        assert detector.detect(np.array(_image(name)), HpDetectionSettings()) is None
 
 
 @pytest.mark.parametrize("name", ["4.jpg", "5.jpg", "7.jpg", "8.jpg", "9.jpg", "10.jpg", "11.jpg", "12.jpg"])
@@ -51,6 +56,10 @@ def test_photometric_changes_may_refuse_but_must_not_move_clear_boundaries(name,
     image = enhancers[kind](_image(name)).enhance(factor)
     result = estimate_boundary(np.array(image))
     assert result.length is None or abs(result.length - _width(name)) <= 3
+    detector = HpDetector()
+    for _ in range(6):
+        length = detector.detect(np.array(image), HpDetectionSettings())
+        assert length is None or abs(length - _width(name)) <= 3
 
 
 @pytest.mark.parametrize("scale", [0.5, 0.75, 1.25, 1.5, 2.0])
@@ -195,3 +204,7 @@ def test_strong_augmentations_do_not_turn_internal_divisions_into_endpoints(numb
         image = enhancer(source).enhance(factor)
     length = estimate_boundary(np.array(image)).length
     assert length is None or abs(length - _width(name)) <= 3
+    detector = HpDetector()
+    for _ in range(6):
+        length = detector.detect(np.array(image), HpDetectionSettings())
+        assert length is None or abs(length - _width(name)) <= 3

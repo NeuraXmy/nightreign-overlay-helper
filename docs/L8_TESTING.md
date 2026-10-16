@@ -29,6 +29,7 @@ tests/
 | `plugins/` | `test_capture_multiscreen.py`、`test_capture_diagnostic.py` | Windows/macOS 四方向副屏、负坐标、混合 DPI、DLL 客户区、标定/预览/地图叠加坐标一致性 |
 | `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
 | `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
+| `plugins/` | `test_hp_detection_accuracy.py`、`test_hp_detection_video.py` | 血条截图与增强、整段无损视频的 GT 误差、拒识比例与连续拒识时间、采样间隔及检测状态重置 |
 | `plugins/` | `test_p2p_helper_path.py` | 源码、构建输出和打包组件路径解析、显式路径覆盖 |
 | `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
 | `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
@@ -56,6 +57,7 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 | [`tests/support/platform.py`](../tests/support/platform.py) | 共享 `FakeBackend` |
 | [`tests/support/qt.py`](../tests/support/qt.py) | `process_events()`、`delete_qobjects()` |
 | [`tests/support/paths.py`](../tests/support/paths.py) | 仓库路径与地图截图路径，避免目录移动影响路径推导 |
+| [`tests/support/hp_video.py`](../tests/support/hp_video.py) | 血条视频逐帧评估及检测耗时统计；复测入口为 `scripts/evaluate_hp_videos.py` |
 
 ## 运行测试
 
