@@ -2,8 +2,8 @@
 
 import numpy as np
 import pytest
+from benchmark.benchmark_full_map import EXCLUDED_CAPTURES, benchmark
 from PIL import Image, ImageEnhance, ImageFilter
-from scripts.benchmark_full_map import EXCLUDED_CAPTURES, benchmark
 
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam
 from tests.support.paths import MAP_CAPTURE_DIR

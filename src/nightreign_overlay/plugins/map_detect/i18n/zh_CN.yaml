@@ -95,6 +95,12 @@ settings:
   full_map_error_threshold:
     title: 完整地图误差阈值
     content: 判断当前画面是否为完整地图的误差上限。数值越大越宽松，也更容易误判。
+  map_stability_change_threshold:
+    title: 地图画面变化阈值
+    content: 稳定检测中，连续截图的主体变化超过此灰度差时会重新计时。数值越大越宽松；设为 0 会对变化更敏感。
+  map_stability_duration:
+    title: 地图稳定时间
+    content: 完整地图画面需持续稳定的时间，单位为秒；时间越长越能避开淡入过程，也会延迟识别。
   poi_algorithm:
     title: POI 识别算法
     content: 整图和手动局部识别共用；CNN 使用 CPU 批量推理

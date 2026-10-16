@@ -17,6 +17,8 @@ class MapDetectionSettings:
     map_overlay_draw_size_ratio: float | None = 1.0
     full_map_hough_circle_thres: tuple[int, ...] = (150, 200, 250)
     full_map_error_threshold: float = 20
+    map_stability_change_threshold: float = 2.0
+    map_stability_duration: float = 0.6
     earth_shifting_ncc_threshold: float = 0.2
     earth_shifting_error_threshold: float = 50
     subicon_template_match_threshold: float = 0.06
@@ -49,6 +51,8 @@ class MapDetectConfig(ConfigGroup):
         ),
     )
     full_map_error_threshold = RangeOption(20.0, 0.0, 1000.0)
+    map_stability_change_threshold = RangeOption(2.0, 0.0, 30.0)
+    map_stability_duration = RangeOption(0.6, 0.0, 5.0)
     earth_shifting_ncc_threshold = RangeOption(0.2, -1.0, 1.0)
     earth_shifting_error_threshold = RangeOption(50.0, 0.0, 1000.0)
     subicon_template_match_threshold = RangeOption(0.06, 0.0, 1.0)

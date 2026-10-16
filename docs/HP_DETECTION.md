@@ -78,9 +78,9 @@ QT_QPA_PLATFORM=offscreen python -m pytest -p no:capture \
 
 按实际默认截图间隔 250 ms 抽样时，第一段检测 237 帧、拒识 9.70%、最长连续拒识 3.77 s；第二段检测 171 帧、拒识 6.43%、最长连续拒识 1.00 s，两段均零误判。测试也覆盖 50 ms 间隔，分别独立创建检测器，不跨视频复用长度。运行时没有向算法传入 GT、视频编号、帧号或固定长度的先验。
 
+运行视频回归测试：
+
 ```bash
-python scripts/evaluate_hp_videos.py --baseline --output hp-video-report.json
-python scripts/evaluate_hp_videos.py --interval 0.25
 python -m pytest tests/plugins/test_hp_detection_video.py -q
 ```
 
