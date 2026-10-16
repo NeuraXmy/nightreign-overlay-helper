@@ -1,0 +1,1050 @@
+{
+  "continuous": [
+    {
+      "evaluated_frames": 1835,
+      "accepted": 1417,
+      "rejected": 418,
+      "rejection_ratio": 0.22779291553133516,
+      "incorrect": 0,
+      "max_error_px": 2,
+      "prediction_range_px": [
+        423,
+        425
+      ],
+      "longest_rejection_seconds": 3.2666666666666657,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": [],
+      "algorithm": "production_scanline",
+      "interval_seconds": 0,
+      "detector_ms": {
+        "mean": 0.8102272454476649,
+        "p95": 3.309769975021481,
+        "max": 10.927299968898296
+      }
+    },
+    {
+      "evaluated_frames": 1223,
+      "accepted": 1003,
+      "rejected": 220,
+      "rejection_ratio": 0.17988552739165986,
+      "incorrect": 0,
+      "max_error_px": 2,
+      "prediction_range_px": [
+        423,
+        425
+      ],
+      "longest_rejection_seconds": 3.1666666666666643,
+      "first_accepted_seconds": 0.2,
+      "mistake_examples": [],
+      "algorithm": "production_scanline",
+      "interval_seconds": 0.05,
+      "detector_ms": {
+        "mean": 0.59638994091776,
+        "p95": 2.4318600306287395,
+        "max": 4.73990011960268
+      }
+    },
+    {
+      "evaluated_frames": 245,
+      "accepted": 208,
+      "rejected": 37,
+      "rejection_ratio": 0.1510204081632653,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 4.0,
+      "first_accepted_seconds": 1.0,
+      "mistake_examples": [],
+      "algorithm": "production_scanline",
+      "interval_seconds": 0.25,
+      "detector_ms": {
+        "mean": 0.42108734784533786,
+        "p95": 0.8572800084948526,
+        "max": 4.319399828091264
+      }
+    },
+    {
+      "evaluated_frames": 1835,
+      "accepted": 1809,
+      "rejected": 26,
+      "rejection_ratio": 0.014168937329700272,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.2666666666666657,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": [],
+      "algorithm": "experimental_multirow",
+      "interval_seconds": 0,
+      "detector_ms": {
+        "mean": 1.282111501158786,
+        "p95": 1.6354599501937628,
+        "max": 3.2845998648554087
+      }
+    },
+    {
+      "evaluated_frames": 1223,
+      "accepted": 1200,
+      "rejected": 23,
+      "rejection_ratio": 0.018806214227309895,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.3999999999999986,
+      "first_accepted_seconds": 0.2,
+      "mistake_examples": [],
+      "algorithm": "experimental_multirow",
+      "interval_seconds": 0.05,
+      "detector_ms": {
+        "mean": 1.2345863460507533,
+        "p95": 1.6057299915701149,
+        "max": 2.722900127992034
+      }
+    },
+    {
+      "evaluated_frames": 245,
+      "accepted": 236,
+      "rejected": 9,
+      "rejection_ratio": 0.036734693877551024,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 1.0,
+      "first_accepted_seconds": 1.0,
+      "mistake_examples": [],
+      "algorithm": "experimental_multirow",
+      "interval_seconds": 0.25,
+      "detector_ms": {
+        "mean": 1.2188971356241678,
+        "p95": 1.5986400656402109,
+        "max": 2.525300020352006
+      }
+    }
+  ],
+  "independent_five_second_starts": [
+    {
+      "start_frame": 0,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 30,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 60,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 90,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 120,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 150,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 180,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 210,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 240,
+      "evaluated_frames": 150,
+      "accepted": 141,
+      "rejected": 9,
+      "rejection_ratio": 0.06,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.3,
+      "first_accepted_seconds": 0.3,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 270,
+      "evaluated_frames": 150,
+      "accepted": 136,
+      "rejected": 14,
+      "rejection_ratio": 0.09333333333333334,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.4666666666666667,
+      "first_accepted_seconds": 0.4666666666666667,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 300,
+      "evaluated_frames": 150,
+      "accepted": 139,
+      "rejected": 11,
+      "rejection_ratio": 0.07333333333333333,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.36666666666666664,
+      "first_accepted_seconds": 0.36666666666666664,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 330,
+      "evaluated_frames": 150,
+      "accepted": 138,
+      "rejected": 12,
+      "rejection_ratio": 0.08,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.4,
+      "first_accepted_seconds": 0.4,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 360,
+      "evaluated_frames": 150,
+      "accepted": 141,
+      "rejected": 9,
+      "rejection_ratio": 0.06,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        424
+      ],
+      "longest_rejection_seconds": 0.3,
+      "first_accepted_seconds": 0.3,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 390,
+      "evaluated_frames": 150,
+      "accepted": 15,
+      "rejected": 135,
+      "rejection_ratio": 0.9,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 4.5,
+      "first_accepted_seconds": 4.5,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 420,
+      "evaluated_frames": 150,
+      "accepted": 45,
+      "rejected": 105,
+      "rejection_ratio": 0.7,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 3.5,
+      "first_accepted_seconds": 3.5,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 450,
+      "evaluated_frames": 150,
+      "accepted": 75,
+      "rejected": 75,
+      "rejection_ratio": 0.5,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 2.5,
+      "first_accepted_seconds": 2.5,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 480,
+      "evaluated_frames": 150,
+      "accepted": 105,
+      "rejected": 45,
+      "rejection_ratio": 0.3,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 1.5,
+      "first_accepted_seconds": 1.5,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 510,
+      "evaluated_frames": 150,
+      "accepted": 134,
+      "rejected": 16,
+      "rejection_ratio": 0.10666666666666667,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.5,
+      "first_accepted_seconds": 0.5,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 540,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 570,
+      "evaluated_frames": 150,
+      "accepted": 143,
+      "rejected": 7,
+      "rejection_ratio": 0.04666666666666667,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.2,
+      "first_accepted_seconds": 0.2,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 600,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 630,
+      "evaluated_frames": 150,
+      "accepted": 92,
+      "rejected": 58,
+      "rejection_ratio": 0.38666666666666666,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 1.8,
+      "first_accepted_seconds": 1.8,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 660,
+      "evaluated_frames": 150,
+      "accepted": 113,
+      "rejected": 37,
+      "rejection_ratio": 0.24666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.8,
+      "first_accepted_seconds": 0.8,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 690,
+      "evaluated_frames": 150,
+      "accepted": 105,
+      "rejected": 45,
+      "rejection_ratio": 0.3,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 1.0666666666666667,
+      "first_accepted_seconds": 1.0666666666666667,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 720,
+      "evaluated_frames": 150,
+      "accepted": 133,
+      "rejected": 17,
+      "rejection_ratio": 0.11333333333333333,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.2666666666666666,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 750,
+      "evaluated_frames": 150,
+      "accepted": 117,
+      "rejected": 33,
+      "rejection_ratio": 0.22,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.6666666666666666,
+      "first_accepted_seconds": 0.6666666666666666,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 780,
+      "evaluated_frames": 150,
+      "accepted": 117,
+      "rejected": 33,
+      "rejection_ratio": 0.22,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 1.1,
+      "first_accepted_seconds": 1.1,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 810,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 840,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 870,
+      "evaluated_frames": 150,
+      "accepted": 125,
+      "rejected": 25,
+      "rejection_ratio": 0.16666666666666666,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.8333333333333334,
+      "first_accepted_seconds": 0.8333333333333334,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 900,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 930,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 960,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 990,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1020,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1050,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1080,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1110,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1140,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1170,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1200,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1230,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.16666666666666666,
+      "first_accepted_seconds": 0.16666666666666666,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1260,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1290,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1320,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1350,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1380,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1410,
+      "evaluated_frames": 150,
+      "accepted": 142,
+      "rejected": 8,
+      "rejection_ratio": 0.05333333333333334,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1440,
+      "evaluated_frames": 150,
+      "accepted": 52,
+      "rejected": 98,
+      "rejection_ratio": 0.6533333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 3.1666666666666665,
+      "first_accepted_seconds": 3.1666666666666665,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1470,
+      "evaluated_frames": 150,
+      "accepted": 82,
+      "rejected": 68,
+      "rejection_ratio": 0.4533333333333333,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 2.1666666666666665,
+      "first_accepted_seconds": 2.1666666666666665,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1500,
+      "evaluated_frames": 150,
+      "accepted": 112,
+      "rejected": 38,
+      "rejection_ratio": 0.25333333333333335,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 1.1666666666666667,
+      "first_accepted_seconds": 1.1666666666666667,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1530,
+      "evaluated_frames": 150,
+      "accepted": 142,
+      "rejected": 8,
+      "rejection_ratio": 0.05333333333333334,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.16666666666666666,
+      "first_accepted_seconds": 0.16666666666666666,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1560,
+      "evaluated_frames": 150,
+      "accepted": 146,
+      "rejected": 4,
+      "rejection_ratio": 0.02666666666666667,
+      "incorrect": 0,
+      "max_error_px": 1,
+      "prediction_range_px": [
+        424,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1590,
+      "evaluated_frames": 150,
+      "accepted": 132,
+      "rejected": 18,
+      "rejection_ratio": 0.12,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.6,
+      "first_accepted_seconds": 0.6,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1620,
+      "evaluated_frames": 150,
+      "accepted": 145,
+      "rejected": 5,
+      "rejection_ratio": 0.03333333333333333,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1650,
+      "evaluated_frames": 150,
+      "accepted": 143,
+      "rejected": 7,
+      "rejection_ratio": 0.04666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    },
+    {
+      "start_frame": 1680,
+      "evaluated_frames": 150,
+      "accepted": 143,
+      "rejected": 7,
+      "rejection_ratio": 0.04666666666666667,
+      "incorrect": 0,
+      "max_error_px": 0,
+      "prediction_range_px": [
+        425,
+        425
+      ],
+      "longest_rejection_seconds": 0.13333333333333333,
+      "first_accepted_seconds": 0.13333333333333333,
+      "mistake_examples": []
+    }
+  ]
+}
