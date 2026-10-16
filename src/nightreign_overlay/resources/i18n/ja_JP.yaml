@@ -103,6 +103,9 @@ settings:
   start_minimized:
     title: 最小化して起動
     content: 起動時はトレイアイコンのみ表示します
+  debug_images:
+    title: デバッグ画像を保存
+    content: 検出画像と認識メタデータを保存します。既定で有効です
   advanced:
     title: 詳細設定
   log_level:

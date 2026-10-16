@@ -32,7 +32,7 @@ from nightreign_overlay.plugins.map_detect.map_info import (
     load_map_info,
 )
 from nightreign_overlay.plugins.map_detect.poi_cnn import BASE_CLASSES, PoiCnn
-from nightreign_overlay.plugins.map_detect.resources import get_appdata_path, get_data_path
+from nightreign_overlay.plugins.map_detect.resources import get_data_path
 
 log = get_logger(__name__)
 
@@ -359,11 +359,16 @@ class MapDetectParam:
 class MapDetectResult:
     img: np.ndarray | None = None
     is_full_map: bool | None = None
+    full_map_score: float | None = None
     earth_shifting: int | None = None
     earth_shifting_score: float | None = None
+    nightlord: int | None = None
+    nightlord_score: float | None = None
     patterns: list[MapPattern] | None = None
     overlay_images: list[Image.Image] | None = None
     poi_types: dict[Position, int] | None = None
+    poi_scores: dict[Position, float] | None = None
+    debug_images: dict[str, np.ndarray] | None = None
 
 
 class MapDetector:
@@ -375,6 +380,7 @@ class MapDetector:
         self.info = load_default_map_info(localized.language)
 
         self._poi_cnn: PoiCnn | None = None
+        self._last_debug_images: dict[str, np.ndarray] = {}
 
         # 初始化POI信息
         self.all_poi_images, self.poi_cate_info = build_poi_categories(self.info)
@@ -772,8 +778,7 @@ class MapDetector:
             cv2.circle(poi_result_img, (x, y), 2, (255, 0, 0), 3)
 
         # 保存结果用于调试
-        cv2.imwrite(get_appdata_path("map.jpg"), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        cv2.imwrite(get_appdata_path("map_poi_result.jpg"), cv2.cvtColor(poi_result_img, cv2.COLOR_RGB2BGR))
+        self._last_debug_images = {"map_poi": img.copy(), "map_poi_result": poi_result_img}
 
         # 匹配地图模式
         empty_construction = Construct(type=0, pos=0, is_display=False)
@@ -1246,8 +1251,6 @@ class MapDetector:
         log.info(f"Draw overlay image size: {draw_size} time cost: {time.time() - t:.4f}s")
 
         # 保存结果用于调试
-        img.convert("RGB").save(get_appdata_path(f"map_overlay_result_{result_index}.jpg"))
-
         return img
 
     def _overlay_draw_size(self, param: MapDetectParam) -> tuple[int, int]:
@@ -1264,6 +1267,7 @@ class MapDetector:
     def detect(self, param: MapDetectParam | None) -> MapDetectResult:
         config = self.config
         ret = MapDetectResult()
+        self._last_debug_images = {}
         if param is None or param.map_region is None:
             return ret
 
@@ -1290,6 +1294,7 @@ class MapDetector:
         # 判断是否是全图
         if param.do_match_full_map:
             full_map_error = self._match_full_map(img)
+            ret.full_map_score = full_map_error
             ret.is_full_map = full_map_error <= config.full_map_error_threshold
 
         # 判断特殊地形
@@ -1305,7 +1310,9 @@ class MapDetector:
 
         # 地图模式匹配
         if param.do_match_pattern:
+            ret.nightlord, ret.nightlord_score = self._match_nightlord(img)
             results = self._match_map_pattern(img, param.earth_shifting, topk=param.return_pattern_topk)
+            ret.debug_images = dict(self._last_debug_images)
 
             # 决定信息绘制大小
             draw_size = self._overlay_draw_size(param)
@@ -1330,5 +1337,7 @@ class MapDetector:
                 aligned, map_bg, param.poi_positions, param.earth_shifting, param.nightlord
             )
             ret.poi_types = {pos: ctype for pos, (ctype, _) in matches.items()}
+            ret.poi_scores = {pos: score for pos, (_, score) in matches.items()}
+            ret.debug_images = {"map_poi": aligned}
 
         return ret

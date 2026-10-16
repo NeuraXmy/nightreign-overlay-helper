@@ -9,10 +9,11 @@ from PyQt6.QtCore import QRect, QTimer
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
-from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
+from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
@@ -135,6 +136,20 @@ class ArtTimerPlugin(Plugin):
             else None
         )
         if result is not None:
+            debug_image = crop_rgb(frame.image, region) if frame is not None else None
+            debug = self.ctx.services.get(DebugImageApi)
+            if debug_image is not None and debug is not None:
+                debug.save(
+                    "art_timer_ultimate",
+                    debug_image,
+                    {
+                        "art_type": result.art_type,
+                        "best_score": result.best_score,
+                        "scores": result.scores,
+                        "region": region,
+                    },
+                    cooldown_seconds=600,
+                )
             for art_type, score in result.scores.items():
                 self.ctx.log.info("Art type: %s, score: %.4f", art_type, score)
             if result.art_type is not None:

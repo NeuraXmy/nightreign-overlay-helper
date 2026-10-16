@@ -11,8 +11,9 @@ from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 from qfluentwidgets import FluentIcon, MessageBox, SettingCard
 
 from nightreign_overlay.core.config import ConfigItem
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
-from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
+from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.rain_timer.config import RainTimerConfig
@@ -186,6 +187,21 @@ class RainTimerPlugin(Plugin):
         )
         if result is None:
             return
+        debug_image = crop_rgb(event.image, region)
+        debug = self.ctx.services.get(DebugImageApi)
+        if debug_image is not None and debug is not None:
+            debug.save(
+                "rain_timer_hp_color",
+                debug_image,
+                {
+                    "in_rain": result.in_rain,
+                    "not_in_rain_ratio": result.not_in_rain_ratio,
+                    "in_rain_ratio": result.in_rain_ratio,
+                    "seconds": result.seconds,
+                    "region": region,
+                },
+                cooldown_seconds=600,
+            )
         self.ctx.log.debug(
             "RainDetector: cost: %.3fs, not_in_rain_ratio=%.3f, in_rain_ratio=%.3f",
             result.seconds,

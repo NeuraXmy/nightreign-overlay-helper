@@ -103,6 +103,9 @@ settings:
   start_minimized:
     title: Start minimized
     content: Only show the tray icon on startup
+  debug_images:
+    title: Save debug images
+    content: Save detection debug images and recognition metadata; enabled by default
   advanced:
     title: Advanced
   log_level:
