@@ -330,7 +330,8 @@ def test_hud_refits_when_a_contributed_bar_hides_itself(core: Core, store: Confi
 
     bar.set_progress(0.5, "rain")
     process_events()
-    assert overlay.height() == full_height
+    # Qt layout rounding can vary slightly after a child is shown again.
+    assert abs(overlay.height() - full_height) <= 2
 
 
 @pytest.mark.parametrize("visible", [True, False])

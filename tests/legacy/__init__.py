@@ -1,1 +1,0 @@
-"""Project test suite: legacy."""

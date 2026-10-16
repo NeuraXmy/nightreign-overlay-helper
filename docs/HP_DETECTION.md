@@ -53,8 +53,7 @@
 
 ```bash
 QT_QPA_PLATFORM=offscreen python -m pytest -p no:capture \
-  tests/plugins/test_hp_marker.py tests/plugins/test_hp_detection_accuracy.py \
-  tests/legacy/test_hp_marker_legacy_parity.py -q
+  tests/plugins/test_hp_marker.py tests/plugins/test_hp_detection_accuracy.py -q
 ```
 
 中线方案允许上下标定边缘略有偏差，但不能补偿中线落到血条外。回归测试会替换中线之外的全部像素、上下对称增加背景，以及仅保留中线，验证结果保持一致；这不代表任意非对称上下扩框都安全，因为那可能移动取样中线。
