@@ -1,5 +1,6 @@
 """FAQ Markdown resources and the shared page banner."""
 
+import gc
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,7 @@ from nightreign_overlay.ui.overlay import OverlayManager
 from nightreign_overlay.ui.pages import AboutPage, HomePage, faq
 from nightreign_overlay.ui.pages.home import Banner
 from tests.support.platform import FakeBackend
+from tests.support.qt import delete_qobjects, process_events
 
 
 def test_faq_resolves_markdown_and_relative_images_with_language_fallback(
@@ -45,7 +47,7 @@ def test_faq_resolves_markdown_and_relative_images_with_language_fallback(
         assert loaded.size() == image.size()
         assert page.browser.openExternalLinks()
     finally:
-        page.deleteLater()
+        delete_qobjects(page)
 
 
 def test_packaged_faq_and_shared_compact_banners(qapp: QApplication, store: ConfigStore) -> None:
@@ -64,8 +66,20 @@ def test_packaged_faq_and_shared_compact_banners(qapp: QApplication, store: Conf
             assert banner.height() == round(168 * 0.6)
             assert not banner.grab().isNull()
     finally:
-        for page in pages:
-            page.deleteLater()
-        overlays.deleteLater()
-        monitor.deleteLater()
-        plugins.deleteLater()
+        delete_qobjects(*pages, overlays, monitor, plugins)
+
+
+def test_faq_teardown_survives_collection_before_next_event_loop(qapp: QApplication) -> None:
+    destroyed = []
+
+    def create_and_dispose() -> None:
+        page = faq.FaqPage()
+        page.destroyed.connect(lambda: destroyed.append("page"))
+        page.browser.destroyed.connect(lambda: destroyed.append("browser"))
+        delete_qobjects(page)
+
+    # Match a completed test returning before the next test starts a nested Qt event loop.
+    create_and_dispose()
+    gc.collect()
+    process_events()
+    assert sorted(destroyed) == ["browser", "page"]

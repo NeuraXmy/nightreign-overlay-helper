@@ -35,7 +35,7 @@ tests/
 | `plugins/map_detect/` | `test_map_full_map.py` | 全图原图、颜色与清晰度增强、半透明与裁剪拒绝率、额外增强参数和无效输入 |
 | `plugins/map_detect/` | `test_poi_cnn.py`、`test_map_localization.py` | ONNX CPU 单点/批量推理、类别约束、14 张地图 ID 验收、名称本地化 |
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
-| `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图 |
+| `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图，以及页面销毁后的垃圾回收与事件循环 |
 | `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
 | `platforms/` | `test_elevation.py` | Windows 管理员权限检查、提权交接参数、取消与失败处理；通过模拟 API 避免触发真实 UAC |
 
@@ -54,7 +54,7 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 | [`tests/conftest.py`](../tests/conftest.py) | pytest fixture、offscreen 环境、隔离运行数据 |
 | [`tests/support/feature_fakes.py`](../tests/support/feature_fakes.py) | capture / region / HUD 等 fake 服务 |
 | [`tests/support/platform.py`](../tests/support/platform.py) | 共享 `FakeBackend` |
-| [`tests/support/qt.py`](../tests/support/qt.py) | `process_events()` |
+| [`tests/support/qt.py`](../tests/support/qt.py) | `process_events()`、`delete_qobjects()` |
 | [`tests/support/paths.py`](../tests/support/paths.py) | 仓库路径与地图截图路径，避免目录移动影响路径推导 |
 
 ## 运行测试
@@ -74,12 +74,11 @@ git diff --check
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
 
-Windows / Qt 6.11 下观察到单进程完整测试在 UI 事件循环中发生原生访问冲突，关闭输出捕获仍可复现；具体原因尚未定位。分进程运行以下两组可覆盖全部测试。分组通过不代表该单进程崩溃已修复：
+### Qt 页面清理
 
-```bash
-python -m pytest tests/core tests/plugins -q
-python -m pytest tests/ui tests/platforms -q
-```
+测试没有运行应用主事件循环，单独调用 `deleteLater()` 后立即结束测试，不能保证 Qt 在 Python 回收页面与子控件包装对象之前完成删除。Windows / Qt 6.11 下，FAQ 页面的待处理 `PolishRequest` 事件可能在后续测试的嵌套事件循环中触发文本控件访问冲突；因此不能仅按堆栈顶部将其归因于后续悬浮窗测试。
+
+FAQ 测试通过 `delete_qobjects(*objects)` 清理页面及相关服务：保留 Python 强引用，逐个调用 `deleteLater()`，再立即处理指定根对象的 `DeferredDelete`，确保其对象树在返回之前销毁。该辅助函数不处理其它排队回调，不能在对象自己的事件回调中使用，也不要同时传入一个父对象和它的子对象。`test_faq_teardown_survives_collection_before_next_event_loop` 主动触发垃圾回收与后续事件循环，验证页面与浏览器均已销毁。无需通过拆分测试进程或屏蔽系统崩溃弹窗来运行完整测试。
 
 多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机验证使用 `scripts/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
