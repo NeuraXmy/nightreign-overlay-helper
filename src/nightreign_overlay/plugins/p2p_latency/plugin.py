@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QWidget
 from qfluentwidgets import FluentIcon
 
+from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
 from nightreign_overlay.plugins.p2p_latency.models import P2PStatus
@@ -39,7 +40,7 @@ class _StatusLabel(QLabel):
 
     def set_status(self, status: P2PStatus) -> None:
         tr = self._tr
-        helper_ok = status.state not in {"disabled", "helper_missing", "helper_error"}
+        helper_ok = status.state not in {"disabled", "helper_missing", "helper_error", "admin_required"}
         steam = (
             "connected"
             if status.state in {"steam_ready", "runtime_error"}
@@ -74,6 +75,10 @@ class P2PLatencyPlugin(Plugin):
         self._status = P2PStatus("disabled", self.ctx.tr("status.disabled"))
 
     def on_activate(self) -> None:
+        if sys.platform == "win32" and not self.ctx.services.require(PlatformBackend).is_admin():
+            message = self.ctx.tr("status.admin_required")
+            self._set_status(P2PStatus("admin_required", message, etw_state="error"))
+            raise PermissionError(message)
         window = P2POverlay(
             self.ctx.services.require(OverlayManager), self.overlay_config, self.config, self.ctx.tr
         )

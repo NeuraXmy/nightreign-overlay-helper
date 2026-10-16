@@ -6,7 +6,9 @@
 
 需要 Steam 已登录、游戏正在运行以及已构建的 `NightreignP2PHelper.exe`。开发环境执行仓库中的 `scripts/build_p2p_helper.ps1`。发布包需要保留 `bin` 中的 EXE 和 `amd64` 支持 DLL，详情见仓库 README。
 
-新 Steam 接口直接返回延迟和本地连接质量；旧接口通过管理员权限下的 ETW 网络事件推断 STUN 往返时间。没有管理员权限时仍查询队友，新接口指标仍可用，旧接口指标显示 `--`。可在设置的运行状态中查看 SteamAPI、ETW 和辅助进程状态。
+新 Steam 接口直接返回延迟和本地连接质量；旧接口通过管理员权限下的 ETW 网络事件推断 STUN 往返时间。Windows 主程序启动时默认请求管理员权限，请在系统授权窗口中允许；取消授权则提示并退出。联机插件也会在激活时检查权限，无管理员权限时启动失败。可在设置的运行状态中查看 SteamAPI、ETW 和辅助进程状态。
+
+源码运行支持直接查找仓库 `bin/`、`build/p2p/bin/` 和原生项目的 Debug／Release 构建输出。若提示未找到联机组件，请在仓库根目录执行 `powershell -ExecutionPolicy Bypass -File scripts/build_p2p_helper.ps1`，或通过环境变量 `NIGHTREIGN_P2P_HELPER_PATH` 指定完整组件路径。组件所需依赖必须保留在其相邻目录。
 
 旧接口的稳定度使用最近最多 10 个有效 RTT 样本的标准差计算，至少 3 个样本才显示。它衡量延迟抖动，不是丢包率；新接口显示 Steam 自身提供的本地连接质量，两者含义不同。
 

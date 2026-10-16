@@ -20,6 +20,7 @@ overlay:
   legacy_no_fields: 旧 Steam P2P 接口没有 Ping/稳定度字段
   etw_source: 延迟来源：ETW STUN 往返时间
 status:
+  admin_required: 联机延迟需要管理员权限，请重新启动程序并允许管理员授权。
   disabled: 联机信息已关闭
   running: 已运行
   stopped: 未启动
