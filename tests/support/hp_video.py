@@ -7,10 +7,12 @@ from time import perf_counter
 
 import cv2
 import numpy as np
+from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
 from nightreign_overlay.plugins.hp_marker.detector import HpDetector
 from nightreign_overlay.plugins.hp_marker.structural import estimate_boundary
+from tests.support.hp_augmentations import Augmentation
 from tests.support.paths import PROJECT_ROOT
 
 VIDEO_ROOT = PROJECT_ROOT / "tests/data/hp_detect/videos"
@@ -20,7 +22,13 @@ def annotations() -> dict:
     return json.loads((VIDEO_ROOT / "annotations.json").read_text(encoding="utf-8"))
 
 
-def evaluate_video(label: dict, *, interval_seconds: float = 0, single_frame: bool = False) -> dict:
+def evaluate_video(
+    label: dict,
+    *,
+    interval_seconds: float = 0,
+    single_frame: bool = False,
+    augmentation: Augmentation | None = None,
+) -> dict:
     """GT is used only after prediction; a new detector is created for each run.
 
     Rejected observations cover time until the next accepted observation, including
@@ -42,6 +50,7 @@ def evaluate_video(label: dict, *, interval_seconds: float = 0, single_frame: bo
     mistakes: list[dict] = []
     predictions: list[int] = []
     costs: list[float] = []
+    scale = 1.0
     try:
         while True:
             ok, bgr = capture.read()
@@ -53,6 +62,10 @@ def evaluate_video(label: dict, *, interval_seconds: float = 0, single_frame: bo
                 continue
             next_sample += interval_seconds
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            if augmentation is not None:
+                transformed = augmentation.apply(Image.fromarray(rgb))
+                scale = transformed.width / rgb.shape[1]
+                rgb = np.asarray(transformed)
             start = perf_counter()
             length = estimate_boundary(rgb).length if single_frame else detector.detect(rgb, settings)
             costs.append((perf_counter() - start) * 1000)
@@ -68,10 +81,10 @@ def evaluate_video(label: dict, *, interval_seconds: float = 0, single_frame: bo
             if rejection_start is not None:
                 longest_rejection = max(longest_rejection, timestamp - rejection_start)
                 rejection_start = None
-            error = abs(length - label["gt_length_px"])
+            error = abs(length - label["gt_length_px"] * scale)
             max_error = max(max_error, error)
-            if error > tolerance:
-                mistakes.append({"frame": frame_index - 1, "length": length})
+            if error > tolerance * scale:
+                mistakes.append({"frame": frame_index - 1, "seconds": timestamp, "length": length})
     finally:
         capture.release()
     duration = frame_index / fps
@@ -84,10 +97,13 @@ def evaluate_video(label: dict, *, interval_seconds: float = 0, single_frame: bo
     return {
         "id": label["id"],
         "algorithm": "single_frame_baseline" if single_frame else "structural",
+        "augmentation": augmentation.name if augmentation else "original",
         "interval_seconds": interval_seconds,
         "decoded_frames": frame_index,
         "evaluated_frames": len(costs),
-        "gt_length_px": label["gt_length_px"],
+        "gt_length_px": label["gt_length_px"] * scale,
+        "tolerance_px": tolerance * scale,
+        "width_scale": scale,
         "prediction_range_px": [min(predictions), max(predictions)] if predictions else None,
         "accepted": accepted,
         "rejected": rejected,

@@ -86,6 +86,7 @@ def on_activate(self):
     capture.acquire_stream(self.id)
     ctx.on_cleanup(lambda: capture.release_stream(self.id))
 
+
 def _on_frame(self, event: FrameCaptured):
     image = crop_rgb(event.image, region)
     ...
@@ -130,7 +131,7 @@ class HotkeyApi:
 
 ```python
 def _matches_suffix(binding, pressed):
-    return canonical(pressed[-len(binding):]) == binding
+    return canonical(pressed[-len(binding) :]) == binding
 ```
 
 ### INVARIANT

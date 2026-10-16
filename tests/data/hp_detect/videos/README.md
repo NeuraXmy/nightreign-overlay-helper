@@ -24,3 +24,5 @@ python -m pytest tests/plugins/test_hp_detection_video.py -q
 ```
 
 `--baseline` 同时报告优化前的无状态新版估计器，退出码仅按当前实际部署的新版算法判定。报告的检测耗时只包含算法调用，不含视频解码、BGR/RGB 转换和 GT 比较。两段录像均用于此次优化，结果不代表未见场景的泛化准确率。
+
+增加 `--augmentations` 可复现之前截图测试的 32 组完整 RGB 图像增强，支持与 `--interval 0.25` 组合。每组单独新建检测器，缩放时同比调整 GT 与容差。`augmentation_full_report.json` 和 `augmentation_250ms_report.json` 保存完整结果，汇总见[连续视频增强评估](../../../../docs/HP_VIDEO_AUGMENTATION_REPORT.md)。存在不达标组时评估命令返回 1，不会修改算法或放宽测试标准。
