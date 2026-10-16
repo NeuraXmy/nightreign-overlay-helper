@@ -7,20 +7,24 @@ import numpy as np
 from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
-from nightreign_overlay.plugins.hp_marker.structural import estimate_boundary
+from nightreign_overlay.plugins.hp_marker.tracking import StructuralHpDetector
 
 
 class HpDetector:
-    """Dispatch detection; legacy history belongs to one uninterrupted legacy session."""
+    """Dispatch streaming detection; each algorithm owns an uninterrupted session's history."""
 
     def __init__(self) -> None:
         self._legacy: LegacyHpDetector | None = None
+        self._structural: StructuralHpDetector | None = None
 
     def detect(self, image: np.ndarray, config: HpDetectionSettings) -> int | None:
         if config.detection_algorithm == "structural":
             self._legacy = None
-            return estimate_boundary(image).length
+            if self._structural is None:
+                self._structural = StructuralHpDetector()
+            return self._structural.detect(image)
         if config.detection_algorithm == "legacy":
+            self._structural = None
             if self._legacy is None:
                 self._legacy = LegacyHpDetector()
             return self._legacy.detect(image, config)
