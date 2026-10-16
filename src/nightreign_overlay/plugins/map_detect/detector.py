@@ -1229,7 +1229,7 @@ class MapDetector:
             info_text_y_offset += 28
 
         # 绘制特殊事件点位（远古法师塔除外）
-        if event_text := get_event_text(pattern) and pattern.event_flag != 7706:
+        if (event_text := get_event_text(pattern)) and pattern.event_flag != 7706:
             texts.append(
                 (
                     scale_size((20, 10 + info_text_y_offset)),
