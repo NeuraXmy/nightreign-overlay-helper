@@ -287,6 +287,10 @@ POI 算法由 `poi_algorithm` 配置选择，默认 `cnn`，保留 `template`。
 - `P2PService` 管理子进程、解析输出、维护状态/玩家列表。
 - `P2POverlay` 显示状态与玩家列表。
 
+Windows 主程序默认请求管理员权限，详见 [启动流程](./L1_STARTUP.md)。联机插件激活时再次检查权限；无权限则在创建悬浮窗和辅助进程之前抛出 `PermissionError`，由插件管理器标记启动失败，设置页显示需要管理员权限。
+
+组件路径优先使用 `NIGHTREIGN_P2P_HELPER_PATH` 覆盖。打包运行仅使用 EXE 同级 `bin/NightreignP2PHelper.exe`。源码运行按顺序查找仓库内 `bin/`、`build/p2p/bin/`、原生项目 Debug 输出、Release 的 `publish/` 及 Release 输出目录；原生输出目标为 `net8.0-windows/win-x64`。查找与启动工作目录无关。若尚未构建，执行 `powershell -ExecutionPolicy Bypass -File scripts/build_p2p_helper.ps1`，生成组件及依赖；无需为了源码调试先打包整个应用。
+
 ### INVARIANT
 
 - 联机检测不受截图门控影响；但悬浮窗仍受显示门控约束。

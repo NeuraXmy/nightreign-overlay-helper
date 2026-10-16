@@ -38,6 +38,7 @@ def resolve_helper_path() -> Path:
     project_root = Path(__file__).resolve().parents[4]
     candidates = [
         project_root / "bin" / HELPER_FILENAME,
+        project_root / "build" / "p2p" / "bin" / HELPER_FILENAME,
         project_root
         / "native"
         / "NightreignP2PHelper"
@@ -55,8 +56,16 @@ def resolve_helper_path() -> Path:
         / "win-x64"
         / "publish"
         / HELPER_FILENAME,
+        project_root
+        / "native"
+        / "NightreignP2PHelper"
+        / "bin"
+        / "Release"
+        / "net8.0-windows"
+        / "win-x64"
+        / HELPER_FILENAME,
     ]
-    return next((candidate for candidate in candidates if candidate.exists()), candidates[0])
+    return next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
 
 
 class P2PService(QObject):
@@ -96,7 +105,10 @@ class P2PService(QObject):
         simulated = sys.platform == "darwin"
         helper_path = Path(__file__).with_name("mock_helper.py") if simulated else resolve_helper_path()
         if not helper_path.is_file():
-            self._set_status("helper_missing", f"未找到联机组件：{helper_path}")
+            self._set_status(
+                "helper_missing",
+                f"未找到联机组件：{helper_path}。源码运行请先执行 scripts/build_p2p_helper.ps1。",
+            )
             return
 
         args = ["-u", str(helper_path)] if simulated else ["--etw"]

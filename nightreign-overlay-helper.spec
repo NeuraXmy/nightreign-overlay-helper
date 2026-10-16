@@ -64,6 +64,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
+    uac_admin=True,
     disable_windowed_traceback=False,
     contents_directory="_internal",
     icon=str(package_root / "resources" / "icons" / "app.ico"),

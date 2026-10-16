@@ -8,7 +8,8 @@
 
 | 文件 | 职责 |
 |------|------|
-| [`src/nightreign_overlay/__main__.py`](../src/nightreign_overlay/__main__.py) | 屏蔽 qfluentwidgets 启动横幅，调用 `app.run()` |
+| [`src/nightreign_overlay/__main__.py`](../src/nightreign_overlay/__main__.py) | Windows 管理员权限检查、屏蔽 qfluentwidgets 启动横幅，调用 `app.run()` |
+| [`src/nightreign_overlay/platforms/elevation.py`](../src/nightreign_overlay/platforms/elevation.py) | 使用 Windows UAC 请求管理员权限，处理取消与启动失败 |
 | [`src/nightreign_overlay/app.py`](../src/nightreign_overlay/app.py) | `Application` 类：构造所有长生命周期对象、连接信号、启动、退出、重启 |
 | [`src/nightreign_overlay/meta.py`](../src/nightreign_overlay/meta.py) | 应用常量：ID、名称、版本、游戏窗口标题 |
 | [`src/nightreign_overlay/core/single_instance.py`](../src/nightreign_overlay/core/single_instance.py) | 单实例锁 |
@@ -17,6 +18,7 @@
 
 ```
 __main__.main()
+  ├─ ensure_administrator()    # Windows 未提权时请求 UAC，交接成功或失败后退出原进程
   └─ app.run(argv)
        ├─ parse_args(argv) → --minimized, --data-dir, --debug
        ├─ setup_logging(log_dir(), level)
@@ -42,6 +44,8 @@ __main__.main()
 ```
 
 ## Application.start()
+
+Windows 默认以管理员权限运行，以满足联机延迟 ETW 的要求。打包 EXE 使用 `uac_admin=True` 启动清单；源码入口（`python main.py`、`python -m nightreign_overlay`）在构造 Qt 界面、创建单实例锁和启动插件前，通过 `ShellExecuteW("runas")` 请求提权。保留原 Python 启动参数、应用参数和工作目录。已提权进程直接继续，macOS 不请求提权。用户取消 UAC 或交接失败时显示说明并退出，不启动无权限实例。
 
 ```
 start()

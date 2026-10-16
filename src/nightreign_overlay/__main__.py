@@ -8,6 +8,12 @@ import sys
 
 
 def main() -> int:
+    from nightreign_overlay.platforms.elevation import ensure_administrator
+
+    exit_code = ensure_administrator()
+    if exit_code is not None:
+        return exit_code
+
     # qfluentwidgets prints a promotional banner when first imported; keep the console clean.
     with contextlib.redirect_stdout(io.StringIO()):
         import qfluentwidgets  # noqa: F401

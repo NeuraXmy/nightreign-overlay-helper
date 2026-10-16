@@ -29,6 +29,7 @@ tests/
 | `plugins/` | `test_capture_multiscreen.py`、`test_capture_diagnostic.py` | Windows/macOS 四方向副屏、负坐标、混合 DPI、DLL 客户区、标定/预览/地图叠加坐标一致性 |
 | `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
 | `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
+| `plugins/` | `test_p2p_helper_path.py` | 源码、构建输出和打包组件路径解析、显式路径覆盖 |
 | `plugins/map_detect/` | `test_map_detect.py`、`test_manual_catalog.py` | 地图状态机、设置、后台任务、手动筛选与候选约束 |
 | `plugins/map_detect/` | `test_map_terrain.py`、`test_map_nightlord.py` | 地形与夜王标注截图回归 |
 | `plugins/map_detect/` | `test_map_full_map.py` | 全图原图、颜色与清晰度增强、半透明与裁剪拒绝率、额外增强参数和无效输入 |
@@ -36,6 +37,7 @@ tests/
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
 | `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图 |
 | `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
+| `platforms/` | `test_elevation.py` | Windows 管理员权限检查、提权交接参数、取消与失败处理；通过模拟 API 避免触发真实 UAC |
 
 早期悬浮窗调试插件及其专属生命周期测试已删除；通用悬浮窗和共享 HUD 的行为测试保留在 `ui/test_overlay.py`，插件发现测试验证正式内置插件及调试插件不再被发现。
 
@@ -72,7 +74,7 @@ git diff --check
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
 
-Windows / Qt 6.11 下观察到单进程完整测试在 UI 事件循环中发生原生访问冲突，关闭输出捕获仍可复现；具体原因尚未定位。分进程运行以下两组可完成全部测试，本次验证分别为 545 与 33 项通过。分组通过不代表该单进程崩溃已修复：
+Windows / Qt 6.11 下观察到单进程完整测试在 UI 事件循环中发生原生访问冲突，关闭输出捕获仍可复现；具体原因尚未定位。分进程运行以下两组可覆盖全部测试。分组通过不代表该单进程崩溃已修复：
 
 ```bash
 python -m pytest tests/core tests/plugins -q

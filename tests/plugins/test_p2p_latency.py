@@ -48,6 +48,7 @@ def plugin(store: ConfigStore):
     app_config = store.bind(AppConfig, "app")
     monitor = GameWindowMonitor(_Backend(), events)
     manager = OverlayManager(monitor._backend, app_config, monitor)
+    services.register(PlatformBackend, monitor._backend)
     services.register(OverlayManager, manager)
     services.register(AppConfig, app_config)
     ctx = PluginContext("p2p_latency", _ROOT, store, translator, services, events)
@@ -358,3 +359,33 @@ def test_top_right_anchor_survives_scale_content_and_restart(plugin, store, rese
     assert (restored.x() + restored.width(), restored.y()) == anchor
     restored.dispose()
     reloaded.deleteLater()
+
+
+def test_windows_activation_without_admin_fails_before_creating_resources(plugin, monkeypatch):
+    import nightreign_overlay.plugins.p2p_latency.plugin as plugin_module
+
+    monkeypatch.setattr(plugin_module.sys, "platform", "win32")
+    with pytest.raises(PermissionError, match="管理员"):
+        plugin.on_activate()
+    assert plugin._service is None
+    assert plugin._window is None
+    assert not plugin.ctx.services.require(OverlayManager).windows()
+    assert plugin._status.state == "admin_required"
+    parent = QWidget()
+    label = _StatusLabel(plugin.ctx.tr, parent)
+    label.set_status(plugin._status)
+    assert "管理员" in label.text()
+    assert "联机组件：未启动" in label.text()
+    parent.deleteLater()
+
+
+def test_windows_activation_as_admin_starts_service(plugin, monkeypatch):
+    import nightreign_overlay.plugins.p2p_latency.plugin as plugin_module
+
+    monkeypatch.setattr(plugin_module.sys, "platform", "win32")
+    monkeypatch.setattr(plugin.ctx.services.require(PlatformBackend), "is_admin", lambda: True)
+    calls = []
+    monkeypatch.setattr(P2PService, "start", lambda self: calls.append(self))
+    plugin.on_activate()
+    assert calls == [plugin._service]
+    assert plugin._window is not None
