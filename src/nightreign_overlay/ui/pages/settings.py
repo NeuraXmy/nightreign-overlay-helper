@@ -89,6 +89,12 @@ class SettingsPage(ScrollPage):
                 tr("settings.start_minimized.title"),
                 tr("settings.start_minimized.content"),
             ),
+            ConfigSwitchCard(
+                self._config.debug_images_enabled,
+                FluentIcon.DEVELOPER_TOOLS,
+                tr("settings.debug_images.title"),
+                tr("settings.debug_images.content"),
+            ),
         )
         self.addWidget(section)
 

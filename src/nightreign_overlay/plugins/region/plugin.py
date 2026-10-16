@@ -21,6 +21,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QWidget
 
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.core.screens import mapping_for_rect, screen_mappings
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
@@ -61,6 +62,27 @@ class _RegionService(RegionApi):
             ctx.log.warning("Region %s setting canceled", key)
             return None
         self.save_region(key, selected)
+        if result is not None:
+            _selections, dialog = result
+            image = (
+                dialog._pixmap.toImage()
+                if dialog._pixmap is not None
+                else dialog.screen().grabWindow(0).toImage()
+            )
+            debug = self._plugin.ctx.services.get(DebugImageApi)
+            if debug is not None:
+                debug.save(
+                    f"region_{key}",
+                    image,
+                    {
+                        "key": key,
+                        "region": selected,
+                        "screen_geometry": dialog._screen_geometry,
+                        "device_pixel_ratio": dialog._device_pixel_ratio,
+                        "pixel_origin": dialog._pixel_origin,
+                    },
+                    keep=1,
+                )
         ctx.log.info("Region %s saved: %s", key, list(selected.getRect()))
         return selected
 
@@ -70,10 +92,24 @@ class _RegionService(RegionApi):
             return None
         selections, dialog = result
         samples = {}
+        debug = self._plugin.ctx.services.get(DebugImageApi)
         for index, rect in selections.items():
             sample = dialog.sample(index)
             if sample is not None:
                 samples[targets[index].id] = sample
+                if debug is not None:
+                    debug.save(
+                        f"region_sample_{targets[index].id}",
+                        sample,
+                        {
+                            "key": targets[index].id,
+                            "region": rect,
+                            "screen_geometry": dialog._screen_geometry,
+                            "device_pixel_ratio": dialog._device_pixel_ratio,
+                            "pixel_origin": dialog._pixel_origin,
+                        },
+                        keep=1,
+                    )
                 self._plugin.ctx.log.info("Sampled %s at %s", targets[index].id, list(rect.getRect()))
         return samples
 

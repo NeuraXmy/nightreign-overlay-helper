@@ -10,8 +10,9 @@ from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QProgressBar, QVBoxLayout, QWidget
 from qfluentwidgets import FluentIcon
 
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
-from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
+from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.day_timer.api import (
     DayPhaseChanged,
     DayStarted,
@@ -224,6 +225,15 @@ class DayTimerPlugin(Plugin):
         )
         if result is None:
             return
+        debug_image = crop_rgb(event.image, region)
+        debug = self.ctx.services.get(DebugImageApi)
+        if debug_image is not None and debug is not None:
+            debug.save(
+                "day_timer_dayx",
+                debug_image,
+                {"day": result.day, "scores": result.scores, "seconds": result.seconds, "region": region},
+                cooldown_seconds=600,
+            )
         self.ctx.log.debug(
             "detect dayx time: %.3fs lang: %s score: %.2f, %.2f, %.2f",
             result.seconds,

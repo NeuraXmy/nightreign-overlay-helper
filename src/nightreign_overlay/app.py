@@ -15,6 +15,7 @@ from qfluentwidgets import FluentTranslator
 from nightreign_overlay.core import i18n
 from nightreign_overlay.core.app_config import APP_CONFIG_NAMESPACE, AppConfig
 from nightreign_overlay.core.config import ConfigStore
+from nightreign_overlay.core.debug import DebugImageApi, DebugImageService
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.game_window import ForegroundPolicy, GameWindowMonitor
 from nightreign_overlay.core.log import get_logger, set_log_level, setup_logging
@@ -75,6 +76,8 @@ class Application(QObject):
         self.services.register(GameWindowMonitor, self.game_monitor)
         self.services.register(ForegroundPolicy, self.overlays.foreground)
         self.services.register(OverlayManager, self.overlays)
+        self.debug_images = DebugImageService(self.config.debug_images_enabled)
+        self.services.register(DebugImageApi, self.debug_images)
 
         self.plugins = PluginManager(self.store, self.translator, self.services, self.events, self)
         self.plugins.discover()
@@ -153,6 +156,7 @@ class Application(QObject):
             return
         self._shut_down = True
         self.plugins.shutdown()
+        self.debug_images.close()
         self.game_monitor.stop()
         if self.tray is not None:
             self.tray.hide()

@@ -29,3 +29,5 @@
 - `→` 表示调用/依赖/数据流向。
 - `INVARIANT` 表示不可破坏的约束。
 - `PATTERN` 表示推荐的标准做法。
+
+- Debug image storage and retention -> [DEBUG_IMAGES.md](./DEBUG_IMAGES.md)

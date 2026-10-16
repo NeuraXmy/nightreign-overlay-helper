@@ -10,7 +10,7 @@ from PyQt6.QtCore import QRect, Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
-from nightreign_overlay.core.paths import user_data_dir
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings, HpMarkerConfig
@@ -151,6 +151,14 @@ class HpMarkerPlugin(Plugin):
         if error is not None:
             self.ctx.log.error("HP detection failed: %s", error)
             return
+        debug = self.ctx.services.get(DebugImageApi)
+        if debug is not None:
+            debug.save(
+                "hp_marker",
+                job.image,
+                {"detected_length": length, "region": job.region, "settings": job.settings.__dict__},
+                cooldown_seconds=600,
+            )
         # Rejection leaves the previous display untouched until a clear boundary is found.
         if length is not None:
             if length <= 0:
@@ -170,7 +178,6 @@ class HpMarkerPlugin(Plugin):
                 _REGION_KEY,
                 self.ctx.tr("settings.region.annotate"),
                 _REGION_COLOR,
-                screenshot_path=str(user_data_dir() / "hpbar_region_screenshot.jpg"),
             )
         finally:
             self._calibrating = False

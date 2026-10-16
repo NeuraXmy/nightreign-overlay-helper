@@ -14,6 +14,7 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon, PushSettingCard
 
+from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.core.screens import mapping_for_rect
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb, normalize_image
@@ -28,7 +29,6 @@ from nightreign_overlay.plugins.map_detect.manual_catalog import ManualFilterCat
 from nightreign_overlay.plugins.map_detect.manual_filter import ManualFilterOverlay
 from nightreign_overlay.plugins.map_detect.map_info import MapPattern, Position
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOverlayState
-from nightreign_overlay.plugins.map_detect.resources import get_appdata_path
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
@@ -42,6 +42,13 @@ from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager
 
 _REGION_KEY = "map_detect.map_region"
 _REGION_COLOR = "#4384b9"
+
+
+class _NoopDebugImageApi:
+    def save(self, *args: Any, **kwargs: Any) -> bool:
+        return False
+
+
 _ACTIONS = (
     "calibrate_region",
     "recognize",
@@ -640,6 +647,51 @@ class MapDetectPlugin(Plugin):
                 self._manual_auto_in_flight = False
                 self._manual_overlay.set_auto_recognizing(None)
             return
+        debug = self.ctx.services.get(DebugImageApi)
+        if debug is None:
+            debug = _NoopDebugImageApi()
+        if job.stage == "check":
+            debug.save(
+                "map_full_map",
+                job.image,
+                {"is_full_map": result.is_full_map, "score": result.full_map_score, "region": job.region},
+                cooldown_seconds=600,
+            )
+        elif job.stage == "terrain":
+            debug.save(
+                "map_terrain",
+                job.image,
+                {
+                    "earth_shifting": result.earth_shifting,
+                    "score": result.earth_shifting_score,
+                    "region": job.region,
+                },
+            )
+        elif job.stage == "poi":
+            for name, image in (result.debug_images or {}).items():
+                debug.save(
+                    name,
+                    image,
+                    {"poi_types": result.poi_types, "poi_scores": result.poi_scores, "region": job.region},
+                )
+        elif job.stage.isdigit():
+            debug.save(
+                "map_nightlord",
+                job.image,
+                {"nightlord": result.nightlord, "score": result.nightlord_score, "region": job.region},
+            )
+            for name, image in (result.debug_images or {}).items():
+                debug.save(
+                    name,
+                    image,
+                    {
+                        "earth_shifting": job.earth_shifting,
+                        "nightlord": result.nightlord,
+                        "nightlord_score": result.nightlord_score,
+                        "patterns": [pattern.id for pattern in result.patterns or []],
+                        "region": job.region,
+                    },
+                )
         if job.stage == "poi":
             self._complete_manual_auto_recognition(job, result)
         elif job.stage == "draw":
@@ -720,7 +772,6 @@ class MapDetectPlugin(Plugin):
                 _REGION_KEY,
                 self.ctx.tr("settings.calibrate_region.annotate"),
                 _REGION_COLOR,
-                screenshot_path=get_appdata_path("map_region_screenshot.jpg"),
             )
             if rect is not None:
                 # Legacy clamps to a square at the selected top-left, rather than recentering.

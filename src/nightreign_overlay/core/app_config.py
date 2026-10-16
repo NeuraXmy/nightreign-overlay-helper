@@ -23,6 +23,7 @@ class AppConfig(ConfigGroup):
     # Retained for existing config files; closing now always quits, hiding is an explicit tray action.
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
+    debug_images_enabled = BoolOption(True)
     log_level = ChoiceOption("INFO", LOG_LEVELS)
     #: Internal: the "still running in the tray" hint is shown only once.
     tray_hint_shown = BoolOption(False)

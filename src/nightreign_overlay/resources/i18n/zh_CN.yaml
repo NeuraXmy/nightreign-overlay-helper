@@ -103,6 +103,9 @@ settings:
   start_minimized:
     title: 启动时最小化
     content: 启动后不显示主界面，只显示托盘图标
+  debug_images:
+    title: 保存调试图片
+    content: 开启后保存检测调试图片和识别元数据；默认开启
   advanced:
     title: 高级
   log_level:

@@ -104,6 +104,9 @@ settings:
   start_minimized:
     title: 啟動時最小化
     content: 啟動後不顯示主介面，只顯示系統匣圖示
+  debug_images:
+    title: 儲存除錯圖片
+    content: 開啟後儲存檢測除錯圖片與辨識中繼資料；預設開啟
   advanced:
     title: 進階
   log_level:
