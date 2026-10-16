@@ -115,6 +115,24 @@ settings:
     title: Data directory
   log_dir:
     title: Log directory
+  diagnostic_export:
+    title: Package logs and debug images
+    content: Describe a problem, attach images, and export a ZIP for feedback
+    button: Package
+    hint: Automatically includes existing logs, debug images, and recognition metadata. Add a description and images, then attach the exported ZIP to your feedback.
+    description: "Problem description (optional): What happened? How can it be reproduced? Include the time, game resolution, and relevant settings."
+    attachments: Attached images (optional)
+    add_images: Add images
+    remove_images: Remove selected images
+    image_filter: "Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    export: Export ZIP
+    cancel: Cancel
+    working: Packaging, please wait…
+    failed: "Packaging failed. Check that the files are readable and the disk is writable, then retry.\n{error}"
+    success: "Exported {count} files. Attach this ZIP to your feedback.\n{path}"
+    skipped: "{count} files were removed during packaging and were skipped. See manifest.json."
+    open_directory: Open containing folder
+    close: Close
   restart:
     title: Restart required
     content: The new language is applied after a restart.

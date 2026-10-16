@@ -115,6 +115,24 @@ settings:
     title: データフォルダー
   log_dir:
     title: ログフォルダー
+  diagnostic_export:
+    title: ログとデバッグ画像をまとめる
+    content: 問題の説明と画像を添えて、報告用の ZIP をエクスポートします
+    button: 作成
+    hint: 保存済みのログ、デバッグ画像、認識メタデータを自動で収集します。説明や画像を追加し、作成した ZIP を問題報告に添付してください。
+    description: "問題の説明（任意）：何が起きましたか？再現手順、発生時刻、ゲームの解像度、関連設定などを記入してください。"
+    attachments: 添付画像（任意）
+    add_images: 画像を追加
+    remove_images: 選択した画像を削除
+    image_filter: "画像 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    export: ZIP を作成
+    cancel: キャンセル
+    working: 作成中です。お待ちください…
+    failed: "作成できませんでした。ファイルの読み取りとディスクへの書き込みが可能か確認し、再試行してください。\n{error}"
+    success: "{count} 個のファイルをエクスポートしました。この ZIP を問題報告に添付してください。\n{path}"
+    skipped: "作成中に削除された {count} 個のファイルを除外しました。詳細は manifest.json を参照してください。"
+    open_directory: 保存先フォルダーを開く
+    close: 閉じる
   restart:
     title: 再起動が必要です
     content: 言語設定は再起動後に反映されます。

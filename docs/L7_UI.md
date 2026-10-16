@@ -13,6 +13,7 @@
 | [`src/nightreign_overlay/ui/pages/plugin_page.py`](../src/nightreign_overlay/ui/pages/plugin_page.py) | 插件页（设置/教程/重置） |
 | [`src/nightreign_overlay/ui/pages/faq.py`](../src/nightreign_overlay/ui/pages/faq.py) | 常见问题图文页 |
 | [`src/nightreign_overlay/ui/pages/settings.py`](../src/nightreign_overlay/ui/pages/settings.py) | 通用设置页 |
+| [`src/nightreign_overlay/ui/components/diagnostic_export.py`](../src/nightreign_overlay/ui/components/diagnostic_export.py) | 问题描述、图片附件和后台导出 ZIP，见 [DIAGNOSTIC_EXPORT.md](DIAGNOSTIC_EXPORT.md) |
 | [`src/nightreign_overlay/ui/pages/about.py`](../src/nightreign_overlay/ui/pages/about.py) | 关于页 |
 | [`src/nightreign_overlay/ui/overlay.py`](../src/nightreign_overlay/ui/overlay.py) | `OverlayWindow` 基类 + `OverlayManager` |
 | [`src/nightreign_overlay/ui/components/setting_cards.py`](../src/nightreign_overlay/ui/components/setting_cards.py) | 绑定 ConfigItem 的设置卡片 |
