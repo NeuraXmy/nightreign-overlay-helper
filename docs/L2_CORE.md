@@ -37,6 +37,7 @@ class MyConfig(ConfigGroup):
     enabled = BoolOption(True)
     opacity = RangeOption(90, 10, 100)
 
+
 cfg = store.bind(MyConfig, "plugins.my_plugin")
 cfg.opacity.valueChanged.connect(handler)
 cfg.opacity.set(80)  # validated, persisted, emitted

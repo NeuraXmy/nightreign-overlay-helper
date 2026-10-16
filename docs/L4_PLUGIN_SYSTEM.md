@@ -69,6 +69,7 @@ loaded ──on_deactivate()──▶ 停止工作；ctx.release() 自动清理
 class FooApi:
     def do_something(self) -> None: ...
 
+
 # 提供方 plugin.py
 ctx.provide(FooApi, _FooService())
 
