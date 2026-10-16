@@ -115,6 +115,24 @@ settings:
     title: 数据目录
   log_dir:
     title: 日志目录
+  diagnostic_export:
+    title: 打包日志与调试图片
+    content: 填写问题描述、附加图片，并导出用于反馈的 ZIP 压缩包
+    button: 打包
+    hint: 自动收集现有日志、调试图片和识别元数据。可以补充问题描述和图片，导出后请将 ZIP 附在问题反馈中。
+    description: "问题描述（可选）：发生了什么？如何复现？可以填写出现时间、游戏分辨率及相关设置。"
+    attachments: 附加图片（可选）
+    add_images: 添加图片
+    remove_images: 移除所选图片
+    image_filter: "图片 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    export: 导出 ZIP
+    cancel: 取消
+    working: 正在打包，请稍候…
+    failed: "打包失败，请检查文件是否可读取、磁盘是否可写后重试。\n{error}"
+    success: "已导出 {count} 个文件。请将 ZIP 附在问题反馈中。\n{path}"
+    skipped: "有 {count} 个文件在打包时已被清理，未包含在压缩包中，详见 manifest.json。"
+    open_directory: 打开所在目录
+    close: 关闭
   restart:
     title: 需要重启
     content: 重启后语言设置才会生效。

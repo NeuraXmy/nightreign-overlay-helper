@@ -116,6 +116,24 @@ settings:
     title: 資料目錄
   log_dir:
     title: 日誌目錄
+  diagnostic_export:
+    title: 打包日誌與除錯圖片
+    content: 填寫問題描述、附加圖片，並匯出用於回報的 ZIP 壓縮檔
+    button: 打包
+    hint: 自動收集現有日誌、除錯圖片和辨識中繼資料。可以補充問題描述和圖片，匯出後請將 ZIP 附在問題回報中。
+    description: "問題描述（選填）：發生了什麼？如何重現？可以填寫發生時間、遊戲解析度及相關設定。"
+    attachments: 附加圖片（選填）
+    add_images: 新增圖片
+    remove_images: 移除所選圖片
+    image_filter: "圖片 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    export: 匯出 ZIP
+    cancel: 取消
+    working: 正在打包，請稍候…
+    failed: "打包失敗，請檢查檔案是否可讀取、磁碟是否可寫入後重試。\n{error}"
+    success: "已匯出 {count} 個檔案。請將 ZIP 附在問題回報中。\n{path}"
+    skipped: "有 {count} 個檔案在打包時已被清理，未包含在壓縮檔中，詳見 manifest.json。"
+    open_directory: 開啟所在資料夾
+    close: 關閉
   restart:
     title: 需要重新啟動
     content: 重新啟動後語言設定才會生效。

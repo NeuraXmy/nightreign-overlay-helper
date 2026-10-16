@@ -31,3 +31,4 @@
 - `PATTERN` 表示推荐的标准做法。
 
 - Debug image storage and retention -> [DEBUG_IMAGES.md](./DEBUG_IMAGES.md)
+- 日志与调试图片打包、问题描述及附件导出 → [DIAGNOSTIC_EXPORT.md](./DIAGNOSTIC_EXPORT.md)
