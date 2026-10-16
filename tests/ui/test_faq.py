@@ -35,7 +35,7 @@ def test_faq_resolves_markdown_and_relative_images_with_language_fallback(
 
     page = faq.FaqPage()
     try:
-        assert page.browser.source().toLocalFile() == str(source)
+        assert Path(page.browser.source().toLocalFile()).resolve() == source.resolve()
         assert "示例问题" in page.browser.toPlainText()
         loaded = page.browser.document().resource(
             QTextDocument.ResourceType.ImageResource, QUrl("images/example.png")

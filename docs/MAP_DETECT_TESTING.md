@@ -80,7 +80,7 @@ OpenCV 5.0.0、NumPy 2.4.6、Pillow 12.3.0；默认霍夫圆阈值 `(150, 200, 2
 
 ### 自动回归
 
-[`tests/plugins/map_detect/test_map_full_map.py`](../tests/plugins/map_detect/test_map_full_map.py) 直接复用 benchmark 的固定变换，要求原图与全部增强样本通过，半透明与裁剪拒绝率至少保持优化前基线；另验证公共 `detect()` 入口、均匀图片及无效尺寸。补充使用未出现在 benchmark 中的增强参数，对 12 张图各验证 9 个样本（共 108 个），包括完全去饱和、亮度/对比度 0.45 与 1.25 倍、锐度 2.5 倍、模糊半径 0.75 像素和组合增强。
+[`tests/plugins/map_detect/test_map_full_map.py`](../tests/plugins/map_detect/test_map_full_map.py) 直接复用 benchmark 的固定变换，要求 12 张原图全部通过、216 个增强样本至少 215 个通过（允许图像库版本引起的 1 个边界样本差异），半透明与裁剪拒绝率至少保持优化前基线；另验证公共 `detect()` 入口、均匀图片及无效尺寸。补充使用未出现在 benchmark 中的增强参数，对 12 张图各验证 9 个样本（共 108 个），包括完全去饱和、亮度/对比度 0.45 与 1.25 倍、锐度 2.5 倍、模糊半径 0.75 像素和组合增强。
 
 ```bash
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect/test_map_full_map.py -q

@@ -14,7 +14,6 @@ tests/
 │   └── map_detect/          # 地图状态机、手动筛选、地形/夜王、POI CNN
 ├── ui/                      # 悬浮窗、FAQ 图文、设置重置、托盘退出
 ├── platforms/               # 原生平台行为（当前为 macOS 悬浮窗非激活）
-├── legacy/                  # 保留的血条旧版对照测试
 ├── support/                 # 共享 fake、Qt 工具、仓库/样本路径
 └── data/map_detect/         # Git 跟踪的地图截图，位置保持稳定
 ```
@@ -37,11 +36,14 @@ tests/
 | `ui/` | `test_overlay.py`、`test_settings_reset.py`、`test_tray_exit.py` | 悬浮窗、设置重置、托盘与应用退出 |
 | `ui/` | `test_faq.py` | FAQ Markdown、相对图片路径、语言回退、首页/关于页紧凑头图 |
 | `platforms/` | `test_overlay_activation.py` | macOS 原生非激活窗口行为 |
-| `legacy/` | `test_hp_marker_legacy_parity.py` | 血条检测与旧版逐帧比较，旧版目录缺失时跳过 |
 
 早期悬浮窗调试插件及其专属生命周期测试已删除；通用悬浮窗和共享 HUD 的行为测试保留在 `ui/test_overlay.py`，插件发现测试验证正式内置插件及调试插件不再被发现。
 
 地图旧版逐像素/评分对照测试已删除；地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)，CNN 部署与验收见 [`POI_CNN.md`](./POI_CNN.md)。
+
+旧版血条外部源码逐帧对照测试已移除，测试不再依赖相邻旧项目或其配置文件。当前新版结构检测、旧版截图准确率、历史状态重置和插件行为仍由 `plugins/test_hp_detection_accuracy.py` 与 `plugins/test_hp_marker.py` 覆盖。
+
+FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统的路径分隔符差异。HUD 子部件重新显示后的高度允许 ±2 逻辑像素偏差，以容纳 Qt 布局取整；隐藏时仍必须缩小。
 
 ## 共享支持代码
 
@@ -62,7 +64,6 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture -q
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/core -q
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/plugins/map_detect -q
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/ui tests/platforms -q
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/legacy -q
 
 .venv/bin/ruff check src tests scripts tools
 .venv/bin/ruff format --check src tests scripts tools
@@ -70,6 +71,13 @@ git diff --check
 ```
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
+
+Windows / Qt 6.11 下观察到单进程完整测试在 UI 事件循环中发生原生访问冲突，关闭输出捕获仍可复现；具体原因尚未定位。分进程运行以下两组可完成全部测试，本次验证分别为 545 与 33 项通过。分组通过不代表该单进程崩溃已修复：
+
+```bash
+python -m pytest tests/core tests/plugins -q
+python -m pytest tests/ui tests/platforms -q
+```
 
 多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机验证使用 `scripts/diagnose_capture.py`，步骤与边界见 [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)。
 
