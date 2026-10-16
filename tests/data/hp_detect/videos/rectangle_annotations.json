@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "video": "rectangle_length_3.mkv",
+  "source_file": "2026-10-16 20-19-02.mp4",
+  "source_sha256": "4e4b2e872d436447513cd91264671ae03b77f2ba89787e2fddadbf7f550e2b3e",
+  "video_sha256": "cf26d3a547c7b964560460b0977f1b3455402e156177e1941791dc4dda9e3ee0",
+  "codec": "FFV1",
+  "crop_xywh": [
+    8,
+    8,
+    1000,
+    28
+  ],
+  "fps": 30.0,
+  "decoded_frame_count": 1835,
+  "left_cap_source_x": 18,
+  "outer_cap_source_x": 443,
+  "gt_length_px": 425,
+  "tolerance_px": 3,
+  "target_max_rejection_ratio": 0.2,
+  "max_rejection_seconds": 5.0,
+  "contains_limit_loss_gray": false,
+  "segments": [
+    "red",
+    "pink",
+    "empty"
+  ],
+  "reference_frames": [
+    {
+      "frame_index": 0,
+      "image": "rectangle_length_3_frame_0.png"
+    },
+    {
+      "frame_index": 366,
+      "image": "rectangle_length_3_frame_366.png"
+    },
+    {
+      "frame_index": 1466,
+      "image": "rectangle_length_3_frame_1466.png"
+    },
+    {
+      "frame_index": 1834,
+      "image": "rectangle_length_3_frame_1834.png"
+    }
+  ],
+  "annotation_method": "Manually inspect the fixed left cap at x=18 and outer right cap at x=443 in full-health frame 366 and depleted frames 1466/1834. The dark empty region belongs inside the usable HP rectangle. This footage contains no gray limit-loss segment. Endpoints use cap centers; allow +/-3 pixels for compression/antialiasing. Detector never receives GT, frame index or fixed length."
+}
