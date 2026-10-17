@@ -14,7 +14,6 @@ from qfluentwidgets import (
     IconWidget,
     ScrollArea,
     SegmentedWidget,
-    TextBrowser,
     TitleLabel,
 )
 
@@ -23,6 +22,7 @@ from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.plugin import PluginManager, PluginRecord
 from nightreign_overlay.ui.components import create_reset_button
 from nightreign_overlay.ui.components.plugin_widgets import PluginSwitch
+from nightreign_overlay.ui.markdown import MarkdownTextBrowser, configure_markdown_browser
 from nightreign_overlay.ui.plugin_actions import state_text
 from nightreign_overlay.ui.theme import fluent_icon
 
@@ -129,10 +129,11 @@ class PluginPage(QWidget):
         path = self._record.plugin.ctx.tutorial_file() if self._record.plugin is not None else None
         if path is None:
             return self._placeholder(tr("plugin_page.no_tutorial"), self)
-        browser = TextBrowser(self)
+        browser = MarkdownTextBrowser(self)
         browser.setOpenExternalLinks(True)
         # Loading via ``setSource`` resolves relative image paths against the tutorial directory.
         browser.setSource(QUrl.fromLocalFile(str(path)), QTextDocument.ResourceType.MarkdownResource)
+        configure_markdown_browser(browser)
         return browser
 
     @staticmethod
