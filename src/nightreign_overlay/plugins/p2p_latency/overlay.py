@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QGridLayout, QLab
 
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
 from nightreign_overlay.plugins.p2p_latency.models import P2PPeer, P2PStatus
+from nightreign_overlay.plugins.p2p_latency.presentation import status_message
 from nightreign_overlay.ui.overlay import OverlayManager, OverlayWindow
 
 
@@ -70,8 +71,9 @@ class P2POverlay(OverlayWindow):
     def set_status(self, status: P2PStatus) -> None:
         self.status = status
         self.status_label.setText(
-            self._tr("overlay.waiting") if status.state == "steam_ready" else status.message
+            self._tr("overlay.waiting") if status.state == "steam_ready" else status_message(status, self._tr)
         )
+        self.status_label.setToolTip(status.message)
         self._refresh_rows()
         self.update_visibility()
 

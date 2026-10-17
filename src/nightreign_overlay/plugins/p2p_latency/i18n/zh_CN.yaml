@@ -13,6 +13,15 @@ overlay:
   legacy_no_fields: 旧 Steam P2P 接口没有 Ping/稳定度字段
   etw_source: 延迟来源：ETW STUN 往返时间
 status:
+  helper_missing: 未找到联机组件，源码运行请先执行 scripts/build_p2p_helper.ps1
+  helper_started: 联机组件已启动
+  helper_restarting: 联机组件正在重新启动
+  helper_error: 联机组件错误
+  waiting_for_game: 等待 nightreign.exe
+  steam_api_error: SteamAPI 初始化失败，请确认游戏文件完整且 Steam 已登录
+  steam_ready: SteamAPI 已连接
+  runtime_error: 读取 Steam 连接失败
+  simulated: macOS 模拟数据（非真实网络测量）
   admin_required: 联机延迟需要管理员权限，请重新启动程序并允许管理员授权
   disabled: 联机信息已关闭
   running: 已运行
