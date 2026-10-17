@@ -1,6 +1,6 @@
 plugin:
   name: 雨中冒险计时
-  description: 根据血条颜色识别雨中冒险并显示倒计时。
+  description: 根据血条颜色识别淋雨状态并显示大幅受伤前的倒计时
 hud:
   text: "雨中冒险倒计时 {remaining} - {percent}%"
 settings:
@@ -8,27 +8,25 @@ settings:
     title: 基本设置
   auto:
     title: 雨中冒险自动计时
-    content: 根据标定区域内的血条颜色自动开始或停止雨中冒险倒计时。
+    content: 根据标定区域内的血条颜色，自动开始或停止雨中冒险倒计时
   region:
     title: 血条检测区域
-    content: 框选血条最左边一小段的纯色内部，可点击「标定」或在游戏中按快捷键开始。
+    content: 框选血条最左边一小段的纯色内部，可点击「标定」或设置快捷键
     button: 标定
-    annotate: 点我并框出 血条 的区域
+    annotate: 点我并框出 “血条纯色内部” 的区域
   toggle:
-    title: 开始/停止雨中冒险
-    content: 手动开始或停止雨中冒险倒计时，自动计时失效时可作为备用。
+    title: 手动开始/停止雨中冒险
     button: 开始/停止
   color:
-    title: 血条颜色校准
+    title: 参考血条颜色
     calibrate:
       title: 校准血条颜色
-      content: 自动计时因色差失效时，框选正常血条和雨中血条以记录实际颜色。
+      content: 自动计时因色差失效时，框选正常血条和雨中血条以记录实际颜色，可点击「校准」或设置快捷键
       button: 校准
-    not_in_rain_annotate: 点我并框出 正常颜色血条 的区域
-    in_rain_annotate: 点我并框出 雨中颜色血条 的区域
+    not_in_rain_annotate: 点我并框出 “正常颜色血条” 的区域
+    in_rain_annotate: 点我并框出 “雨中颜色血条” 的区域
     status:
-      title: 血条颜色
-      content: 普通模式与 HDR 模式分别保存，显示的是当前图像模式的设置。
+      title: 参考颜色
     not_in_rain: "正常血条颜色:"
     in_rain: "雨中血条颜色:"
     default: 默认
@@ -42,7 +40,7 @@ settings:
   advanced:
     title: 高级选项
   duration:
-    title: 雨中冒险持续时间
+    title: 大幅受伤开始时间
   h_tolerance:
     title: 色相容差
   l_tolerance:
@@ -50,8 +48,9 @@ settings:
   s_tolerance:
     title: 饱和度容差
   min_area_percent:
-    title: 颜色面积最小占比
-    content: 另一种颜色的面积占比不高于此值时才进行判定。
+    title: 干扰色面积最小占比
+    content: 另一种颜色的面积占比不高于此值时才进行判定
   max_area_percent:
-    title: 颜色面积最大占比
-    content: 某种颜色的面积占比达到此值时，认为血条为该颜色。
+    title: 主颜色面积最大占比
+    content: 某种颜色的面积占比达到此值时，认为血条为该颜色
+  

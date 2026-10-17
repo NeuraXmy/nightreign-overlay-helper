@@ -1,34 +1,29 @@
 plugin:
   name: 血量阈值标记
-  description: 自动检测血条长度，在血条上方显示低血量、高血量和满血参考线。
+  description: 自动检测血条长度，在血条上方显示血量较低词条、满血词条触发的血量参考线
 settings:
-  basic: 标定与阈值标记
-  advanced: 高级检测与绘制选项
+  basic: 基本设置
+  advanced: 高级选项
   region:
     title: 血条区域
-    content: 左边缘紧贴血条左侧，高度接近血条即可，检测时会自动扩张上下文。
-    annotate: 点击并框选血条区域
+    content: 框选左边缘紧贴血条左侧，宽度和血条一致的区域，可点击「标定」或设置快捷键
+    annotate: 点我并框出 “血条左侧” 的区域
     button: 标定
   hpbar_low_hp_marker:
-    title: 低血量标记比例
-    content: 默认 0.40（40%），用于低血量参考线。
+    title: 血量较低词条触发比例
   hpbar_high_hp_marker:
-    title: 高血量标记比例
-    content: 默认 0.85（85%），满血线固定为 100%。
+    title: 满血词条触发比例
   marker_size:
     title: 标记大小
-    content: 同时缩放楔形标记的宽度和高度。
   marker_color:
     title: 标记颜色
   line_width:
     title: 标记线宽
-    content: 顶部参考线宽度，默认 3。
   line_height:
     title: 标记线高
-    content: 顶部参考线高度，默认 7。
   hpbar_region_aspect_ratio:
     title: 检测区域宽高比
-    content: 检测宽度为标定高度乘此值，默认 125。
+    content: 检测宽度为标定高度乘此值
   hpbar_detection_offset:
     title: 检测长度偏移
-    content: 对检测到的血条长度增加像素偏移，默认向右偏移 3 像素；负值向左校正。
+    content: 对检测到的血条长度增加像素偏移，正值向右校正

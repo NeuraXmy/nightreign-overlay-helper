@@ -1,10 +1,8 @@
 plugin:
   name: 共享 HUD
-  description: 为倒计时等紧凑状态信息提供共享悬浮容器。
+  description: 为倒计时等紧凑状态信息提供共享悬浮容器
 settings:
   enabled:
     title: 启用悬浮窗
-    content: 关闭后会隐藏整个 HUD 悬浮窗，不保留透明窗口。
   hide_text:
     title: 隐藏文字
-    content: 只显示进度条，隐藏悬浮窗中的倒计时等文字。

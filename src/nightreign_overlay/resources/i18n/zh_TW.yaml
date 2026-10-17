@@ -85,8 +85,6 @@ settings:
   theme_color:
     title: 主題色
     content: 主介面的強調色
-  overlay:
-    title: 懸浮窗
   overlay_mode:
     title: 懸浮窗顯示方式
     content: 透明懸浮窗顯示異常時，可切換為一般視窗
@@ -96,11 +94,6 @@ settings:
   only_when_game_foreground:
     title: 僅在遊戲時顯示和偵測
     content: 遊戲不在前景時隱藏所有懸浮窗、暫停截圖偵測並停用快捷鍵；主介面或選單開啟時懸浮窗和快捷鍵仍可使用
-  behavior:
-    title: 行為
-  close_to_tray:
-    title: 關閉時最小化至系統匣
-    content: 關閉主介面後程式會在系統匣中繼續執行
   start_minimized:
     title: 啟動時最小化
     content: 啟動後不顯示主介面，只顯示系統匣圖示
@@ -145,9 +138,6 @@ about:
     title: 專案
     repo_button: 前往儲存庫
     repo_content: "版本 {version} · 開源專案，歡迎 Star"
-    feedback_title: 問題回報
-    feedback_content: 遇到問題或有建議？歡迎提交 Issue
-    feedback_button: 提交回報
   credits:
     title: 致謝
     visit: 前往
@@ -158,14 +148,11 @@ about:
 
 tray:
   toggle: 顯示／隱藏主介面
-  show: 顯示主介面
   quit: 結束
   hidden_hint: 主介面已隱藏，程式仍在執行。點擊系統匣圖示可重新顯示主介面。
 
 overlay:
   menu:
-    reset_position: 重設位置
-    click_through: 開啟滑鼠穿透
     open_main_window: 開啟主介面
     quit: 結束程式
 
@@ -201,4 +188,3 @@ overlay_settings:
     content: 將懸浮窗移回螢幕頂部中央
     reset: 重設
     horizontal: 僅水平重設
-    horizontal_content: 保持目前高度，僅移回螢幕水平中央

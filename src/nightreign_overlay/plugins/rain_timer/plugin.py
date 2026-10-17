@@ -92,12 +92,12 @@ class _HpColorCard(SettingCard):
             value = self._plugin._color_item(in_rain, hdr).value
             if value is None:
                 label.setText(prefix + tr("settings.color.default"))
-                label.setStyleSheet(_COLOR_LABEL_STYLE.format(background="#fff", color="black"))
+                value = DEFAULT_HLS[(in_rain, hdr)][0]
             else:
                 label.setText(prefix + tr("settings.color.set"))
-                label.setStyleSheet(
-                    _COLOR_LABEL_STYLE.format(background=f"rgb{hls_to_rgb(value)}", color="white")
-                )
+            label.setStyleSheet(
+                _COLOR_LABEL_STYLE.format(background=f"rgb{hls_to_rgb(value)}", color="white")
+            )
 
     def showEvent(self, event: QShowEvent) -> None:
         self.refresh()

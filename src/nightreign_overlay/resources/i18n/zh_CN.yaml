@@ -81,8 +81,6 @@ settings:
     auto: 跟随系统
   theme_color:
     title: 主题色
-  overlay:
-    title: 悬浮窗
   overlay_mode:
     title: 悬浮窗显示方式
     content: 透明悬浮窗显示异常时，可切换为普通窗口
@@ -92,17 +90,12 @@ settings:
   only_when_game_foreground:
     title: 仅在游戏时显示和检测
     content: 游戏不在前台时隐藏所有悬浮窗、暂停截图检测并屏蔽快捷键；主界面或菜单打开时悬浮窗和快捷键仍可用
-  behavior:
-    title: 行为
-  close_to_tray:
-    title: 关闭时最小化到托盘
-    content: 关闭主界面后程序在系统托盘中继续运行
   start_minimized:
     title: 启动时最小化
     content: 启动后不显示主界面，只显示托盘图标
   debug_images:
     title: 保存调试图片
-    content: 开启后保存检测调试图片和识别元数据以供问题反馈
+    content: 开启后会保存近期检测图片和识别数据，用于问题反馈
   advanced:
     title: 高级
   log_level:
@@ -140,9 +133,6 @@ about:
     title: 项目
     repo_button: 访问仓库
     repo_content: "版本 {version}"
-    feedback_title: 问题反馈
-    feedback_content: 遇到问题或有建议？欢迎提交 Issue
-    feedback_button: 提交反馈
   credits:
     title: 致谢
     visit: 访问
@@ -153,14 +143,11 @@ about:
 
 tray:
   toggle: 显示／隐藏主界面
-  show: 显示主界面
   quit: 退出
-  hidden_hint: 主界面已隐藏，程序仍在运行。点击托盘图标可重新显示主界面。
+  hidden_hint: 主界面已隐藏，程序仍在运行。点击托盘图标可重新显示主界面
 
 overlay:
   menu:
-    reset_position: 重置位置
-    click_through: 开启鼠标穿透
     open_main_window: 打开主界面
     quit: 退出程序
 
@@ -170,7 +157,7 @@ input_dialog:
     mouse: 鼠标
     controller: 手柄
   title: 设置快捷键
-  hint: 请按下键盘、鼠标或手柄组合键；首次输入会锁定设备类型。
+  hint: 请按下键盘、鼠标或手柄组合键；首次输入会锁定设备类型
   waiting: 等待输入…
   unset: 快捷键未设置
   clear: 清空
@@ -178,7 +165,7 @@ input_dialog:
   confirm: 确认
 
 overlay_settings:
-  title: 悬浮窗
+  title: 主悬浮窗
   opacity:
     title: 不透明度
   scale:

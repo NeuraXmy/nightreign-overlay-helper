@@ -52,9 +52,9 @@ _detected_day(day)
 
 | action_id | 默认绑定 | 行为 |
 |-----------|---------|------|
-| `day_timer.next_day` | `ctrl+shift+d` | 切换到下一天 |
-| `day_timer.forward` | `ctrl+shift+right` | 前进若干秒 |
-| `day_timer.backward` | `ctrl+shift+left` | 后退若干秒 |
+| `day_timer.next_day` | 未设置 | 切换到下一天 |
+| `day_timer.forward` | 未设置 | 前进若干秒 |
+| `day_timer.backward` | 未设置 | 后退若干秒 |
 | `day_timer.calibrate_region` | 未绑定 | 标定 DAY 横幅区域 |
 
 ### INVARIANT

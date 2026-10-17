@@ -141,9 +141,9 @@ def test_general_settings_reset_keeps_internal_state_and_resets_embedded_plugins
             day_plugin,
             "day_timer.detect_region",
             {
-                "day_timer.next_day": HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "d")),
-                "day_timer.forward": HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "right")),
-                "day_timer.backward": HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "left")),
+                "day_timer.next_day": HotkeyBinding(None),
+                "day_timer.forward": HotkeyBinding(None),
+                "day_timer.backward": HotkeyBinding(None),
                 "day_timer.calibrate_region": HotkeyBinding(None),
             },
         ),

@@ -1,4 +1,4 @@
-"""Settings entry and the real background export dialog's success/retry flow."""
+"""About entry and the real background export dialog's success/retry flow."""
 
 from __future__ import annotations
 
@@ -11,10 +11,11 @@ from PIL import Image
 from PyQt6.QtCore import QElapsedTimer, QThread
 from PyQt6.QtTest import QSignalSpy, QTest
 from PyQt6.QtWidgets import QWidget
+from qfluentwidgets import PushSettingCard
 
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.ui.components import diagnostic_export
-from nightreign_overlay.ui.pages import settings
+from nightreign_overlay.ui.pages import about, settings
 
 
 def _wait_for_export(qapp, dialog):
@@ -114,7 +115,7 @@ def test_attachment_dedup_removal_and_failed_export_can_be_retried(qapp, tmp_pat
     parent.close()
 
 
-def test_settings_button_opens_export_dialog(store, qapp, monkeypatch):
+def test_only_about_button_opens_export_dialog(store, qapp, monkeypatch):
     opened = []
 
     class Dialog:
@@ -127,7 +128,9 @@ def test_settings_button_opens_export_dialog(store, qapp, monkeypatch):
         def deleteLater(self):
             opened.append("delete")
 
-    monkeypatch.setattr(settings, "DiagnosticExportDialog", Dialog)
-    page = settings.SettingsPage(store.bind(AppConfig, "app"), SimpleNamespace(records=lambda: []))
-    page.diagnosticExportCard.clicked.emit()
+    monkeypatch.setattr(about, "DiagnosticExportDialog", Dialog)
+    settings_page = settings.SettingsPage(store.bind(AppConfig, "app"), SimpleNamespace(records=lambda: []))
+    assert not hasattr(settings_page, "diagnosticExportCard")
+    page = about.AboutPage()
+    page.findChild(PushSettingCard).clicked.emit()
     assert opened == [page.window(), "exec", "delete"]
