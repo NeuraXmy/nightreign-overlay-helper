@@ -98,6 +98,16 @@ settings:
     title: Data folder
   log_dir:
     title: Log folder
+  files:
+    title: Manage settings files
+    content: Import or export all settings (YAML). Importing immediately restarts the application
+    import: Import
+    export: Export
+    cancel: Cancel
+    filter: YAML settings files (*.yaml *.yml)
+    confirm: All current settings will be lost and replaced with the selected file. The application will restart immediately after a successful import. Continue?
+    export_success: All settings exported.
+    failed: Operation failed. Check the settings file format, contents, and file permissions. The original settings file has not been replaced.
   diagnostic_export:
     feedback_email: nroh-report@qq.com
     title: Report a problem

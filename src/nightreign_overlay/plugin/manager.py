@@ -156,6 +156,11 @@ class PluginManager(QObject):
 
     # -- queries ------------------------------------------------------------------------------
 
+    @property
+    def config_store(self) -> ConfigStore:
+        """The application-wide store used for complete settings import and export."""
+        return self._store
+
     def records(self) -> list[PluginRecord]:
         """All plugins: resolved ones in activation order, followed by unavailable ones."""
         return [self._records[plugin_id] for plugin_id in self._order]

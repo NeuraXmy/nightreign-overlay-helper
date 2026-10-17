@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
 from PyQt6.QtCore import QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, PushSettingCard
+from PyQt6.QtWidgets import QFileDialog, QWidget
+from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, MessageBox, PushButton, PushSettingCard
 
 from nightreign_overlay.core.app_config import OVERLAY_MODES, THEMES, AppConfig
 from nightreign_overlay.core.i18n import language_names, tr
@@ -18,6 +19,7 @@ from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigColorCard,
     ConfigSwitchCard,
+    MultiButtonSettingCard,
     ScrollPage,
     SettingSection,
     create_reset_button,
@@ -33,6 +35,7 @@ class SettingsPage(ScrollPage):
     def __init__(self, config: AppConfig, plugins: PluginManager, parent: QWidget | None = None) -> None:
         super().__init__("settingsPage", tr("settings.title"), parent)
         self._config = config
+        self._store = plugins.config_store
         self._plugins: list[Plugin] = []
         self._init_general()
         self._init_plugin_settings(plugins)
@@ -139,8 +142,67 @@ class SettingsPage(ScrollPage):
             ),
             data_card,
             log_card,
+            MultiButtonSettingCard(
+                [
+                    (tr("settings.files.import"), self._import_settings),
+                    (tr("settings.files.export"), self._export_settings),
+                ],
+                FluentIcon.DOCUMENT,
+                tr("settings.files.title"),
+                tr("settings.files.content"),
+            ),
         )
         self.addWidget(section)
+
+    def _export_settings(self) -> None:
+        dialog = QFileDialog(self, tr("settings.files.export"), "settings.yaml", tr("settings.files.filter"))
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        # Apply the extension inside the dialog so its overwrite confirmation uses the final path.
+        dialog.setDefaultSuffix("yaml")
+        if not dialog.exec():
+            return
+        path = Path(dialog.selectedFiles()[0])
+        try:
+            self._store.export_file(path)
+        except (OSError, ValueError, yaml.YAMLError):
+            log.exception("Settings export failed")
+            self._settings_file_error()
+            return
+        InfoBar.success(
+            tr("settings.files.title"),
+            tr("settings.files.export_success"),
+            position=InfoBarPosition.TOP,
+            parent=self.window(),
+        )
+
+    def _import_settings(self) -> None:
+        filename, _ = QFileDialog.getOpenFileName(
+            self, tr("settings.files.import"), "", tr("settings.files.filter")
+        )
+        if not filename:
+            return
+        try:
+            data = self._store.read_import_file(Path(filename))
+            dialog = MessageBox(tr("settings.files.title"), tr("settings.files.confirm"), self.window())
+            dialog.yesButton.setText(tr("settings.files.import"))
+            dialog.cancelButton.setText(tr("settings.files.cancel"))
+            if not dialog.exec():
+                return
+            self._store.replace_for_restart(data)
+        except (OSError, ValueError, TypeError, OverflowError, RecursionError, yaml.YAMLError):
+            log.exception("Settings import failed")
+            self._settings_file_error()
+            return
+        self.restartRequested.emit()
+
+    def _settings_file_error(self) -> None:
+        InfoBar.error(
+            tr("settings.files.title"),
+            tr("settings.files.failed"),
+            duration=6000,
+            position=InfoBarPosition.TOP,
+            parent=self.window(),
+        )
 
     def _reset_settings(self) -> None:
         for item in self._config.items().values():

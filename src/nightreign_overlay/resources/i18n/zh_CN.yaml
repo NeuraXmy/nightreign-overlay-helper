@@ -104,6 +104,16 @@ settings:
     title: 数据目录
   log_dir:
     title: 日志目录
+  files:
+    title: 管理设置文件
+    content: 导入或导出所有设置（YAML），导入后立即重启程序
+    import: 导入
+    export: 导出
+    cancel: 取消
+    filter: YAML 设置文件 (*.yaml *.yml)
+    confirm: 当前所有设置将丢失，并由所选文件中的设置替换。导入成功后程序将立即重启。是否继续？
+    export_success: 已导出所有设置。
+    failed: 操作失败，请检查设置文件格式、内容以及文件读写权限。原有设置文件未被替换。
   diagnostic_export:
     feedback_email: nroh-report@qq.com
     title: 问题反馈
