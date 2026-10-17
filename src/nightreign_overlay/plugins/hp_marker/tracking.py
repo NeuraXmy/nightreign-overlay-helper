@@ -1,4 +1,4 @@
-"""Temporal confirmation of scanline boundaries without retaining captured images."""
+"""Confirm material boundaries, with scanline tracking for tight existing crops."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections import deque
 
 import numpy as np
 
+from nightreign_overlay.plugins.hp_marker.material import MaterialHpDetector, MaterialModel
 from nightreign_overlay.plugins.hp_marker.structural import _calibrate, _Reference, estimate_boundary
 
 _WINDOW = 5
@@ -14,19 +15,22 @@ _EXPIRE_AFTER = 2 * _WINDOW
 
 
 class StructuralHpDetector:
-    """Confirm stationary caps, but require fresh image evidence for every output.
+    """Prefer full vertical material evidence, requiring fresh support per output.
 
-    A moving fill/damage cap and scene edges are not reliable HP endpoints. A
-    short history of relative ridge responses distinguishes them from a narrow,
+    Tight crops retain scanline tracking: moving fill/damage caps and scene edges
+    are not reliable HP endpoints. Relative ridge history distinguishes a narrow,
     neutral outer cap. Broader caps and limit-loss divisions still use the
     multiscale estimator, with temporal and local shape confirmation.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, material_model: MaterialModel | None = None) -> None:
+        self._material = MaterialHpDetector(material_model)
         self._reset()
 
     def _reset(self) -> None:
         self._shape: tuple[int, ...] | None = None
+        self._scanline_y: int | None = None
+        self._bar_height: int | None = None
         self._profiles: deque[np.ndarray] = deque(maxlen=_WINDOW)
         self._scene: deque[np.ndarray] = deque(maxlen=_WINDOW)
         self._colors: deque[float] = deque(maxlen=_WINDOW)
@@ -34,18 +38,35 @@ class StructuralHpDetector:
         self._length: int | None = None
         self._narrow = False
         self._misses = 0
+        self._material_active = False
+        self._material.reset()
 
-    def detect(self, image: np.ndarray) -> int | None:
+    def detect(
+        self, image: np.ndarray, *, scanline_y: int | None = None, bar_height: int | None = None
+    ) -> int | None:
         if image.ndim != 3 or image.shape[2] != 3 or image.dtype != np.uint8:
             self._reset()
             return None
-        if image.shape != self._shape:
+        if image.shape != self._shape or scanline_y != self._scanline_y or bar_height != self._bar_height:
             self._reset()
             self._shape = image.shape
+            self._scanline_y = scanline_y
+            self._bar_height = bar_height
         if image.shape[0] < 1 or image.shape[1] < 48:
             self._reset()
             return None
-        row = image[image.shape[0] // 2]
+        if scanline_y is not None and not 0 <= scanline_y < image.shape[0]:
+            self._reset()
+            return None
+        material = self._material.detect(image, scanline_y=scanline_y, bar_height=bar_height)
+        if material is not None:
+            self._material_active = True
+        if self._material_active:
+            # A material ambiguity must not promote the gray suffix's outer
+            # cap via scanline acquisition. The region detector owns its bounded
+            # geometry/material votes and requires current evidence per output.
+            return None if material is None else material.usable
+        row = image[image.shape[0] // 2 if scanline_y is None else scanline_y]
         reference = _calibrate(row)
         if reference is None:
             # A vanished HUD or invalid start cap cannot contribute old evidence
@@ -61,7 +82,9 @@ class StructuralHpDetector:
         # Once a narrow cap is confirmed, verification needs only the response
         # above; avoid running the more expensive multiscale scan on every frame.
         if self._length is None or not self._narrow:
-            primary = estimate_boundary(image).length
+            # The expanded crop's midpoint can move at a screen/client edge.
+            # The stateless estimator only needs the original calibrated row.
+            primary = estimate_boundary(row[None]).length
             supported = primary is not None and _has_boundary_shape(row, primary, reference)
             self._boundaries.append(primary if supported else None)
         else:

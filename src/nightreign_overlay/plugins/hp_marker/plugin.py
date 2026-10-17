@@ -7,10 +7,12 @@ from dataclasses import dataclass
 
 import numpy as np
 from PyQt6.QtCore import QRect, Qt, pyqtSignal
+from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.core.debug import DebugImageApi
+from nightreign_overlay.core.screens import screen_mappings
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings, HpMarkerConfig
@@ -19,7 +21,6 @@ from nightreign_overlay.plugins.hp_marker.overlay import HpMarkerOverlay
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
-    ConfigChoiceCard,
     ConfigColorCard,
     ConfigDoubleSpinCard,
     ConfigRangeCard,
@@ -40,6 +41,22 @@ class _Job:
     region: QRect
     image: np.ndarray
     settings: HpDetectionSettings
+    capture_region: QRect | None = None
+
+
+def _detection_region(region: QRect, settings: HpDetectionSettings, bounds: QRect) -> QRect:
+    """Keep the calibrated left origin and clip context to available physical pixels."""
+    # Selection width is deliberately irrelevant; its left edge and height are
+    # the user's calibration. Never silently move an unavailable calibration.
+    if region.isEmpty() or not bounds.contains(QRect(region.x(), region.y(), 1, region.height())):
+        return QRect()
+    padding = region.height()
+    return QRect(
+        region.x(),
+        region.y() - padding,
+        region.height() * settings.hpbar_region_aspect_ratio,
+        region.height() + 2 * padding,
+    ).intersected(bounds)
 
 
 class HpMarkerPlugin(Plugin):
@@ -65,7 +82,6 @@ class HpMarkerPlugin(Plugin):
         self._generation = 0
         self._region: QRect | None = None
         self._worker_generation: int | None = None
-        self.config.detection_algorithm.valueChanged.connect(self._on_algorithm_changed)
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
 
     def on_activate(self) -> None:
@@ -111,28 +127,47 @@ class HpMarkerPlugin(Plugin):
         if region is None or self._pending is not None:
             return
         settings = self.config.snapshot()
-        # Both algorithms use the full bar height and right-side context.
-        expanded = QRect(
-            region.x(), region.y(), region.height() * settings.hpbar_region_aspect_ratio, region.height()
+        # A desktop frame may span multiple monitors or contain padding gaps.
+        # Stay on the calibrated monitor as well as inside the captured client.
+        bounds = frame.image.rect().translated(frame.image.offset())
+        mappings = screen_mappings(QGuiApplication.screens())
+        screen = next(
+            (mapping.pixels for mapping in mappings if mapping.pixels.contains(region.topLeft())), None
         )
+        if mappings and screen is None:
+            return
+        if screen is not None:
+            bounds = bounds.intersected(screen)
+        expanded = _detection_region(region, settings, bounds)
         image = crop_rgb(frame.image, expanded)
         if image is None:
             return
-        job = _Job(self._generation, QRect(region), image, settings)
+        job = _Job(self._generation, QRect(region), image, settings, expanded)
         self._pending = job
         future = self._executor.submit(self._run_job, job)
         future.add_done_callback(lambda result: self._deliver(job, result))
-
-    def _on_algorithm_changed(self, _value: str) -> None:
-        # In-flight results must not update the overlay after a selection change.
-        self._generation += 1
 
     def _run_job(self, job: _Job) -> int | None:
         # Only the serialized worker mutates the detector, including history resets.
         if self._worker_generation != job.generation:
             self._detector = HpDetector()
             self._worker_generation = job.generation
-        return self._detector.detect(job.image, job.settings)
+        if job.capture_region is None:
+            length = self._detector.detect(job.image, job.settings)
+            return self._apply_detection_offset(length, job)
+        top = job.region.y() - job.capture_region.y()
+        length = self._detector.detect(
+            job.image, job.settings, scanline_y=top + job.region.height() // 2, bar_height=job.region.height()
+        )
+        return self._apply_detection_offset(length, job)
+
+    @staticmethod
+    def _apply_detection_offset(length: int | None, job: _Job) -> int | None:
+        if length is None:
+            return None
+        # The detector reports the boundary in the expanded crop's coordinate
+        # system. Keep the correction configurable and inside available pixels.
+        return max(0, min(job.image.shape[1], length + job.settings.hpbar_detection_offset))
 
     def _deliver(self, job: _Job, future: Future[int | None]) -> None:
         try:
@@ -156,7 +191,12 @@ class HpMarkerPlugin(Plugin):
             debug.save(
                 "hp_marker",
                 job.image,
-                {"detected_length": length, "region": job.region, "settings": job.settings.__dict__},
+                {
+                    "detected_length": length,
+                    "region": job.region,
+                    "capture_region": job.capture_region,
+                    "settings": job.settings.__dict__,
+                },
                 cooldown_seconds=600,
             )
         # Rejection leaves the previous display untouched until a clear boundary is found.
@@ -187,16 +227,6 @@ class HpMarkerPlugin(Plugin):
         panel = SettingsPanel(parent)
         basic = SettingSection(tr("settings.basic"))
         basic.addCards(
-            ConfigChoiceCard(
-                self.config.detection_algorithm,
-                [
-                    (algorithm, tr(f"settings.detection_algorithm.{algorithm}"))
-                    for algorithm in self.config.detection_algorithm.option.choices
-                ],
-                FluentIcon.HEART,
-                tr("settings.detection_algorithm.title"),
-                tr("settings.detection_algorithm.content"),
-            ),
             HotkeySettingCard(
                 self.ctx.services.require(HotkeyApi),
                 _CALIBRATE,
@@ -238,12 +268,7 @@ class HpMarkerPlugin(Plugin):
                     "line_width",
                     "line_height",
                     "hpbar_region_aspect_ratio",
-                    "hpbar_detect_std_height",
-                    "hpbar_border_v_peak_start",
-                    "hpbar_border_v_peak_lower",
-                    "hpbar_border_v_peak_threshold",
-                    "hpbar_border_v_peak_interval",
-                    "hpbar_recent_length_count",
+                    "hpbar_detection_offset",
                 )
             ),
         )

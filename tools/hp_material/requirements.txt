@@ -1,0 +1,4 @@
+# Offline training only; application inference uses its existing onnxruntime dependency.
+scikit-learn==1.9.1
+skl2onnx==1.20.0
+onnx==1.23.2

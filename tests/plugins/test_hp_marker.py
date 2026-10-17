@@ -1,4 +1,4 @@
-"""HP marker lifecycle, legacy failure behavior, geometry and asynchronous frame handling."""
+"""HP marker lifecycle, structural detection, geometry and asynchronous frame handling."""
 
 from __future__ import annotations
 
@@ -7,16 +7,17 @@ from threading import Event
 
 import numpy as np
 import pytest
-from PyQt6.QtCore import QRect, Qt
+from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtWidgets import QWidget
 
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
+from nightreign_overlay.core.screens import ScreenMapping
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hp_marker import plugin as module
 from nightreign_overlay.plugins.hp_marker.plugin import HpMarkerPlugin, _Job
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
-from nightreign_overlay.ui.components import ConfigChoiceCard, ConfigDoubleSpinCard
+from nightreign_overlay.ui.components import ConfigDoubleSpinCard, ConfigRangeCard
 from nightreign_overlay.ui.overlay import OverlayManager
 from tests.support.feature_fakes import FeatureServices, solid_image
 from tests.support.platform import FakeBackend
@@ -135,6 +136,9 @@ def test_worker_expands_width_keeps_raw_pixels_and_drops_busy_frames(hp, monkeyp
         return 500
 
     monkeypatch.setattr(plugin, "_run_job", run)
+    monkeypatch.setattr(
+        module, "screen_mappings", lambda _: [ScreenMapping(QRect(0, 0, 2000, 100), 1, QPoint())]
+    )
     plugin.on_activate()
     frame = FrameCaptured(solid_image(2000, 100, (32, 64, 128)), 0, hdr=True)
     plugin._on_frame(frame)
@@ -142,7 +146,9 @@ def test_worker_expands_width_keeps_raw_pixels_and_drops_busy_frames(hp, monkeyp
         assert started.wait(5)
         plugin._on_frame(frame)
         assert len(calls) == 1
-        assert calls[0].image.shape == (15, 1875, 3)
+        assert calls[0].image.shape == (45, 1875, 3)
+        assert calls[0].region == region
+        assert calls[0].capture_region == QRect(10, 5, 1875, 45)
         assert tuple(calls[0].image[0, 0]) == (32, 64, 128)
         plugin._generation += 1
     finally:
@@ -222,44 +228,12 @@ def test_dpi_converts_bar_coordinates_but_preserves_logical_marker_size(
     assert plugin._overlay.y() == geometry.y() - 5
 
 
-def test_algorithm_selection_discards_pending_result_and_resets_to_new(hp):
-    plugin, fakes, *_ = hp
+def test_detection_offset_is_available_in_advanced_settings(hp):
+    plugin, *_ = hp
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)
-    card = next(
-        card for card in panel.findChildren(ConfigChoiceCard) if card.item.key == "detection_algorithm"
-    )
-    assert card.comboBox.currentText() == "新版"
-    assert plugin.config.snapshot().detection_algorithm == "structural"
-    region = QRect(10, 20, 15, 15)
-    fakes.region.regions[module._REGION_KEY] = region
-    plugin.on_activate()
-    _finish(plugin, region, 500)
-    job = _Job(plugin._generation, region, np.zeros((15, 100, 3), np.uint8), plugin.config.snapshot())
-    plugin._pending = job
-    card.comboBox.setCurrentIndex(card.comboBox.findData("legacy"))
-    assert card.comboBox.currentText() == "旧版"
-    assert plugin.config.snapshot().detection_algorithm == "legacy"
-    plugin._on_completed(job, 700, None)
-    assert plugin._pending is None
-    assert plugin._overlay.width() == 500
-    plugin.reset_settings()
-    assert plugin.config.snapshot().detection_algorithm == "structural"
-    assert card.comboBox.currentText() == "新版"
-
-
-def test_worker_resets_legacy_history_after_region_or_algorithm_change(hp):
-    plugin, *_ = hp
-    plugin.config.detection_algorithm.set("legacy")
-    plugin.on_activate()
-    image = np.zeros((15, 1875, 3), np.uint8)
-    image[:, 50:65] = (200, 40, 30)
-    image[:, 500:515] = (50, 230, 60)
-    region = QRect(10, 20, 15, 15)
-    job = _Job(plugin._generation, region, image, plugin.config.snapshot())
-    for _ in range(20):
-        length = plugin._run_job(job)
-    assert length is not None
-    plugin._generation += 1
-    blank = _Job(plugin._generation, region, np.zeros_like(image), plugin.config.snapshot())
-    assert plugin._run_job(blank) is None
+    cards = {card.item.key: card for card in panel.findChildren(ConfigRangeCard)}
+    assert "hpbar_detection_offset" in cards
+    assert plugin.config.snapshot().hpbar_detection_offset == 3
+    cards["hpbar_detection_offset"].slider.setValue(7)
+    assert plugin.config.snapshot().hpbar_detection_offset == 7
