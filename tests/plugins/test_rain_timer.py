@@ -161,7 +161,7 @@ def test_detection_uses_colours_of_the_frame_image_mode(
     assert calls[-1] == (DEFAULT_HLS[(False, False)], DEFAULT_HLS[(True, False)])
 
 
-def test_calibrate_region_suspends_detection_and_uses_legacy_annotation(
+def test_calibrate_region_suspends_detection(
     store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
@@ -174,7 +174,7 @@ def test_calibrate_region_suspends_detection_and_uses_legacy_annotation(
 
     monkeypatch.setattr(fakes.region, "request_region", request_region)
     plugin._calibrate_region()
-    assert fakes.region.requests == [(_REGION, "点我并框出 血条 的区域", "#a84747")]
+    assert fakes.region.requests == [(_REGION, plugin.ctx.tr("settings.region.annotate"), "#a84747")]
     assert seen == [True] and not plugin._calibrating
 
 
@@ -189,8 +189,8 @@ def test_calibrate_color_only_updates_the_current_image_mode(
         plugin._calibrate_color()
     [targets] = fakes.region.sample_requests
     assert [(target.id, target.label, target.color) for target in targets] == [
-        ("not_in_rain", "点我并框出 正常颜色血条 的区域", "#b83232"),
-        ("in_rain", "点我并框出 雨中颜色血条 的区域", "#c03184"),
+        ("not_in_rain", plugin.ctx.tr("settings.color.not_in_rain_annotate"), "#b83232"),
+        ("in_rain", plugin.ctx.tr("settings.color.in_rain_annotate"), "#c03184"),
     ]
     assert plugin.config.in_rain_hls_hdr.value == _hls((200, 40, 150))
     assert plugin.config.not_in_rain_hls_hdr.value is None

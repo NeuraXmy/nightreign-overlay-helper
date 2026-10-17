@@ -124,7 +124,7 @@ def test_lifecycle_settings_and_resources(maps):
     hotkey_cards = {card._action_id: card for card in panel.findChildren(HotkeySettingCard)}
     assert set(hotkey_cards) == {f"map_detect.{action}" for action in module._ACTIONS}
     calibration = hotkey_cards.pop("map_detect.calibrate_region")
-    assert calibration.parent().titleLabel.text() == "地图识别"
+    assert calibration.parent().titleLabel.text() == plugin.ctx.tr("settings.basic")
     action_buttons = [
         button for button in calibration.findChildren(QPushButton) if button is not calibration.captureButton
     ]
@@ -365,8 +365,8 @@ def test_manual_filter_mode_hides_map_blocks_detection_and_toggles_from_controls
     assert controls.manual_filter.text() == "退出筛选"
     assert controls.candidate_group.isHidden() and controls.crystal_group.isHidden()
     assert not controls.recognize.isEnabled()
-    assert manual.status_label.text() == "请选择特殊地形"
-    assert "#ff4242" in manual.status_label.styleSheet()
+    assert manual.status_label.text() == plugin.ctx.tr("manual_filter.recognizing_entry")
+    assert "color: white" in manual.status_label.styleSheet()
     assert manual.layout().contentsMargins().top() == 10
     assert manual.layout().contentsMargins().left() == 10
     assert "rgba(53, 69, 87, 235)" in manual.earth_shifting_combo.styleSheet()
@@ -783,12 +783,16 @@ def test_force_display_button_keeps_windows_available_without_faking_full_map(ma
     plugin, _, submitted = _ready(maps, monkeypatch)
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)
-    button = next(b for b in panel.findChildren(QPushButton) if b.text() == "进入强制显示模式")
+    button = next(
+        b
+        for b in panel.findChildren(QPushButton)
+        if b.text() == plugin.ctx.tr("settings.force_display.enter")
+    )
     plugin._flag = MatchFlag.TRUE
     plugin._last_match = 1000.0
     generation = plugin._generation
     button.click()
-    assert button.text() == "退出强制显示模式"
+    assert button.text() == plugin.ctx.tr("settings.force_display.exit")
     assert plugin._force_display and plugin._map_overlay_visible
     assert not plugin._current_is_full_map
     assert plugin._generation == generation and plugin._flag == MatchFlag.TRUE
@@ -805,7 +809,7 @@ def test_force_display_button_keeps_windows_available_without_faking_full_map(ma
     plugin._toggle_overlay()
     assert plugin._map_overlay_visible
     button.click()
-    assert button.text() == "进入强制显示模式"
+    assert button.text() == plugin.ctx.tr("settings.force_display.enter")
     assert not plugin._force_display and not plugin._map_overlay_visible
     for _ in range(30):
         plugin._overlay._tick()

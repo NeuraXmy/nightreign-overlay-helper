@@ -1,4 +1,123 @@
+plugin:
+  name: マップ情報
+  description: マップを自動・手動で認識し、詳細情報を表示
+controls:
+  title: マップ操作パネル
+  recognize: 再認識
+  manual_filter: 手動絞り込み
+  exit_filter: 絞り込み終了
+  candidates: 候補マップ
+  crystals: 結晶配置
+  previous: 前へ
+  next: 次へ
+manual_filter:
+  title: 手動絞り込み
+  earth_shifting: 地変
+  unselected: 未選択
+  nightlord: ボス
+  all_nightlords: すべて
+  auto_recognize: 自動認識
+  empty: なし
+  select_earth_shifting: 地変を選択してください
+  recognizing_entry: 地変と夜の王を認識中…
+  remaining_candidates: 候補マップ数：{count}
+  apply_now: 今すぐ適用
+  no_match: 候補なし。条件を設定し直してください
+overlay:
+  result: 認識結果：{index}/{total}
+  crystal: 結晶配置：
+  all: すべて
+  matching: 認識中… {spinner}
+  elapsed: 認識時刻：{elapsed}前
+  duration:
+    hours: '{hours}時間{minutes}分{seconds}秒'
+    minutes: '{minutes}分{seconds}秒'
+    seconds: '{seconds}秒'
+  legend:
+    crystal: 結晶
+    underground: 地下の結晶
+    extra: 追加の結晶
+drawing:
+  unknown_boss: 不明なボス
+  day_boss: Day{day} {name}
+  extra_boss: 追加ボス：{name}
+  rooftop: 屋上：{name}
+  basement: 地下：{name}
+  flask: 聖杯瓶
+  floor_boss: '{floor}F：{name}'
+  blessing: 加護
+  hidden_nightlord: （隠れた夜の王）
+  upper_left: 左上
+  lower_right: 右下
+  day2_circle: Day2 最初の収縮位置：{position}
+  event: 特殊イベント：{name}
 settings:
+  force_display:
+    title: オーバーレイを強制表示
+    content: 認識できない場合に強制表示して手動で絞り込めます。事前にマップ範囲の指定が必要
+    enter: 強制表示を開始
+    exit: 強制表示を終了
+  basic: 基本設定
+  hotkeys: ショートカット
+  advanced: 詳細設定
+  manual_filter:
+    title: 手動絞り込みを開始／終了
+    content: マップ上に絞り込み操作を表示。再度実行すると終了
+  calibrate_region:
+    action: 範囲指定
+    title: マップ範囲
+    content: マップ全体を枠に沿って囲みます。「範囲指定」かショートカットで設定
+    annotate: ここを押して「マップ」を囲んでください
+  recognize:
+    title: マップを認識
+    content: 以前の結果を消去し、次に全体マップが鮮明に表示された時に認識
+  toggle:
+    title: マップ情報を表示／非表示
+  next_result:
+    title: 次の認識結果
+  previous_result:
+    title: 前の認識結果
+  next_crystal:
+    title: 次の結晶配置
+  previous_crystal:
+    title: 前の結晶配置
+  topk:
+    title: 認識結果の件数
+    content: 最初の候補が違う場合に切り替え可能。件数が多すぎると認識が遅くなり、異常終了する場合があります
   english_text_width:
-    title: 英語の地図ラベルの横幅
-    content: 英語表示時の地図ラベルの横幅。既定は50%、100%で元の幅になります。文字の高さと位置は維持され、次回の認識時に反映されます。
+    title: 英語ラベルの幅
+  match_interval:
+    title: 再照合の間隔
+    content: 再照合までの時間。夜の雨タイマーが無効の場合も、新しい出撃で認識し直すために使用
+  full_map_error_threshold:
+    title: 全体マップ認識：誤差の上限
+    content: 全体マップと判定する誤差の上限。大きいほど緩くなり、誤認識も増えます
+  map_stability_change_threshold:
+    title: マップ安定判定：変化量
+    content: 連続画像の明度差がこの値を超えると待機時間をリセット。大きいほど緩い判定
+  map_stability_duration:
+    title: マップ安定判定：最小時間
+    content: 全体マップが安定するまでの秒数。長いほどフェード中の認識を防止
+  poi_algorithm:
+    title: 地点認識：方式
+    template: テンプレート照合
+    cnn: CNN
+  earth_shifting_algorithm:
+    title: 地変認識：方式
+    ncc: NCC
+    template: テンプレート照合
+  earth_shifting_ncc_threshold:
+    title: 地変認識：NCCしきい値
+    content: NCC専用。相関係数がこの値未満なら認識を拒否。大きいほど厳密
+  earth_shifting_error_threshold:
+    title: 地変認識：テンプレート誤差
+    content: テンプレート照合専用。誤差がこの値を超えたら認識を拒否。大きいほど緩い判定
+  subicon_template_match_threshold:
+    title: 地点認識：サブアイコンしきい値
+    content: 照合スコアがこの値を超えたらサブアイコンなしと判定。大きいほど残りやすくなります
+  poi_match_sample_ratio_w_nightlord:
+    title: 地点認識：夜の王が既知の標本率
+    content: 夜の王が判明している場合の抽出率。低いほど高速ですが、認識が不安定になる場合があります
+  poi_match_sample_ratio_wo_nightlord:
+    title: 地点認識：夜の王が不明の標本率
+    content: 夜の王が不明な場合の抽出率。低いほど高速ですが、認識が不安定になる場合があります

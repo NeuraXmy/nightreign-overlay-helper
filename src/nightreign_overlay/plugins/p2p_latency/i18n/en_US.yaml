@@ -1,0 +1,41 @@
+plugin:
+  name: Co-op Status
+  description: Show Steam teammates, latency and stability; administrator privileges required
+settings:
+  window: Overlay
+  good_ping: Good ping limit (green below this value)
+  warning_ping: Warning ping limit (yellow below, red otherwise)
+  status: Runtime status
+  simulation: 'macOS uses a simulated process: a ~32 s loop of waiting, unknown metrics, latency changes and team
+    changes. These are not real measurements'
+overlay:
+  title: Co-op · Ping / Stability
+  waiting: Waiting for teammates / Steam sync
+  legacy_no_fields: Legacy Steam P2P has no ping or stability fields
+  etw_source: 'Latency source: ETW STUN round-trip time'
+status:
+  admin_required: Latency monitoring needs administrator privileges. Restart and allow elevation
+  disabled: Co-op status disabled
+  running: Running
+  stopped: Stopped
+  waiting: Waiting
+  connected: Connected
+  failed: Failed
+  detail: 'Status: {message}
+
+    NIGHTREIGN: {game}
+
+    Co-op helper: {helper}
+
+    Steam API: {steam}
+
+    ETW latency: {etw}
+
+    Teammates: {count}'
+  etw:
+    disabled: Disabled
+    waiting: Waiting for game
+    starting: Starting
+    ready: Enabled
+    error: Unavailable; run as administrator
+    simulated: Simulated (ETW disabled)

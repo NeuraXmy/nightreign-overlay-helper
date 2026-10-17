@@ -1,0 +1,28 @@
+plugin:
+  name: アーツタイマー
+  description: アーツ発動後にアイコンを認識し、効果の残り時間を表示
+hud:
+  text: '{name} {remaining}'
+  duchess: フィナーレ 透明化
+  recluse: 血魂の唄 標的効果
+  revenant: 不死の行進 無敵
+  scholar: 共感術 リンク
+  executor: 坩堝の諸相・獣 変身
+settings:
+  basic:
+    title: 基本設定
+  region:
+    title: アーツアイコン範囲
+    content: アーツアイコンを囲んで指定。「範囲指定」かショートカットで設定
+    button: 範囲指定
+    annotate: ここを押して「アーツアイコン」を囲んでください
+  use_art:
+    title: アーツのショートカット
+  advanced:
+    title: 詳細設定
+  delay:
+    title: 認識までの待機時間
+    content: アーツキーを押してからアイコンを撮影・認識するまでの待機時間
+  threshold:
+    title: 一致判定のしきい値
+    content: アイコンの誤差がこの値未満なら認識成功。小さいほど厳密

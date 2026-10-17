@@ -1,0 +1,18 @@
+plugin:
+  name: 畫面擷取引擎
+  description: 為辨識外掛提供統一的遊戲畫面
+settings:
+  title: 畫面擷取設定
+  mode:
+    title: 擷取方式
+    content: 預設為舊版擷取；桌面歌詞等遮擋會影響辨識。僅前景／僅背景模式可能改變視窗大小
+    legacy: 舊版
+    foreground: 僅前景
+    background: 僅背景
+  interval:
+    title: 辨識間隔
+    content: 所有辨識功能共用；間隔越短反應越快，但耗用更多效能
+    value: '{milliseconds} ms'
+  hdr:
+    title: 啟用 HDR 影像處理
+    content: 遊戲啟用 HDR 時，此選項可能提升辨識準確度

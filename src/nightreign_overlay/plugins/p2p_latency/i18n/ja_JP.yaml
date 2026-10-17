@@ -1,0 +1,40 @@
+plugin:
+  name: マルチプレイ状況
+  description: Steamの仲間・遅延・安定性を表示。管理者権限が必要
+settings:
+  window: オーバーレイ
+  good_ping: 良好な遅延の上限（未満なら緑）
+  warning_ping: 注意する遅延の上限（未満なら黄、以上は赤）
+  status: 動作状況
+  simulation: macOSでは模擬プロセスを使用。待機・不明な指標・遅延変動・仲間の交代を約32秒で再現します。実測値ではありません
+overlay:
+  title: マルチプレイ · Ping／安定性
+  waiting: 仲間／Steamの同期を待機中
+  legacy_no_fields: 旧Steam P2P APIにPing・安定性の項目はありません
+  etw_source: 遅延の測定元：ETW STUN往復時間
+status:
+  admin_required: 遅延計測には管理者権限が必要です。再起動して権限を許可してください
+  disabled: マルチプレイ情報は無効です
+  running: 動作中
+  stopped: 停止中
+  waiting: 待機中
+  connected: 接続済み
+  failed: 失敗
+  detail: '状態：{message}
+
+    NIGHTREIGN：{game}
+
+    通信ヘルパー：{helper}
+
+    Steam API：{steam}
+
+    ETW遅延：{etw}
+
+    現在の仲間：{count}'
+  etw:
+    disabled: 無効
+    waiting: ゲーム待ち
+    starting: 起動中
+    ready: 有効
+    error: 利用不可。管理者として実行してください
+    simulated: 模擬データ（ETW無効）

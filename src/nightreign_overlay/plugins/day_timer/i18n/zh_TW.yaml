@@ -1,0 +1,54 @@
+plugin:
+  name: 縮圈計時
+  description: 自動辨識每天的開始，顯示縮圈倒數
+hud:
+  map_ready: ' - 地圖辨識就緒'
+  waiting: 等待遊戲開始
+  phase: DAY {day} - {remaining} 後第{circle}圈{action}
+  circle:
+    first: 一
+    second: 二
+  action:
+    start: 開始縮圈
+    end: 縮圈結束
+  boss: DAY {day} - 夜晚BOSS戰 {elapsed}
+  day3: DAY {day} - {elapsed}
+settings:
+  basic:
+    title: 基本設定
+  auto:
+    title: 自動辨識
+    content: 辨識標定區域內的 DAY I/II 圖示，自動開始計時
+  language:
+    title: 遊戲語言
+    chs: 简体中文
+    cht: 繁體中文
+    eng: English
+    jp: 日本語
+  calibrate:
+    title: DAY I 圖示區域
+    content: 框選 DAY I 圖示的區域，可按「標定」或設定快捷鍵
+    button: 標定
+    annotate: 按此並框選「DAY I 圖示」區域
+  manual:
+    title: 手動調整計時
+    next_day: 開始下一天
+    backward: 倒退
+    forward: 快進
+  shortcuts:
+    title: 快捷鍵
+    next_day:
+      title: 開始下一天
+    forward:
+      title: 快進計時
+    backward:
+      title: 倒退計時
+  advanced:
+    title: 進階選項
+  forward:
+    title: 快進秒數
+  backward:
+    title: 倒退秒數
+  threshold:
+    title: DAY X 範本比對閾值
+    content: 數值越小，比對越嚴格

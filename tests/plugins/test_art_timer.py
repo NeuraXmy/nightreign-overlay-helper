@@ -172,7 +172,7 @@ def test_countdown_starts_after_the_legacy_delay_and_clears_when_done(
     assert plugin._art_type is None
 
 
-def test_calibrate_region_uses_legacy_annotation_and_suspends_detection(
+def test_calibrate_region_suspends_detection(
     store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
@@ -185,7 +185,7 @@ def test_calibrate_region_uses_legacy_annotation_and_suspends_detection(
 
     monkeypatch.setattr(fakes.region, "request_region", request_region)
     plugin._calibrate_region()
-    assert fakes.region.requests == [(_REGION, "点我并框出 绝招图标 的区域", "#3235eb")]
+    assert fakes.region.requests == [(_REGION, plugin.ctx.tr("settings.region.annotate"), "#3235eb")]
     assert seen == [True] and not plugin._calibrating
 
 

@@ -1,0 +1,19 @@
+plugin:
+  name: Capture Engine
+  description: Provide shared game frames for detection plugins
+settings:
+  title: Capture settings
+  mode:
+    title: Capture method
+    content: Legacy is the default; desktop overlays can affect detection. Foreground/background modes may resize
+      the window
+    legacy: Legacy
+    foreground: Foreground only
+    background: Background only
+  interval:
+    title: Detection interval
+    content: Shared by all detectors; shorter intervals respond faster but use more resources
+    value: '{milliseconds} ms'
+  hdr:
+    title: HDR image processing
+    content: May improve detection when HDR is enabled in the game

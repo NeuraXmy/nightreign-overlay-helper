@@ -1,0 +1,9 @@
+plugin:
+  name: Area Calibration
+  description: Save shared screen areas for detection plugins
+selection:
+  annotate: Click here, then select an area
+  hint: Click a button above, then drag to select. Drag corners to resize or the center to move. If the cursor is
+    locked in-game, try left-clicking. Enter saves; Esc cancels
+  cancel: Cancel
+  save: Save

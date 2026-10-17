@@ -1,0 +1,29 @@
+plugin:
+  name: HP Threshold Markers
+  description: Detect HP bar length and mark low-HP and full-HP effect thresholds above it
+settings:
+  basic: Basic
+  advanced: Advanced
+  region:
+    title: HP bar area
+    content: Align the box's left edge with the HP bar and match its width; use Calibrate or a shortcut
+    annotate: Click here, then box the left side of the HP bar
+    button: Calibrate
+  hpbar_low_hp_marker:
+    title: Low-HP effect threshold
+  hpbar_high_hp_marker:
+    title: Full-HP effect threshold
+  marker_size:
+    title: Marker size
+  marker_color:
+    title: Marker color
+  line_width:
+    title: Line width
+  line_height:
+    title: Line height
+  hpbar_region_aspect_ratio:
+    title: Detection aspect ratio
+    content: Detection width equals the selected height times this value
+  hpbar_detection_offset:
+    title: Length offset
+    content: Add this pixel offset to the detected length; positive shifts right

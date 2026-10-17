@@ -1,0 +1,28 @@
+plugin:
+  name: Ultimate Art Timer
+  description: Detect the Ultimate Art icon after activation and show its effect timer
+hud:
+  text: '{name} {remaining}'
+  duchess: Finale invisibility
+  recluse: Soulblood Song marks
+  revenant: Immortal March invincibility
+  scholar: Communion links
+  executor: Aspects of the Crucible form
+settings:
+  basic:
+    title: Basic
+  region:
+    title: Ultimate Art icon area
+    content: Select the Ultimate Art icon area; use Calibrate or assign a shortcut
+    button: Calibrate
+    annotate: Click here, then box the Ultimate Art icon
+  use_art:
+    title: Ultimate Art shortcut
+  advanced:
+    title: Advanced
+  delay:
+    title: Detection delay
+    content: Delay from pressing the Ultimate Art key to capturing its icon
+  threshold:
+    title: Match threshold
+    content: Accept icon matches below this error; lower is stricter

@@ -1,0 +1,8 @@
+plugin:
+  name: 輸入與快捷鍵
+  description: 集中管理功能外掛註冊的全域快捷鍵
+settings:
+  title: 輸入設定
+  listener:
+    title: 啟用全域鍵盤監聽
+    content: 需允許程式監聽全域輸入；關閉後仍可使用測試輸入介面

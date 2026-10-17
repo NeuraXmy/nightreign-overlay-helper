@@ -1,0 +1,8 @@
+plugin:
+  name: 共用 HUD
+  description: 為倒數等精簡資訊提供共用懸浮容器
+settings:
+  enabled:
+    title: 啟用懸浮窗
+  hide_text:
+    title: 隱藏文字

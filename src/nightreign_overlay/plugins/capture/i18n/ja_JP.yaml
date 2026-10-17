@@ -1,0 +1,18 @@
+plugin:
+  name: 画面キャプチャ
+  description: 認識プラグインに共通のゲーム画像を提供
+settings:
+  title: キャプチャ設定
+  mode:
+    title: キャプチャ方式
+    content: 既定は従来方式。歌詞表示などの重なりは認識に影響します。前面／背面方式ではウィンドウサイズが変わる場合があります
+    legacy: 従来方式
+    foreground: 前面のみ
+    background: 背面のみ
+  interval:
+    title: 認識間隔
+    content: 全認識機能で共有。短いほど反応が速くなりますが、負荷も増えます
+    value: '{milliseconds} ms'
+  hdr:
+    title: HDR画像処理を有効化
+    content: ゲームでHDRを使用している場合、認識精度が改善することがあります

@@ -1,0 +1,54 @@
+plugin:
+  name: 夜の雨タイマー
+  description: 各日の開始を自動認識し、夜の雨の収縮までの時間を表示
+hud:
+  map_ready: ' - マップ認識準備完了'
+  waiting: ゲーム開始待ち
+  phase: DAY {day} - 第{circle}収縮{action}まで {remaining}
+  circle:
+    first: '1'
+    second: '2'
+  action:
+    start: 開始
+    end: 終了
+  boss: DAY {day} - 夜のボス戦 {elapsed}
+  day3: DAY {day} - {elapsed}
+settings:
+  basic:
+    title: 基本設定
+  auto:
+    title: 自動認識
+    content: 指定範囲のDAY I/II表示を認識して自動で計測開始
+  language:
+    title: ゲームの言語
+    chs: 简体中文
+    cht: 繁體中文
+    eng: English
+    jp: 日本語
+  calibrate:
+    title: DAY Iアイコン範囲
+    content: DAY Iアイコンを囲んで指定。「範囲指定」かショートカットで設定
+    button: 範囲指定
+    annotate: ここを押して「DAY Iアイコン」を囲んでください
+  manual:
+    title: タイマーの手動調整
+    next_day: 次の日を開始
+    backward: 戻す
+    forward: 進める
+  shortcuts:
+    title: ショートカット
+    next_day:
+      title: 次の日を開始
+    forward:
+      title: タイマーを進める
+    backward:
+      title: タイマーを戻す
+  advanced:
+    title: 詳細設定
+  forward:
+    title: 進める秒数
+  backward:
+    title: 戻す秒数
+  threshold:
+    title: DAY Xの照合しきい値
+    content: 小さいほど厳密に照合

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import string
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -127,16 +128,17 @@ def _load(directory: Path, language: str) -> dict[str, Any]:
     return _flatten_raw(data)
 
 
-def _placeholders(text: str) -> set[str]:
-    return {name for _, name, _, _ in string.Formatter().parse(text) if name}
+def _placeholders(text: str) -> Counter[str]:
+    return Counter(name for _, name, _, _ in string.Formatter().parse(text) if name)
 
 
 def _translation_cases() -> list[tuple[Path, str]]:
-    """Validate core languages fully and any supplied plugin translations without requiring every key."""
-    cases = [(CORE_I18N_DIR, language) for language in available_languages()]
-    for directory in PLUGIN_I18N_DIRS:
-        cases += [(directory, path.stem) for path in sorted(directory.glob("*.yaml"))]
-    return cases
+    """Require every registered language in the core and every plugin namespace."""
+    return [
+        (directory, language)
+        for directory in [CORE_I18N_DIR, *PLUGIN_I18N_DIRS]
+        for language in available_languages()
+    ]
 
 
 def _literal_keys(expression: ast.expr) -> set[str]:
@@ -186,6 +188,13 @@ def test_shipped_languages_declare_their_name() -> None:
         assert isinstance(meta, dict) and isinstance(meta.get("name"), str), path.name
 
 
+@pytest.mark.parametrize(
+    "directory", [CORE_I18N_DIR, *PLUGIN_I18N_DIRS], ids=lambda p: str(p.relative_to(SRC))
+)
+def test_every_namespace_ships_all_registered_languages(directory: Path) -> None:
+    assert {path.stem for path in directory.glob("*.yaml")} == set(available_languages())
+
+
 @pytest.mark.parametrize("directory", PLUGIN_I18N_DIRS, ids=lambda p: str(p.relative_to(SRC)))
 def test_plugin_translations_have_the_fallback_language(directory: Path) -> None:
     assert (directory / f"{FALLBACK_LANGUAGE}.yaml").is_file()
@@ -194,7 +203,10 @@ def test_plugin_translations_have_the_fallback_language(directory: Path) -> None
 @pytest.mark.parametrize("directory", PLUGIN_I18N_DIRS, ids=lambda p: str(p.relative_to(SRC)))
 def test_plugin_chinese_translations_cover_source(directory: Path) -> None:
     table = _load(directory, FALLBACK_LANGUAGE)
-    missing = sorted(_plugin_source_keys(directory.parent) - table.keys())
+    # Descriptions are optional; Translator returns an empty string for absent content.
+    missing = sorted(
+        key for key in _plugin_source_keys(directory.parent) - table.keys() if not key.endswith(".content")
+    )
     assert not missing, f"plugin source keys missing from zh_CN: {missing}"
     for key, value in table.items():
         assert isinstance(value, str) and value.strip(), f"empty or invalid zh_CN translation: {key}"
@@ -205,16 +217,24 @@ def test_plugin_chinese_translations_cover_source(directory: Path) -> None:
     _translation_cases(),
     ids=lambda value: str(value.relative_to(SRC)) if isinstance(value, Path) else value,
 )
-def test_translation_files_have_required_keys_and_valid_placeholders(directory: Path, language: str) -> None:
+def test_all_languages_match_chinese_fields_and_placeholders(directory: Path, language: str) -> None:
     assert language in available_languages(), f"{language} is not a core language"
+    assert (directory / f"{language}.yaml").is_file(), f"missing {language} translation file"
     reference = _load(directory, FALLBACK_LANGUAGE)
     table = _load(directory, language)
-    if directory == CORE_I18N_DIR:
-        assert sorted(set(reference) - set(table)) == [], "missing keys"
-    assert sorted(set(table) - set(reference)) == [], "keys not present in the fallback language"
+    assert sorted(reference.keys() - table.keys()) == [], "missing Chinese reference fields"
+    assert sorted(table.keys() - reference.keys()) == [], "obsolete fields absent from Chinese reference"
     for key, value in table.items():
         assert isinstance(value, str), f"{key} is {value!r} (quote values such as On/Off/Yes/No)"
+        assert value.strip(), f"empty translation: {key}"
         assert _placeholders(value) == _placeholders(reference[key]), f"placeholders differ in {key}"
+
+
+def test_missing_setting_description_is_optional(translations: Path) -> None:
+    translator = Translator(FALLBACK_LANGUAGE)
+    translator.load_dir("ns", translations)
+    assert translator.tr("ns", "settings.optional.content") == ""
+    assert translator.tr("ns", "settings.required.title") == "settings.required.title"
 
 
 @pytest.mark.parametrize("directory", TUTORIAL_DIRS, ids=lambda p: str(p.relative_to(SRC)))

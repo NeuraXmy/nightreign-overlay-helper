@@ -53,4 +53,3 @@ settings:
   max_area_percent:
     title: 主颜色面积最大占比
     content: 某种颜色的面积占比达到此值时，认为血条为该颜色
-  
