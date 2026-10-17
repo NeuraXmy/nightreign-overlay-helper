@@ -11,6 +11,7 @@ from PIL import Image
 
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
 from nightreign_overlay.plugins.hp_marker.detector import HpDetector
+from tests.support.hp_assertions import assert_rejection_duration, assert_rejection_ratio
 from tests.support.hp_video import VIDEO_ROOT, annotations, evaluate_video
 
 MANIFEST = annotations()
@@ -46,8 +47,10 @@ def test_video_fixtures_match_saved_labels_and_references(label):
 def test_every_video_output_is_correct_with_bounded_rejections(label, interval_seconds):
     report = evaluate_video(label, interval_seconds=interval_seconds)
     assert report["incorrect"] == 0, report
-    assert report["rejection_ratio"] <= MANIFEST["max_rejection_ratio"], report
-    assert report["longest_rejection_seconds"] <= MANIFEST["max_rejection_seconds"], report
+    assert_rejection_ratio(report["rejection_ratio"], context=f"{label['id']} interval={interval_seconds}s")
+    assert_rejection_duration(
+        report["longest_rejection_seconds"], context=f"{label['id']} interval={interval_seconds}s"
+    )
 
 
 def test_tracking_rechecks_each_frame_and_recovers_after_real_length_changes():

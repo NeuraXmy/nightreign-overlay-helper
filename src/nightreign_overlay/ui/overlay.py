@@ -433,6 +433,10 @@ class OverlayWindow(QWidget):
         if not self._position_ready or value is None or value[0] is None or old_width == width:
             return
         new_x = old_x + self._anchor_offset(old_width) - self._anchor_offset(width)
+        # Restoration may have adjusted the live position for a temporary startup width without
+        # changing the saved coordinates. Returning to the saved width can therefore leave the
+        # config value unchanged (and emit no signal); always move the window explicitly.
+        self._move_to(QPoint(new_x, self.y()))
         self.config.position_width.set(width)
         self.config.position.set([new_x, value[1]])
 

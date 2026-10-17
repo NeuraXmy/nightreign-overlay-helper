@@ -407,3 +407,51 @@ def test_hud_anchor_survives_content_changes_and_restart(core, store, reset):
     assert (restored.x() + restored.width() // 2, restored.y()) == anchor
     restored.dispose()
     reloaded.deleteLater()
+
+
+@pytest.mark.parametrize("anchor", ["center", "right"])
+def test_restore_then_resize_to_saved_width_moves_even_when_config_is_unchanged(core, store, anchor):
+    config = store.bind(OverlayConfig, "restore.same_width")
+    config.position.set([200, 180])
+    config.position_width.set(200)
+
+    class DynamicOverlay(OverlayWindow):
+        position_anchor = anchor
+
+    overlay = DynamicOverlay(core.overlays, config, "dynamic", QSize(16, 40))
+    overlay.set_base_size(QSize(200, 40))
+    assert overlay.x() == 200
+    assert overlay.y() == 180
+    assert config.position.value == [200, 180]
+    assert config.position_width.value == 200
+
+
+@pytest.mark.parametrize("reset", ["position", "horizontal"])
+@pytest.mark.parametrize("scale", [100, 125])
+def test_hud_reset_survives_shutdown_removing_all_content(core, store, reset, scale):
+    namespace = "hud.shutdown"
+    hud_config = store.bind(HudConfig, "plugins.hud")
+    store.bind(OverlayConfig, namespace).scale.set(scale)
+    expected = None
+    for _ in range(3):
+        reloaded = ConfigStore(store.path) if store.path.exists() else store
+        config = reloaded.bind(OverlayConfig, namespace)
+        overlay = HudOverlay(core.overlays, config, hud_config, "HUD")
+        token = overlay.add_widget("day_timer", _DayTimerHud([270, 180, 210, 180], "Waiting"), 0)
+        process_events()
+        if expected is not None:
+            assert (overlay.x() + overlay.width() // 2, overlay.y()) == expected
+        else:
+            overlay.move(overlay.x() + 30, overlay.y() + 60)
+            process_events()
+            if reset == "horizontal":
+                config.reset_horizontal_position()
+            else:
+                config.reset_position()
+            expected = (overlay.x() + overlay.width() // 2, overlay.y())
+        # Plugin shutdown removes contributed widgets before disposing the HUD.
+        overlay.remove_widget(token)
+        overlay.dispose()
+        reloaded.flush()
+        if reloaded is not store:
+            reloaded.deleteLater()

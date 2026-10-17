@@ -7,6 +7,7 @@ from PIL import Image, ImageEnhance
 from nightreign_overlay.plugins.hp_marker.config import HpDetectionSettings
 from nightreign_overlay.plugins.hp_marker.detector import HpDetector
 from nightreign_overlay.plugins.hp_marker.material import estimate_material_boundary
+from tests.support.hp_assertions import assert_rejection_duration, assert_rejection_ratio
 from tests.support.hp_production_evaluation import evaluate_production, production_labels
 from tests.support.hp_video import VIDEO_ROOT, evaluate_video, hp_footage_annotations
 
@@ -21,8 +22,10 @@ def _frame(name: str) -> np.ndarray:
 def test_capacity_change_videos_have_no_mistakes_and_low_refusal(label, interval):
     report = evaluate_video(label, interval_seconds=interval)
     assert report["incorrect"] == 0, report
-    assert report["rejection_ratio"] < 0.2, report
-    assert report["longest_rejection_seconds"] < 2, report
+    assert_rejection_ratio(report["rejection_ratio"], context=f"{label['id']} interval={interval}s")
+    assert_rejection_duration(
+        report["longest_rejection_seconds"], context=f"{label['id']} interval={interval}s"
+    )
 
 
 def test_gray_bevel_is_excluded_but_flat_empty_hp_is_included():
@@ -137,6 +140,8 @@ def test_independent_starts_each_second_need_no_warmed_capacity(label):
     assert report["cold_starts"]
     for window in report["cold_starts"]:
         assert window["incorrect"] == 0, window
-        assert window["rejection_ratio"] < 0.5, window
+        assert_rejection_ratio(
+            window["rejection_ratio"], context=f"{label['id']} cold start at {window['start_seconds']}s"
+        )
         assert window["first_accepted_after_seconds"] is not None, window
         assert window["first_accepted_after_seconds"] < 2, window
