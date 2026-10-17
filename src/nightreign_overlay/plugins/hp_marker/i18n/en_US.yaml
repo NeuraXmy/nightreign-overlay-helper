@@ -1,6 +1,6 @@
 plugin:
   name: HP Threshold Markers
-  description: Detect HP bar length and mark low-HP and full-HP effect thresholds above it
+  description: Detect HP bar length and mark low-HP and below-max-HP effect thresholds above it
 settings:
   basic: Basic
   advanced: Advanced
@@ -12,7 +12,7 @@ settings:
   hpbar_low_hp_marker:
     title: Low-HP effect threshold
   hpbar_high_hp_marker:
-    title: Full-HP effect threshold
+    title: Below-max-HP effect threshold
   marker_size:
     title: Marker size
   marker_color:
