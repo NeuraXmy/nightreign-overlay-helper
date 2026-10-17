@@ -6,8 +6,8 @@ import sys
 from collections.abc import Callable
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QLabel, QWidget
-from qfluentwidgets import FluentIcon
+from PyQt6.QtWidgets import QWidget
+from qfluentwidgets import BodyLabel, FluentIcon
 
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
@@ -31,7 +31,7 @@ class _PingThresholdCard(ConfigRangeCard):
         super()._sync(self.item.value)
 
 
-class _StatusLabel(QLabel):
+class _StatusLabel(BodyLabel):
     def __init__(self, tr: Callable[..., str], parent: QWidget) -> None:
         super().__init__(parent)
         self._tr = tr
@@ -109,9 +109,8 @@ class P2PLatencyPlugin(Plugin):
         window = OverlaySettingSection(
             self.overlay_config, tr("settings.window"), include_horizontal_reset=False
         )
-        thresholds = SettingSection(tr("settings.thresholds"))
         for name in ("good_ping", "warning_ping"):
-            thresholds.addCard(
+            window.addCard(
                 _PingThresholdCard(
                     self.config.item(name),
                     FluentIcon.SPEED_HIGH,
@@ -124,15 +123,11 @@ class P2PLatencyPlugin(Plugin):
         label.set_status(self._status)
         self.statusChanged.connect(label.set_status)
         status.addCard(label)
-        foreground_hint = QLabel(tr("settings.foreground"), status)
-        foreground_hint.setWordWrap(True)
-        status.addCard(foreground_hint)
         if sys.platform == "darwin":
-            hint = QLabel(tr("settings.simulation"), status)
+            hint = BodyLabel(tr("settings.simulation"), status)
             hint.setWordWrap(True)
             status.addCard(hint)
         panel.addSection(window)
-        panel.addSection(thresholds)
         panel.addSection(status)
         return panel
 

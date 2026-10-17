@@ -1,6 +1,6 @@
 # 日志与调试图片打包
 
-入口位于「设置 → 高级 → 打包日志与调试图片」。弹窗支持填写可选的问题描述、多次选择附加图片，以及移除所选附件。点击「导出 ZIP」后在后台线程打包，完成后显示文件路径和「打开所在目录」按钮，用户自行将 ZIP 附在问题反馈中。
+入口位于「关于 → 问题反馈」。弹窗支持填写可选的问题描述、多次选择附加图片，以及移除所选附件。点击「导出 ZIP」后在后台线程打包，完成后显示文件路径和「打开所在目录」按钮，用户自行将 ZIP 附在问题反馈中。
 
 输出路径为 `user_data_dir()/reports/diagnostics_{datetime}.zip`，时间精确至微秒。导出仅生成本地文件，不会自动上传。
 
@@ -26,10 +26,10 @@
 
 - [`core/diagnostics.py`](../src/nightreign_overlay/core/diagnostics.py)：不依赖 UI 的 ZIP 生成逻辑。
 - [`ui/components/diagnostic_export.py`](../src/nightreign_overlay/ui/components/diagnostic_export.py)：描述、附件选择及线程池后台导出。
-- [`ui/pages/settings.py`](../src/nightreign_overlay/ui/pages/settings.py)：设置入口。
+- [`ui/pages/about.py`](../src/nightreign_overlay/ui/pages/about.py)：问题反馈入口。
 
 ```bash
 python -m pytest tests/core/test_diagnostics.py tests/ui/test_diagnostic_export.py -q
 ```
 
-回归覆盖真实 ZIP 内容及 CRC、中文描述和同名附件、元数据与图片字节保持、缺少诊断目录、保留策略删除文件、无效附件、写入失败清理，以及界面的后台执行、重复提交保护、失败重试和设置入口。
+回归覆盖真实 ZIP 内容及 CRC、中文描述和同名附件、元数据与图片字节保持、缺少诊断目录、保留策略删除文件、无效附件、写入失败清理，以及界面的后台执行、重复提交保护、失败重试和关于页入口。

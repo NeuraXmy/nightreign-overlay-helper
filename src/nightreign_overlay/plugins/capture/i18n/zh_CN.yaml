@@ -5,14 +5,14 @@ settings:
   title: 截图设置
   mode:
     title: 截图方式
-    content: 默认使用旧版 mss 桌面截图，不调整游戏窗口；画面遮挡会影响检测。仅前台和仅后台使用 DLL，可能调整窗口；仅后台可能出现黄色捕获边框。切换后立即生效。
+    content: 默认旧版截图，桌面歌词等画面遮挡会影响检测；仅前台/仅后台方式可能导致窗口大小变化
     legacy: 旧版
     foreground: 仅前台
     background: 仅后台
   interval:
     title: 检测间隔
-    content: 每个间隔最多捕获一帧，所有检测插件共享该帧。
+    content: 所有识别功能共享的检测间隔，更短的间隔反应更灵敏，但会消耗更多性能
     value: "{milliseconds} ms"
   hdr:
     title: 启用 HDR 图像处理
-    content: HDR 显示模式下启用可提高识别准确性，各检测功能会自动选用合适的处理方式；遇到识别问题可尝试关闭。
+    content: 若游戏开启 HDR 模式，启动该选项可能提高识别准确性

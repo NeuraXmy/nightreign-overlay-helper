@@ -22,7 +22,6 @@ from nightreign_overlay.ui.components import (
     SettingSection,
     create_reset_button,
 )
-from nightreign_overlay.ui.components.diagnostic_export import DiagnosticExportDialog
 
 log = get_logger(__name__)
 
@@ -124,13 +123,6 @@ class SettingsPage(ScrollPage):
             str(log_dir()),
         )
         log_card.clicked.connect(lambda: _open_directory(log_dir()))
-        self.diagnosticExportCard = PushSettingCard(
-            tr("settings.diagnostic_export.button"),
-            FluentIcon.ZIP_FOLDER,
-            tr("settings.diagnostic_export.title"),
-            tr("settings.diagnostic_export.content"),
-        )
-        self.diagnosticExportCard.clicked.connect(self._export_diagnostics)
         section.addCards(
             ConfigChoiceCard(
                 self._config.log_level,
@@ -147,14 +139,8 @@ class SettingsPage(ScrollPage):
             ),
             data_card,
             log_card,
-            self.diagnosticExportCard,
         )
         self.addWidget(section)
-
-    def _export_diagnostics(self) -> None:
-        dialog = DiagnosticExportDialog(self.window())
-        dialog.exec()
-        dialog.deleteLater()
 
     def _reset_settings(self) -> None:
         for item in self._config.items().values():

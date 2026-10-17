@@ -1,8 +1,8 @@
 plugin:
   name: 区域标定
-  description: 为检测插件保存统一的屏幕区域。
+  description: 为检测插件保存统一的屏幕区域
 selection:
   annotate: 点我并框出区域
-  hint: 先点击上方按钮再拖动鼠标框选；拖动方框四角可调整大小，拖动中心可移动。按 Enter 保存，Esc 取消。
+  hint: 先点击上方按钮再拖动鼠标框选；拖动方框四角可调整大小，拖动中心可移动；游戏内鼠标无法移动可以尝试按下左键；按 Enter 保存，Esc 取消
   cancel: 取消
   save: 保存

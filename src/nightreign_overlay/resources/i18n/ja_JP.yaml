@@ -84,8 +84,6 @@ settings:
   theme_color:
     title: アクセントカラー
     content: メインウィンドウの強調色
-  overlay:
-    title: オーバーレイ
   overlay_mode:
     title: オーバーレイ表示方式
     content: 透過オーバーレイが正しく表示されない場合は通常ウィンドウに切り替えてください
@@ -95,11 +93,6 @@ settings:
   only_when_game_foreground:
     title: ゲームが前面のときのみ表示・検出
     content: ゲームが前面にないときはすべてのオーバーレイを非表示にし、検出を停止してホットキーを無効にします。メイン画面やメニューを開いている間は利用できます
-  behavior:
-    title: 動作
-  close_to_tray:
-    title: 閉じるとトレイに格納
-    content: メインウィンドウを閉じてもシステムトレイで動作を続けます
   start_minimized:
     title: 最小化して起動
     content: 起動時はトレイアイコンのみ表示します
@@ -144,9 +137,6 @@ about:
     title: プロジェクト
     repo_button: リポジトリを開く
     repo_content: "バージョン {version} · オープンソース、Star 歓迎"
-    feedback_title: フィードバック
-    feedback_content: 不具合や要望は Issue でお知らせください
-    feedback_button: フィードバック
   credits:
     title: 謝辞
     visit: 開く
@@ -157,14 +147,11 @@ about:
 
 tray:
   toggle: メインウィンドウを表示／非表示
-  show: メインウィンドウを表示
   quit: 終了
   hidden_hint: メインウィンドウを非表示にしました。アプリは動作中です。トレイアイコンをクリックすると再表示できます。
 
 overlay:
   menu:
-    reset_position: 位置をリセット
-    click_through: クリック透過を有効にする
     open_main_window: メインウィンドウを開く
     quit: 終了
 
@@ -200,4 +187,3 @@ overlay_settings:
     content: オーバーレイを画面上部中央に戻します
     reset: リセット
     horizontal: 水平位置のみリセット
-    horizontal_content: 現在の高さを維持し、水平方向のみ中央へ戻します

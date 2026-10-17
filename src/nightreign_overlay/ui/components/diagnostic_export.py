@@ -51,6 +51,11 @@ class DiagnosticExportDialog(MessageBoxBase):
             tr("settings.diagnostic_export.hint", email=tr("settings.diagnostic_export.feedback_email")), self
         )
         hint.setWordWrap(True)
+        hint.setTextInteractionFlags(
+            hint.textInteractionFlags()
+            | Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.TextSelectableByKeyboard
+        )
         self.viewLayout.addWidget(hint)
         self.descriptionEdit = TextEdit(self)
         self.descriptionEdit.setPlaceholderText(tr("settings.diagnostic_export.description"))

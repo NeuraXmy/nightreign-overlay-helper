@@ -84,8 +84,6 @@ settings:
   theme_color:
     title: Accent color
     content: Accent color of the main window
-  overlay:
-    title: Overlays
   overlay_mode:
     title: Overlay presentation
     content: Switch to regular windows if transparent overlays render incorrectly
@@ -95,11 +93,6 @@ settings:
   only_when_game_foreground:
     title: Only show and detect while the game is focused
     content: Hide all overlays, pause detection and ignore hotkeys while another window is active; overlays and hotkeys stay available while the main window or a menu is open
-  behavior:
-    title: Behavior
-  close_to_tray:
-    title: Minimize to tray on close
-    content: Keep running in the system tray after closing the main window
   start_minimized:
     title: Start minimized
     content: Only show the tray icon on startup
@@ -144,9 +137,6 @@ about:
     title: Project
     repo_button: Open repository
     repo_content: "Version {version} · open source, stars welcome"
-    feedback_title: Feedback
-    feedback_content: Found a bug or have an idea? Open an issue
-    feedback_button: Give feedback
   credits:
     title: Credits
     visit: Visit
@@ -157,14 +147,11 @@ about:
 
 tray:
   toggle: Show / hide main window
-  show: Show main window
   quit: Quit
   hidden_hint: The main window is hidden; the app is still running. Click the tray icon to show it again.
 
 overlay:
   menu:
-    reset_position: Reset position
-    click_through: Enable click-through
     open_main_window: Open main window
     quit: Quit
 
@@ -200,4 +187,3 @@ overlay_settings:
     content: Move the overlay back to the top centre of the screen
     reset: Reset
     horizontal: Reset horizontal only
-    horizontal_content: Keep the current height and move to the horizontal centre

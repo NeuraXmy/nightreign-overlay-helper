@@ -23,7 +23,7 @@ from nightreign_overlay.plugins.day_timer.api import (
 from nightreign_overlay.plugins.day_timer.config import DayTimerConfig
 from nightreign_overlay.plugins.day_timer.detector import DayDetector
 from nightreign_overlay.plugins.hud.api import HudApi
-from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, InputDevice
+from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
@@ -42,9 +42,9 @@ _FORWARD = "day_timer.forward"
 _BACKWARD = "day_timer.backward"
 _CALIBRATE_REGION = "day_timer.calibrate_region"
 _DEFAULT_HOTKEYS = {
-    _NEXT_DAY: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "d")),
-    _FORWARD: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "right")),
-    _BACKWARD: HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "left")),
+    _NEXT_DAY: HotkeyBinding(None),
+    _FORWARD: HotkeyBinding(None),
+    _BACKWARD: HotkeyBinding(None),
     _CALIBRATE_REGION: HotkeyBinding(None),
 }
 # Hits of the same DAY banner within this window refresh the start time instead of starting a new day.
@@ -416,6 +416,7 @@ class DayTimerPlugin(Plugin):
                 self.config.score_threshold,
                 FluentIcon.DEVELOPER_TOOLS,
                 self.ctx.tr("settings.threshold.title"),
+                self.ctx.tr("settings.threshold.content"),
                 formatter=lambda value: f"{value}%",
             ),
         )

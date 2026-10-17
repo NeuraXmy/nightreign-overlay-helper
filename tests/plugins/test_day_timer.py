@@ -55,7 +55,7 @@ def _input_context(
     return PluginContext("input", tmp_path, store, Translator("zh_CN"), services, events)
 
 
-def test_calibrate_region_hotkey_is_registered_with_empty_default(
+def test_all_hotkeys_are_registered_with_empty_defaults(
     store: ConfigStore, qapp: QApplication, tmp_path: Path
 ) -> None:
     services = ServiceRegistry()
@@ -68,7 +68,8 @@ def test_calibrate_region_hotkey_is_registered_with_empty_default(
     plugin._register_hotkeys(services.require(HotkeyApi))
 
     hotkeys = services.require(HotkeyApi)
-    assert hotkeys.binding("day_timer.calibrate_region", HotkeyBinding(None)) == HotkeyBinding(None)
+    for action in ("next_day", "forward", "backward", "calibrate_region"):
+        assert hotkeys.binding(f"day_timer.{action}", HotkeyBinding(None)) == HotkeyBinding(None)
     hotkeys.set_binding(
         "day_timer.calibrate_region", HotkeyBinding(InputDevice.KEYBOARD, ("ctrl", "shift", "c"))
     )
