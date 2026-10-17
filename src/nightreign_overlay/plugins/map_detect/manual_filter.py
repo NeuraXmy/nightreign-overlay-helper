@@ -150,6 +150,18 @@ class ManualFilterOverlay(OverlayWindow):
         self.refresh_positions()
         self.show_select_earth_shifting()
 
+    def set_recognized_parameters(self, earth_shifting: int | None, nightlord: int | None) -> None:
+        earth_blocker = QSignalBlocker(self.earth_shifting_combo)
+        nightlord_blocker = QSignalBlocker(self.nightlord_combo)
+        earth_index = self.earth_shifting_combo.findData(earth_shifting)
+        self.earth_shifting_combo.setCurrentIndex(earth_index if earth_index >= 0 else -1)
+        nightlord_index = self.nightlord_combo.findData(nightlord)
+        self.nightlord_combo.setCurrentIndex(nightlord_index if nightlord_index >= 0 else 0)
+        self.earth_shifting = earth_shifting
+        self.nightlord = nightlord
+        del earth_blocker, nightlord_blocker
+        self.refresh_positions()
+
     def clear_poi_choices(self) -> None:
         self.explicit_choices.clear()
         self.inferred_choices.clear()
