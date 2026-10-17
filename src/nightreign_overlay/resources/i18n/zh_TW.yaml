@@ -117,10 +117,11 @@ settings:
   log_dir:
     title: 日誌目錄
   diagnostic_export:
+    feedback_email: nroh-report@qq.com
     title: 打包日誌與除錯圖片
     content: 填寫問題描述、附加圖片，並匯出用於回報的 ZIP 壓縮檔
     button: 打包
-    hint: 自動收集現有日誌、除錯圖片和辨識中繼資料。可以補充問題描述和圖片，匯出後請將 ZIP 附在問題回報中。
+    hint: 自動收集現有日誌、除錯圖片和辨識中繼資料。匯出後請將 ZIP 以電子郵件寄送至 {email}。若無法傳送 ZIP可將副檔名改為 .txt 後再寄送。
     description: "問題描述（選填）：發生了什麼？如何重現？可以填寫發生時間、遊戲解析度及相關設定。"
     attachments: 附加圖片（選填）
     add_images: 新增圖片
@@ -130,7 +131,7 @@ settings:
     cancel: 取消
     working: 正在打包，請稍候…
     failed: "打包失敗，請檢查檔案是否可讀取、磁碟是否可寫入後重試。\n{error}"
-    success: "已匯出 {count} 個檔案。請將 ZIP 附在問題回報中。\n{path}"
+    success: "已匯出 {count} 個檔案。請將 ZIP 以電子郵件寄送至 {email}。若無法傳送 ZIP可將副檔名改為 .txt 後再寄送。\n{path}"
     skipped: "有 {count} 個檔案在打包時已被清理，未包含在壓縮檔中，詳見 manifest.json。"
     open_directory: 開啟所在資料夾
     close: 關閉
@@ -169,8 +170,12 @@ overlay:
     quit: 結束程式
 
 input_dialog:
+  device:
+    keyboard: 鍵盤
+    mouse: 滑鼠
+    controller: 手把
   title: 設定快速鍵
-  hint: 請按下鍵盤、滑鼠或控制器組合鍵；首次輸入會鎖定裝置類型。
+  hint: 請按下鍵盤、滑鼠或手把組合鍵；首次輸入會鎖定裝置類型。
   waiting: 等待輸入…
   unset: 快速鍵未設定
   clear: 清空

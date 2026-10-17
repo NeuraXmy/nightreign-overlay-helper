@@ -142,6 +142,10 @@ class Translator:
         text = next((table[key] for table in self._tables.get(namespace, ()) if key in table), None)
         if text is None:
             log.debug("Missing translation %s:%s", namespace, key)
+            # Setting-card descriptions are optional. Returning an empty string lets
+            # the widget hide the description instead of exposing the raw key.
+            if key.endswith(".content"):
+                return ""
             return key
         if not kwargs:
             return text

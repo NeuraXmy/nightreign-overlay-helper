@@ -16,7 +16,7 @@ OVERLAY_MODES = ("auto", "overlay", "window")
 class AppConfig(ConfigGroup):
     language = ChoiceOption("auto", ("auto", *available_languages()))
     theme = ChoiceOption("dark", THEMES)
-    theme_color = ColorOption("#c8a35a")
+    theme_color = ColorOption("#2e3f7b")
     overlay_mode = ChoiceOption("auto", OVERLAY_MODES)
     #: Legacy "仅在游戏时显示和检测": one switch for every overlay, detection and hotkeys.
     only_when_game_foreground = BoolOption(False)

@@ -116,10 +116,11 @@ settings:
   log_dir:
     title: Log directory
   diagnostic_export:
+    feedback_email: nroh-report@qq.com
     title: Package logs and debug images
     content: Describe a problem, attach images, and export a ZIP for feedback
     button: Package
-    hint: Automatically includes existing logs, debug images, and recognition metadata. Add a description and images, then attach the exported ZIP to your feedback.
+    hint: Automatically includes existing logs, debug images, and recognition metadata. Add a description and images, then send the exported ZIP by email to {email}. If ZIP attachments are blocked, rename the extension to .txt before sending.
     description: "Problem description (optional): What happened? How can it be reproduced? Include the time, game resolution, and relevant settings."
     attachments: Attached images (optional)
     add_images: Add images
@@ -129,7 +130,7 @@ settings:
     cancel: Cancel
     working: Packaging, please wait…
     failed: "Packaging failed. Check that the files are readable and the disk is writable, then retry.\n{error}"
-    success: "Exported {count} files. Attach this ZIP to your feedback.\n{path}"
+    success: "Exported {count} files. Send this ZIP by email to {email}. If ZIP attachments are blocked, rename the extension to .txt before sending.\n{path}"
     skipped: "{count} files were removed during packaging and were skipped. See manifest.json."
     open_directory: Open containing folder
     close: Close
@@ -168,6 +169,10 @@ overlay:
     quit: Quit
 
 input_dialog:
+  device:
+    keyboard: Keyboard
+    mouse: Mouse
+    controller: Controller
   title: Set shortcut
   hint: Press a keyboard, mouse, or controller combination. The first input locks the device type.
   waiting: Waiting for input…

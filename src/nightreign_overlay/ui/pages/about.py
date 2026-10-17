@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, HyperlinkCard
+from qfluentwidgets import FluentIcon, HyperlinkCard, PushSettingCard
 
 from nightreign_overlay.core.i18n import tr
-from nightreign_overlay.meta import APP_NAME, APP_VERSION, ISSUES_URL, REPO_URL
+from nightreign_overlay.meta import APP_NAME, APP_VERSION, REPO_URL
 from nightreign_overlay.ui.components import ScrollPage, SettingSection
+from nightreign_overlay.ui.components.diagnostic_export import DiagnosticExportDialog
 from nightreign_overlay.ui.pages.home import Banner
 
 #: (translation key, display name, url)
@@ -33,13 +34,7 @@ class AboutPage(ScrollPage):
                 APP_NAME,
                 tr("about.project.repo_content", version=APP_VERSION),
             ),
-            HyperlinkCard(
-                ISSUES_URL,
-                tr("about.project.feedback_button"),
-                FluentIcon.FEEDBACK,
-                tr("about.project.feedback_title"),
-                tr("about.project.feedback_content"),
-            ),
+            self._feedback_card(),
         )
         self.addWidget(project)
 
@@ -51,3 +46,18 @@ class AboutPage(ScrollPage):
                 )
             )
         self.addWidget(credits)
+
+    def _feedback_card(self) -> PushSettingCard:
+        card = PushSettingCard(
+            tr("settings.diagnostic_export.button"),
+            FluentIcon.FEEDBACK,
+            tr("settings.diagnostic_export.title"),
+            tr("settings.diagnostic_export.content"),
+        )
+        card.clicked.connect(self._export_diagnostics)
+        return card
+
+    def _export_diagnostics(self) -> None:
+        dialog = DiagnosticExportDialog(self.window())
+        dialog.exec()
+        dialog.deleteLater()
