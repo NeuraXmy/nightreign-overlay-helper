@@ -1,0 +1,168 @@
+[
+  {
+    "id": "pink_complex",
+    "algorithm": "rectangle_experiment",
+    "source_file": "2026-10-16 20-19-02.mp4",
+    "source_sha256": "4e4b2e872d436447513cd91264671ae03b77f2ba89787e2fddadbf7f550e2b3e",
+    "decoded_frames": 1835,
+    "fps": 30.0,
+    "calibration_xywh": [
+      18,
+      16,
+      5,
+      10
+    ],
+    "capture_xywh": [
+      18,
+      6,
+      1250,
+      30
+    ],
+    "scanline_y_in_crop": 15,
+    "gt_length_px": 425,
+    "tolerance_px": 3,
+    "contains_limit_loss_gray": false,
+    "reports": [
+      {
+        "interval_seconds": 0,
+        "evaluated": 1835,
+        "rejected": 26,
+        "incorrect": 0,
+        "longest_rejection_seconds": 0.2666666666666657,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.014168937329700272,
+        "prediction_range_px": [
+          424,
+          425
+        ],
+        "detector_ms": {
+          "mean": 1.1363783088697967,
+          "p95": 1.5332099515944715
+        }
+      },
+      {
+        "interval_seconds": 0.05,
+        "evaluated": 918,
+        "rejected": 14,
+        "incorrect": 0,
+        "longest_rejection_seconds": 0.26666666666666666,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.015250544662309368,
+        "prediction_range_px": [
+          424,
+          425
+        ],
+        "detector_ms": {
+          "mean": 1.061867318402221,
+          "p95": 1.2763349572196603
+        }
+      },
+      {
+        "interval_seconds": 0.25,
+        "evaluated": 230,
+        "rejected": 5,
+        "incorrect": 0,
+        "longest_rejection_seconds": 1.0666666666666667,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.021739130434782608,
+        "prediction_range_px": [
+          424,
+          425
+        ],
+        "detector_ms": {
+          "mean": 1.0352191292559323,
+          "p95": 1.1278650257736442
+        }
+      }
+    ]
+  },
+  {
+    "id": "yellow_complex",
+    "algorithm": "rectangle_experiment",
+    "source_file": "hp_3.mp4",
+    "source_sha256": "c30adfe9e022ec0ca231e570968c4a491534915952f93fbde7cfe96b5c36e9d8",
+    "decoded_frames": 1404,
+    "fps": 30.0,
+    "calibration_xywh": [
+      9,
+      12,
+      5,
+      10
+    ],
+    "capture_xywh": [
+      9,
+      2,
+      711,
+      30
+    ],
+    "scanline_y_in_crop": 15,
+    "gt_length_px": 320,
+    "tolerance_px": 3,
+    "contains_limit_loss_gray": false,
+    "reports": [
+      {
+        "interval_seconds": 0,
+        "evaluated": 1404,
+        "rejected": 209,
+        "incorrect": 0,
+        "longest_rejection_seconds": 6.8,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.14886039886039887,
+        "prediction_range_px": [
+          319,
+          320
+        ],
+        "detector_ms": {
+          "mean": 0.7715413766114461,
+          "p95": 1.0762849473394454
+        }
+      },
+      {
+        "interval_seconds": 0.05,
+        "evaluated": 702,
+        "rejected": 108,
+        "incorrect": 0,
+        "longest_rejection_seconds": 7.0,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.15384615384615385,
+        "prediction_range_px": [
+          320,
+          320
+        ],
+        "detector_ms": {
+          "mean": 0.688277207516622,
+          "p95": 0.821504974737763
+        }
+      },
+      {
+        "interval_seconds": 0.25,
+        "evaluated": 176,
+        "rejected": 76,
+        "incorrect": 0,
+        "longest_rejection_seconds": 20.0,
+        "mistakes": [],
+        "false_gray_samples": 0,
+        "wrong_outer_samples": 0,
+        "rejection_ratio": 0.4318181818181818,
+        "prediction_range_px": [
+          320,
+          320
+        ],
+        "detector_ms": {
+          "mean": 0.6996767135040666,
+          "p95": 0.8881999528966844
+        }
+      }
+    ]
+  }
+]

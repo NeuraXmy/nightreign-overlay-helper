@@ -1,0 +1,5260 @@
+{
+  "original": [
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0,
+      "decoded_frames": 977,
+      "evaluated_frames": 887,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 672,
+          "rejected": 18,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 197,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 869,
+      "rejected": 18,
+      "rejection_ratio": 0.020293122886133032,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 3.066666666666667,
+      "longest_rejection_seconds": 0.3333333333333339,
+      "detector_ms": {
+        "mean": 0.5010686819074617,
+        "p95": 0.8913801051676273,
+        "max": 4.941100021824241
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0,
+      "decoded_frames": 863,
+      "evaluated_frames": 743,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 497,
+          "rejected": 13,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 233,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 730,
+      "rejected": 13,
+      "rejection_ratio": 0.017496635262449527,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.1999999999999993,
+      "detector_ms": {
+        "mean": 0.5723326790728201,
+        "p95": 1.0271400213241575,
+        "max": 1.8345999997109175
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0.05,
+      "decoded_frames": 977,
+      "evaluated_frames": 444,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 331,
+          "rejected": 14,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 99,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 430,
+      "rejected": 14,
+      "rejection_ratio": 0.03153153153153153,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 3.1333333333333333,
+      "longest_rejection_seconds": 0.40000000000000036,
+      "detector_ms": {
+        "mean": 0.5484122805800175,
+        "p95": 0.7105799391865729,
+        "max": 1.097099855542183
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0.05,
+      "decoded_frames": 863,
+      "evaluated_frames": 372,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 246,
+          "rejected": 9,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 117,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 363,
+      "rejected": 9,
+      "rejection_ratio": 0.024193548387096774,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.20000000000000107,
+      "detector_ms": {
+        "mean": 0.6017115832677249,
+        "p95": 0.7912049070000647,
+        "max": 1.4045999851077795
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.6242556583827301,
+        "p95": 0.7427350850775838,
+        "max": 0.9802000131458044
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "original",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6960681957108054,
+        "p95": 0.8911549695767462,
+        "max": 1.044499920681119
+      }
+    }
+  ],
+  "independent_starts": [
+    {
+      "id": "hp_footage_1",
+      "sampling_period_seconds": 0.26666666666666666,
+      "windows": [
+        {
+          "source_start_seconds": 3,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 4,
+          "incorrect": 0,
+          "rejection_ratio": 0.21052631578947367,
+          "first_accepted_after_seconds": 1.0666666666666667
+        },
+        {
+          "source_start_seconds": 5,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 6,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 7,
+          "incorrect": 0,
+          "rejection_ratio": 0.21052631578947367,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 8,
+          "incorrect": 0,
+          "rejection_ratio": 0.3684210526315789,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 9,
+          "incorrect": 0,
+          "rejection_ratio": 0.2631578947368421,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 10,
+          "incorrect": 0,
+          "rejection_ratio": 0.2631578947368421,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 11,
+          "incorrect": 0,
+          "rejection_ratio": 0.2631578947368421,
+          "first_accepted_after_seconds": 1.3333333333333333
+        },
+        {
+          "source_start_seconds": 12,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 13,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 14,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 15,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 16,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 17,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 18,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 19,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 20,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 21,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 29,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 30,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        }
+      ]
+    },
+    {
+      "id": "hp_footage_2",
+      "sampling_period_seconds": 0.26666666666666666,
+      "windows": [
+        {
+          "source_start_seconds": 4,
+          "incorrect": 0,
+          "rejection_ratio": 0.21052631578947367,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 5,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 6,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 7,
+          "incorrect": 0,
+          "rejection_ratio": 0.2631578947368421,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 8,
+          "incorrect": 0,
+          "rejection_ratio": 0.2631578947368421,
+          "first_accepted_after_seconds": 1.3333333333333333
+        },
+        {
+          "source_start_seconds": 9,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 10,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 11,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 12,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 13,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 14,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 15,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 16,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 24,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 25,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        },
+        {
+          "source_start_seconds": 26,
+          "incorrect": 0,
+          "rejection_ratio": 0.10526315789473684,
+          "first_accepted_after_seconds": 0.5333333333333333
+        }
+      ]
+    }
+  ],
+  "augmented": [
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "brightness_0.35",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 77,
+          "rejected": 10,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 102,
+      "rejected": 10,
+      "rejection_ratio": 0.08928571428571429,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 1.3333333333333321,
+      "detector_ms": {
+        "mean": 0.57535081155478,
+        "p95": 0.7597949821501969,
+        "max": 1.5698999632149935
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "brightness_0.6",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5599193729370111,
+        "p95": 0.7079251343384385,
+        "max": 0.9119999594986439
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "brightness_1.4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5637201642046773,
+        "p95": 0.6977600743994117,
+        "max": 1.0794999543577433
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "brightness_1.8",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 84,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        307.0
+      ],
+      "accepted": 109,
+      "rejected": 3,
+      "rejection_ratio": 0.026785714285714284,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.5333333333333332,
+      "detector_ms": {
+        "mean": 0.5711508133719044,
+        "p95": 0.6972800707444549,
+        "max": 0.839899992570281
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "brightness_2.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 76,
+          "max_error_px": 4.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 2,
+          "max_error_px": 4.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        306.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 78,
+      "mistake_examples": [
+        {
+          "frame": 48,
+          "source_seconds": 4.6,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 56,
+          "source_seconds": 4.866666666666667,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 64,
+          "source_seconds": 5.133333333333333,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 72,
+          "source_seconds": 5.4,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 80,
+          "source_seconds": 5.666666666666666,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 88,
+          "source_seconds": 5.933333333333334,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 96,
+          "source_seconds": 6.2,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 104,
+          "source_seconds": 6.466666666666667,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 112,
+          "source_seconds": 6.733333333333333,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 120,
+          "source_seconds": 7.0,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 4.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5554766225207958,
+        "p95": 0.6831500795669854,
+        "max": 0.7778999861329794
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "saturation_0",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 73,
+          "rejected": 14,
+          "incorrect": 1,
+          "max_error_px": 103.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 25,
+          "max_error_px": 153.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        204.0,
+        307.0
+      ],
+      "accepted": 98,
+      "rejected": 14,
+      "rejection_ratio": 0.125,
+      "incorrect": 26,
+      "mistake_examples": [
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 204.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 780,
+          "source_seconds": 29.0,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 788,
+          "source_seconds": 29.266666666666666,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 796,
+          "source_seconds": 29.533333333333335,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 804,
+          "source_seconds": 29.8,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 812,
+          "source_seconds": 30.066666666666666,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 820,
+          "source_seconds": 30.333333333333332,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 828,
+          "source_seconds": 30.6,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 836,
+          "source_seconds": 30.866666666666667,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 844,
+          "source_seconds": 31.133333333333333,
+          "length": 307.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 153.0,
+      "first_accepted_seconds": 4.066666666666666,
+      "longest_rejection_seconds": 2.666666666666667,
+      "detector_ms": {
+        "mean": 0.6823661444228022,
+        "p95": 0.8833399275317785,
+        "max": 2.065700013190508
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "saturation_0.2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 78,
+          "rejected": 9,
+          "incorrect": 28,
+          "max_error_px": 106.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 25,
+          "max_error_px": 6.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        148.0,
+        307.0
+      ],
+      "accepted": 103,
+      "rejected": 9,
+      "rejection_ratio": 0.08035714285714286,
+      "incorrect": 53,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 201.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 24,
+          "source_seconds": 3.8,
+          "length": 201.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 201.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 168,
+          "source_seconds": 8.6,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 176,
+          "source_seconds": 8.866666666666667,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 184,
+          "source_seconds": 9.133333333333333,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 192,
+          "source_seconds": 9.4,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 200,
+          "source_seconds": 9.666666666666668,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 208,
+          "source_seconds": 9.933333333333334,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 544,
+          "source_seconds": 21.133333333333333,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 106.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 1.3333333333333321,
+      "detector_ms": {
+        "mean": 0.570805643820354,
+        "p95": 0.6720001110807061,
+        "max": 1.0418000165373087
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "saturation_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5813967793308679,
+        "p95": 0.6962748826481401,
+        "max": 1.6250000335276127
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "saturation_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5758427282524926,
+        "p95": 0.7192301214672624,
+        "max": 1.4755998272448778
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "saturation_4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 79,
+          "rejected": 8,
+          "incorrect": 3,
+          "max_error_px": 103.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        307.0
+      ],
+      "accepted": 104,
+      "rejected": 8,
+      "rejection_ratio": 0.07142857142857142,
+      "incorrect": 3,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 204.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 24,
+          "source_seconds": 3.8,
+          "length": 204.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 204.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 103.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 1.0666666666666664,
+      "detector_ms": {
+        "mean": 0.5697395104253965,
+        "p95": 0.6814849330112338,
+        "max": 0.8929998148232698
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "contrast_0.25",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 58,
+          "rejected": 29,
+          "incorrect": 34,
+          "max_error_px": 7.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 17,
+          "rejected": 8,
+          "incorrect": 4,
+          "max_error_px": 9.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        145.0,
+        308.0
+      ],
+      "accepted": 75,
+      "rejected": 37,
+      "rejection_ratio": 0.33035714285714285,
+      "incorrect": 38,
+      "mistake_examples": [
+        {
+          "frame": 176,
+          "source_seconds": 8.866666666666667,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 184,
+          "source_seconds": 9.133333333333333,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 192,
+          "source_seconds": 9.4,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 200,
+          "source_seconds": 9.666666666666668,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 208,
+          "source_seconds": 9.933333333333334,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 216,
+          "source_seconds": 10.2,
+          "length": 302.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 296,
+          "source_seconds": 12.866666666666667,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 304,
+          "source_seconds": 13.133333333333333,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 312,
+          "source_seconds": 13.4,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 320,
+          "source_seconds": 13.666666666666666,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 9.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 1.333333333333334,
+      "detector_ms": {
+        "mean": 0.5702524119237017,
+        "p95": 0.6688949884846805,
+        "max": 0.9061000309884548
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "contrast_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5647322508476434,
+        "p95": 0.6559050059877336,
+        "max": 1.1853999458253384
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "contrast_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5672145203026312,
+        "p95": 0.7054100162349641,
+        "max": 0.8398001082241535
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "contrast_2.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 49,
+          "rejected": 38,
+          "incorrect": 25,
+          "max_error_px": 112.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        307.0
+      ],
+      "accepted": 74,
+      "rejected": 38,
+      "rejection_ratio": 0.3392857142857143,
+      "incorrect": 25,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 195.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 56,
+          "source_seconds": 4.866666666666667,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 64,
+          "source_seconds": 5.133333333333333,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 72,
+          "source_seconds": 5.4,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 80,
+          "source_seconds": 5.666666666666666,
+          "length": 300.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 224,
+          "source_seconds": 10.466666666666667,
+          "length": 300.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 232,
+          "source_seconds": 10.733333333333334,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 280,
+          "source_seconds": 12.333333333333334,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 288,
+          "source_seconds": 12.6,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 320,
+          "source_seconds": 13.666666666666666,
+          "length": 299.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 112.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 2.666666666666666,
+      "detector_ms": {
+        "mean": 0.5363862991573349,
+        "p95": 0.6515351706184447,
+        "max": 0.7255000527948141
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "sharpness_0",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 80,
+          "rejected": 7,
+          "incorrect": 3,
+          "max_error_px": 104.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 23,
+          "max_error_px": 4.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        307.0
+      ],
+      "accepted": 105,
+      "rejected": 7,
+      "rejection_ratio": 0.0625,
+      "incorrect": 26,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 24,
+          "source_seconds": 3.8,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 796,
+          "source_seconds": 29.533333333333335,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 804,
+          "source_seconds": 29.8,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 812,
+          "source_seconds": 30.066666666666666,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 820,
+          "source_seconds": 30.333333333333332,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 828,
+          "source_seconds": 30.6,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 836,
+          "source_seconds": 30.866666666666667,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 844,
+          "source_seconds": 31.133333333333333,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 104.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5878193600613985,
+        "p95": 0.6883649039082229,
+        "max": 0.9507001377642155
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "sharpness_3",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 80,
+          "rejected": 7,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 19,
+          "max_error_px": 4.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        307.0
+      ],
+      "accepted": 105,
+      "rejected": 7,
+      "rejection_ratio": 0.0625,
+      "incorrect": 19,
+      "mistake_examples": [
+        {
+          "frame": 812,
+          "source_seconds": 30.066666666666666,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 820,
+          "source_seconds": 30.333333333333332,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 828,
+          "source_seconds": 30.6,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 836,
+          "source_seconds": 30.866666666666667,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 844,
+          "source_seconds": 31.133333333333333,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 852,
+          "source_seconds": 31.4,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 860,
+          "source_seconds": 31.666666666666668,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 868,
+          "source_seconds": 31.933333333333334,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 876,
+          "source_seconds": 32.2,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 884,
+          "source_seconds": 32.46666666666667,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 4.0,
+      "first_accepted_seconds": 4.866666666666667,
+      "longest_rejection_seconds": 1.8666666666666671,
+      "detector_ms": {
+        "mean": 0.5625822626414799,
+        "p95": 0.6702800979837774,
+        "max": 1.086799893528223
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "sharpness_6",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 23,
+          "rejected": 64,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 0,
+          "rejected": 25,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        304.0,
+        307.0
+      ],
+      "accepted": 23,
+      "rejected": 89,
+      "rejection_ratio": 0.7946428571428571,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 4.066666666666666,
+      "longest_rejection_seconds": 10.733333333333333,
+      "detector_ms": {
+        "mean": 0.6000935606988927,
+        "p95": 1.4619951136410227,
+        "max": 2.059499965980649
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "blur_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5578951620977493,
+        "p95": 0.6510750856250525,
+        "max": 0.9955000132322311
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "blur_1",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 80,
+          "rejected": 7,
+          "incorrect": 3,
+          "max_error_px": 104.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 25,
+          "max_error_px": 5.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        149.0,
+        307.0
+      ],
+      "accepted": 105,
+      "rejected": 7,
+      "rejection_ratio": 0.0625,
+      "incorrect": 28,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 24,
+          "source_seconds": 3.8,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 203.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 780,
+          "source_seconds": 29.0,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 788,
+          "source_seconds": 29.266666666666666,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 796,
+          "source_seconds": 29.533333333333335,
+          "length": 150.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 804,
+          "source_seconds": 29.8,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 812,
+          "source_seconds": 30.066666666666666,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 820,
+          "source_seconds": 30.333333333333332,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 828,
+          "source_seconds": 30.6,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 104.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5441427347250283,
+        "p95": 0.6560200243256985,
+        "max": 0.6964001804590225
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "blur_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 76,
+          "rejected": 11,
+          "incorrect": 20,
+          "max_error_px": 105.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 13,
+          "rejected": 12,
+          "incorrect": 10,
+          "max_error_px": 9.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        145.0,
+        308.0
+      ],
+      "accepted": 89,
+      "rejected": 23,
+      "rejection_ratio": 0.20535714285714285,
+      "incorrect": 30,
+      "mistake_examples": [
+        {
+          "frame": 16,
+          "source_seconds": 3.533333333333333,
+          "length": 202.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 24,
+          "source_seconds": 3.8,
+          "length": 202.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 32,
+          "source_seconds": 4.066666666666666,
+          "length": 202.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 560,
+          "source_seconds": 21.666666666666668,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 568,
+          "source_seconds": 21.933333333333334,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 576,
+          "source_seconds": 22.2,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 584,
+          "source_seconds": 22.466666666666665,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 592,
+          "source_seconds": 22.733333333333334,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 600,
+          "source_seconds": 23.0,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 608,
+          "source_seconds": 23.266666666666666,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 105.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 1.8666666666666654,
+      "detector_ms": {
+        "mean": 0.5562524161031169,
+        "p95": 0.6836449843831359,
+        "max": 0.83580007776618
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "blur_4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 0,
+          "rejected": 87,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 0,
+          "rejected": 25,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": null,
+      "accepted": 0,
+      "rejected": 112,
+      "rejection_ratio": 1.0,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 0.0,
+      "first_accepted_seconds": null,
+      "longest_rejection_seconds": 23.0,
+      "detector_ms": {
+        "mean": 1.444029837711564,
+        "p95": 2.209945081267506,
+        "max": 2.6374999433755875
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "gamma_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 62,
+          "rejected": 25,
+          "incorrect": 18,
+          "max_error_px": 6.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 21,
+          "rejected": 4,
+          "incorrect": 1,
+          "max_error_px": 8.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        307.0
+      ],
+      "accepted": 83,
+      "rejected": 29,
+      "rejection_ratio": 0.25892857142857145,
+      "incorrect": 19,
+      "mistake_examples": [
+        {
+          "frame": 176,
+          "source_seconds": 8.866666666666667,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 184,
+          "source_seconds": 9.133333333333333,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 192,
+          "source_seconds": 9.4,
+          "length": 302.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 456,
+          "source_seconds": 18.2,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 464,
+          "source_seconds": 18.46666666666667,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 472,
+          "source_seconds": 18.733333333333334,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 480,
+          "source_seconds": 19.0,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 488,
+          "source_seconds": 19.266666666666666,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 496,
+          "source_seconds": 19.533333333333335,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 504,
+          "source_seconds": 19.8,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 8.0,
+      "first_accepted_seconds": 4.866666666666667,
+      "longest_rejection_seconds": 1.8666666666666671,
+      "detector_ms": {
+        "mean": 0.6191992001878398,
+        "p95": 0.7493350189179181,
+        "max": 1.1297001037746668
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "gamma_0.75",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 79,
+          "rejected": 8,
+          "incorrect": 3,
+          "max_error_px": 4.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        308.0
+      ],
+      "accepted": 104,
+      "rejected": 8,
+      "rejection_ratio": 0.07142857142857142,
+      "incorrect": 3,
+      "mistake_examples": [
+        {
+          "frame": 512,
+          "source_seconds": 20.066666666666666,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 520,
+          "source_seconds": 20.333333333333332,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 528,
+          "source_seconds": 20.6,
+          "length": 303.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 4.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.5983177444807464,
+        "p95": 0.715265073813498,
+        "max": 0.9253001771867275
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "gamma_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 85,
+          "rejected": 2,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 23,
+          "rejected": 2,
+          "incorrect": 2,
+          "max_error_px": 5.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        149.0,
+        308.0
+      ],
+      "accepted": 108,
+      "rejected": 4,
+      "rejection_ratio": 0.03571428571428571,
+      "incorrect": 2,
+      "mistake_examples": [
+        {
+          "frame": 964,
+          "source_seconds": 35.13333333333333,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 972,
+          "source_seconds": 35.4,
+          "length": 149.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 5.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.5333333333333332,
+      "detector_ms": {
+        "mean": 0.579798396962184,
+        "p95": 0.6948999711312354,
+        "max": 0.8185000624507666
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "gamma_2.2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 2,
+          "rejected": 85,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 17,
+          "rejected": 8,
+          "incorrect": 17,
+          "max_error_px": 11.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        143.0,
+        307.0
+      ],
+      "accepted": 19,
+      "rejected": 93,
+      "rejection_ratio": 0.8303571428571429,
+      "incorrect": 17,
+      "mistake_examples": [
+        {
+          "frame": 780,
+          "source_seconds": 29.0,
+          "length": 144.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 788,
+          "source_seconds": 29.266666666666666,
+          "length": 144.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 796,
+          "source_seconds": 29.533333333333335,
+          "length": 144.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 804,
+          "source_seconds": 29.8,
+          "length": 143.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 812,
+          "source_seconds": 30.066666666666666,
+          "length": 143.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 820,
+          "source_seconds": 30.333333333333332,
+          "length": 143.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 828,
+          "source_seconds": 30.6,
+          "length": 144.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 836,
+          "source_seconds": 30.866666666666667,
+          "length": 144.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 844,
+          "source_seconds": 31.133333333333333,
+          "length": 143.0,
+          "gt_length_px": 154.0
+        },
+        {
+          "frame": 852,
+          "source_seconds": 31.4,
+          "length": 143.0,
+          "gt_length_px": 154.0
+        }
+      ],
+      "max_error_px": 11.0,
+      "first_accepted_seconds": 4.066666666666666,
+      "longest_rejection_seconds": 20.866666666666667,
+      "detector_ms": {
+        "mean": 0.5626766153821542,
+        "p95": 0.8753700181841847,
+        "max": 2.8412998653948307
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "scale_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 85,
+          "rejected": 2,
+          "incorrect": 0,
+          "max_error_px": 0.5
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 1.5,
+      "width_scale": 0.5,
+      "prediction_range_px": [
+        76.0,
+        154.0
+      ],
+      "accepted": 110,
+      "rejected": 2,
+      "rejection_ratio": 0.017857142857142856,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.5333333333333332,
+      "detector_ms": {
+        "mean": 0.33276129115913666,
+        "p95": 0.39870491018518806,
+        "max": 0.7235000375658274
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "scale_0.75",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 1.3050847457627412
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.7288135593220346
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 2.254237288135593,
+      "width_scale": 0.751412429378531,
+      "prediction_range_px": [
+        113.98870056497175,
+        231.98870056497177
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.7288135593220346,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.4122000086241432,
+        "p95": 0.4987700725905597,
+        "max": 0.7116999477148056
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "scale_1.25",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 82,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 3.305084745762656
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.2711864406779512
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.7457627118644066,
+      "width_scale": 1.2485875706214689,
+      "prediction_range_px": [
+        191.01129943502826,
+        385.01129943502826
+      ],
+      "accepted": 107,
+      "rejected": 5,
+      "rejection_ratio": 0.044642857142857144,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.305084745762656,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.7343217692968826,
+        "p95": 0.8680350729264319,
+        "max": 0.9667000267654657
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "scale_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 79,
+          "rejected": 8,
+          "incorrect": 0,
+          "max_error_px": 1.5
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 4.5,
+      "width_scale": 1.5,
+      "prediction_range_px": [
+        229.0,
+        462.0
+      ],
+      "accepted": 104,
+      "rejected": 8,
+      "rejection_ratio": 0.07142857142857142,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 3.533333333333333,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.9086725842808524,
+        "p95": 1.11052505671978,
+        "max": 1.3317998964339495
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "scale_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 81,
+          "rejected": 6,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 6.0,
+      "width_scale": 2.0,
+      "prediction_range_px": [
+        306.0,
+        615.0
+      ],
+      "accepted": 106,
+      "rejected": 6,
+      "rejection_ratio": 0.05357142857142857,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.6,
+      "longest_rejection_seconds": 1.5999999999999996,
+      "detector_ms": {
+        "mean": 1.427153221166302,
+        "p95": 1.7573451274074614,
+        "max": 1.7816999461501837
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "bright_combination",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 54,
+          "rejected": 33,
+          "incorrect": 10,
+          "max_error_px": 12.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 25,
+          "rejected": 0,
+          "incorrect": 7,
+          "max_error_px": 4.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        306.0
+      ],
+      "accepted": 79,
+      "rejected": 33,
+      "rejection_ratio": 0.29464285714285715,
+      "incorrect": 17,
+      "mistake_examples": [
+        {
+          "frame": 88,
+          "source_seconds": 5.933333333333334,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 96,
+          "source_seconds": 6.2,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 104,
+          "source_seconds": 6.466666666666667,
+          "length": 296.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 112,
+          "source_seconds": 6.733333333333333,
+          "length": 295.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 304,
+          "source_seconds": 13.133333333333333,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 384,
+          "source_seconds": 15.8,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 392,
+          "source_seconds": 16.066666666666666,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 400,
+          "source_seconds": 16.333333333333336,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 408,
+          "source_seconds": 16.6,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 416,
+          "source_seconds": 16.866666666666667,
+          "length": 298.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 12.0,
+      "first_accepted_seconds": 4.866666666666667,
+      "longest_rejection_seconds": 1.8666666666666671,
+      "detector_ms": {
+        "mean": 0.5587661195726644,
+        "p95": 0.6864099064841865,
+        "max": 0.9121999610215425
+      }
+    },
+    {
+      "id": "hp_footage_1",
+      "algorithm": "structural",
+      "augmentation": "dark_combination",
+      "interval_seconds": 0.25,
+      "decoded_frames": 977,
+      "evaluated_frames": 112,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "accepted": 61,
+          "rejected": 26,
+          "incorrect": 8,
+          "max_error_px": 7.0
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "accepted": 23,
+          "rejected": 2,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        }
+      ],
+      "ignored_frames": 90,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        152.0,
+        308.0
+      ],
+      "accepted": 84,
+      "rejected": 28,
+      "rejection_ratio": 0.25,
+      "incorrect": 8,
+      "mistake_examples": [
+        {
+          "frame": 504,
+          "source_seconds": 19.8,
+          "length": 300.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 512,
+          "source_seconds": 20.066666666666666,
+          "length": 300.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 520,
+          "source_seconds": 20.333333333333332,
+          "length": 300.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 616,
+          "source_seconds": 23.533333333333335,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 624,
+          "source_seconds": 23.8,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 632,
+          "source_seconds": 24.066666666666666,
+          "length": 302.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 640,
+          "source_seconds": 24.333333333333332,
+          "length": 302.0,
+          "gt_length_px": 307.0
+        },
+        {
+          "frame": 680,
+          "source_seconds": 25.666666666666668,
+          "length": 301.0,
+          "gt_length_px": 307.0
+        }
+      ],
+      "max_error_px": 7.0,
+      "first_accepted_seconds": 3.8,
+      "longest_rejection_seconds": 1.5999999999999979,
+      "detector_ms": {
+        "mean": 0.576561284927471,
+        "p95": 0.7028249790892005,
+        "max": 1.2980999890714884
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "brightness_0.35",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 55,
+          "rejected": 9,
+          "incorrect": 1,
+          "max_error_px": 40.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 8,
+          "rejected": 22,
+          "incorrect": 3,
+          "max_error_px": 193.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        385.0
+      ],
+      "accepted": 63,
+      "rejected": 31,
+      "rejection_ratio": 0.32978723404255317,
+      "incorrect": 4,
+      "mistake_examples": [
+        {
+          "frame": 518,
+          "source_seconds": 20.266666666666666,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 630,
+          "source_seconds": 24.0,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 766,
+          "source_seconds": 28.533333333333335,
+          "length": 195.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 774,
+          "source_seconds": 28.8,
+          "length": 195.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 193.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 3.4666666666666686,
+      "detector_ms": {
+        "mean": 0.6557718025181781,
+        "p95": 0.854645133949816,
+        "max": 0.9796000085771084
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "brightness_0.6",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6351990921592171,
+        "p95": 0.7667298894375563,
+        "max": 0.8322999347001314
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "brightness_1.4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6358127321370624,
+        "p95": 0.7733650039881468,
+        "max": 0.9263998363167048
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "brightness_1.8",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6553272716701031,
+        "p95": 0.7628801045939326,
+        "max": 0.9512999095022678
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "brightness_2.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 53,
+          "max_error_px": 4.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        189.0,
+        384.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 53,
+      "mistake_examples": [
+        {
+          "frame": 30,
+          "source_seconds": 4.0,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 38,
+          "source_seconds": 4.266666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 46,
+          "source_seconds": 4.533333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 62,
+          "source_seconds": 5.066666666666666,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 70,
+          "source_seconds": 5.333333333333334,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 78,
+          "source_seconds": 5.6,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 86,
+          "source_seconds": 5.866666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 94,
+          "source_seconds": 6.133333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 102,
+          "source_seconds": 6.4,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 4.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.5333333333333314,
+      "detector_ms": {
+        "mean": 0.6442990873686292,
+        "p95": 0.7600249140523374,
+        "max": 0.9929998777806759
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "saturation_0",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 44,
+          "rejected": 20,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 19,
+          "rejected": 11,
+          "incorrect": 19,
+          "max_error_px": 195.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        196.0
+      ],
+      "accepted": 63,
+      "rejected": 31,
+      "rejection_ratio": 0.32978723404255317,
+      "incorrect": 19,
+      "mistake_examples": [
+        {
+          "frame": 630,
+          "source_seconds": 24.0,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 638,
+          "source_seconds": 24.266666666666666,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 646,
+          "source_seconds": 24.533333333333335,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 654,
+          "source_seconds": 24.8,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 662,
+          "source_seconds": 25.066666666666666,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 670,
+          "source_seconds": 25.333333333333332,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 678,
+          "source_seconds": 25.6,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 686,
+          "source_seconds": 25.866666666666667,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 694,
+          "source_seconds": 26.133333333333333,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 702,
+          "source_seconds": 26.4,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 195.0,
+      "first_accepted_seconds": 5.6,
+      "longest_rejection_seconds": 2.9333333333333336,
+      "detector_ms": {
+        "mean": 1.2065845541656017,
+        "p95": 3.0591049580834806,
+        "max": 5.375700071454048
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "saturation_0.2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 2,
+          "rejected": 62,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 3,
+          "rejected": 27,
+          "incorrect": 3,
+          "max_error_px": 195.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        192.0
+      ],
+      "accepted": 5,
+      "rejected": 89,
+      "rejection_ratio": 0.9468085106382979,
+      "incorrect": 3,
+      "mistake_examples": [
+        {
+          "frame": 702,
+          "source_seconds": 26.4,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 710,
+          "source_seconds": 26.666666666666668,
+          "length": 191.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 758,
+          "source_seconds": 28.266666666666666,
+          "length": 192.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 195.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 16.46666666666667,
+      "detector_ms": {
+        "mean": 0.6091418146917765,
+        "p95": 0.8492250577546652,
+        "max": 3.2756999135017395
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "saturation_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6305627334354953,
+        "p95": 0.7500001229345798,
+        "max": 0.945699866861105
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "saturation_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6251090841198509,
+        "p95": 0.749229989014566,
+        "max": 0.8217000868171453
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "saturation_4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 60,
+          "rejected": 4,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 90,
+      "rejected": 4,
+      "rejection_ratio": 0.0425531914893617,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.0666666666666664,
+      "detector_ms": {
+        "mean": 0.6264863662760366,
+        "p95": 0.7475399877876043,
+        "max": 0.8999998681247234
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "contrast_0.25",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 61,
+          "max_error_px": 48.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 30,
+          "max_error_px": 199.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        145.0,
+        191.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 91,
+      "mistake_examples": [
+        {
+          "frame": 30,
+          "source_seconds": 4.0,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 38,
+          "source_seconds": 4.266666666666667,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 46,
+          "source_seconds": 4.533333333333333,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 62,
+          "source_seconds": 5.066666666666666,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 70,
+          "source_seconds": 5.333333333333334,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 78,
+          "source_seconds": 5.6,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 86,
+          "source_seconds": 5.866666666666667,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 94,
+          "source_seconds": 6.133333333333333,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 102,
+          "source_seconds": 6.4,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 199.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.5333333333333314,
+      "detector_ms": {
+        "mean": 0.6244845328513872,
+        "p95": 0.7380500319413841,
+        "max": 0.8203999605029821
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "contrast_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6328118097206409,
+        "p95": 0.7589649059809744,
+        "max": 0.8183999452739954
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "contrast_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 60,
+          "rejected": 4,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 90,
+      "rejected": 4,
+      "rejection_ratio": 0.0425531914893617,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.0666666666666664,
+      "detector_ms": {
+        "mean": 0.616617255251516,
+        "p95": 0.7718099397607148,
+        "max": 0.817399937659502
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "contrast_2.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 44,
+          "rejected": 20,
+          "incorrect": 33,
+          "max_error_px": 44.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 20,
+          "rejected": 10,
+          "incorrect": 4,
+          "max_error_px": 195.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        149.0,
+        385.0
+      ],
+      "accepted": 64,
+      "rejected": 30,
+      "rejection_ratio": 0.3191489361702128,
+      "incorrect": 37,
+      "mistake_examples": [
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 110,
+          "source_seconds": 6.666666666666666,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 190,
+          "source_seconds": 9.333333333333332,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 198,
+          "source_seconds": 9.6,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 206,
+          "source_seconds": 9.866666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 214,
+          "source_seconds": 10.133333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 222,
+          "source_seconds": 10.4,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 262,
+          "source_seconds": 11.733333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 270,
+          "source_seconds": 12.0,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 278,
+          "source_seconds": 12.266666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 195.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.6000000000000014,
+      "detector_ms": {
+        "mean": 0.6362118271433495,
+        "p95": 0.775099964812398,
+        "max": 1.5130999963730574
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "sharpness_0",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 56,
+          "rejected": 8,
+          "incorrect": 5,
+          "max_error_px": 43.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 27,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        385.0
+      ],
+      "accepted": 83,
+      "rejected": 11,
+      "rejection_ratio": 0.11702127659574468,
+      "incorrect": 5,
+      "mistake_examples": [
+        {
+          "frame": 126,
+          "source_seconds": 7.2,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 134,
+          "source_seconds": 7.466666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 142,
+          "source_seconds": 7.733333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 486,
+          "source_seconds": 19.2,
+          "length": 150.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 494,
+          "source_seconds": 19.466666666666665,
+          "length": 150.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 43.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 0.6665190978145058,
+        "p95": 0.7891550078056753,
+        "max": 0.9365000296384096
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "sharpness_3",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 4,
+          "max_error_px": 40.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 30,
+          "max_error_px": 193.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        197.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 34,
+      "mistake_examples": [
+        {
+          "frame": 502,
+          "source_seconds": 19.733333333333334,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 510,
+          "source_seconds": 20.0,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 518,
+          "source_seconds": 20.266666666666666,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 526,
+          "source_seconds": 20.533333333333335,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 630,
+          "source_seconds": 24.0,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 638,
+          "source_seconds": 24.266666666666666,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 646,
+          "source_seconds": 24.533333333333335,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 654,
+          "source_seconds": 24.8,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 662,
+          "source_seconds": 25.066666666666666,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 670,
+          "source_seconds": 25.333333333333332,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 193.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.533333333333335,
+      "detector_ms": {
+        "mean": 0.724699993787164,
+        "p95": 0.8309449651278555,
+        "max": 1.0494999587535858
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "sharpness_6",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 15,
+          "rejected": 49,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 0,
+          "rejected": 30,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        191.0
+      ],
+      "accepted": 15,
+      "rejected": 79,
+      "rejection_ratio": 0.8404255319148937,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 13.0,
+      "detector_ms": {
+        "mean": 0.7556272691793062,
+        "p95": 0.9299300727434454,
+        "max": 6.870199926197529
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "blur_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 60,
+          "rejected": 4,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 90,
+      "rejected": 4,
+      "rejection_ratio": 0.0425531914893617,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.0666666666666664,
+      "detector_ms": {
+        "mean": 0.7033509096469391,
+        "p95": 0.8120350539684295,
+        "max": 1.1877999641001225
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "blur_1",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 57,
+          "rejected": 7,
+          "incorrect": 35,
+          "max_error_px": 44.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 14,
+          "rejected": 16,
+          "incorrect": 11,
+          "max_error_px": 196.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        149.0,
+        385.0
+      ],
+      "accepted": 71,
+      "rejected": 23,
+      "rejection_ratio": 0.24468085106382978,
+      "incorrect": 46,
+      "mistake_examples": [
+        {
+          "frame": 30,
+          "source_seconds": 4.0,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 38,
+          "source_seconds": 4.266666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 46,
+          "source_seconds": 4.533333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 62,
+          "source_seconds": 5.066666666666666,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 70,
+          "source_seconds": 5.333333333333334,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 78,
+          "source_seconds": 5.6,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 86,
+          "source_seconds": 5.866666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 94,
+          "source_seconds": 6.133333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 102,
+          "source_seconds": 6.4,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 196.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 2.666666666666668,
+      "detector_ms": {
+        "mean": 0.7024772676893256,
+        "p95": 0.9097399306483566,
+        "max": 1.1018000077456236
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "blur_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 27,
+          "rejected": 37,
+          "incorrect": 20,
+          "max_error_px": 43.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 7,
+          "rejected": 23,
+          "incorrect": 7,
+          "max_error_px": 198.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        150.0,
+        213.0
+      ],
+      "accepted": 34,
+      "rejected": 60,
+      "rejection_ratio": 0.6382978723404256,
+      "incorrect": 27,
+      "mistake_examples": [
+        {
+          "frame": 30,
+          "source_seconds": 4.0,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 38,
+          "source_seconds": 4.266666666666667,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 46,
+          "source_seconds": 4.533333333333333,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 62,
+          "source_seconds": 5.066666666666666,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 70,
+          "source_seconds": 5.333333333333334,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 78,
+          "source_seconds": 5.6,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 246,
+          "source_seconds": 11.2,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 254,
+          "source_seconds": 11.466666666666667,
+          "length": 185.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 294,
+          "source_seconds": 12.8,
+          "length": 186.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 198.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 3.1999999999999993,
+      "detector_ms": {
+        "mean": 0.6097263656556606,
+        "p95": 0.7332450477406383,
+        "max": 0.7805000059306622
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "blur_4",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 0,
+          "rejected": 64,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 0,
+          "rejected": 30,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": null,
+      "accepted": 0,
+      "rejected": 94,
+      "rejection_ratio": 1.0,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 0.0,
+      "first_accepted_seconds": null,
+      "longest_rejection_seconds": 17.0,
+      "detector_ms": {
+        "mean": 0.5047854522920467,
+        "p95": 0.6009049713611603,
+        "max": 0.7042998913675547
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "gamma_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 64,
+          "rejected": 0,
+          "incorrect": 3,
+          "max_error_px": 4.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        189.0,
+        385.0
+      ],
+      "accepted": 94,
+      "rejected": 0,
+      "rejection_ratio": 0.0,
+      "incorrect": 3,
+      "mistake_examples": [
+        {
+          "frame": 126,
+          "source_seconds": 7.2,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 134,
+          "source_seconds": 7.466666666666667,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 142,
+          "source_seconds": 7.733333333333333,
+          "length": 189.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 4.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.0,
+      "detector_ms": {
+        "mean": 0.626183631406589,
+        "p95": 0.7551600458100438,
+        "max": 1.0799001902341843
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "gamma_0.75",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 64,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        191.0,
+        385.0
+      ],
+      "accepted": 94,
+      "rejected": 0,
+      "rejection_ratio": 0.0,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.0,
+      "detector_ms": {
+        "mean": 0.6272490919482979,
+        "p95": 0.7606598548591137,
+        "max": 0.9431999642401934
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "gamma_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 58,
+          "rejected": 6,
+          "incorrect": 4,
+          "max_error_px": 41.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 28,
+          "rejected": 2,
+          "incorrect": 28,
+          "max_error_px": 193.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        152.0,
+        196.0
+      ],
+      "accepted": 86,
+      "rejected": 8,
+      "rejection_ratio": 0.0851063829787234,
+      "incorrect": 32,
+      "mistake_examples": [
+        {
+          "frame": 502,
+          "source_seconds": 19.733333333333334,
+          "length": 152.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 510,
+          "source_seconds": 20.0,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 518,
+          "source_seconds": 20.266666666666666,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 526,
+          "source_seconds": 20.533333333333335,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 630,
+          "source_seconds": 24.0,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 638,
+          "source_seconds": 24.266666666666666,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 646,
+          "source_seconds": 24.533333333333335,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 654,
+          "source_seconds": 24.8,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 662,
+          "source_seconds": 25.066666666666666,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 670,
+          "source_seconds": 25.333333333333332,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 193.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.6541836392981085,
+        "p95": 0.8067450253292918,
+        "max": 1.0943000670522451
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "gamma_2.2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 0,
+          "rejected": 64,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 0,
+          "rejected": 30,
+          "incorrect": 0,
+          "max_error_px": 0.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": null,
+      "accepted": 0,
+      "rejected": 94,
+      "rejection_ratio": 1.0,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 0.0,
+      "first_accepted_seconds": null,
+      "longest_rejection_seconds": 17.0,
+      "detector_ms": {
+        "mean": 0.5064054519276727,
+        "p95": 0.671239977236837,
+        "max": 1.2527999933809042
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "scale_0.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 60,
+          "rejected": 4,
+          "incorrect": 0,
+          "max_error_px": 1.5
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 1.5,
+      "width_scale": 0.5,
+      "prediction_range_px": [
+        95.0,
+        192.0
+      ],
+      "accepted": 90,
+      "rejected": 4,
+      "rejection_ratio": 0.0425531914893617,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 1.5,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.0666666666666664,
+      "detector_ms": {
+        "mean": 0.3487009195272218,
+        "p95": 0.42742505902424455,
+        "max": 0.4749000072479248
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "scale_0.75",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 58,
+          "rejected": 6,
+          "incorrect": 1,
+          "max_error_px": 29.986175115207374
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 17,
+          "rejected": 13,
+          "incorrect": 14,
+          "max_error_px": 144.95852534562212
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 2.2534562211981566,
+      "width_scale": 0.7511520737327189,
+      "prediction_range_px": [
+        114.98617511520737,
+        288.9861751152074
+      ],
+      "accepted": 75,
+      "rejected": 19,
+      "rejection_ratio": 0.20212765957446807,
+      "incorrect": 15,
+      "mistake_examples": [
+        {
+          "frame": 526,
+          "source_seconds": 20.533333333333335,
+          "length": 114.98617511520737,
+          "gt_length_px": 144.97235023041475
+        },
+        {
+          "frame": 702,
+          "source_seconds": 26.4,
+          "length": 144.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 710,
+          "source_seconds": 26.666666666666668,
+          "length": 144.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 718,
+          "source_seconds": 26.933333333333334,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 726,
+          "source_seconds": 27.2,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 734,
+          "source_seconds": 27.466666666666665,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 742,
+          "source_seconds": 27.733333333333334,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 750,
+          "source_seconds": 28.0,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 758,
+          "source_seconds": 28.266666666666666,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        },
+        {
+          "frame": 798,
+          "source_seconds": 29.6,
+          "length": 145.98617511520737,
+          "gt_length_px": 289.9447004608295
+        }
+      ],
+      "max_error_px": 144.95852534562212,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.5999999999999979,
+      "detector_ms": {
+        "mean": 0.4793018102645874,
+        "p95": 0.6198000744916499,
+        "max": 1.173499971628189
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "scale_1.25",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.0138248847926263
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 0,
+          "max_error_px": 1.0414746543779074
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.7465437788018434,
+      "width_scale": 1.2488479262672811,
+      "prediction_range_px": [
+        239.01382488479263,
+        481.0138248847926
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.0138248847926263,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.7999999999999989,
+      "detector_ms": {
+        "mean": 0.8454918035898696,
+        "p95": 0.9920399868860841,
+        "max": 1.0017999447882175
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "scale_1.5",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 2.5
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 27,
+          "rejected": 3,
+          "incorrect": 0,
+          "max_error_px": 1.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 4.5,
+      "width_scale": 1.5,
+      "prediction_range_px": [
+        287.0,
+        578.0
+      ],
+      "accepted": 88,
+      "rejected": 6,
+      "rejection_ratio": 0.06382978723404255,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 2.5,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.8000000000000007,
+      "detector_ms": {
+        "mean": 1.0754972823302855,
+        "p95": 1.303169911261648,
+        "max": 1.607599901035428
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "scale_2",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 62,
+          "rejected": 2,
+          "incorrect": 0,
+          "max_error_px": 3.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 25,
+          "rejected": 5,
+          "incorrect": 0,
+          "max_error_px": 2.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 6.0,
+      "width_scale": 2.0,
+      "prediction_range_px": [
+        383.0,
+        770.0
+      ],
+      "accepted": 87,
+      "rejected": 7,
+      "rejection_ratio": 0.07446808510638298,
+      "incorrect": 0,
+      "mistake_examples": [],
+      "max_error_px": 3.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.3333333333333357,
+      "detector_ms": {
+        "mean": 1.6264345475726507,
+        "p95": 1.8979401211254299,
+        "max": 2.0745000801980495
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "bright_combination",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 53,
+          "rejected": 11,
+          "incorrect": 53,
+          "max_error_px": 45.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 30,
+          "max_error_px": 197.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        148.0,
+        193.0
+      ],
+      "accepted": 83,
+      "rejected": 11,
+      "rejection_ratio": 0.11702127659574468,
+      "incorrect": 83,
+      "mistake_examples": [
+        {
+          "frame": 30,
+          "source_seconds": 4.0,
+          "length": 187.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 38,
+          "source_seconds": 4.266666666666667,
+          "length": 187.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 46,
+          "source_seconds": 4.533333333333333,
+          "length": 187.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 54,
+          "source_seconds": 4.8,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 62,
+          "source_seconds": 5.066666666666666,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 70,
+          "source_seconds": 5.333333333333334,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 78,
+          "source_seconds": 5.6,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 86,
+          "source_seconds": 5.866666666666667,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 94,
+          "source_seconds": 6.133333333333333,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 102,
+          "source_seconds": 6.4,
+          "length": 188.0,
+          "gt_length_px": 193.0
+        }
+      ],
+      "max_error_px": 197.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 1.3333333333333321,
+      "detector_ms": {
+        "mean": 0.6277554626153274,
+        "p95": 0.7632899796590209,
+        "max": 1.0118000209331512
+      }
+    },
+    {
+      "id": "hp_footage_2",
+      "algorithm": "structural",
+      "augmentation": "dark_combination",
+      "interval_seconds": 0.25,
+      "decoded_frames": 863,
+      "evaluated_frames": 94,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "accepted": 61,
+          "rejected": 3,
+          "incorrect": 4,
+          "max_error_px": 40.0
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "accepted": 30,
+          "rejected": 0,
+          "incorrect": 30,
+          "max_error_px": 193.0
+        }
+      ],
+      "ignored_frames": 120,
+      "tolerance_px": 3.0,
+      "width_scale": 1.0,
+      "prediction_range_px": [
+        153.0,
+        197.0
+      ],
+      "accepted": 91,
+      "rejected": 3,
+      "rejection_ratio": 0.031914893617021274,
+      "incorrect": 34,
+      "mistake_examples": [
+        {
+          "frame": 502,
+          "source_seconds": 19.733333333333334,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 510,
+          "source_seconds": 20.0,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 518,
+          "source_seconds": 20.266666666666666,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 526,
+          "source_seconds": 20.533333333333335,
+          "length": 153.0,
+          "gt_length_px": 193.0
+        },
+        {
+          "frame": 630,
+          "source_seconds": 24.0,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 638,
+          "source_seconds": 24.266666666666666,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 646,
+          "source_seconds": 24.533333333333335,
+          "length": 193.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 654,
+          "source_seconds": 24.8,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 662,
+          "source_seconds": 25.066666666666666,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        },
+        {
+          "frame": 670,
+          "source_seconds": 25.333333333333332,
+          "length": 194.0,
+          "gt_length_px": 386.0
+        }
+      ],
+      "max_error_px": 193.0,
+      "first_accepted_seconds": 4.0,
+      "longest_rejection_seconds": 0.533333333333335,
+      "detector_ms": {
+        "mean": 0.6521509028971195,
+        "p95": 0.768084975425154,
+        "max": 1.061800168827176
+      }
+    }
+  ]
+}

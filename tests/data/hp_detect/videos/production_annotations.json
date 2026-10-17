@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "annotations": [
+    {
+      "id": "hp_footage_1",
+      "source_file": "hp_1.mp4",
+      "source_sha256": "da702835783f98fcf3a3c60e59af25d450d8ff2069495fe9cad5aa1e2255b634",
+      "source_size_px": [
+        720,
+        720
+      ],
+      "calibration_xywh": [
+        83,
+        30,
+        5,
+        8
+      ],
+      "fixture_crop_xywh": [
+        82,
+        22,
+        638,
+        24
+      ],
+      "left_cap_source_x": 83,
+      "outer_cap_source_x": 390,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "label": "full_limit"
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "label": "half_limit"
+        }
+      ],
+      "contains_limit_loss_gray": true,
+      "gt_constant": false,
+      "tolerance_px": 3,
+      "video": "hp_footage_1_production.mkv",
+      "video_sha256": "c2f0fc8da16cf8facbb742c7019be0734c159d14626a3c3b8eac44bec0fb3518",
+      "fps": 30.0,
+      "decoded_frame_count": 1067,
+      "reference_frames": [
+        {
+          "frame_index": 120,
+          "image": "hp_footage_1_production_frame_120.png"
+        },
+        {
+          "frame_index": 300,
+          "image": "hp_footage_1_production_frame_300.png"
+        },
+        {
+          "frame_index": 600,
+          "image": "hp_footage_1_production_frame_600.png"
+        },
+        {
+          "frame_index": 900,
+          "image": "hp_footage_1_production_frame_900.png"
+        }
+      ],
+      "codec": "FFV1",
+      "decoded_pixel_sha256": "b3a8fbc4110db1197ab4a7a2d9e81efbd4c7a3401152c6a481f6acfdd9a84c28"
+    },
+    {
+      "id": "hp_footage_2",
+      "source_file": "hp_2.mp4",
+      "source_sha256": "62bd3e050ab437e9d5bfd8c30094c8d0e256a06d8550937d9de70d6bd232e5cb",
+      "source_size_px": [
+        720,
+        720
+      ],
+      "calibration_xywh": [
+        117,
+        32,
+        5,
+        8
+      ],
+      "fixture_crop_xywh": [
+        116,
+        24,
+        604,
+        24
+      ],
+      "left_cap_source_x": 117,
+      "outer_cap_source_x": 503,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "label": "half_limit"
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "label": "full_limit"
+        }
+      ],
+      "contains_limit_loss_gray": true,
+      "gt_constant": false,
+      "tolerance_px": 3,
+      "video": "hp_footage_2_production.mkv",
+      "video_sha256": "563f728ff7d6d9a27b4dc68803361669b941edb2faae664b2244519a233721ca",
+      "fps": 30.0,
+      "decoded_frame_count": 953,
+      "reference_frames": [
+        {
+          "frame_index": 120,
+          "image": "hp_footage_2_production_frame_120.png"
+        },
+        {
+          "frame_index": 300,
+          "image": "hp_footage_2_production_frame_300.png"
+        },
+        {
+          "frame_index": 600,
+          "image": "hp_footage_2_production_frame_600.png"
+        },
+        {
+          "frame_index": 900,
+          "image": "hp_footage_2_production_frame_900.png"
+        }
+      ],
+      "codec": "FFV1",
+      "decoded_pixel_sha256": "36eb0c0999795ef3bfb15658fa6a85a6288c5510f582a827decb41962229f405"
+    },
+    {
+      "id": "pink_complex",
+      "source_file": "2026-10-16 20-19-02.mp4",
+      "source_sha256": "4e4b2e872d436447513cd91264671ae03b77f2ba89787e2fddadbf7f550e2b3e",
+      "source_size_px": [
+        1920,
+        1080
+      ],
+      "calibration_xywh": [
+        18,
+        16,
+        5,
+        10
+      ],
+      "fixture_crop_xywh": [
+        18,
+        6,
+        1250,
+        30
+      ],
+      "left_cap_source_x": 18,
+      "outer_cap_source_x": 443,
+      "gt_length_px": 425,
+      "fill_types": [
+        "red",
+        "pink",
+        "empty"
+      ],
+      "video": "hp_pink_complex.mkv",
+      "video_sha256": "d5540d4d816ac26e32b9de3424eeea9b85547d1518e86b7eb92c76c87a30e9b7",
+      "fps": 30.0,
+      "decoded_frame_count": 1835,
+      "contains_limit_loss_gray": false,
+      "tolerance_px": 3,
+      "gt_constant": true,
+      "reference_frames": [
+        {
+          "frame_index": 0,
+          "image": "hp_pink_complex_frame_0.png"
+        },
+        {
+          "frame_index": 366,
+          "image": "hp_pink_complex_frame_366.png"
+        },
+        {
+          "frame_index": 952,
+          "image": "hp_pink_complex_frame_952.png"
+        },
+        {
+          "frame_index": 1296,
+          "image": "hp_pink_complex_frame_1296.png"
+        },
+        {
+          "frame_index": 1834,
+          "image": "hp_pink_complex_frame_1834.png"
+        }
+      ],
+      "codec": "FFV1",
+      "decoded_pixel_sha256": "9ca596b0a19544f8019832cb165162d0ab0ceecb64a3e3faefd611e60e8c20b1",
+      "gt_segments": [
+        {
+          "source_start_seconds": 0,
+          "source_end_seconds": 61.166666666666664,
+          "gt_length_px": 425,
+          "label": "constant_limit"
+        }
+      ]
+    },
+    {
+      "id": "yellow_complex",
+      "source_file": "hp_3.mp4",
+      "source_sha256": "c30adfe9e022ec0ca231e570968c4a491534915952f93fbde7cfe96b5c36e9d8",
+      "source_size_px": [
+        720,
+        720
+      ],
+      "calibration_xywh": [
+        9,
+        12,
+        5,
+        10
+      ],
+      "fixture_crop_xywh": [
+        8,
+        2,
+        712,
+        30
+      ],
+      "left_cap_source_x": 9,
+      "outer_cap_source_x": 329,
+      "gt_length_px": 320,
+      "fill_types": [
+        "red",
+        "yellow",
+        "empty"
+      ],
+      "video": "hp_yellow_complex.mkv",
+      "video_sha256": "9b031a6cb4b8c12b5f759c8acec66f4947a9bde2ef09e2a6bd917d26b066fb38",
+      "fps": 30.0,
+      "decoded_frame_count": 1404,
+      "contains_limit_loss_gray": false,
+      "tolerance_px": 3,
+      "gt_constant": true,
+      "reference_frames": [
+        {
+          "frame_index": 0,
+          "image": "hp_yellow_complex_frame_0.png"
+        },
+        {
+          "frame_index": 234,
+          "image": "hp_yellow_complex_frame_234.png"
+        },
+        {
+          "frame_index": 936,
+          "image": "hp_yellow_complex_frame_936.png"
+        },
+        {
+          "frame_index": 1403,
+          "image": "hp_yellow_complex_frame_1403.png"
+        }
+      ],
+      "codec": "FFV1",
+      "decoded_pixel_sha256": "a17eaab5e8e713b7d0675986dbba1e15f7934c3db617a6be8da70bb200d53750",
+      "gt_segments": [
+        {
+          "source_start_seconds": 0,
+          "source_end_seconds": 46.8,
+          "gt_length_px": 320,
+          "label": "constant_limit"
+        }
+      ]
+    }
+  ]
+}

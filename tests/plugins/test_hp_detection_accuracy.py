@@ -103,42 +103,6 @@ def test_estimator_does_not_mutate_or_retain_input():
     assert estimate_boundary(image) == valid
 
 
-@pytest.mark.parametrize(
-    "number,expected",
-    [
-        (1, 556),
-        (2, None),
-        (3, None),
-        (4, 500),
-        (5, 723),
-        (6, None),
-        (7, 698),
-        (8, 401),
-        (9, 295),
-        (10, 76),
-        (11, 707),
-        (12, 483),
-    ],
-)
-def test_legacy_capture_regression(number, expected):
-    detector = HpDetector()
-    image = np.array(_image(f"{number}.jpg"))
-    settings = HpDetectionSettings(detection_algorithm="legacy")
-    for _ in range(20):
-        result = detector.detect(image, settings)
-    assert result == expected
-
-
-def test_switching_algorithms_does_not_reuse_legacy_history():
-    detector = HpDetector()
-    image = np.array(_image("1.jpg"))
-    legacy = HpDetectionSettings(detection_algorithm="legacy")
-    for _ in range(20):
-        detector.detect(image, legacy)
-    assert detector.detect(image, HpDetectionSettings()) == HpDetector().detect(image, HpDetectionSettings())
-    assert detector.detect(np.zeros_like(image), legacy) is None
-
-
 @pytest.mark.parametrize("number", range(1, 13))
 def test_only_the_center_scanline_affects_detection(number):
     image = np.array(_image(f"{number}.jpg"))

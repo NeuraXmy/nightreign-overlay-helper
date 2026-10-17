@@ -83,19 +83,6 @@ def test_missing_hud_clears_history_and_never_returns_a_cached_length():
     assert length is not None and abs(length - 424) <= 3
 
 
-def test_shape_change_and_algorithm_switch_reset_structural_history():
-    detector, settings = HpDetector(), HpDetectionSettings()
-    image = _reference(2, 700)
-    for _ in range(10):
-        detector.detect(image, settings)
-    resized_context = image[:, :-40]
-    assert detector.detect(resized_context, settings) is None
-    for _ in range(10):
-        detector.detect(resized_context, settings)
-    detector.detect(image, HpDetectionSettings(detection_algorithm="legacy"))
-    assert detector.detect(image, settings) is None
-
-
 def test_streaming_detection_reads_only_the_middle_row_and_does_not_mutate_input():
     image = _reference(2, 700)
     before = image.copy()

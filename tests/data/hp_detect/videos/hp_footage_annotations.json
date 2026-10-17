@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "pixel_format": "RGB24",
+  "codec": "FFV1",
+  "tolerance_px": 3,
+  "max_rejection_ratio": 0.5,
+  "max_rejection_seconds": 5.0,
+  "annotations": [
+    {
+      "id": "hp_footage_1",
+      "source_file": "hp_1.mp4",
+      "source_sha256": "da702835783f98fcf3a3c60e59af25d450d8ff2069495fe9cad5aa1e2255b634",
+      "video": "hp_footage_1.mkv",
+      "video_sha256": "f967b3c6073d563ea0bcbef8e0accc511d09e6ab9b49b9e30a2c81f0045c06a4",
+      "fps": 30.0,
+      "source_frame_count": 1067,
+      "discarded_source_frames": [
+        0,
+        89
+      ],
+      "source_start_seconds": 3.0,
+      "decoded_frame_count": 977,
+      "crop_xywh": [
+        75,
+        20,
+        355,
+        24
+      ],
+      "gt_origin_x": 8,
+      "gt_start_x": 8,
+      "gt_end_x": 315,
+      "gt_length_px": 307,
+      "gt_segments": [
+        {
+          "source_start_seconds": 3.0,
+          "source_end_seconds": 26.0,
+          "gt_length_px": 307,
+          "label": "full_limit"
+        },
+        {
+          "source_start_seconds": 29.0,
+          "source_end_seconds": 35.5667,
+          "gt_length_px": 154,
+          "label": "half_limit"
+        }
+      ],
+      "gt_image": "hp_footage_1_gt.png",
+      "annotation_image": "hp_footage_1_annotation.png",
+      "reference_frames": [
+        {
+          "source_frame_index": 120,
+          "fixture_frame_index": 30,
+          "image": "hp_footage_1_frame_120.png"
+        },
+        {
+          "source_frame_index": 300,
+          "fixture_frame_index": 210,
+          "image": "hp_footage_1_frame_300.png"
+        },
+        {
+          "source_frame_index": 600,
+          "fixture_frame_index": 510,
+          "image": "hp_footage_1_frame_600.png"
+        },
+        {
+          "source_frame_index": 900,
+          "fixture_frame_index": 810,
+          "image": "hp_footage_1_frame_900.png"
+        }
+      ],
+      "annotation_method": "The stable pre-transition endpoint is the full-limit GT. The stable post-transition endpoint is half the full usable length. Ignore the 27-29 second expanded transition interval. GT is measured from the left cap, so the evaluator removes the crop's 8-pixel left inset from detector coordinates. Allow +/-3 pixels."
+    },
+    {
+      "id": "hp_footage_2",
+      "source_file": "hp_2.mp4",
+      "source_sha256": "62bd3e050ab437e9d5bfd8c30094c8d0e256a06d8550937d9de70d6bd232e5cb",
+      "video": "hp_footage_2.mkv",
+      "video_sha256": "e7cc168d43e9a608ad0437842aa561e0e3e7a8c40a068e10ec85debcd6cd140c",
+      "fps": 30.0,
+      "source_frame_count": 954,
+      "discarded_source_frames": [
+        0,
+        89
+      ],
+      "source_start_seconds": 3.0,
+      "decoded_frame_count": 863,
+      "crop_xywh": [
+        105,
+        22,
+        435,
+        24
+      ],
+      "gt_origin_x": 12,
+      "gt_start_x": 12,
+      "gt_end_x": 205,
+      "gt_length_px": 193,
+      "gt_segments": [
+        {
+          "source_start_seconds": 4.0,
+          "source_end_seconds": 21.0,
+          "gt_length_px": 193,
+          "label": "half_limit"
+        },
+        {
+          "source_start_seconds": 24.0,
+          "source_end_seconds": 31.7667,
+          "gt_length_px": 386,
+          "label": "full_limit"
+        }
+      ],
+      "gt_image": "hp_footage_2_gt.png",
+      "annotation_image": "hp_footage_2_annotation.png",
+      "reference_frames": [
+        {
+          "source_frame_index": 120,
+          "fixture_frame_index": 30,
+          "image": "hp_footage_2_frame_120.png"
+        },
+        {
+          "source_frame_index": 300,
+          "fixture_frame_index": 210,
+          "image": "hp_footage_2_frame_300.png"
+        },
+        {
+          "source_frame_index": 600,
+          "fixture_frame_index": 510,
+          "image": "hp_footage_2_frame_600.png"
+        },
+        {
+          "source_frame_index": 750,
+          "fixture_frame_index": 660,
+          "image": "hp_footage_2_frame_750.png"
+        },
+        {
+          "source_frame_index": 900,
+          "fixture_frame_index": 810,
+          "image": "hp_footage_2_frame_900.png"
+        }
+      ],
+      "annotation_method": "The stable half-limit segment uses the existing 193-pixel GT. The stable full-limit segment is twice that width. Ignore 3-4 seconds around the 2-3 second limit decrease and 21-24 seconds around the 22-23 second restoration. GT is measured from the left cap, so the evaluator removes the crop's 12-pixel left inset from detector coordinates. Allow +/-3 pixels."
+    }
+  ]
+}
