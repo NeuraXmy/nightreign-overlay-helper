@@ -1,0 +1,3 @@
+plugin:
+  name: 音声通知
+  description: ローカル通知音声の共通プレーヤー

@@ -26,3 +26,7 @@ settings:
   threshold:
     title: Match threshold
     content: Accept icon matches below this error; lower is stricter
+
+audio:
+  start: Art countdown begins
+  end: Art countdown ends

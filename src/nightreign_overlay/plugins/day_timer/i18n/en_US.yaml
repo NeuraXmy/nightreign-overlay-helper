@@ -52,3 +52,10 @@ settings:
   threshold:
     title: DAY X match threshold
     content: Lower values require a closer match
+
+audio:
+  day1: DAY I begins
+  day2: DAY II begins
+  day3: DAY III begins
+  first_circle: First circle approaching (each day)
+  second_circle: Second circle approaching (each day)

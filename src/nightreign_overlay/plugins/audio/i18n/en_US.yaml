@@ -1,0 +1,3 @@
+plugin:
+  name: Audio notifications
+  description: Shared local notification audio player

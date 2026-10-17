@@ -53,3 +53,7 @@ settings:
   max_area_percent:
     title: Main-color area threshold
     content: Treat the HP bar as this color once its area ratio reaches this value
+
+audio:
+  start: Nightrain begins
+  end: Nightrain ends

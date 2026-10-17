@@ -26,3 +26,7 @@ settings:
   threshold:
     title: 一致判定のしきい値
     content: アイコンの誤差がこの値未満なら認識成功。小さいほど厳密
+
+audio:
+  start: アーツカウントダウン開始
+  end: アーツカウントダウン終了

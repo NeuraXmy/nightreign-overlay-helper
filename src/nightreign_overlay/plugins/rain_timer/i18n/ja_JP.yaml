@@ -53,3 +53,7 @@ settings:
   max_area_percent:
     title: 主な色の面積しきい値
     content: その色の面積比率がこの値に達したら、HPバーをその色と判定
+
+audio:
+  start: 夜の雨開始
+  end: 夜の雨終了

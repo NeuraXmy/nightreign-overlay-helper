@@ -164,6 +164,18 @@ input_dialog:
   cancel: 取消
   confirm: 确认
 
+audio:
+  title: 音频播报
+  volume: 音量
+  unset: 音频未设置
+  select: 选择本地音频
+  change: 更换音频
+  clear: 清空音频
+  delay: 延迟时间
+  advance: 提前时间
+  test: 播放测试
+  filter: 音频文件 (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;所有文件 (*)
+
 overlay_settings:
   title: 主悬浮窗
   opacity:

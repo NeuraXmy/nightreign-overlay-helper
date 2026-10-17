@@ -13,6 +13,7 @@ from qfluentwidgets import FluentIcon, MessageBox, SettingCard
 from nightreign_overlay.core.config import ConfigItem
 from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
+from nightreign_overlay.plugins.audio.api import AudioNotifications
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -32,6 +33,7 @@ from nightreign_overlay.ui.components import (
     SettingSection,
     SettingsPanel,
 )
+from nightreign_overlay.ui.components.audio_settings import audio_section
 
 _REGION_KEY = "rain_timer.hp_region"
 _TOGGLE = "rain_timer.toggle"
@@ -109,12 +111,13 @@ class RainTimerPlugin(Plugin):
         id="rain_timer",
         kind=PluginKind.FEATURE,
         icon="CLOUD",
-        requires=("capture", "hud", "input", "region"),
+        requires=("capture", "hud", "input", "region", "audio"),
         order=10,
     )
 
     def on_load(self) -> None:
         self.config = self.ctx.config(RainTimerConfig)
+        self._audio = AudioNotifications(self.ctx, ("start", "end"))
         self._started: float | None = None
         self._hud: HudTimerBar | None = None
         self._calibrating = False
@@ -140,6 +143,8 @@ class RainTimerPlugin(Plugin):
         self.ctx.on_cleanup(self._clock.stop)
 
     def on_deactivate(self) -> None:
+        self._audio.reset()
+        self._started = None
         self._hud = None
 
     def _watch_config(self) -> None:
@@ -229,11 +234,14 @@ class RainTimerPlugin(Plugin):
     # -- countdown ----------------------------------------------------------------------------
 
     def _start(self) -> None:
+        self._audio.reset()
         self._started = time.monotonic()
         self.ctx.log.info("Started in rain.")
         self._update_timer()
 
     def _stop(self) -> None:
+        if self._started is not None:
+            self._audio.timeline.fire("end", self._audio.cues["end"])
         self._started = None
         self.ctx.log.info("Stopped in rain.")
         self._update_timer()
@@ -247,6 +255,14 @@ class RainTimerPlugin(Plugin):
             self.ctx.log.info("Stopped in rain by %s.", source)
 
     def _update_timer(self) -> None:
+        if self._started is not None:
+            self._audio.update(
+                time.monotonic() - self._started,
+                {
+                    "start": self._audio.cues["start"].seconds.value,
+                    "end": self.config.duration_seconds.value - self._audio.cues["end"].seconds.value,
+                },
+            )
         if self._hud is None:
             return
         if self._started is None:
@@ -405,9 +421,11 @@ class RainTimerPlugin(Plugin):
         panel.addSection(basic)
         panel.addSection(color)
         panel.addSection(advanced)
+        panel.addSection(audio_section(self._audio, ("end",)))
         return panel
 
     def reset_settings(self) -> None:
+        self._audio.reset()
         super().reset_settings()
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action in _HOTKEYS:

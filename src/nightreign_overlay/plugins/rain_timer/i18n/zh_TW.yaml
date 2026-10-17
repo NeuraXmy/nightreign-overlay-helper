@@ -53,3 +53,7 @@ settings:
   max_area_percent:
     title: 主顏色面積最大占比
     content: 某顏色的面積占比達到此值時，視血條為該顏色
+
+audio:
+  start: 雨中冒險開始
+  end: 雨中冒險結束
