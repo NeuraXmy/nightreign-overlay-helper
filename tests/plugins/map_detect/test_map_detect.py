@@ -24,7 +24,12 @@ from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
 from nightreign_overlay.plugins.map_detect.detector import MapDetectResult
 from nightreign_overlay.plugins.map_detect.manual_catalog import PoiChoice
 from nightreign_overlay.plugins.map_detect.plugin import MapDetectPlugin, MatchFlag, _Job
-from nightreign_overlay.ui.components import ConfigChoiceCard, ConfigDoubleSpinCard, HotkeySettingCard
+from nightreign_overlay.ui.components import (
+    ConfigChoiceCard,
+    ConfigDoubleSpinCard,
+    ConfigRangeCard,
+    HotkeySettingCard,
+)
 from nightreign_overlay.ui.overlay import OverlayManager
 from tests.support.feature_fakes import FeatureServices, solid_image
 from tests.support.platform import FakeBackend
@@ -129,6 +134,16 @@ def test_lifecycle_settings_and_resources(maps):
     for card in hotkey_cards.values():
         assert card.parent() is shortcut_section
         assert card.findChildren(QPushButton) == [card.captureButton]
+    width_card = next(
+        card for card in panel.findChildren(ConfigRangeCard) if card.item.key == "english_text_width_percent"
+    )
+    assert width_card.parent() is calibration.parent()
+    assert width_card.slider.minimum() == 10 and width_card.slider.maximum() == 100
+    assert width_card.slider.value() == 50 and width_card.valueLabel.text() == "50%"
+    width_card.slider.setValue(75)
+    assert plugin.config.snapshot().english_text_width_percent == 75
+    plugin.config.english_text_width_percent.reset()
+    assert width_card.slider.value() == 50 and width_card.valueLabel.text() == "50%"
     assert plugin.config.return_topk.value == 3
     plugin.on_activate()
     overlay = plugin._overlay

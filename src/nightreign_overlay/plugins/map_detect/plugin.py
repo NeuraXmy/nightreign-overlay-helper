@@ -868,6 +868,13 @@ class MapDetectPlugin(Plugin):
                 self.ctx.tr("settings.topk.title"),
                 self.ctx.tr("settings.topk.content"),
             ),
+            ConfigRangeCard(
+                self.config.english_text_width_percent,
+                FluentIcon.FONT,
+                self.ctx.tr("settings.english_text_width.title"),
+                self.ctx.tr("settings.english_text_width.content"),
+                formatter=lambda value: f"{value}%",
+            ),
         )
         panel.addSection(basic)
         panel.addSection(shortcuts)

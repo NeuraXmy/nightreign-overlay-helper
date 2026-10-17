@@ -1,0 +1,4 @@
+settings:
+  english_text_width:
+    title: 英文地標文字寬度
+    content: 英文地圖地標文字的橫向寬度，預設為 50%，100% 為原始寬度；維持文字高度與標註位置。下次辨識時生效。
