@@ -127,9 +127,9 @@ class ConfigChoiceCard(_ConfigCard):
 
 
 _DEVICE_LABELS = {
-    InputDevice.KEYBOARD: "Keyboard",
-    InputDevice.MOUSE: "Mouse",
-    InputDevice.JOYSTICK: "Controller",
+    InputDevice.KEYBOARD: "input_dialog.device.keyboard",
+    InputDevice.MOUSE: "input_dialog.device.mouse",
+    InputDevice.JOYSTICK: "input_dialog.device.controller",
 }
 #: Controller labels from the legacy tool; unknown buttons fall back to ``Btn<index>``.
 _JOYSTICK_KEY_LABELS = {
@@ -166,7 +166,7 @@ def _format_binding(binding: HotkeyBinding) -> str:
     if not binding.enabled:
         return tr("input_dialog.unset")
     device: InputDevice = binding.device  # type: ignore[assignment]
-    return f"{_DEVICE_LABELS[device]}: {' + '.join(_format_key(device, key) for key in binding.keys)}"
+    return f"{tr(_DEVICE_LABELS[device])}: {' + '.join(_format_key(device, key) for key in binding.keys)}"
 
 
 class _HotkeySettingDialog(QDialog):

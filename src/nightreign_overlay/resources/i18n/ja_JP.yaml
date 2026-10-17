@@ -116,10 +116,11 @@ settings:
   log_dir:
     title: ログフォルダー
   diagnostic_export:
+    feedback_email: nroh-report@qq.com
     title: ログとデバッグ画像をまとめる
     content: 問題の説明と画像を添えて、報告用の ZIP をエクスポートします
     button: 作成
-    hint: 保存済みのログ、デバッグ画像、認識メタデータを自動で収集します。説明や画像を追加し、作成した ZIP を問題報告に添付してください。
+    hint: 既存のログ、デバッグ画像、認識メタデータを自動収集します。エクスポート後、ZIP を {email} にメールで送信してください。ZIP を送信できない場合は拡張子を .txt に変更して送信してください。
     description: "問題の説明（任意）：何が起きましたか？再現手順、発生時刻、ゲームの解像度、関連設定などを記入してください。"
     attachments: 添付画像（任意）
     add_images: 画像を追加
@@ -129,7 +130,7 @@ settings:
     cancel: キャンセル
     working: 作成中です。お待ちください…
     failed: "作成できませんでした。ファイルの読み取りとディスクへの書き込みが可能か確認し、再試行してください。\n{error}"
-    success: "{count} 個のファイルをエクスポートしました。この ZIP を問題報告に添付してください。\n{path}"
+    success: "{count} 個のファイルをエクスポートしました。ZIP を {email} にメールで送信してください。ZIP を送信できない場合は拡張子を .txt に変更して送信してください。\n{path}"
     skipped: "作成中に削除された {count} 個のファイルを除外しました。詳細は manifest.json を参照してください。"
     open_directory: 保存先フォルダーを開く
     close: 閉じる
@@ -168,8 +169,12 @@ overlay:
     quit: 終了
 
 input_dialog:
+  device:
+    keyboard: キーボード
+    mouse: マウス
+    controller: コントローラー
   title: ショートカットを設定
-  hint: キーボード、マウス、またはコントローラーの組み合わせを押してください。最初の入力でデバイス種類が固定されます。
+  hint: キーボード、マウス、またはコントローラーの組み合わせを押してください。最初の入力でデバイス種別が固定されます。
   waiting: 入力待ち…
   unset: ショートカット未設定
   clear: クリア

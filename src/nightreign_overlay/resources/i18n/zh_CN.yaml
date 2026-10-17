@@ -12,17 +12,17 @@ nav:
   about: 关于
 
 home:
-  subtitle: 《艾尔登法环 黑夜君临》悬浮窗辅助工具
+  subtitle: 《艾尔登法环 黑夜君临》悬浮助手
   version: "版本 {version}"
   status:
     title: 运行状态
     game: 游戏窗口
-    game_unsupported: 当前平台不支持检测（视为前台）
+    game_unsupported: 当前平台不支持检测
     game_foreground: 位于前台
     game_background: 未在前台
     overlay: 悬浮窗显示方式
     overlay_transparent: 透明悬浮窗
-    overlay_window: 普通窗口（兼容模式）
+    overlay_window: 普通窗口
     plugins: 功能
     plugins_value: "{active} / {total} 个运行中"
   plugins:
@@ -73,17 +73,14 @@ settings:
     title: 通用
   language:
     title: 语言
-    content: 界面显示语言，修改后需要重启生效
     auto: 跟随系统
   theme:
     title: 主题
-    content: 主界面的明暗主题
     dark: 深色
     light: 浅色
     auto: 跟随系统
   theme_color:
     title: 主题色
-    content: 主界面的强调色
   overlay:
     title: 悬浮窗
   overlay_mode:
@@ -105,21 +102,21 @@ settings:
     content: 启动后不显示主界面，只显示托盘图标
   debug_images:
     title: 保存调试图片
-    content: 开启后保存检测调试图片和识别元数据；默认开启
+    content: 开启后保存检测调试图片和识别元数据以供问题反馈
   advanced:
     title: 高级
   log_level:
     title: 日志级别
-    content: 反馈问题时建议设置为 DEBUG
   data_dir:
     title: 数据目录
   log_dir:
     title: 日志目录
   diagnostic_export:
-    title: 打包日志与调试图片
+    feedback_email: nroh-report@qq.com
+    title: 问题反馈
     content: 填写问题描述、附加图片，并导出用于反馈的 ZIP 压缩包
-    button: 打包
-    hint: 自动收集现有日志、调试图片和识别元数据。可以补充问题描述和图片，导出后请将 ZIP 附在问题反馈中。
+    button: 反馈
+    hint: 自动收集现有日志、调试图片和识别元数据。导出后请将 ZIP 以邮件形式发送到 {email}。若无法发送 ZIP，可将后缀名改为 .txt 后再发送。
     description: "问题描述（可选）：发生了什么？如何复现？可以填写出现时间、游戏分辨率及相关设置。"
     attachments: 附加图片（可选）
     add_images: 添加图片
@@ -129,7 +126,7 @@ settings:
     cancel: 取消
     working: 正在打包，请稍候…
     failed: "打包失败，请检查文件是否可读取、磁盘是否可写后重试。\n{error}"
-    success: "已导出 {count} 个文件。请将 ZIP 附在问题反馈中。\n{path}"
+    success: "已导出 {count} 个文件。请将 ZIP 以邮件形式发送到 {email}。若无法发送 ZIP，可将后缀名改为 .txt 后再发送。\n{path}"
     skipped: "有 {count} 个文件在打包时已被清理，未包含在压缩包中，详见 manifest.json。"
     open_directory: 打开所在目录
     close: 关闭
@@ -142,7 +139,7 @@ about:
   project:
     title: 项目
     repo_button: 访问仓库
-    repo_content: "版本 {version} · 开源项目，欢迎 Star"
+    repo_content: "版本 {version}"
     feedback_title: 问题反馈
     feedback_content: 遇到问题或有建议？欢迎提交 Issue
     feedback_button: 提交反馈
@@ -168,6 +165,10 @@ overlay:
     quit: 退出程序
 
 input_dialog:
+  device:
+    keyboard: 键盘
+    mouse: 鼠标
+    controller: 手柄
   title: 设置快捷键
   hint: 请按下键盘、鼠标或手柄组合键；首次输入会锁定设备类型。
   waiting: 等待输入…
@@ -180,19 +181,15 @@ overlay_settings:
   title: 悬浮窗
   opacity:
     title: 不透明度
-    content: 悬浮窗整体的不透明度
   scale:
     title: 缩放
-    content: 悬浮窗内容的大小
   input_mode:
     title: 鼠标交互
-    content: 控制鼠标是否可以拖动悬浮窗或穿透到下方窗口（仅透明悬浮窗模式完全穿透）。
+    content: 控制鼠标是否可以拖动悬浮窗或穿透到下方窗口
     normal: 不穿透
     locked: 仅锁定位置
     passthrough: 完全穿透
   reset_position:
     title: 重置位置
-    content: 将悬浮窗移回屏幕顶部中央
     reset: 重置
     horizontal: 仅水平重置
-    horizontal_content: 保持当前高度，仅移回屏幕水平中央

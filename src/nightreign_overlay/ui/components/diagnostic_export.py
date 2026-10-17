@@ -47,7 +47,9 @@ class DiagnosticExportDialog(MessageBoxBase):
         self._attachments: list[Path] = []
         self.widget.setMinimumWidth(520)
         self.viewLayout.addWidget(SubtitleLabel(tr("settings.diagnostic_export.title"), self))
-        hint = BodyLabel(tr("settings.diagnostic_export.hint"), self)
+        hint = BodyLabel(
+            tr("settings.diagnostic_export.hint", email=tr("settings.diagnostic_export.feedback_email")), self
+        )
         hint.setWordWrap(True)
         self.viewLayout.addWidget(hint)
         self.descriptionEdit = TextEdit(self)
@@ -131,7 +133,12 @@ class DiagnosticExportDialog(MessageBoxBase):
             self.statusLabel.setText(tr("settings.diagnostic_export.failed", error=error))
             return
         self.statusLabel.setText(
-            tr("settings.diagnostic_export.success", path=result.path, count=result.file_count)
+            tr(
+                "settings.diagnostic_export.success",
+                path=result.path,
+                count=result.file_count,
+                email=tr("settings.diagnostic_export.feedback_email"),
+            )
         )
         if result.skipped:
             self.statusLabel.setText(
