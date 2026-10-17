@@ -194,6 +194,9 @@ class ManualFilterOverlay(OverlayWindow):
     def show_select_earth_shifting(self) -> None:
         self._show_status(self._tr("manual_filter.select_earth_shifting"), "#ff4242")
 
+    def show_entry_recognizing(self) -> None:
+        self._show_status(self._tr("manual_filter.recognizing_entry"), "white")
+
     def show_candidate_count(self, count: int, can_apply: bool = False) -> None:
         self._show_status(self._tr("manual_filter.remaining_candidates", count=count), "white", can_apply)
 
