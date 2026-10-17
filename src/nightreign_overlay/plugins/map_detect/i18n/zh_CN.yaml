@@ -18,6 +18,7 @@ manual_filter:
   auto_recognize: 自动识别
   empty: 空
   select_earth_shifting: 请选择特殊地形
+  recognizing_entry: 正在识别特殊地形和夜王...
   remaining_candidates: "剩余候选地图数量：{count}"
   apply_now: 立刻应用
   no_match: 筛选为空，请重新设置

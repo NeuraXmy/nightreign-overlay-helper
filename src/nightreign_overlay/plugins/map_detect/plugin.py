@@ -304,7 +304,9 @@ class MapDetectPlugin(Plugin):
         self._manual_overlay.set_catalog(self._manual_catalog)
         self._manual_overlay.reset_selection()
         self._manual_overlay.set_map_region(self._region)
-        self._manual_overlay.set_map_open(self._current_is_full_map or self._force_display)
+        # The manual filter must be visible immediately while the entry
+        # recognition runs in the background.
+        self._manual_overlay.set_map_open(True)
         self._overlay.set_suppressed(True)
         self._manual_overlay.show_overlay()
         if self._controls is not None:
@@ -315,30 +317,41 @@ class MapDetectPlugin(Plugin):
         if self._manual_entry_recognition or self._manual_overlay is None:
             return
         self._manual_entry_recognition = True
-        self._manual_overlay.set_capture_hidden(True)
+        self._manual_overlay.show_entry_recognizing()
         revision = self._manual_revision
         QTimer.singleShot(150, lambda: self._capture_manual_entry(revision))
 
     def _capture_manual_entry(self, revision: int) -> None:
         if not self._manual_filtering or revision != self._manual_revision or self._region is None:
+            if self._manual_filtering and revision == self._manual_revision and self._manual_overlay is not None:
+                self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
         current_region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
         if current_region is None or current_region != self._region:
+            if self._manual_overlay is not None:
+                self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
         self._manual_capture_in_progress = True
+        self._manual_overlay.set_capture_hidden(True)
         self.ctx.services.require(CaptureApi).request_frame(
             lambda frame: self._on_manual_entry_frame(frame, revision, current_region)
         )
 
     def _on_manual_entry_frame(self, frame: FrameCaptured | None, revision: int, region: QRect) -> None:
         self._manual_capture_in_progress = False
+        if self._manual_overlay is not None:
+            self._manual_overlay.set_capture_hidden(False)
         if frame is None or not self._manual_filtering or revision != self._manual_revision:
+            if self._manual_overlay is not None:
+                self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
         image = crop_rgb(frame.image, region)
         if image is None or image.shape[:2] != (region.height(), region.width()):
+            if self._manual_overlay is not None:
+                self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
         self._submit(_Job(self._generation, region.getRect(), image, frame.hdr, self.config.snapshot(), self.config.return_topk.value, "entry_check", frame.captured_at, manual_revision=revision))
@@ -690,7 +703,11 @@ class MapDetectPlugin(Plugin):
             return
         current_region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
         if current_region is None or current_region.getRect() != job.region:
-            if job.stage == "poi":
+            if job.stage.startswith("entry_"):
+                if self._manual_overlay is not None:
+                    self._manual_overlay.show_select_earth_shifting()
+                self._finish_manual_entry_recognition()
+            elif job.stage == "poi":
                 self._abort_manual_auto_recognition()
             else:
                 self._request_match()
@@ -703,10 +720,14 @@ class MapDetectPlugin(Plugin):
                 self._manual_auto_in_flight = False
                 self._manual_overlay.set_auto_recognizing(None)
             if job.stage.startswith("entry_"):
+                if self._manual_overlay is not None:
+                    self._manual_overlay.show_select_earth_shifting()
                 self._finish_manual_entry_recognition()
             return
         if job.stage == "entry_check":
             if not result.is_full_map:
+                if self._manual_overlay is not None:
+                    self._manual_overlay.show_select_earth_shifting()
                 self._finish_manual_entry_recognition()
             else:
                 if self._manual_overlay is not None:
@@ -715,8 +736,12 @@ class MapDetectPlugin(Plugin):
             return
         if job.stage == "entry_terrain":
             if result.earth_shifting is None:
+                if self._manual_overlay is not None:
+                    self._manual_overlay.show_select_earth_shifting()
                 self._finish_manual_entry_recognition()
             else:
+                if self._manual_overlay is not None:
+                    self._manual_overlay.set_recognized_parameters(result.earth_shifting, None)
                 self._submit(_Job(self._generation, job.region, job.image, job.hdr, job.settings, job.topk, "entry_boss", job.captured_at, manual_revision=job.manual_revision, earth_shifting=result.earth_shifting))
             return
         if job.stage == "entry_boss":
