@@ -100,6 +100,16 @@ settings:
     title: 資料目錄
   log_dir:
     title: 日誌目錄
+  files:
+    title: 管理設定檔案
+    content: 匯入或匯出所有設定（YAML），匯入後立即重新啟動程式
+    import: 匯入
+    export: 匯出
+    cancel: 取消
+    filter: YAML 設定檔案 (*.yaml *.yml)
+    confirm: 目前所有設定將遺失，並由所選檔案中的設定取代。匯入成功後程式將立即重新啟動。是否繼續？
+    export_success: 已匯出所有設定。
+    failed: 操作失敗，請檢查設定檔案格式、內容及檔案讀寫權限。原有設定檔案未被取代。
   diagnostic_export:
     feedback_email: nroh-report@qq.com
     title: 問題回報

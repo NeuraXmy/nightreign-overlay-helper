@@ -18,8 +18,10 @@ Items must be modified from the GUI thread only.
 from __future__ import annotations
 
 import copy
+import math
 import os
 import re
+import tempfile
 import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -209,6 +211,8 @@ class ConfigStore(QObject):
         super().__init__(parent)
         self.path = path
         self._data: dict[str, Any] = {}
+        self._groups: list[ConfigGroup] = []
+        self._import_pending = False
         self._dirty = False
         self._save_timer = QTimer(self)
         self._save_timer.setSingleShot(True)
@@ -220,10 +224,110 @@ class ConfigStore(QObject):
         section = self._section(namespace, create=False) or {}
 
         def on_change(key: str, value: Any) -> None:
+            # Import is followed immediately by restart. Shutdown callbacks may still write old state.
+            if self._import_pending:
+                return
             self._section(namespace, create=True)[key] = copy.deepcopy(value)
             self._mark_dirty()
 
-        return group_cls(namespace, section, on_change)
+        group = group_cls(namespace, section, on_change)
+        self._groups.append(group)
+        return group
+
+    def export_file(self, path: Path) -> None:
+        """Export all namespaces, including unchanged defaults and unknown plugin settings."""
+        data = copy.deepcopy(self._data)
+        for group in self._groups:
+            section = data
+            for part in group.namespace.split("."):
+                if not isinstance(section.get(part), dict):
+                    section[part] = {}
+                section = section[part]
+            for key, item in group.items().items():
+                # The persisted document holds the latest write if a namespace was bound twice.
+                try:
+                    section[key] = item.option.normalize(section.get(key, item.value))
+                except (ValueError, TypeError, OverflowError):
+                    section[key] = copy.deepcopy(item.default)
+        self._write_document(path, data)
+
+    def read_import_file(self, path: Path) -> dict[str, Any]:
+        """Read and validate a complete replacement without modifying current settings."""
+        with path.open(encoding="utf-8-sig") as source:
+            data = yaml.safe_load(source)
+        self._validate_import(data)
+        return data
+
+    def replace_for_restart(self, data: dict[str, Any]) -> None:
+        """Atomically replace all settings, then protect them from writes during immediate restart.
+
+        Existing ConfigItems deliberately stay unchanged; callers must restart after success.
+        A failed write leaves both the running configuration and the original file intact.
+        """
+        self._validate_import(data)
+        replacement = copy.deepcopy(data)
+        self._write_document(self.path, replacement)
+        self._save_timer.stop()
+        self._data = replacement
+        self._dirty = False
+        self._import_pending = True
+
+    def _validate_import(self, data: Any) -> None:
+        if not isinstance(data, dict) or not data:
+            raise ValueError("Settings must be a non-empty YAML mapping")
+
+        def validate(value: Any, ancestors: frozenset[int] = frozenset()) -> None:
+            if isinstance(value, dict | list):
+                if id(value) in ancestors:
+                    raise ValueError("Recursive YAML aliases are not supported")
+                ancestors = ancestors | {id(value)}
+                if isinstance(value, dict):
+                    if any(not isinstance(key, str) for key in value):
+                        raise ValueError("Settings keys must be strings")
+                    values = value.values()
+                else:
+                    values = value
+                for child in values:
+                    validate(child, ancestors)
+            elif not isinstance(value, str | int | float | bool | type(None)):
+                raise ValueError("Unsupported setting value")
+            elif isinstance(value, float) and not math.isfinite(value):
+                raise ValueError("Settings numbers must be finite")
+
+        validate(data)
+        roots = {group.namespace.split(".")[0] for group in self._groups}
+        if not roots.intersection(data):
+            raise ValueError("No application settings found")
+        for group in self._groups:
+            section = data
+            for part in group.namespace.split("."):
+                section = section.get(part, {})
+                if not isinstance(section, dict):
+                    raise ValueError(f"Expected a settings mapping: {group.namespace}")
+            for key, item in group.items().items():
+                if key in section:
+                    item.option.normalize(section[key])
+
+    @staticmethod
+    def _write_document(path: Path, data: dict[str, Any]) -> None:
+        """Write beside the destination and replace it only after serialization succeeds."""
+        temporary: Path | None = None
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=path.parent,
+                prefix=f".{path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as target:
+                temporary = Path(target.name)
+                yaml.safe_dump(data, target, allow_unicode=True, sort_keys=False)
+            os.replace(temporary, path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
     def flush(self) -> None:
         """Write pending changes to disk immediately."""

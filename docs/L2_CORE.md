@@ -49,6 +49,12 @@ cfg.opacity.set(80)  # validated, persisted, emitted
 - 写入：`tmp` 文件 → `os.replace`，失败时删除 tmp。
 - 加载失败：备份为 `.broken-<timestamp>.yaml`，清空配置。
 
+### 导出与导入
+
+- `export_file(path)` 导出完整 YAML 快照，包含已绑定配置的默认值、尚未防抖落盘的修改，以及未识别插件的原始配置。
+- `read_import_file(path)` 只读取并验证文件，不修改当前设置；拒绝非法类型、非有限数值、循环别名及不含应用设置的文档。
+- `replace_for_restart(data)` 原子替换全部配置，成功后调用方必须立即重启；导入文件缺少的选项在下次启动时使用默认值。写入失败保留原设置，成功后阻止退出清理中的旧配置写回覆盖导入结果。
+
 ### INVARIANT
 
 - `ConfigItem.set()` 必须在 GUI 线程调用。

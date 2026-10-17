@@ -96,6 +96,16 @@ settings:
     title: データフォルダー
   log_dir:
     title: ログフォルダー
+  files:
+    title: 設定ファイルの管理
+    content: すべての設定を YAML 形式でインポート／エクスポートします。インポート後は直ちに再起動します
+    import: インポート
+    export: エクスポート
+    cancel: キャンセル
+    filter: YAML 設定ファイル (*.yaml *.yml)
+    confirm: 現在のすべての設定は失われ、選択したファイルの設定に置き換えられます。インポート成功後、アプリは直ちに再起動します。続行しますか？
+    export_success: すべての設定をエクスポートしました。
+    failed: 操作に失敗しました。設定ファイルの形式、内容、読み書き権限を確認してください。元の設定ファイルは変更されていません。
   diagnostic_export:
     feedback_email: nroh-report@qq.com
     title: 問題を報告
