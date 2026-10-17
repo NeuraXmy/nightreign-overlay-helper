@@ -155,6 +155,18 @@ input_dialog:
   clear: クリア
   cancel: キャンセル
   confirm: 確定
+audio:
+  title: 音声通知
+  volume: 音量
+  unset: 音声未設定
+  select: ローカル音声を選択
+  change: 音声を変更
+  clear: 音声をクリア
+  delay: 遅延時間
+  advance: 先行時間
+  test: テスト再生
+  filter: 音声ファイル (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;すべてのファイル (*)
+
 overlay_settings:
   title: メインオーバーレイ
   opacity:

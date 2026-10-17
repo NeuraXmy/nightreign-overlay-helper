@@ -12,6 +12,7 @@ from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
+from nightreign_overlay.plugins.audio.api import AudioNotifications
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.day_timer.api import (
     DayPhaseChanged,
@@ -35,6 +36,7 @@ from nightreign_overlay.ui.components import (
     SettingSection,
     SettingsPanel,
 )
+from nightreign_overlay.ui.components.audio_settings import audio_section
 
 _REGION_KEY = "day_timer.detect_region"
 _NEXT_DAY = "day_timer.next_day"
@@ -126,12 +128,13 @@ class DayTimerPlugin(Plugin):
         id="day_timer",
         kind=PluginKind.FEATURE,
         icon="STOP_WATCH",
-        requires=("capture", "hud", "input", "region"),
+        requires=("capture", "hud", "input", "region", "audio"),
         order=0,
     )
 
     def on_load(self) -> None:
         self.config = self.ctx.config(DayTimerConfig)
+        self._audio = AudioNotifications(self.ctx, ("day1", "day2", "day3", "first_circle", "second_circle"))
         self.day: int | None = None
         self.phase: Phase | None = None
         self._phase_started: float | None = None
@@ -166,6 +169,8 @@ class DayTimerPlugin(Plugin):
         self.ctx.on_cleanup(self._clock.stop)
 
     def on_deactivate(self) -> None:
+        self._audio.reset()
+        self.day = self.phase = self._phase_started = None
         self._hud = self._label = None
         self._progress.clear()
         self._detector = None
@@ -276,6 +281,7 @@ class DayTimerPlugin(Plugin):
         self.ctx.log.info("Day %d started by %s.", day, source)
 
     def _start_day(self, day: int) -> None:
+        self._audio.reset()
         self.day = day
         self.phase = _initial_phase(day)
         self._phase_started = time.monotonic()
@@ -325,6 +331,14 @@ class DayTimerPlugin(Plugin):
         now = time.monotonic()
         self._advance_phases(now)
         elapsed = now - self._phase_started
+        periods = self.config.day_period_seconds.value
+        day_elapsed = elapsed + (sum(periods[: int(self.phase)]) if self.day != 3 else 0)
+        cue = self._audio.cues[f"day{self.day}"]
+        deadlines = {f"day{self.day}": cue.seconds.value}
+        if self.day != 3:
+            deadlines["first_circle"] = periods[0] - self._audio.cues["first_circle"].seconds.value
+            deadlines["second_circle"] = sum(periods[:3]) - self._audio.cues["second_circle"].seconds.value
+        self._audio.update(day_elapsed, deadlines)
         day = "I" * self.day
         if self.day == 3:
             text = self.ctx.tr("hud.day3", day=day, elapsed=format_period(int(elapsed)))
@@ -423,9 +437,11 @@ class DayTimerPlugin(Plugin):
         panel.addSection(basic)
         panel.addSection(shortcuts)
         panel.addSection(advanced)
+        panel.addSection(audio_section(self._audio, ("first_circle", "second_circle")))
         return panel
 
     def reset_settings(self) -> None:
+        self._audio.reset()
         super().reset_settings()
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action, default in _DEFAULT_HOTKEYS.items():

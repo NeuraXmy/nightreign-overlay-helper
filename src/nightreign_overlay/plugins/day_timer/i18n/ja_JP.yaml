@@ -52,3 +52,10 @@ settings:
   threshold:
     title: DAY Xの照合しきい値
     content: 小さいほど厳密に照合
+
+audio:
+  day1: DAY I 開始
+  day2: DAY II 開始
+  day3: DAY III 開始
+  first_circle: 1回目の縮小予告（毎日共通）
+  second_circle: 2回目の縮小予告（毎日共通）

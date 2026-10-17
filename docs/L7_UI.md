@@ -155,6 +155,8 @@ def should_be_visible(self) -> bool:
 | `HotkeySettingCard` | 热键绑定 | 打开录制对话框 |
 | `MultiButtonSettingCard` | 无配置 | 一个卡片多个操作按钮 |
 
+音频设置卡片 AudioSettingCard 位于 ui/components/audio_settings.py，绑定独立 AudioCueConfig，提供音量滑块、本地文件选择／更换／清空、浮点秒数和立即测试播放。audio_section 构建功能页末尾的独立分组。
+
 ### HotkeySettingCard
 
 - 左侧显示标题/描述。

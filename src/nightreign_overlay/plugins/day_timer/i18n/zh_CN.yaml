@@ -52,3 +52,10 @@ settings:
   threshold:
     title: DAY X 模板匹配阈值
     content: 数值越小，匹配越严格
+
+audio:
+  day1: DAY I 开始
+  day2: DAY II 开始
+  day3: DAY III 开始
+  first_circle: 即将开始一缩（每天共用）
+  second_circle: 即将开始二缩（每天共用）

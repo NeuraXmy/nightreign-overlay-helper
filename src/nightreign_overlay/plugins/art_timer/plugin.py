@@ -13,11 +13,13 @@ from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
+from nightreign_overlay.plugins.audio.api import AudioNotifications
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import ConfigRangeCard, HotkeySettingCard, SettingSection, SettingsPanel
+from nightreign_overlay.ui.components.audio_settings import audio_section
 
 _REGION_KEY = "art_timer.art_region"
 _USE_ART = "art_timer.use_art"
@@ -55,12 +57,13 @@ class ArtTimerPlugin(Plugin):
         id="art_timer",
         kind=PluginKind.FEATURE,
         icon="CALORIES",
-        requires=("capture", "hud", "input", "region"),
+        requires=("capture", "hud", "input", "region", "audio"),
         order=20,
     )
 
     def on_load(self) -> None:
         self.config = self.ctx.config(ArtTimerConfig)
+        self._audio = AudioNotifications(self.ctx, ("start", "end"))
         self._art_type: str | None = None
         self._art_started: float | None = None
         self._detector: ArtDetector | None = None
@@ -88,6 +91,8 @@ class ArtTimerPlugin(Plugin):
         self.ctx.on_cleanup(self._detect_timer.stop)
 
     def on_deactivate(self) -> None:
+        self._audio.reset()
+        self._art_type = self._art_started = None
         self._detect_generation += 1
         self._hud = None
         self._detector = None
@@ -160,6 +165,7 @@ class ArtTimerPlugin(Plugin):
             self.ctx.log.info("No art detected.")
             return
         self.ctx.log.info("detected art: %s", result.art_type)
+        self._audio.reset()
         self._art_type = result.art_type
         self._art_started = time.monotonic()
         self._update_timer()
@@ -167,6 +173,15 @@ class ArtTimerPlugin(Plugin):
     # -- countdown ----------------------------------------------------------------------------
 
     def _update_timer(self) -> None:
+        if self._art_type is not None and self._art_started is not None:
+            info = _ART_INFO[self._art_type]
+            self._audio.update(
+                time.monotonic() - self._art_started,
+                {
+                    "start": info.delay + self._audio.cues["start"].seconds.value,
+                    "end": info.delay + info.duration - self._audio.cues["end"].seconds.value,
+                },
+            )
         if self._hud is None:
             return
         if self._art_type is None or self._art_started is None:
@@ -245,9 +260,11 @@ class ArtTimerPlugin(Plugin):
         )
         panel.addSection(basic)
         panel.addSection(advanced)
+        panel.addSection(audio_section(self._audio, ("end",)))
         return panel
 
     def reset_settings(self) -> None:
+        self._audio.reset()
         super().reset_settings()
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action in _HOTKEYS:

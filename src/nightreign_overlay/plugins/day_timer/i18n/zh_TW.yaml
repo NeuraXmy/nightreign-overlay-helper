@@ -52,3 +52,10 @@ settings:
   threshold:
     title: DAY X 範本比對閾值
     content: 數值越小，比對越嚴格
+
+audio:
+  day1: DAY I 開始
+  day2: DAY II 開始
+  day3: DAY III 開始
+  first_circle: 一縮即將開始（每天共用）
+  second_circle: 二縮即將開始（每天共用）

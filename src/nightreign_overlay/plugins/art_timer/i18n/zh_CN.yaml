@@ -26,3 +26,7 @@ settings:
   threshold:
     title: 匹配阈值
     content: 图标匹配差异低于此值才认为识别成功，数值越小越严格
+
+audio:
+  start: 绝招倒计时开始
+  end: 绝招倒计时结束

@@ -160,6 +160,18 @@ input_dialog:
   clear: Clear
   cancel: Cancel
   confirm: Confirm
+audio:
+  title: Audio notifications
+  volume: Volume
+  unset: No audio selected
+  select: Choose local audio
+  change: Change audio
+  clear: Clear audio
+  delay: Delay
+  advance: Advance
+  test: Test playback
+  filter: Audio files (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;All files (*)
+
 overlay_settings:
   title: Main overlay
   opacity:

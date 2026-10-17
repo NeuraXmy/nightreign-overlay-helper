@@ -1,0 +1,107 @@
+"""Reusable audio notification cards bound to feature cue configuration."""
+
+from __future__ import annotations
+
+from PyQt6.QtCore import QSignalBlocker, Qt
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QWidget
+from qfluentwidgets import BodyLabel, DoubleSpinBox, FluentIcon, PushButton, SettingCard, Slider
+
+from nightreign_overlay.core.audio import AudioCueConfig
+from nightreign_overlay.core.i18n import tr
+from nightreign_overlay.plugins.audio.api import AudioNotifications
+from nightreign_overlay.ui.components.page import SettingSection
+
+
+class AudioSettingCard(SettingCard):
+    """Title, volume, file selection/clear, timing offset, and immediate preview."""
+
+    def __init__(
+        self,
+        notifications: AudioNotifications,
+        key: str,
+        title: str,
+        *,
+        advance: bool = False,
+        parent: QWidget | None = None,
+    ) -> None:
+        self.cue: AudioCueConfig = notifications.cues[key]
+        super().__init__(FluentIcon.MUSIC, title, self.cue.path.value or tr("audio.unset"), parent)
+        self._notifications = notifications
+        self.slider = Slider(Qt.Orientation.Horizontal, self)
+        self.slider.setRange(0, 100)
+        self.slider.setMinimumWidth(100)
+        self.volumeLabel = BodyLabel(self)
+        self.spinBox = DoubleSpinBox(self)
+        self.spinBox.setRange(0.0, 3600.0)
+        self.spinBox.setDecimals(1)
+        self.spinBox.setSingleStep(0.1)
+        self.spinBox.setSuffix(" s")
+        self.spinBox.setKeyboardTracking(False)
+        self.spinBox.setMinimumWidth(120)
+        timing = QHBoxLayout()
+        timing.addWidget(BodyLabel(tr("audio.volume"), self))
+        timing.addWidget(self.slider, 1)
+        timing.addWidget(self.volumeLabel)
+        timing.addSpacing(16)
+        timing.addWidget(BodyLabel(tr("audio.advance" if advance else "audio.delay"), self))
+        timing.addWidget(self.spinBox)
+        self.vBoxLayout.addLayout(timing)
+
+        self.selectButton = PushButton(self)
+        self.clearButton = PushButton(tr("audio.clear"), self)
+        self.testButton = PushButton(tr("audio.test"), self)
+        buttons = QHBoxLayout()
+        for button in (self.selectButton, self.clearButton, self.testButton):
+            buttons.addWidget(button)
+        buttons.addStretch(1)
+        self.vBoxLayout.addLayout(buttons)
+        self.vBoxLayout.setSpacing(10)
+        self.hBoxLayout.addSpacing(16)
+        self.selectButton.clicked.connect(self._select_file)
+        self.clearButton.clicked.connect(self._clear)
+        self.testButton.clicked.connect(lambda: notifications.play(self.cue))
+        self.slider.valueChanged.connect(self.cue.volume.set)
+        self.spinBox.valueChanged.connect(self.cue.seconds.set)
+        for item in self.cue.items().values():
+            item.valueChanged.connect(self._sync)
+        self._sync()
+
+    def _select_file(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("audio.select"),
+            self.cue.path.value,
+            tr("audio.filter"),
+        )
+        if path:
+            self.cue.path.set(path)
+
+    def _clear(self) -> None:
+        self.cue.path.set("")
+
+    def _sync(self, *_args: object) -> None:
+        with QSignalBlocker(self.slider), QSignalBlocker(self.spinBox):
+            self.slider.setValue(self.cue.volume.value)
+            self.spinBox.setValue(self.cue.seconds.value)
+        self.volumeLabel.setText(f"{self.cue.volume.value}%")
+        path = self.cue.path.value
+        self.setContent(path or tr("audio.unset"))
+        self.contentLabel.setToolTip(path)
+        self.selectButton.setText(tr("audio.change" if path else "audio.select"))
+        self.clearButton.setEnabled(bool(path))
+        self.testButton.setEnabled(bool(path))
+
+
+def audio_section(notifications: AudioNotifications, advance: tuple[str, ...]) -> SettingSection:
+    """Build the final feature settings group with localized titles."""
+    section = SettingSection(tr("audio.title"))
+    for key in notifications.cues:
+        section.addCard(
+            AudioSettingCard(
+                notifications,
+                key,
+                notifications.ctx.tr(f"audio.{key}"),
+                advance=key in advance,
+            )
+        )
+    return section

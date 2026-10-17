@@ -26,3 +26,7 @@ settings:
   threshold:
     title: 比對閾值
     content: 圖示比對誤差低於此值才算成功；數值越小越嚴格
+
+audio:
+  start: 絕招倒數開始
+  end: 絕招倒數結束

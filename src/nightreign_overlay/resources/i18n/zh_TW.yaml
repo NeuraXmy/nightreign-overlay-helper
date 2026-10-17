@@ -159,6 +159,18 @@ input_dialog:
   clear: 清除
   cancel: 取消
   confirm: 確認
+audio:
+  title: 音訊播報
+  volume: 音量
+  unset: 尚未設定音訊
+  select: 選擇本機音訊
+  change: 更換音訊
+  clear: 清除音訊
+  delay: 延遲時間
+  advance: 提前時間
+  test: 測試播放
+  filter: 音訊檔案 (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;所有檔案 (*)
+
 overlay_settings:
   title: 主懸浮窗
   opacity:
