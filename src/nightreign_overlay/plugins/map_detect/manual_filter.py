@@ -64,7 +64,7 @@ class ManualFilterOverlay(OverlayWindow):
         self._popup: QWidget | None = None
 
         self.earth_shifting_combo = QComboBox(self)
-        self.earth_shifting_combo.setPlaceholderText(tr("manual_filter.earth_shifting"))
+        self.earth_shifting_combo.setPlaceholderText(tr("manual_filter.unselected"))
         for earth_shifting, name in earth_shiftings:
             self.earth_shifting_combo.addItem(name, earth_shifting)
         self.earth_shifting_combo.setCurrentIndex(-1)
@@ -141,7 +141,10 @@ class ManualFilterOverlay(OverlayWindow):
         """Restore entry defaults without treating the reset as user input."""
         earth_blocker = QSignalBlocker(self.earth_shifting_combo)
         nightlord_blocker = QSignalBlocker(self.nightlord_combo)
+        # Force the placeholder state on every entry, even when the previous
+        # session left a recognized terrain selected.
         self.earth_shifting_combo.setCurrentIndex(-1)
+        self.earth_shifting_combo.setPlaceholderText(self._tr("manual_filter.unselected"))
         self.nightlord_combo.setCurrentIndex(0)
         self.earth_shifting = None
         self.nightlord = None
