@@ -89,6 +89,9 @@ settings:
   topk:
     title: 识别结果返回数量
     content: 大空洞地表建筑可能相似，请切换候选确认；如内存占用过大，可减少返回数量。
+  english_text_width:
+    title: 英文地标文字宽度
+    content: 英文地图地标文字的横向宽度，默认 50%，100% 为原始宽度；保持文字高度与标注位置。下次识别生效。
   match_interval:
     title: 自动匹配间隔
     content: 两次自动地图匹配的最短间隔，单位为秒；手动识别不受此限制。

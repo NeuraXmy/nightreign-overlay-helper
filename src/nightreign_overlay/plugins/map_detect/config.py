@@ -15,6 +15,7 @@ class MapDetectionSettings:
     earth_shifting_algorithm: str = "ncc"
     fixed_map_overlay_draw_size: tuple[int, int] | None = None
     map_overlay_draw_size_ratio: float | None = 1.0
+    english_text_width_percent: int = 50
     full_map_hough_circle_thres: tuple[int, ...] = (150, 200, 250)
     full_map_error_threshold: float = 20
     map_stability_change_threshold: float = 2.0
@@ -32,6 +33,7 @@ class MapDetectConfig(ConfigGroup):
     poi_algorithm = ChoiceOption("cnn", ("template", "cnn"))
     earth_shifting_algorithm = ChoiceOption("ncc", ("ncc", "template"))
     return_topk = RangeOption(3, 1, 10)
+    english_text_width_percent = RangeOption(50, 10, 100)
     map_pattern_match_interval = RangeOption(2100, 1, 86400)
     fixed_map_overlay_draw_size = Option(
         None,

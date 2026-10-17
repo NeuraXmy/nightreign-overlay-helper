@@ -1,0 +1,4 @@
+settings:
+  english_text_width:
+    title: English landmark text width
+    content: "Horizontal width of English map labels: 50% by default, 100% for original width. Keeps text height and position. Applies on the next recognition."

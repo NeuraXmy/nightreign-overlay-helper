@@ -375,6 +375,7 @@ class MapDetector:
     def __init__(self, config: MapDetectionSettings | None = None, *, language: str | None = None) -> None:
         self.config = config or MapDetectionSettings()
         localized = rendering_translator(language)
+        self.language = localized.language
         self._tr = lambda key, **kwargs: localized.tr("map_detect", key, **kwargs)
         # 地图信息
         self.info = load_default_map_info(localized.language)
@@ -1190,6 +1191,8 @@ class MapDetector:
                 )
             )
 
+        landmark_text_count = len(texts)
+
         # 说明文本
         info_text_y_offset = 0
         text = f"#{pattern.id}"
@@ -1245,8 +1248,9 @@ class MapDetector:
 
         for icon in icons:
             draw_icon(img, *icon)
-        for text in texts:
-            draw_text(img, *text)
+        width_scale = self.config.english_text_width_percent / 100 if self.language == "en_US" else 1.0
+        for index, text in enumerate(texts):
+            draw_text(img, *text, width_scale=width_scale if index < landmark_text_count else 1.0)
 
         log.info(f"Draw overlay image size: {draw_size} time cost: {time.time() - t:.4f}s")
 

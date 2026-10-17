@@ -1,4 +1,4 @@
-"""Legacy map image drawing, template matching and SIFT alignment, unchanged numerically."""
+"""Map image drawing, template matching and SIFT alignment."""
 
 from __future__ import annotations
 
@@ -47,25 +47,50 @@ def draw_text(
     outline_width: int = 0,
     outline_color: tuple[int, int, int, int] = (0, 0, 0, 255),
     align: str = "c",
+    *,
+    width_scale: float = 1.0,
 ) -> None:
+    """Draw outlined text, optionally compressing only its width around the same anchor."""
     assert align in ("lb", "c", "lt")
     if text is None:
         text = "null"
-    draw = ImageDraw.Draw(img)
     font = get_font(size)
-    text_size = get_text_size(font, text)
+    text_width, text_height = get_text_size(font, text)
+    scaled_width = round(text_width * width_scale)
     if align == "lb":
-        pos = (pos[0] + text_size[0] // 2, pos[1] - text_size[1] // 2)
+        pos = (pos[0] + scaled_width // 2, pos[1] - text_height // 2)
     elif align == "lt":
-        pos = (pos[0] + text_size[0] // 2, pos[1] + text_size[1] // 2)
-    draw.text(
-        (pos[0] - text_size[0] // 2, pos[1] - text_size[1] // 2),
+        pos = (pos[0] + scaled_width // 2, pos[1] + text_height // 2)
+    text_pos = (pos[0] - scaled_width // 2, pos[1] - text_height // 2)
+    if width_scale == 1.0:
+        ImageDraw.Draw(img).text(
+            text_pos,
+            text,
+            font=font,
+            fill=color,
+            stroke_width=outline_width,
+            stroke_fill=outline_color,
+        )
+        return
+
+    # Include glyph bearings and the entire outline before resizing, even near map edges.
+    left, top, right, bottom = font.getbbox(text, stroke_width=outline_width)
+    if right <= left or bottom <= top:
+        return
+    label = Image.new("RGBA", (right - left, bottom - top))
+    ImageDraw.Draw(label).text(
+        (-left, -top),
         text,
         font=font,
         fill=color,
         stroke_width=outline_width,
         stroke_fill=outline_color,
     )
+    label = label.resize(
+        (max(1, round(label.width * width_scale)), label.height),
+        resample=Image.Resampling.LANCZOS,
+    )
+    img.alpha_composite(label, (text_pos[0] + round(left * width_scale), text_pos[1] + top))
 
 
 def match_template(
