@@ -323,7 +323,11 @@ class MapDetectPlugin(Plugin):
 
     def _capture_manual_entry(self, revision: int) -> None:
         if not self._manual_filtering or revision != self._manual_revision or self._region is None:
-            if self._manual_filtering and revision == self._manual_revision and self._manual_overlay is not None:
+            if (
+                self._manual_filtering
+                and revision == self._manual_revision
+                and self._manual_overlay is not None
+            ):
                 self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
@@ -354,7 +358,19 @@ class MapDetectPlugin(Plugin):
                 self._manual_overlay.show_select_earth_shifting()
             self._finish_manual_entry_recognition()
             return
-        self._submit(_Job(self._generation, region.getRect(), image, frame.hdr, self.config.snapshot(), self.config.return_topk.value, "entry_check", frame.captured_at, manual_revision=revision))
+        self._submit(
+            _Job(
+                self._generation,
+                region.getRect(),
+                image,
+                frame.hdr,
+                self.config.snapshot(),
+                self.config.return_topk.value,
+                "entry_check",
+                frame.captured_at,
+                manual_revision=revision,
+            )
+        )
 
     def _finish_manual_entry_recognition(self) -> None:
         self._manual_entry_recognition = False
@@ -656,7 +672,11 @@ class MapDetectPlugin(Plugin):
         if self._detector is None:
             self._detector = MapDetector(job.settings, language=self.ctx.language)
         self._detector.config = job.settings
-        image = normalize_image(job.image) if job.hdr and job.stage in ("check", "entry_check", "poi") else job.image
+        image = (
+            normalize_image(job.image)
+            if job.hdr and job.stage in ("check", "entry_check", "poi")
+            else job.image
+        )
         if job.stage in ("check", "entry_check"):
             return self._detector.detect(
                 MapDetectParam(map_region=job.region, img=image, do_match_full_map=True)
@@ -732,7 +752,19 @@ class MapDetectPlugin(Plugin):
             else:
                 if self._manual_overlay is not None:
                     self._manual_overlay.set_map_open(True)
-                self._submit(_Job(self._generation, job.region, job.image, job.hdr, job.settings, job.topk, "entry_terrain", job.captured_at, manual_revision=job.manual_revision))
+                self._submit(
+                    _Job(
+                        self._generation,
+                        job.region,
+                        job.image,
+                        job.hdr,
+                        job.settings,
+                        job.topk,
+                        "entry_terrain",
+                        job.captured_at,
+                        manual_revision=job.manual_revision,
+                    )
+                )
             return
         if job.stage == "entry_terrain":
             if result.earth_shifting is None:
@@ -742,7 +774,20 @@ class MapDetectPlugin(Plugin):
             else:
                 if self._manual_overlay is not None:
                     self._manual_overlay.set_recognized_parameters(result.earth_shifting, None)
-                self._submit(_Job(self._generation, job.region, job.image, job.hdr, job.settings, job.topk, "entry_boss", job.captured_at, manual_revision=job.manual_revision, earth_shifting=result.earth_shifting))
+                self._submit(
+                    _Job(
+                        self._generation,
+                        job.region,
+                        job.image,
+                        job.hdr,
+                        job.settings,
+                        job.topk,
+                        "entry_boss",
+                        job.captured_at,
+                        manual_revision=job.manual_revision,
+                        earth_shifting=result.earth_shifting,
+                    )
+                )
             return
         if job.stage == "entry_boss":
             if self._manual_overlay is not None:

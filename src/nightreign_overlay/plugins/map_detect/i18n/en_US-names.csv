@@ -1,24 +1,24 @@
 id,name
 45510,Black Knife Assassin
-46510,Red Wolf of the King Consort
+46510,Red Wolf
 46550,Leonine Misbegotten
 46570,Elder Lion
 46590,Royal Revenant
 46620,Night's Cavalry
 46650,Grafted Scion
-46690,Ancient Hero of Zamor
-46710,Miranda Blossom
-46720,Golden Hippopotamus
+46690,Zamor
+46710,Miranda Flower
+46720,Hippo
 46770,Demi-Human Queen
 46810,Black Knife Assassin
-46820,Red Wolf of the King Consort
+46820,Red Wolf
 46860,Leonine Misbegotten
 46880,Royal Revenant
 46910,Grafted Scion
-46950,Ancient Hero of Zamor
-46520,Draconic Tree Sentinel
+46950,Zamor
+46520,Draconic Sentinel
 46530,Tree Sentinel
-46540,Royal Carian Knight
+46540,Loretta
 46560,Bell Bearing Hunter
 46580,Flying Dragon
 46630,Ulcerated Tree Spirit
@@ -26,163 +26,163 @@ id,name
 46660,Black Blade Kindred
 46670,Erdtree Avatar
 46680,Magma Wyrm
-46740,Death Rite Bird
+46740,Deathbird
 46870,Bell Bearing Hunter
 46502,Omen
 46503,Grave Warden Duelist
-46504,Beastmen of Farum Azula
-46505,Beastly Brigade
-46602,Crystalians
+46504,Beastmen
+46505,Misbegotten Horde
+46602,Crystalian
 46603,Stoneskin Lords
-46604,Banished Knights
-46605,Nox Warriors
+46604,Banished Knight
+46605,Nox
 46606,Bloodhound Knight
 46700,Dragonkin Soldier
 46701,Godskin Apostle
 46702,Godskin Noble
-46703,Crucible Knight (Sword & Shield)
-46704,Crucible Knight (Spear)
-46800,Death Rite Bird
+46703,Crucible Knight (sword)
+46704,Crucible Knight (spear)
+46800,Deathbird
 46801,Ancient Dragon
-46802,Godskin Noble & Godskin Apostle
+46802,Godskin Duo
 4770,Tibia Mariner
 4780,Gaping Dragon
 4790,Centipede Demon
-4800,The Duke's Dear Freja
+4800,Freja
 4810,Smelter Demon
 4820,Nameless King
-4830,Dancer of the Boreal Valley
+4830,Dancer
 4840,Fell Omen
-4850,Draconic Tree Sentinel & Royal Cavalrymen
-4860,Tree Sentinel & Royal Cavalrymen
+4850,Draconic Sentinel
+4860,Tree Sentinel
 4870,Godskin Apostle
-4880,Godskin Noble & Godskin Apostle
+4880,Godskin Duo
 4890,Wormface
 4910,Grafted Monarch
-4917,Valiant Gargoyle
+4917,Gargoyle
 4918,Great Wyrm
 4919,Ancient Dragon
-4920,Full-Grown Fallingstar Beast
-4921,Death Rite Bird
-4923,Nox Dragonkin Soldier
+4920,Fallingstar Beast
+4921,Deathbird
+4923,Dragonkin Soldier
 4924,Bell Bearing Hunter
-4925,Crucible Knight & Golden Hippopotamus
+4925,Crucible Knight & Hippo
 4926,Outland Commander
 4927,Battlefield Commander
 4928,Night's Cavalry
-4929,Demi-Human Queen & Demi-Human Swordmaster
+4929,Queen & Swordmaster
 4930,Royal Revenant
 4990,Ulcerated Tree Spirit
-5200,Curseblade & Divine Beast Warrior
-5203,Demon in Pain & Demon from Below
+5200,Curseblade
+5203,Demon Duo
 5201,Great Red Bear
-5202,Death Knights
+5202,Death Knight
 5210,Lord of Blood
 5213,Demon Prince
 5211,Divine Beast Dancing Lion
-5212,Knight Artorias
-7700,Day 1 Extra Boss
-7720,Day 2 Extra Boss
-7701,Day 1 Meteor Strike
-7721,Day 2 Meteor Strike
-7702,Day 1 Walking Mausoleum
-7722,Day 2 Walking Mausoleum
+5212,Artorias
+7700,Day 1 extra boss
+7720,Day 2 extra boss
+7701,Day 1 meteor
+7721,Day 2 meteor
+7702,Day 1 mausoleum
+7722,Day 2 mausoleum
 7704,Day 1 Night Horde
 7724,Day 2 Night Horde
 7705,Day 1
 7725,Day 2
 3040,Fell Omen
-3050,Giant Bubbles
+3050,Giant Bubble
 3060,Locust Swarm
 3070,Demon's Curse
-3110,Chill Mist
-3120,Fire-Summoning Beasts
-3130,Balancing Judgment
-510,Chill Mist
-520,Fire-Summoning Beasts
-540,Giant Bubbles
+3110,Freezing Fog
+3120,Flame Beast
+3130,Balancers' Judgment
+510,Freezing Fog
+520,Flame Beast
+540,Giant Bubble
 550,Locust Swarm
 560,Demon's Curse
-7707,Frenzied Flame Tower
-7727,Frenzied Flame Tower
-7706,Old Sorcerer's Rise
+7707,Frenzy Tower
+7727,Frenzy Tower
+7706,Ancient Sorcerer's Rise
 0,None
-30000,Royal Army Knights
+30000,Knight
 30001,Abductor Virgin
-30300,Guardian Golem
-30301,Crystalians
-32000,Banished Knights
+30300,Golem
+30301,Crystalian
+32000,Banished Knight
 32001,Elder Lion
-32200,Flame Chariots
+32200,Chariot
 32201,Frenzied Flame
 32100,Misbegotten
-32101,Redmane Knights
-32102,Royal Army Knights
-34000,Erdtree Burial Watchdogs
-34001,Sanguine Noble
-34002,Ancient Hero of Zamor
-34003,Albinaurics
+32101,Redmane
+32102,Knight
+34000,Watchdog
+34001,Blood
+34002,Zamor
+34003,Albinauric
 34100,Perfumer
 34101,Depraved Perfumer
-34102,Battlemages
-34103,Albinauric Archers
+34102,Sorcerer
+34103,Albinauric Archer
 34104,Runebear
 34200,Wormface
-34300,Beastmen of Farum Azula
+34300,Beastman
 37900,Village
-38000,Oracle Envoys
-38001,Guardian Golem
-38100,Fire Monks
-38101,Mausoleum Knight
-40000,Above the Door
-40001,Small Statue
-40002,Dead Tree
-40003,Above the Pond
-40004,Wooden Planks
+38000,Oracle Envoy
+38001,Golem
+38100,Flame
+38101,Mausoleum
+40000,Above door
+40001,Small statue
+40002,Dead tree
+40003,Above pond
+40004,Planks
 40005,Bushes
-40006,Fog Gate
-40007,Tree Stump
-40008,Lantern
-40009,Illusory Wall
-51100,Above the Door
-51101,Small Statue
-51102,Dead Tree
-51103,Above the Pond
-51104,Wooden Planks
+40006,Fog gate
+40007,Tree stump
+40008,Lamp
+40009,Illusory wall
+51100,Above door
+51101,Small statue
+51102,Dead tree
+51103,Above pond
+51104,Planks
 51105,Bushes
-51106,Fog Gate
-51107,Tree Stump
-51108,Lantern
-51109,Illusory Wall
-41000,Church
-41010,Church
-41001,Church - Rats
-41011,Church - Rats
-41300,Scarlet Rot Church
-41301,Scarlet Rot Church
-43000,Knight Camp
-43010,Noble Camp
-43020,Crossbowman Camp
-43001,Knight Camp
-43011,Noble Camp
-43021,Crossbowman Camp
-43300,Scarlet Rot Camp
-43400,Misbegotten Camp
-43410,Demi-Human Camp
-43500,Fire Monk Camp
-43301,Scarlet Rot Camp
-43401,Misbegotten Camp
-43411,Demi-Human Camp
-43501,Fire Monk Camp
+51106,Fog gate
+51107,Tree stump
+51108,Lamp
+51109,Illusory wall
+41000,Chapel
+41010,Chapel
+41001,Chapel (rats)
+41011,Chapel (rats)
+41300,Rot church
+41301,Rot church
+43000,Knight camp
+43010,Noble camp
+43020,Crossbow camp
+43001,Knight camp
+43011,Noble camp
+43021,Crossbow camp
+43300,Rot camp
+43400,Misbegotten camp
+43410,Demi-human camp
+43500,Flame camp
+43301,Rot camp
+43401,Misbegotten camp
+43411,Demi-human camp
+43501,Flame camp
 44010,Shack
 44011,Shack
-45000,Carriage
-45010,Noble Carriage
-45001,Carriage
-45011,Noble Carriage
-49410,Banished Knight Castle
-49420,Troll Castle
-49430,Crucible Knight Castle
+45000,Caravan
+45010,Noble caravan
+45001,Caravan
+45011,Noble caravan
+49410,Banished Knight fort
+49420,Troll fort
+49430,Crucible fort
 100000,Tricephalos
 100001,Gaping Jaw
 100002,Sentient Pest
@@ -195,67 +195,67 @@ id,name
 100009,Dreglord
 200000,No Shifting Earth
 200001,Mountaintop
-200002,The Crater
+200002,Crater
 200003,Rotted Woods
-200004,The Great Hollow
-200005,"Noklateo, the Shrouded City"
-50001,Poison Swamp
-50011,Poison Swamp
-50020,Frostbite Swamp
-50030,Sleep Swamp
-50040,Scarlet Rot Swamp
-50050,Madness Swamp
-50060,Blood Loss Swamp
-50100,Blacksmith Village
-50102,Blood Loss Blacksmith Village
-50103,Lightning Blacksmith Village
-50104,Holy Blacksmith Village
-50112,Blacksmith Village
-50113,Fire Blacksmith Village
-50114,Poison Blacksmith Village
-50116,Lightning Blacksmith Village
-53580,Fire Knight Castle
-53590,Godskin Castle
-53670,Cleanrot Knight Castle
-53680,Hornsent Castle
-53700,Banished Knights
+200004,Great Hollow
+200005,Noklateo
+50001,Poison swamp
+50011,Poison swamp
+50020,Frost swamp
+50030,Sleep swamp
+50040,Rot swamp
+50050,Frenzy swamp
+50060,Blood swamp
+50100,Smithing village
+50102,Blood smithing village
+50103,Lightning smithing village
+50104,Holy smithing village
+50112,Smithing village
+50113,Fire smithing village
+50114,Poison smithing village
+50116,Lightning smithing village
+53580,Fire Knight fort
+53590,Godskin fort
+53670,Cleanrot fort
+53680,Hornsent fort
+53700,Banished Knight
 53710,Curseblade
 53720,Omen
 53600,Omenkiller
 53610,Bloodhound Knight
-52500,Blood Loss Ruins
-52520,Poison Ruins
-52570,Sleep Ruins
-52550,Magic Ruins
-52450,Sleep Church
-52460,Lightning Church
-52400,Holy Church
-52420,Frostbite Church
+52500,Blood ruins
+52520,Poison ruins
+52570,Sleep ruins
+52550,Magic ruins
+52450,Sleep church
+52460,Lightning church
+52400,Holy church
+52420,Frost church
 47702,Tibia Mariner
 47802,Gaping Dragon
 47902,Centipede Demon
-48002,The Duke's Dear Freja
+48002,Freja
 48102,Smelter Demon
 48202,Nameless King
-48302,Dancer of the Boreal Valley
+48302,Dancer
 48402,Fell Omen
-48502,Draconic Tree Sentinel & Royal Cavalrymen
-48602,Tree Sentinel & Royal Cavalrymen
+48502,Draconic Sentinel
+48602,Tree Sentinel
 48702,Godskin Apostle
-48802,Godskin Noble & Godskin Apostle
+48802,Godskin Duo
 48902,Wormface
 49102,Grafted Monarch
-49172,Valiant Gargoyle
+49172,Gargoyle
 49182,Great Wyrm
 49192,Ancient Dragon
-49202,Full-Grown Fallingstar Beast
-49212,Death Rite Bird
-49232,Nox Dragonkin Soldier
+49202,Fallingstar Beast
+49212,Deathbird
+49232,Dragonkin Soldier
 49242,Bell Bearing Hunter
-49252,Crucible Knight & Golden Hippopotamus
+49252,Crucible Knight & Hippo
 49262,Outland Commander
 49272,Battlefield Commander
 49282,Night's Cavalry
-49292,Demi-Human Queen & Demi-Human Swordmaster
+49292,Queen & Swordmaster
 49302,Royal Revenant
-49902,Ulcerated Tree Spirit
+49902,Tree Spirit

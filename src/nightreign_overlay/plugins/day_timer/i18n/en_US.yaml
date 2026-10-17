@@ -1,0 +1,54 @@
+plugin:
+  name: Circle Timer
+  description: Detect each day's start and show the circle countdown
+hud:
+  map_ready: ' - Map detection ready'
+  waiting: Waiting for the game
+  phase: DAY {day} - Circle {circle} {action} in {remaining}
+  circle:
+    first: '1'
+    second: '2'
+  action:
+    start: starts
+    end: ends
+  boss: DAY {day} - Night boss {elapsed}
+  day3: DAY {day} - {elapsed}
+settings:
+  basic:
+    title: Basic
+  auto:
+    title: Auto detection
+    content: Detect the DAY I/II banner in the selected area to start the timer
+  language:
+    title: Game language
+    chs: 简体中文
+    cht: 繁體中文
+    eng: English
+    jp: 日本語
+  calibrate:
+    title: DAY I icon area
+    content: Select the DAY I icon area; use Calibrate or assign a shortcut
+    button: Calibrate
+    annotate: Click here, then box the DAY I icon
+  manual:
+    title: Adjust timer
+    next_day: Next day
+    backward: Rewind
+    forward: Advance
+  shortcuts:
+    title: Shortcuts
+    next_day:
+      title: Start next day
+    forward:
+      title: Advance timer
+    backward:
+      title: Rewind timer
+  advanced:
+    title: Advanced
+  forward:
+    title: Advance by (seconds)
+  backward:
+    title: Rewind by (seconds)
+  threshold:
+    title: DAY X match threshold
+    content: Lower values require a closer match

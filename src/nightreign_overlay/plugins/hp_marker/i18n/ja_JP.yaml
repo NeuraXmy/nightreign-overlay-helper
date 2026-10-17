@@ -1,0 +1,29 @@
+plugin:
+  name: HPしきい値マーカー
+  description: HPバーの長さを自動認識し、HP低下時・最大時の効果の目安を上部に表示
+settings:
+  basic: 基本設定
+  advanced: 詳細設定
+  region:
+    title: HPバー範囲
+    content: 左端をHPバーの左端に合わせ、同じ幅で囲みます。「範囲指定」かショートカットで設定
+    annotate: ここを押して「HPバー左端」を囲んでください
+    button: 範囲指定
+  hpbar_low_hp_marker:
+    title: HP低下時効果の割合
+  hpbar_high_hp_marker:
+    title: HP最大時効果の割合
+  marker_size:
+    title: マーカーサイズ
+  marker_color:
+    title: マーカーの色
+  line_width:
+    title: マーカーの幅
+  line_height:
+    title: マーカーの高さ
+  hpbar_region_aspect_ratio:
+    title: 認識範囲の縦横比
+    content: 指定範囲の高さにこの値を掛けた幅で認識
+  hpbar_detection_offset:
+    title: 検出長の補正
+    content: 検出した長さにピクセル単位で加算。正の値で右に補正

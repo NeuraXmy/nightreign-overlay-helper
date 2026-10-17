@@ -258,7 +258,7 @@ def test_region_request_hides_and_restores_main_window(
     def fake_run(dialog: region_plugin._SelectionDialog) -> dict[int, QRect]:
         # The selector must only appear after the main window has been asked to hide.
         calls.append("select")
-        assert dialog.annotateButton.text() == "点我并框出 DAY I 图标 的区域"
+        assert dialog.annotateButton.text() == plugin.ctx.tr("settings.calibrate.annotate")
         return {0: QRect(10, 20, 30, 40)}
 
     monkeypatch.setattr(region_plugin._SelectionDialog, "run", fake_run)

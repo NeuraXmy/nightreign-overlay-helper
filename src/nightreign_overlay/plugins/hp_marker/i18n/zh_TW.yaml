@@ -1,0 +1,29 @@
+plugin:
+  name: 血量閾值標記
+  description: 自動偵測血條長度，在上方標示低血量與滿血詞條的觸發參考線
+settings:
+  basic: 基本設定
+  advanced: 進階選項
+  region:
+    title: 血條區域
+    content: 框選左緣緊貼血條左側、寬度與血條相同的區域，可按「標定」或設定快捷鍵
+    annotate: 按此並框選「血條左側」區域
+    button: 標定
+  hpbar_low_hp_marker:
+    title: 低血量詞條觸發比例
+  hpbar_high_hp_marker:
+    title: 滿血詞條觸發比例
+  marker_size:
+    title: 標記大小
+  marker_color:
+    title: 標記顏色
+  line_width:
+    title: 標記線寬
+  line_height:
+    title: 標記線高
+  hpbar_region_aspect_ratio:
+    title: 偵測區域長寬比
+    content: 偵測寬度為標定高度乘上此值
+  hpbar_detection_offset:
+    title: 偵測長度偏移
+    content: 對偵測到的長度增加此像素偏移；正值向右校正

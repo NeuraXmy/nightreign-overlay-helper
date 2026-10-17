@@ -1,0 +1,8 @@
+plugin:
+  name: 入力とショートカット
+  description: 各機能のグローバルショートカットを一括管理
+settings:
+  title: 入力設定
+  listener:
+    title: グローバルキー入力を有効化
+    content: グローバル入力の監視許可が必要です。無効時もテスト入力は利用可能

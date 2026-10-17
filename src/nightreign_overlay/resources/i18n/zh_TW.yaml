@@ -1,35 +1,34 @@
 meta:
   name: 繁體中文
-  locales: [zh_HK, zh_MO, zh_Hant]
-
+  locales:
+  - zh_HK
+  - zh_MO
+  - zh_Hant
 common:
-  "on": 開
-  "off": 關
-
+  'on': 開
+  'off': 關
 nav:
   faq: 常見問題
-  home: 主頁
+  home: 首頁
   settings: 設定
   about: 關於
-
 home:
-  subtitle: 《艾爾登法環 黑夜君臨》懸浮窗輔助工具
-  version: "版本 {version}"
+  subtitle: 《艾爾登法環 黑夜君臨》懸浮助手
+  version: 版本 {version}
   status:
     title: 執行狀態
     game: 遊戲視窗
-    game_unsupported: 目前平台不支援偵測（視為前景）
+    game_unsupported: 此平台不支援偵測
     game_foreground: 位於前景
     game_background: 不在前景
     overlay: 懸浮窗顯示方式
     overlay_transparent: 透明懸浮窗
-    overlay_window: 一般視窗（相容模式）
+    overlay_window: 一般視窗
     plugins: 功能
-    plugins_value: "{active} / {total} 個執行中"
+    plugins_value: '{active} / {total} 個執行中'
   plugins:
     title: 功能
-    empty: 尚未安裝任何功能外掛。
-
+    empty: 尚未安裝功能外掛
 plugin:
   kind:
     infrastructure: 基礎元件
@@ -38,35 +37,31 @@ plugin:
   state:
     active: 執行中
     inactive: 未啟用
-    failed: "啟動失敗：{error}"
-    unavailable: "無法使用：缺少相依 {plugins}"
+    failed: 啟動失敗：{error}
+    unavailable: 無法使用：缺少相依 {plugins}
     circular: 無法使用：存在循環相依
   cascade:
-    enabled: "已同時啟用相依的功能：{plugins}"
-    disabled: "已同時停用相依於它的功能：{plugins}"
-
+    enabled: 已一併啟用相依功能：{plugins}
+    disabled: 已一併停用依賴此功能的項目：{plugins}
 plugin_page:
   tab:
     settings: 設定
     tutorial: 教學
-  no_settings: 此功能沒有可調整的選項。
-  no_tutorial: 此功能暫無教學。
-
+  no_settings: 此功能沒有可調整的選項
+  no_tutorial: 此功能暫無教學
 settings_reset:
   button: 重設
   title: 重設設定
-  plugin_content: 確定要將本頁的所有設定恢復為預設值嗎？本頁的快捷鍵會恢復預設，已標定的辨識區域會被清除，此操作無法復原。
-  general_content: 確定要將本頁的所有設定恢復為預設值嗎？此操作無法復原。
+  plugin_content: 確定將本頁所有設定恢復預設值？快捷鍵會恢復預設，已標定區域會被清除。此操作無法復原
+  general_content: 確定將本頁所有設定恢復預設值？此操作無法復原
   confirm: 重設
   cancel: 取消
   done: 已恢復預設設定
-
 region_preview:
   calibrated: 已標定
   uncalibrated: 未標定
-  current: "顯示目前區域：({x}, {y})，{width} × {height} 像素"
+  current: 目前區域：({x}, {y})，{width} × {height} 像素
   unset: 尚未標定區域
-
 settings:
   title: 設定
   open: 開啟
@@ -74,17 +69,14 @@ settings:
     title: 一般
   language:
     title: 語言
-    content: 介面顯示語言，修改後需要重新啟動才會生效
     auto: 跟隨系統
   theme:
     title: 主題
-    content: 主介面的明暗主題
     dark: 深色
     light: 淺色
     auto: 跟隨系統
   theme_color:
     title: 主題色
-    content: 主介面的強調色
   overlay_mode:
     title: 懸浮窗顯示方式
     content: 透明懸浮窗顯示異常時，可切換為一般視窗
@@ -92,99 +84,94 @@ settings:
     overlay: 透明懸浮窗
     window: 一般視窗
   only_when_game_foreground:
-    title: 僅在遊戲時顯示和偵測
-    content: 遊戲不在前景時隱藏所有懸浮窗、暫停截圖偵測並停用快捷鍵；主介面或選單開啟時懸浮窗和快捷鍵仍可使用
+    title: 僅在遊戲時顯示與偵測
+    content: 遊戲不在前景時隱藏懸浮窗、暫停辨識並停用快捷鍵；主介面或選單開啟時，懸浮窗與快捷鍵仍可使用
   start_minimized:
     title: 啟動時最小化
-    content: 啟動後不顯示主介面，只顯示系統匣圖示
+    content: 啟動後僅顯示系統匣圖示，不開啟主介面
   debug_images:
     title: 儲存除錯圖片
-    content: 開啟後儲存檢測除錯圖片與辨識中繼資料；預設開啟
+    content: 儲存近期辨識圖片與資料，供問題回報使用
   advanced:
     title: 進階
   log_level:
     title: 日誌層級
-    content: 回報問題時建議設為 DEBUG
   data_dir:
     title: 資料目錄
   log_dir:
     title: 日誌目錄
   diagnostic_export:
     feedback_email: nroh-report@qq.com
-    title: 打包日誌與除錯圖片
-    content: 填寫問題描述、附加圖片，並匯出用於回報的 ZIP 壓縮檔
-    button: 打包
-    hint: 自動收集現有日誌、除錯圖片和辨識中繼資料。匯出後請將 ZIP 以電子郵件寄送至 {email}。若無法傳送 ZIP可將副檔名改為 .txt 後再寄送。
-    description: "問題描述（選填）：發生了什麼？如何重現？可以填寫發生時間、遊戲解析度及相關設定。"
+    title: 問題回報
+    content: 填寫問題描述、附上圖片，並匯出回報用 ZIP 壓縮檔
+    button: 回報
+    hint: 自動收集現有日誌、除錯圖片與辨識中繼資料。匯出後請將 ZIP 寄至 {email}；若無法傳送 ZIP，可將副檔名改為 .txt 再寄送
+    description: 問題描述（選填）：發生什麼事？如何重現？可填寫時間、遊戲解析度及相關設定
     attachments: 附加圖片（選填）
     add_images: 新增圖片
     remove_images: 移除所選圖片
-    image_filter: "圖片 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    image_filter: 圖片 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)
     export: 匯出 ZIP
     cancel: 取消
     working: 正在打包，請稍候…
-    failed: "打包失敗，請檢查檔案是否可讀取、磁碟是否可寫入後重試。\n{error}"
-    success: "已匯出 {count} 個檔案。請將 ZIP 以電子郵件寄送至 {email}。若無法傳送 ZIP可將副檔名改為 .txt 後再寄送。\n{path}"
-    skipped: "有 {count} 個檔案在打包時已被清理，未包含在壓縮檔中，詳見 manifest.json。"
-    open_directory: 開啟所在資料夾
+    failed: '打包失敗，請確認檔案可讀取、磁碟可寫入後重試。
+
+      {error}'
+    success: '已匯出 {count} 個檔案。請將 ZIP 寄至 {email}；若無法傳送，可將副檔名改為 .txt 再寄送。
+
+      {path}'
+    skipped: 有 {count} 個檔案在打包時已被清除，未納入壓縮檔；詳見 manifest.json
+    open_directory: 開啟所在目錄
     close: 關閉
   restart:
     title: 需要重新啟動
-    content: 重新啟動後語言設定才會生效。
+    content: 重新啟動後套用語言設定
     button: 立即重新啟動
-
 about:
   project:
     title: 專案
     repo_button: 前往儲存庫
-    repo_content: "版本 {version} · 開源專案，歡迎 Star"
+    repo_content: 版本 {version}
   credits:
     title: 致謝
     visit: 前往
     fuwish: 地圖解包資料支援
-    quexuan: 大空洞水晶配置分享
-    steam_p2p_info: P2P 連線查詢與 ETW 延遲量測思路（MIT 授權）
+    quexuan: 大空洞結晶配置分享
+    steam_p2p_info: P2P 連線查詢與 ETW 延遲量測方法（MIT 授權）
     fluent_widgets: Fluent Design 風格介面元件庫
-
 tray:
   toggle: 顯示／隱藏主介面
   quit: 結束
-  hidden_hint: 主介面已隱藏，程式仍在執行。點擊系統匣圖示可重新顯示主介面。
-
+  hidden_hint: 主介面已隱藏，程式仍在執行。按系統匣圖示即可重新開啟
 overlay:
   menu:
     open_main_window: 開啟主介面
     quit: 結束程式
-
 input_dialog:
   device:
     keyboard: 鍵盤
     mouse: 滑鼠
-    controller: 手把
-  title: 設定快速鍵
-  hint: 請按下鍵盤、滑鼠或手把組合鍵；首次輸入會鎖定裝置類型。
+    controller: 控制器
+  title: 設定快捷鍵
+  hint: 請按下鍵盤、滑鼠或控制器組合鍵；首次輸入會鎖定裝置類型
   waiting: 等待輸入…
-  unset: 快速鍵未設定
-  clear: 清空
+  unset: 未設定快捷鍵
+  clear: 清除
   cancel: 取消
   confirm: 確認
-
 overlay_settings:
-  title: 懸浮窗
+  title: 主懸浮窗
   opacity:
     title: 不透明度
-    content: 懸浮窗整體的不透明度
   scale:
     title: 縮放
-    content: 懸浮窗內容的大小
   input_mode:
     title: 滑鼠互動
-    content: 控制滑鼠是否可拖曳懸浮窗或穿透到下方視窗（完全穿透僅透明懸浮窗模式有效）。
-    normal: 不穿透
+    content: 控制滑鼠是否可拖曳懸浮窗，或穿透至下方視窗
+    normal: 可互動
     locked: 僅鎖定位置
     passthrough: 完全穿透
   reset_position:
     title: 重設位置
-    content: 將懸浮窗移回螢幕頂部中央
     reset: 重設
     horizontal: 僅水平重設

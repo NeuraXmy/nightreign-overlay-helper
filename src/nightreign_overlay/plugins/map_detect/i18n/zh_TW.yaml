@@ -1,4 +1,123 @@
+plugin:
+  name: 地圖資訊
+  description: 自動或手動辨識地圖，顯示詳細資訊
+controls:
+  title: 地圖資訊操作列
+  recognize: 重新辨識
+  manual_filter: 手動篩選
+  exit_filter: 離開篩選
+  candidates: 候選地圖
+  crystals: 結晶配置
+  previous: 上一個
+  next: 下一個
+manual_filter:
+  title: 手動篩選
+  earth_shifting: 特殊地形
+  unselected: 未選擇
+  nightlord: BOSS
+  all_nightlords: 全部
+  auto_recognize: 自動辨識
+  empty: 空
+  select_earth_shifting: 請選擇特殊地形
+  recognizing_entry: 正在辨識特殊地形與黑夜王…
+  remaining_candidates: 剩餘候選地圖：{count}
+  apply_now: 立即套用
+  no_match: 篩選結果為空，請重新設定
+overlay:
+  result: 辨識結果：{index}/{total}
+  crystal: 結晶配置：
+  all: 全部
+  matching: 正在辨識… {spinner}
+  elapsed: 辨識時間：{elapsed}前
+  duration:
+    hours: '{hours}小時{minutes}分{seconds}秒'
+    minutes: '{minutes}分{seconds}秒'
+    seconds: '{seconds}秒'
+  legend:
+    crystal: 結晶位置
+    underground: 地下結晶位置
+    extra: 額外結晶位置
+drawing:
+  unknown_boss: 未知BOSS
+  day_boss: Day{day} {name}
+  extra_boss: 額外BOSS：{name}
+  rooftop: 屋頂：{name}
+  basement: 地下室：{name}
+  flask: 聖杯瓶
+  floor_boss: '{floor}F：{name}'
+  blessing: 庇佑
+  hidden_nightlord: （隱藏黑夜王）
+  upper_left: 左上
+  lower_right: 右下
+  day2_circle: Day2 首次縮圈位置：{position}
+  event: 特殊事件：{name}
 settings:
+  force_display:
+    title: 強制顯示懸浮窗
+    content: 無法辨識時可強制開啟懸浮窗進行手動篩選；仍須先標定地圖區域
+    enter: 進入強制顯示
+    exit: 結束強制顯示
+  basic: 基本設定
+  hotkeys: 快捷鍵
+  advanced: 進階選項
+  manual_filter:
+    title: 進入／離開手動篩選
+    content: 在地圖區域顯示可互動的篩選懸浮窗；再次執行即可離開
+  calibrate_region:
+    action: 標定
+    title: 地圖區域
+    content: 沿地圖邊框框選完整地圖，可按「標定」或設定快捷鍵
+    annotate: 按此並框選「地圖」區域
+  recognize:
+    title: 辨識地圖
+    content: 清除舊結果，待下次完整地圖顯示且地形清晰時辨識
+  toggle:
+    title: 顯示／隱藏地圖資訊
+  next_result:
+    title: 下一個辨識結果
+  previous_result:
+    title: 上一個辨識結果
+  next_crystal:
+    title: 下一個結晶配置
+  previous_crystal:
+    title: 上一個結晶配置
+  topk:
+    title: 辨識結果數量
+    content: 首選結果有誤時可切換候選；數量過多會降低辨識速度，可能導致程式當機
   english_text_width:
     title: 英文地標文字寬度
-    content: 英文地圖地標文字的橫向寬度，預設為 50%，100% 為原始寬度；維持文字高度與標註位置。下次辨識時生效。
+  match_interval:
+    title: 重新比對間隔
+    content: 經過多久重新比對；未啟用縮圈計時時，此間隔也確保新一局能自動重新辨識
+  full_map_error_threshold:
+    title: 完整地圖辨識－誤差閾值
+    content: 判斷是否為完整地圖的誤差上限；越大越寬鬆，也越容易誤判
+  map_stability_change_threshold:
+    title: 地圖穩定辨識－畫面變化閾值
+    content: 連續畫面的灰階差超過此值時重新計時；數值越大越寬鬆
+  map_stability_duration:
+    title: 地圖穩定辨識－最短持續時間
+    content: 完整地圖需持續穩定的秒數；時間越長越能避開淡入淡出
+  poi_algorithm:
+    title: 據點辨識－演算法
+    template: 範本比對
+    cnn: CNN
+  earth_shifting_algorithm:
+    title: 特殊地形辨識－演算法
+    ncc: NCC
+    template: 範本比對
+  earth_shifting_ncc_threshold:
+    title: 特殊地形辨識－NCC 閾值
+    content: 僅用於 NCC；相關係數低於此值即拒絕辨識，越大越嚴格
+  earth_shifting_error_threshold:
+    title: 特殊地形辨識－範本比對誤差閾值
+    content: 僅用於範本比對；誤差高於此值即拒絕辨識，越大越寬鬆
+  subicon_template_match_threshold:
+    title: 據點辨識－子圖示比對閾值
+    content: 子圖示比對分數高於此值時視為沒有子圖示；越大越容易保留子圖示
+  poi_match_sample_ratio_w_nightlord:
+    title: 據點辨識－已知黑夜王時採樣比例
+    content: 已知黑夜王時的據點採樣比例；降低可加快辨識，但可能降低穩定性
+  poi_match_sample_ratio_wo_nightlord:
+    title: 據點辨識－未知黑夜王時採樣比例
+    content: 未知黑夜王時的據點採樣比例；降低可加快辨識，但可能降低穩定性

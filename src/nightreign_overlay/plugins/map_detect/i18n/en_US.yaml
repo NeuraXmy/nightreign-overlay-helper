@@ -1,4 +1,123 @@
+plugin:
+  name: Map Info
+  description: Detect maps automatically or manually and show their details
+controls:
+  title: Map controls
+  recognize: Recognize again
+  manual_filter: Manual filter
+  exit_filter: Exit filter
+  candidates: Map candidates
+  crystals: Crystal layout
+  previous: Previous
+  next: Next
+manual_filter:
+  title: Manual filter
+  earth_shifting: Shifting Earth
+  unselected: Not selected
+  nightlord: BOSS
+  all_nightlords: All
+  auto_recognize: Auto detect
+  empty: Empty
+  select_earth_shifting: Select Shifting Earth
+  recognizing_entry: Detecting Shifting Earth and Nightlord…
+  remaining_candidates: 'Maps remaining: {count}'
+  apply_now: Apply now
+  no_match: No matches; adjust your filters
+overlay:
+  result: 'Result: {index}/{total}'
+  crystal: 'Crystal layout: '
+  all: All
+  matching: Recognizing… {spinner}
+  elapsed: Recognized {elapsed} ago
+  duration:
+    hours: '{hours}h {minutes}m {seconds}s'
+    minutes: '{minutes}m {seconds}s'
+    seconds: '{seconds}s'
+  legend:
+    crystal: Crystal
+    underground: Underground crystal
+    extra: Extra crystal
+drawing:
+  unknown_boss: Unknown boss
+  day_boss: Day {day} {name}
+  extra_boss: 'Extra boss: {name}'
+  rooftop: 'Roof: {name}'
+  basement: 'Basement: {name}'
+  flask: Flask
+  floor_boss: '{floor}F: {name}'
+  blessing: Blessing
+  hidden_nightlord: ' (hidden Nightlord)'
+  upper_left: upper left
+  lower_right: lower right
+  day2_circle: 'Day 2 first circle: {position}'
+  event: 'Special event: {name}'
 settings:
+  force_display:
+    title: Force overlay display
+    content: Open the overlay for manual filtering if detection fails. Calibrate the map area first
+    enter: Force display
+    exit: End forced display
+  basic: Basic
+  hotkeys: Shortcuts
+  advanced: Advanced
+  manual_filter:
+    title: Enter / exit manual filter
+    content: Show interactive map filters; trigger again to exit
+  calibrate_region:
+    action: Calibrate
+    title: Map area
+    content: Box the full map along its border; use Calibrate or assign a shortcut
+    annotate: Click here, then box the map
+  recognize:
+    title: Recognize map
+    content: Clear old results and detect when the full map is next visible and clear
+  toggle:
+    title: Show / hide map info
+  next_result:
+    title: Next result
+  previous_result:
+    title: Previous result
+  next_crystal:
+    title: Next crystal layout
+  previous_crystal:
+    title: Previous crystal layout
+  topk:
+    title: Number of results
+    content: Switch candidates if the top match is wrong. Too many results slow recognition and may crash the app
   english_text_width:
-    title: English landmark text width
-    content: "Horizontal width of English map labels: 50% by default, 100% for original width. Keeps text height and position. Applies on the next recognition."
+    title: English label width
+  match_interval:
+    title: Rematch interval
+    content: Time before matching again. Without the circle timer, this also ensures a new expedition triggers detection
+  full_map_error_threshold:
+    title: Full map · Error threshold
+    content: Maximum error for full-map detection; higher is more lenient but may misidentify
+  map_stability_change_threshold:
+    title: Map stability · Change threshold
+    content: Restart stability timing when frame changes exceed this grayscale difference; higher is more lenient
+  map_stability_duration:
+    title: Map stability · Minimum duration
+    content: Seconds the full map must stay stable; longer waits avoid fades
+  poi_algorithm:
+    title: POI detection · Algorithm
+    template: Template matching
+    cnn: CNN
+  earth_shifting_algorithm:
+    title: Shifting Earth · Algorithm
+    ncc: NCC
+    template: Template matching
+  earth_shifting_ncc_threshold:
+    title: Shifting Earth · NCC threshold
+    content: 'NCC only: reject correlations below this value; higher is stricter'
+  earth_shifting_error_threshold:
+    title: Shifting Earth · Template error
+    content: 'Template matching only: reject errors above this value; higher is more lenient'
+  subicon_template_match_threshold:
+    title: POI detection · Sub-icon threshold
+    content: Treat scores above this value as no sub-icon; higher values retain more sub-icons
+  poi_match_sample_ratio_w_nightlord:
+    title: POI sampling · Known Nightlord
+    content: POI sampling ratio when the Nightlord is known; lower is faster but may reduce reliability
+  poi_match_sample_ratio_wo_nightlord:
+    title: POI sampling · Unknown Nightlord
+    content: POI sampling ratio when the Nightlord is unknown; lower is faster but may reduce reliability

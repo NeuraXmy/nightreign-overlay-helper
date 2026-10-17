@@ -1,0 +1,28 @@
+plugin:
+  name: 絕招倒數
+  description: 按下絕招鍵後辨識絕招圖示，顯示效果倒數
+hud:
+  text: '{name} {remaining}'
+  duchess: 落幕之章隱身時間
+  recluse: 血魂歌標記時間
+  revenant: 不死行軍無敵時間
+  scholar: 共感術標記時間
+  executor: 熔爐百相變身時間
+settings:
+  basic:
+    title: 基本設定
+  region:
+    title: 絕招圖示區域
+    content: 框選絕招圖示的區域，可按「標定」或設定快捷鍵
+    button: 標定
+    annotate: 按此並框選「絕招圖示」區域
+  use_art:
+    title: 絕招快捷鍵
+  advanced:
+    title: 進階選項
+  delay:
+    title: 辨識延遲
+    content: 按下絕招鍵後，等待多久再擷取圖示進行辨識
+  threshold:
+    title: 比對閾值
+    content: 圖示比對誤差低於此值才算成功；數值越小越嚴格

@@ -1,0 +1,8 @@
+plugin:
+  name: Input & Shortcuts
+  description: Manage global shortcuts registered by feature plugins
+settings:
+  title: Input settings
+  listener:
+    title: Enable global keyboard input
+    content: Requires permission to monitor global input; test injection remains available when disabled

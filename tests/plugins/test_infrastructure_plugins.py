@@ -332,7 +332,7 @@ def test_joysticks_report_triggers_dpad_and_keep_separate_states(
 
 def test_controller_bindings_use_legacy_button_names() -> None:
     binding = HotkeyBinding(InputDevice.JOYSTICK, ("button_1", "button_12", "dpad_up", "rt"))
-    assert _format_binding(binding) == "Controller: A + Btn12 + Up + RT"
+    assert _format_binding(binding).split(": ", 1)[1] == "A + Btn12 + Up + RT"
 
 
 def test_hotkeys_migrate_legacy_bindings_and_capture_devices(store: ConfigStore) -> None:

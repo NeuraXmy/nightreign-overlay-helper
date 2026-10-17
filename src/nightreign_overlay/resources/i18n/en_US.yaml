@@ -1,34 +1,30 @@
 meta:
   name: English
-
 common:
-  "on": "On"
-  "off": "Off"
-
+  'on': 'On'
+  'off': 'Off'
 nav:
   faq: FAQ
   home: Home
   settings: Settings
   about: About
-
 home:
-  subtitle: Overlay toolkit for ELDEN RING NIGHTREIGN
-  version: "Version {version}"
+  subtitle: ELDEN RING NIGHTREIGN Overlay Helper
+  version: Version {version}
   status:
     title: Status
     game: Game window
-    game_unsupported: Detection not supported here (assumed focused)
+    game_unsupported: Detection unavailable on this platform
     game_foreground: In foreground
-    game_background: Not in foreground
-    overlay: Overlay presentation
+    game_background: In background
+    overlay: Overlay mode
     overlay_transparent: Transparent overlay
-    overlay_window: Regular window (compatibility)
+    overlay_window: Standard window
     plugins: Features
-    plugins_value: "{active} / {total} running"
+    plugins_value: '{active} / {total} running'
   plugins:
     title: Features
-    empty: No feature plugins are installed yet.
-
+    empty: No feature plugins installed
 plugin:
   kind:
     infrastructure: Components
@@ -37,35 +33,32 @@ plugin:
   state:
     active: Running
     inactive: Disabled
-    failed: "Failed to start: {error}"
-    unavailable: "Unavailable: missing {plugins}"
-    circular: "Unavailable: circular dependency"
+    failed: 'Failed to start: {error}'
+    unavailable: 'Unavailable: missing {plugins}'
+    circular: 'Unavailable: circular dependency'
   cascade:
-    enabled: "Also enabled required features: {plugins}"
-    disabled: "Also disabled dependent features: {plugins}"
-
+    enabled: 'Also enabled required features: {plugins}'
+    disabled: 'Also disabled dependent features: {plugins}'
 plugin_page:
   tab:
     settings: Settings
-    tutorial: Tutorial
-  no_settings: This feature has no options.
-  no_tutorial: No tutorial is available for this feature yet.
-
+    tutorial: Guide
+  no_settings: No settings for this feature
+  no_tutorial: No guide available yet
 settings_reset:
   button: Reset
   title: Reset settings
-  plugin_content: Restore every setting on this page to its default? Shortcuts on this page return to their defaults and calibrated detection regions are cleared. This cannot be undone.
-  general_content: Restore every setting on this page to its default? This cannot be undone.
+  plugin_content: Reset all settings on this page? Shortcuts return to defaults and calibrated areas are cleared.
+    This cannot be undone
+  general_content: Reset all settings on this page? This cannot be undone
   confirm: Reset
   cancel: Cancel
-  done: Default settings restored
-
+  done: Defaults restored
 region_preview:
   calibrated: Calibrated
   uncalibrated: Not calibrated
-  current: "Showing the current region: ({x}, {y}), {width} × {height} px"
-  unset: No region calibrated yet
-
+  current: 'Current area: ({x}, {y}), {width} × {height} px'
+  unset: No area selected
 settings:
   title: Settings
   open: Open
@@ -73,117 +66,113 @@ settings:
     title: General
   language:
     title: Language
-    content: Interface language; takes effect after a restart
-    auto: Use system setting
+    auto: System default
   theme:
     title: Theme
-    content: Light or dark appearance of the main window
     dark: Dark
     light: Light
-    auto: Use system setting
+    auto: System default
   theme_color:
     title: Accent color
-    content: Accent color of the main window
   overlay_mode:
-    title: Overlay presentation
-    content: Switch to regular windows if transparent overlays render incorrectly
-    auto: Automatic
+    title: Overlay mode
+    content: Switch to a standard window if the transparent overlay displays incorrectly
+    auto: Auto
     overlay: Transparent overlay
-    window: Regular window
+    window: Standard window
   only_when_game_foreground:
-    title: Only show and detect while the game is focused
-    content: Hide all overlays, pause detection and ignore hotkeys while another window is active; overlays and hotkeys stay available while the main window or a menu is open
+    title: Show and detect only in-game
+    content: Hide overlays, pause detection and block shortcuts when the game is in the background. Overlays and
+      shortcuts remain available while the main window or menus are open
   start_minimized:
     title: Start minimized
-    content: Only show the tray icon on startup
+    content: Start with only the tray icon; keep the main window hidden
   debug_images:
     title: Save debug images
-    content: Save detection debug images and recognition metadata; enabled by default
+    content: Save recent detection images and data for problem reports
   advanced:
     title: Advanced
   log_level:
     title: Log level
-    content: Use DEBUG when reporting a problem
   data_dir:
-    title: Data directory
+    title: Data folder
   log_dir:
-    title: Log directory
+    title: Log folder
   diagnostic_export:
     feedback_email: nroh-report@qq.com
-    title: Package logs and debug images
-    content: Describe a problem, attach images, and export a ZIP for feedback
-    button: Package
-    hint: Automatically includes existing logs, debug images, and recognition metadata. Add a description and images, then send the exported ZIP by email to {email}. If ZIP attachments are blocked, rename the extension to .txt before sending.
-    description: "Problem description (optional): What happened? How can it be reproduced? Include the time, game resolution, and relevant settings."
-    attachments: Attached images (optional)
+    title: Report a problem
+    content: Describe the problem, attach images and export a ZIP for your report
+    button: Report
+    hint: Collect existing logs, debug images and detection metadata. Email the exported ZIP to {email}. If ZIP
+      files cannot be sent, rename the extension to .txt and try again
+    description: 'Problem description (optional): What happened? How can it be reproduced? Include the time, game
+      resolution and relevant settings'
+    attachments: Image attachments (optional)
     add_images: Add images
-    remove_images: Remove selected images
-    image_filter: "Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
+    remove_images: Remove selected
+    image_filter: Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)
     export: Export ZIP
     cancel: Cancel
-    working: Packaging, please wait…
-    failed: "Packaging failed. Check that the files are readable and the disk is writable, then retry.\n{error}"
-    success: "Exported {count} files. Send this ZIP by email to {email}. If ZIP attachments are blocked, rename the extension to .txt before sending.\n{path}"
-    skipped: "{count} files were removed during packaging and were skipped. See manifest.json."
-    open_directory: Open containing folder
+    working: Creating archive, please wait…
+    failed: 'Export failed. Check file access and disk write permissions, then retry.
+
+      {error}'
+    success: 'Exported {count} files. Email the ZIP to {email}. If it cannot be sent, rename the extension to .txt
+      and try again.
+
+      {path}'
+    skipped: Skipped {count} files removed during export; see manifest.json
+    open_directory: Open folder
     close: Close
   restart:
     title: Restart required
-    content: The new language is applied after a restart.
+    content: Restart to apply the language setting
     button: Restart now
-
 about:
   project:
     title: Project
-    repo_button: Open repository
-    repo_content: "Version {version} · open source, stars welcome"
+    repo_button: View repository
+    repo_content: Version {version}
   credits:
     title: Credits
     visit: Visit
-    fuwish: Map data extraction
+    fuwish: Map data extraction support
     quexuan: Great Hollow crystal layouts
-    steam_p2p_info: P2P connection query and ETW latency concepts (MIT)
-    fluent_widgets: Fluent Design widget library
-
+    steam_p2p_info: P2P queries and ETW latency measurement approach (MIT license)
+    fluent_widgets: Fluent Design UI components
 tray:
   toggle: Show / hide main window
   quit: Quit
-  hidden_hint: The main window is hidden; the app is still running. Click the tray icon to show it again.
-
+  hidden_hint: The app is still running in the tray. Click the tray icon to show the main window
 overlay:
   menu:
     open_main_window: Open main window
-    quit: Quit
-
+    quit: Quit app
 input_dialog:
   device:
     keyboard: Keyboard
     mouse: Mouse
     controller: Controller
   title: Set shortcut
-  hint: Press a keyboard, mouse, or controller combination. The first input locks the device type.
+  hint: Press a keyboard, mouse or controller combination. The first input locks the device type
   waiting: Waiting for input…
-  unset: Shortcut not set
+  unset: Not set
   clear: Clear
   cancel: Cancel
   confirm: Confirm
-
 overlay_settings:
-  title: Overlay
+  title: Main overlay
   opacity:
     title: Opacity
-    content: Overall opacity of the overlay
   scale:
     title: Scale
-    content: Size of the overlay content
   input_mode:
     title: Mouse interaction
-    content: Controls whether the overlay can be dragged or mouse input passes through it (full pass-through is transparent mode only).
-    normal: Normal
-    locked: Lock position only
-    passthrough: Full pass-through
+    content: Control dragging and whether mouse input passes to the window below
+    normal: Interactive
+    locked: Position locked
+    passthrough: Click-through
   reset_position:
     title: Reset position
-    content: Move the overlay back to the top centre of the screen
     reset: Reset
-    horizontal: Reset horizontal only
+    horizontal: Center horizontally

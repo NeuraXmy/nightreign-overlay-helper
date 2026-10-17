@@ -1,0 +1,55 @@
+plugin:
+  name: Rain Exposure Timer
+  description: Detect rain exposure from HP bar colors and count down to heavy damage
+hud:
+  text: Night's Tide {remaining} - {percent}%
+settings:
+  basic:
+    title: Basic
+  auto:
+    title: Auto rain exposure timer
+    content: Start or stop the rain timer using HP bar colors in the selected area
+  region:
+    title: HP bar detection area
+    content: Select a small solid-color patch inside the HP bar's left end; use Calibrate or a shortcut
+    button: Calibrate
+    annotate: Click here, then box the solid-color HP bar interior
+  toggle:
+    title: Start / stop rain timer
+    button: Start / stop
+  color:
+    title: Reference HP colors
+    calibrate:
+      title: Calibrate HP colors
+      content: If color differences break auto timing, sample normal and rain HP bars with Calibrate or a shortcut
+      button: Calibrate
+    not_in_rain_annotate: Click here, then box the normal HP bar color
+    in_rain_annotate: Click here, then box the rain HP bar color
+    status:
+      title: Reference colors
+    not_in_rain: 'Normal HP color:'
+    in_rain: 'Rain HP color:'
+    default: Default
+    set: Custom
+    hdr_prefix: 'HDR:'
+    reset: Reset
+    reset_title: Confirm
+    reset_confirm: Reset HP colors for {mode} to defaults?
+    mode_hdr: HDR mode
+    mode_normal: SDR mode
+  advanced:
+    title: Advanced
+  duration:
+    title: Time until heavy damage
+  h_tolerance:
+    title: Hue tolerance
+  l_tolerance:
+    title: Lightness tolerance
+  s_tolerance:
+    title: Saturation tolerance
+  min_area_percent:
+    title: Other-color area limit
+    content: Classify only if the other color's area ratio does not exceed this value
+  max_area_percent:
+    title: Main-color area threshold
+    content: Treat the HP bar as this color once its area ratio reaches this value

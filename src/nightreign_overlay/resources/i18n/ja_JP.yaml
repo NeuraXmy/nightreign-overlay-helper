@@ -1,71 +1,63 @@
 meta:
   name: 日本語
-
 common:
-  "on": オン
-  "off": オフ
-
+  'on': オン
+  'off': オフ
 nav:
   faq: よくある質問
   home: ホーム
   settings: 設定
-  about: 情報
-
+  about: このアプリについて
 home:
-  subtitle: 『ELDEN RING NIGHTREIGN』オーバーレイ支援ツール
-  version: "バージョン {version}"
+  subtitle: ELDEN RING NIGHTREIGN オーバーレイヘルパー
+  version: バージョン {version}
   status:
-    title: 状態
+    title: 動作状況
     game: ゲームウィンドウ
-    game_unsupported: この環境では検出非対応（前面とみなす）
-    game_foreground: 前面
-    game_background: 背面
+    game_unsupported: この環境では検出非対応
+    game_foreground: 前面に表示中
+    game_background: 背面に表示中
     overlay: オーバーレイ表示方式
-    overlay_transparent: 透過オーバーレイ
-    overlay_window: 通常ウィンドウ（互換モード）
+    overlay_transparent: 透明オーバーレイ
+    overlay_window: 通常ウィンドウ
     plugins: 機能
-    plugins_value: "{active} / {total} 実行中"
+    plugins_value: '{active} / {total} 個が動作中'
   plugins:
     title: 機能
-    empty: 機能プラグインはまだインストールされていません。
-
+    empty: 機能プラグインがありません
 plugin:
   kind:
-    infrastructure: 基盤コンポーネント
+    infrastructure: 基本コンポーネント
     feature: 機能
     debug: デバッグツール
   state:
-    active: 実行中
+    active: 動作中
     inactive: 無効
-    failed: "起動失敗：{error}"
-    unavailable: "利用不可：依存 {plugins} がありません"
-    circular: 利用不可：循環依存があります
+    failed: 起動失敗：{error}
+    unavailable: 利用不可：{plugins} が必要
+    circular: 利用不可：循環依存あり
   cascade:
-    enabled: "依存する機能も有効にしました：{plugins}"
-    disabled: "この機能に依存する機能も無効にしました：{plugins}"
-
+    enabled: 必要な機能も有効化しました：{plugins}
+    disabled: 依存する機能も無効化しました：{plugins}
 plugin_page:
   tab:
     settings: 設定
-    tutorial: チュートリアル
-  no_settings: この機能には設定項目がありません。
-  no_tutorial: この機能のチュートリアルはまだありません。
-
+    tutorial: 使い方
+  no_settings: この機能に設定項目はありません
+  no_tutorial: この機能の説明はまだありません
 settings_reset:
   button: リセット
-  title: 設定のリセット
-  plugin_content: このページのすべての設定を既定値に戻しますか？このページのショートカットは既定値に戻り、設定済みの検出範囲は消去されます。この操作は元に戻せません。
-  general_content: このページのすべての設定を既定値に戻しますか？この操作は元に戻せません。
+  title: 設定をリセット
+  plugin_content: このページの設定を初期化しますか？ショートカットは既定値に戻り、指定した認識範囲は消去されます。元に戻せません
+  general_content: このページの設定を初期化しますか？元に戻せません
   confirm: リセット
   cancel: キャンセル
-  done: 既定の設定に戻しました
-
+  done: 初期設定に戻しました
 region_preview:
-  calibrated: 設定済み
-  uncalibrated: 未設定
-  current: "現在の範囲を表示中：({x}, {y})、{width} × {height} px"
-  unset: 範囲はまだ設定されていません
-
+  calibrated: 指定済み
+  uncalibrated: 未指定
+  current: 現在の範囲：({x}, {y})、{width} × {height} px
+  unset: 認識範囲が未指定です
 settings:
   title: 設定
   open: 開く
@@ -73,117 +65,109 @@ settings:
     title: 一般
   language:
     title: 言語
-    content: 表示言語（再起動後に反映されます）
     auto: システムに従う
   theme:
     title: テーマ
-    content: メインウィンドウのライト／ダーク表示
     dark: ダーク
     light: ライト
     auto: システムに従う
   theme_color:
     title: アクセントカラー
-    content: メインウィンドウの強調色
   overlay_mode:
     title: オーバーレイ表示方式
-    content: 透過オーバーレイが正しく表示されない場合は通常ウィンドウに切り替えてください
+    content: 透明オーバーレイの表示に問題がある場合は通常ウィンドウに切り替えてください
     auto: 自動
-    overlay: 透過オーバーレイ
+    overlay: 透明オーバーレイ
     window: 通常ウィンドウ
   only_when_game_foreground:
-    title: ゲームが前面のときのみ表示・検出
-    content: ゲームが前面にないときはすべてのオーバーレイを非表示にし、検出を停止してホットキーを無効にします。メイン画面やメニューを開いている間は利用できます
+    title: ゲーム操作中のみ表示・認識
+    content: ゲームが背面の間は表示・認識・ショートカットを停止。メイン画面やメニューを開いている間は表示とショートカットを利用可能
   start_minimized:
     title: 最小化して起動
-    content: 起動時はトレイアイコンのみ表示します
+    content: 起動時にメイン画面を表示せず、トレイアイコンのみ表示
   debug_images:
     title: デバッグ画像を保存
-    content: 検出画像と認識メタデータを保存します。既定で有効です
+    content: 問題報告用に最近の認識画像とデータを保存
   advanced:
-    title: 詳細設定
+    title: 詳細
   log_level:
     title: ログレベル
-    content: 不具合報告の際は DEBUG を推奨します
   data_dir:
     title: データフォルダー
   log_dir:
     title: ログフォルダー
   diagnostic_export:
     feedback_email: nroh-report@qq.com
-    title: ログとデバッグ画像をまとめる
-    content: 問題の説明と画像を添えて、報告用の ZIP をエクスポートします
-    button: 作成
-    hint: 既存のログ、デバッグ画像、認識メタデータを自動収集します。エクスポート後、ZIP を {email} にメールで送信してください。ZIP を送信できない場合は拡張子を .txt に変更して送信してください。
-    description: "問題の説明（任意）：何が起きましたか？再現手順、発生時刻、ゲームの解像度、関連設定などを記入してください。"
+    title: 問題を報告
+    content: 問題の説明と画像を添え、報告用ZIPを書き出します
+    button: 報告
+    hint: 既存のログ・デバッグ画像・認識データを収集します。ZIPを {email} へメール送信してください。送信できない場合は拡張子を .txt に変更してください
+    description: 問題の説明（任意）：発生した現象、再現手順、発生時刻、ゲームの解像度や設定など
     attachments: 添付画像（任意）
     add_images: 画像を追加
     remove_images: 選択した画像を削除
-    image_filter: "画像 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)"
-    export: ZIP を作成
+    image_filter: 画像 (*.png *.jpg *.jpeg *.bmp *.webp *.gif *.tif *.tiff)
+    export: ZIPを書き出す
     cancel: キャンセル
-    working: 作成中です。お待ちください…
-    failed: "作成できませんでした。ファイルの読み取りとディスクへの書き込みが可能か確認し、再試行してください。\n{error}"
-    success: "{count} 個のファイルをエクスポートしました。ZIP を {email} にメールで送信してください。ZIP を送信できない場合は拡張子を .txt に変更して送信してください。\n{path}"
-    skipped: "作成中に削除された {count} 個のファイルを除外しました。詳細は manifest.json を参照してください。"
-    open_directory: 保存先フォルダーを開く
+    working: 圧縮中です。お待ちください…
+    failed: '書き出し失敗。ファイルの読み取り・保存先への書き込み権限を確認して再試行してください。
+
+      {error}'
+    success: '{count} 件を書き出しました。ZIPを {email} へ送信してください。送信できない場合は拡張子を .txt に変更してください。
+
+      {path}'
+    skipped: 処理中に削除された {count} 件は含まれません。詳細はmanifest.jsonを確認してください
+    open_directory: 保存先を開く
     close: 閉じる
   restart:
     title: 再起動が必要です
-    content: 言語設定は再起動後に反映されます。
+    content: 言語設定は再起動後に反映されます
     button: 今すぐ再起動
-
 about:
   project:
     title: プロジェクト
     repo_button: リポジトリを開く
-    repo_content: "バージョン {version} · オープンソース、Star 歓迎"
+    repo_content: バージョン {version}
   credits:
     title: 謝辞
     visit: 開く
-    fuwish: マップ解析データの提供
-    quexuan: 大空洞クリスタル配置の共有
-    steam_p2p_info: P2P 接続照会と ETW 遅延計測の手法（MIT ライセンス）
-    fluent_widgets: Fluent Design ウィジェットライブラリ
-
+    fuwish: マップデータ解析の支援
+    quexuan: 大空洞の結晶配置の提供
+    steam_p2p_info: P2P接続照会とETW遅延計測の手法（MITライセンス）
+    fluent_widgets: Fluent DesignのUIコンポーネント
 tray:
-  toggle: メインウィンドウを表示／非表示
+  toggle: メイン画面を表示／非表示
   quit: 終了
-  hidden_hint: メインウィンドウを非表示にしました。アプリは動作中です。トレイアイコンをクリックすると再表示できます。
-
+  hidden_hint: アプリはトレイで動作中です。トレイアイコンを押すとメイン画面を表示します
 overlay:
   menu:
-    open_main_window: メインウィンドウを開く
-    quit: 終了
-
+    open_main_window: メイン画面を開く
+    quit: アプリを終了
 input_dialog:
   device:
     keyboard: キーボード
     mouse: マウス
     controller: コントローラー
-  title: ショートカットを設定
-  hint: キーボード、マウス、またはコントローラーの組み合わせを押してください。最初の入力でデバイス種別が固定されます。
+  title: ショートカットの設定
+  hint: キー・マウス・コントローラーの組み合わせを入力。最初の入力でデバイスが固定されます
   waiting: 入力待ち…
-  unset: ショートカット未設定
+  unset: 未設定
   clear: クリア
   cancel: キャンセル
   confirm: 確定
-
 overlay_settings:
-  title: オーバーレイ
+  title: メインオーバーレイ
   opacity:
     title: 不透明度
-    content: オーバーレイ全体の不透明度
   scale:
-    title: 拡大率
-    content: オーバーレイの表示サイズ
+    title: 表示倍率
   input_mode:
     title: マウス操作
-    content: オーバーレイのドラッグ可否と、下のウィンドウへのマウス操作の透過を設定します（完全透過は透過モードのみ）。
-    normal: 透過しない
-    locked: 位置のみ固定
-    passthrough: 完全透過
+    content: ドラッグの可否と、背後のウィンドウへクリックを通すかを設定
+    normal: 通常操作
+    locked: 位置固定
+    passthrough: クリック透過
   reset_position:
     title: 位置をリセット
-    content: オーバーレイを画面上部中央に戻します
     reset: リセット
-    horizontal: 水平位置のみリセット
+    horizontal: 左右位置のみ

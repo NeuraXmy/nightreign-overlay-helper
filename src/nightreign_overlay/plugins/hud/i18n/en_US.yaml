@@ -1,0 +1,8 @@
+plugin:
+  name: Shared HUD
+  description: A shared overlay for compact information such as countdowns
+settings:
+  enabled:
+    title: Enable overlay
+  hide_text:
+    title: Hide text

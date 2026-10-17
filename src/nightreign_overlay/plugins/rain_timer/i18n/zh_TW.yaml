@@ -1,0 +1,55 @@
+plugin:
+  name: 黑夜雨中計時
+  description: 依血條顏色辨識淋雨狀態，顯示大量受傷前的倒數
+hud:
+  text: 雨中倒數 {remaining} - {percent}%
+settings:
+  basic:
+    title: 基本設定
+  auto:
+    title: 自動雨中計時
+    content: 依標定區域內的血條顏色，自動開始或停止雨中倒數
+  region:
+    title: 血條偵測區域
+    content: 框選血條最左端一小段純色內部，可按「標定」或設定快捷鍵
+    button: 標定
+    annotate: 按此並框選「血條純色內部」區域
+  toggle:
+    title: 手動開始／停止雨中計時
+    button: 開始／停止
+  color:
+    title: 參考血條顏色
+    calibrate:
+      title: 校準血條顏色
+      content: 色差導致自動計時失效時，可按「校準」或快捷鍵，框選正常與雨中血條來記錄實際顏色
+      button: 校準
+    not_in_rain_annotate: 按此並框選「正常顏色血條」區域
+    in_rain_annotate: 按此並框選「雨中顏色血條」區域
+    status:
+      title: 參考顏色
+    not_in_rain: 正常血條顏色：
+    in_rain: 雨中血條顏色：
+    default: 預設
+    set: 已設定
+    hdr_prefix: HDR：
+    reset: 重設
+    reset_title: 確認
+    reset_confirm: 確定將{mode}的血條顏色恢復預設值？
+    mode_hdr: HDR 模式
+    mode_normal: 一般模式
+  advanced:
+    title: 進階選項
+  duration:
+    title: 大量受傷開始時間
+  h_tolerance:
+    title: 色相容差
+  l_tolerance:
+    title: 亮度容差
+  s_tolerance:
+    title: 飽和度容差
+  min_area_percent:
+    title: 干擾色面積最小占比
+    content: 另一種顏色的面積占比不高於此值時，才進行判定
+  max_area_percent:
+    title: 主顏色面積最大占比
+    content: 某顏色的面積占比達到此值時，視血條為該顏色

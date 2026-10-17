@@ -1,0 +1,8 @@
+plugin:
+  name: 共有HUD
+  description: カウントダウンなどの短い情報を共通オーバーレイに表示
+settings:
+  enabled:
+    title: オーバーレイを有効化
+  hide_text:
+    title: テキストを非表示

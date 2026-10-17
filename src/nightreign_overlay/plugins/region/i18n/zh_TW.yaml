@@ -1,0 +1,8 @@
+plugin:
+  name: 區域標定
+  description: 為辨識外掛儲存統一的螢幕區域
+selection:
+  annotate: 按此並框選區域
+  hint: 先按上方按鈕再拖曳框選；拖曳四角調整大小、中央移動。遊戲內游標無法移動時可嘗試按滑鼠左鍵；Enter 儲存，Esc 取消
+  cancel: 取消
+  save: 儲存

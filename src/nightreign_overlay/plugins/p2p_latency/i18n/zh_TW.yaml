@@ -1,0 +1,40 @@
+plugin:
+  name: 連線狀態
+  description: 顯示 Steam 隊友、延遲與穩定度；需以系統管理員身分執行
+settings:
+  window: 懸浮窗
+  good_ping: 良好延遲上限（低於此值顯示綠色）
+  warning_ping: 警告延遲上限（低於此值顯示黃色，否則紅色）
+  status: 執行狀態
+  simulation: macOS 使用模擬子程序，約 32 秒循環展示等待、未知數值、延遲變化與換隊；並非實際網路測量
+overlay:
+  title: 連線狀態 · Ping／穩定度
+  waiting: 等待隊友／Steam 同步
+  legacy_no_fields: 舊 Steam P2P 介面沒有 Ping／穩定度欄位
+  etw_source: 延遲來源：ETW STUN 往返時間
+status:
+  admin_required: 連線延遲功能需要管理員權限，請重新啟動並允許授權
+  disabled: 連線資訊已關閉
+  running: 執行中
+  stopped: 未啟動
+  waiting: 等待中
+  connected: 已連線
+  failed: 失敗
+  detail: '狀態：{message}
+
+    黑夜君臨：{game}
+
+    連線元件：{helper}
+
+    Steam API：{steam}
+
+    ETW 延遲：{etw}
+
+    目前隊友：{count}'
+  etw:
+    disabled: 已關閉
+    waiting: 等待遊戲
+    starting: 正在啟動
+    ready: 已啟用
+    error: 無法使用，請以管理員身分執行
+    simulated: 模擬資料（未啟用 ETW）

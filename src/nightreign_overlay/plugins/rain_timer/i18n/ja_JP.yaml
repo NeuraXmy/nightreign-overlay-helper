@@ -1,0 +1,55 @@
+plugin:
+  name: 夜の雨ダメージタイマー
+  description: HPバーの色で夜の雨を判定し、大ダメージまでの時間を表示
+hud:
+  text: 雨ダメージ {remaining} - {percent}%
+settings:
+  basic:
+    title: 基本設定
+  auto:
+    title: 雨ダメージの自動計測
+    content: 指定範囲のHPバーの色から、夜の雨の計測を自動で開始・停止
+  region:
+    title: HPバーの認識範囲
+    content: HPバー左端の単色部分を小さく囲みます。「範囲指定」かショートカットで設定
+    button: 範囲指定
+    annotate: ここを押して「HPバー内部の単色部分」を囲んでください
+  toggle:
+    title: 雨タイマーを開始／停止
+    button: 開始／停止
+  color:
+    title: HPバーの基準色
+    calibrate:
+      title: HPバーの色を設定
+      content: 色の違いで自動計測できない場合、設定ボタンかショートカットで通常時・雨の中のHPバーの色を採取
+      button: 色を設定
+    not_in_rain_annotate: ここを押して「通常時のHPバー」を囲んでください
+    in_rain_annotate: ここを押して「雨の中のHPバー」を囲んでください
+    status:
+      title: 基準色
+    not_in_rain: 通常時の色：
+    in_rain: 雨の中の色：
+    default: 既定
+    set: 設定済み
+    hdr_prefix: HDR：
+    reset: リセット
+    reset_title: 確認
+    reset_confirm: '{mode}のHPバーの色を初期設定に戻しますか？'
+    mode_hdr: HDRモード
+    mode_normal: 通常モード
+  advanced:
+    title: 詳細設定
+  duration:
+    title: 大ダメージまでの時間
+  h_tolerance:
+    title: 色相の許容差
+  l_tolerance:
+    title: 明度の許容差
+  s_tolerance:
+    title: 彩度の許容差
+  min_area_percent:
+    title: 他の色の面積上限
+    content: 他の色の面積比率がこの値以下の場合のみ判定
+  max_area_percent:
+    title: 主な色の面積しきい値
+    content: その色の面積比率がこの値に達したら、HPバーをその色と判定
