@@ -13,6 +13,7 @@ controls:
 manual_filter:
   title: 手动筛选
   earth_shifting: 特殊地形
+  unselected: 未选择
   nightlord: BOSS
   all_nightlords: 所有
   auto_recognize: 自动识别
