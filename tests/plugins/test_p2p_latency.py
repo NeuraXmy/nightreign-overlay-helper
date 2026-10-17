@@ -87,6 +87,50 @@ def _wait_until(predicate, timeout: float = 5) -> None:
     assert predicate()
 
 
+@pytest.mark.parametrize("language", ["zh_CN", "zh_TW", "en_US", "ja_JP"])
+@pytest.mark.parametrize(
+    "state",
+    [
+        "disabled",
+        "admin_required",
+        "helper_missing",
+        "helper_started",
+        "helper_restarting",
+        "helper_error",
+        "waiting_for_game",
+        "steam_api_error",
+        "steam_ready",
+        "runtime_error",
+        "future_state",
+    ],
+)
+def test_status_display_translates_without_changing_protocol(plugin, language, state):
+    translator = Translator(language)
+    translator.load_dir("p2p_latency", _ROOT / "i18n")
+
+    def tr(key, **kwargs):
+        return translator.tr("p2p_latency", key, **kwargs)
+
+    payload = {"type": "status", "state": state, "message": "原始诊断：error details", "etw_state": "ready"}
+    _, status = parse_helper_message(json.dumps(payload))
+    window = P2POverlay(plugin.ctx.services.require(OverlayManager), plugin.overlay_config, plugin.config, tr)
+    plugin.ctx.on_cleanup(window.dispose)
+    parent = QWidget()
+    label = _StatusLabel(tr, parent)
+    label.set_status(status)
+    window.set_status(status)
+    expected = status.message if state == "future_state" else tr(f"status.{state}")
+    assert expected != f"status.{state}"
+    assert expected in label.text()
+    assert window.status_label.text() == (tr("overlay.waiting") if state == "steam_ready" else expected)
+    assert label.toolTip() == window.status_label.toolTip() == payload["message"]
+    assert window.status is status
+    assert status.state == payload["state"]
+    assert status.message == payload["message"]
+    assert status.etw_state == payload["etw_state"]
+    parent.deleteLater()
+
+
 def test_settings_changes_persistence_and_reset(plugin, store, tmp_path):
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)
@@ -138,7 +182,8 @@ def test_overlay_rows_missing_metrics_and_colour_boundaries(plugin):
     assert window.peer_grid.count() == 0
     assert window.status_label.isVisible()
     window.set_status(P2PStatus("steam_api_error", "模拟初始化失败"))
-    assert window.status_label.text() == "模拟初始化失败"
+    assert window.status_label.text() == plugin.ctx.tr("status.steam_api_error")
+    assert window.status_label.toolTip() == "模拟初始化失败"
 
 
 def test_scaling_layout_position_opacity_and_modes(plugin):
@@ -188,7 +233,7 @@ def test_foreground_gate_also_controls_waiting_status(plugin):
     assert not window.isVisible()
     manager.foreground.set_ui_active("main_window", True)
     assert window.isVisible()
-    assert window.status_label.text() == "等待"
+    assert window.status_label.text() == plugin.ctx.tr("status.waiting_for_game")
 
 
 def test_transparent_text_status_and_standard_window_settings(plugin):
@@ -207,7 +252,8 @@ def test_transparent_text_status_and_standard_window_settings(plugin):
     for state in ("waiting_for_game", "steam_api_error", "helper_missing", "runtime_error"):
         window.set_status(P2PStatus(state, "状态详情"))
         assert window.status_label.isVisible()
-        assert window.status_label.text() == "状态详情"
+        assert window.status_label.text() == plugin.ctx.tr(f"status.{state}")
+        assert window.status_label.toolTip() == "状态详情"
         assert window.peer_grid.count() == 0
     window.set_status(P2PStatus("steam_ready", "模拟"))
     assert window.peer_grid.count() == 9

@@ -14,6 +14,15 @@ overlay:
   legacy_no_fields: Legacy Steam P2P has no ping or stability fields
   etw_source: 'Latency source: ETW STUN round-trip time'
 status:
+  helper_missing: Co-op helper not found; run scripts/build_p2p_helper.ps1 when running from source
+  helper_started: Co-op helper started
+  helper_restarting: Restarting co-op helper
+  helper_error: Co-op helper error
+  waiting_for_game: Waiting for nightreign.exe
+  steam_api_error: Steam API initialization failed; verify game files and sign in to Steam
+  steam_ready: Steam API connected
+  runtime_error: Failed to read Steam connections
+  simulated: macOS simulated data (not real network measurements)
   admin_required: Latency monitoring needs administrator privileges. Restart and allow elevation
   disabled: Co-op status disabled
   running: Running

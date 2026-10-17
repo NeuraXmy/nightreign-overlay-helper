@@ -14,6 +14,7 @@ from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
 from nightreign_overlay.plugins.p2p_latency.models import P2PStatus
 from nightreign_overlay.plugins.p2p_latency.overlay import P2POverlay
+from nightreign_overlay.plugins.p2p_latency.presentation import status_message
 from nightreign_overlay.plugins.p2p_latency.service import P2PService
 from nightreign_overlay.ui.components import (
     ConfigRangeCard,
@@ -50,7 +51,7 @@ class _StatusLabel(BodyLabel):
         self.setText(
             tr(
                 "status.detail",
-                message=status.message,
+                message=status_message(status, tr),
                 game=tr("status.running" if status.game_running else "status.waiting"),
                 helper=tr("status.running" if helper_ok else "status.stopped"),
                 steam=tr(f"status.{steam}"),
@@ -58,6 +59,7 @@ class _StatusLabel(BodyLabel):
                 count=status.peer_count,
             )
         )
+        self.setToolTip(status.message)
 
 
 class P2PLatencyPlugin(Plugin):

@@ -13,6 +13,15 @@ overlay:
   legacy_no_fields: 旧Steam P2P APIにPing・安定性の項目はありません
   etw_source: 遅延の測定元：ETW STUN往復時間
 status:
+  helper_missing: 通信ヘルパーが見つかりません。ソースから実行する場合は scripts/build_p2p_helper.ps1 を実行してください
+  helper_started: 通信ヘルパーが起動しました
+  helper_restarting: 通信ヘルパーを再起動中
+  helper_error: 通信ヘルパーエラー
+  waiting_for_game: nightreign.exe を待機中
+  steam_api_error: Steam APIの初期化に失敗しました。ゲームファイルとSteamへのログインを確認してください
+  steam_ready: Steam APIに接続済み
+  runtime_error: Steam接続情報の読み取りに失敗しました
+  simulated: macOSの模擬データ（実際のネットワーク測定ではありません）
   admin_required: 遅延計測には管理者権限が必要です。再起動して権限を許可してください
   disabled: マルチプレイ情報は無効です
   running: 動作中

@@ -13,6 +13,15 @@ overlay:
   legacy_no_fields: 舊 Steam P2P 介面沒有 Ping／穩定度欄位
   etw_source: 延遲來源：ETW STUN 往返時間
 status:
+  helper_missing: 找不到連線元件，從原始碼執行請先執行 scripts/build_p2p_helper.ps1
+  helper_started: 連線元件已啟動
+  helper_restarting: 連線元件正在重新啟動
+  helper_error: 連線元件錯誤
+  waiting_for_game: 等待 nightreign.exe
+  steam_api_error: SteamAPI 初始化失敗，請確認遊戲檔案完整且 Steam 已登入
+  steam_ready: SteamAPI 已連線
+  runtime_error: 讀取 Steam 連線失敗
+  simulated: macOS 模擬資料（非實際網路測量）
   admin_required: 連線延遲功能需要管理員權限，請重新啟動並允許授權
   disabled: 連線資訊已關閉
   running: 執行中
