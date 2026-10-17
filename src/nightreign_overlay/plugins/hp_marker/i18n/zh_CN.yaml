@@ -1,6 +1,6 @@
 plugin:
   name: 血量阈值标记
-  description: 自动检测血条长度，在血条上方显示血量较低词条、满血词条触发的血量参考线
+  description: 自动检测血条长度，在血条上方显示血量较低词条、血量不满词条触发的血量参考线
 settings:
   basic: 基本设置
   advanced: 高级选项
@@ -12,7 +12,7 @@ settings:
   hpbar_low_hp_marker:
     title: 血量较低词条触发比例
   hpbar_high_hp_marker:
-    title: 满血词条触发比例
+    title: 血量不满词条触发比例
   marker_size:
     title: 标记大小
   marker_color:
