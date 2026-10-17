@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
+from tests.support.hp_assertions import assert_rejection_duration, assert_rejection_ratio
 from tests.support.hp_scene_evaluation import evaluate_scene, scene_geometry, scene_labels
 from tests.support.hp_video import VIDEO_ROOT
 
@@ -65,5 +66,10 @@ def scene_report(request):
 def test_complex_scene_capacity_accuracy(scene_report):
     report = scene_report["reports"][0]
     assert report["incorrect"] == 0, report
-    assert report["rejection_ratio"] < 0.2, report
-    assert report["longest_rejection_seconds"] < 2, report
+    assert_rejection_ratio(
+        report["rejection_ratio"], context=f"{scene_report['id']} interval={report['interval_seconds']}s"
+    )
+    assert_rejection_duration(
+        report["longest_rejection_seconds"],
+        context=f"{scene_report['id']} interval={report['interval_seconds']}s",
+    )

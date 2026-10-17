@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import string
 from pathlib import Path
 from typing import Any
@@ -131,11 +132,49 @@ def _placeholders(text: str) -> set[str]:
 
 
 def _translation_cases() -> list[tuple[Path, str]]:
-    """Core files must exist for every language; plugin files are optional and fall back to zh_CN."""
+    """Validate core languages fully and any supplied plugin translations without requiring every key."""
     cases = [(CORE_I18N_DIR, language) for language in available_languages()]
     for directory in PLUGIN_I18N_DIRS:
         cases += [(directory, path.stem) for path in sorted(directory.glob("*.yaml"))]
     return cases
+
+
+def _literal_keys(expression: ast.expr) -> set[str]:
+    if isinstance(expression, ast.Constant) and isinstance(expression.value, str):
+        return {expression.value}
+    if isinstance(expression, ast.IfExp):
+        return _literal_keys(expression.body) | _literal_keys(expression.orelse)
+    return set()
+
+
+def _plugin_source_keys(directory: Path) -> set[str]:
+    """Collect literal plugin lookups; dynamic keys are exercised by plugin UI tests."""
+    keys = {"plugin.name", "plugin.description"}
+    for path in directory.glob("**/*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        core_aliases = {
+            alias.asname or alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module == "nightreign_overlay.core.i18n"
+            for alias in node.names
+            if alias.name == "tr"
+        }
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not node.args:
+                continue
+            func = node.func
+            plugin_lookup = (
+                isinstance(func, ast.Name) and func.id == "tr" and func.id not in core_aliases
+            ) or (
+                isinstance(func, ast.Attribute)
+                and (
+                    func.attr == "_tr"
+                    or (func.attr == "tr" and ast.unparse(func.value).split(".")[-1] == "ctx")
+                )
+            )
+            if plugin_lookup:
+                keys.update(_literal_keys(node.args[0]))
+    return keys
 
 
 def test_shipped_languages_declare_their_name() -> None:
@@ -152,16 +191,26 @@ def test_plugin_translations_have_the_fallback_language(directory: Path) -> None
     assert (directory / f"{FALLBACK_LANGUAGE}.yaml").is_file()
 
 
+@pytest.mark.parametrize("directory", PLUGIN_I18N_DIRS, ids=lambda p: str(p.relative_to(SRC)))
+def test_plugin_chinese_translations_cover_source(directory: Path) -> None:
+    table = _load(directory, FALLBACK_LANGUAGE)
+    missing = sorted(_plugin_source_keys(directory.parent) - table.keys())
+    assert not missing, f"plugin source keys missing from zh_CN: {missing}"
+    for key, value in table.items():
+        assert isinstance(value, str) and value.strip(), f"empty or invalid zh_CN translation: {key}"
+
+
 @pytest.mark.parametrize(
     ("directory", "language"),
     _translation_cases(),
     ids=lambda value: str(value.relative_to(SRC)) if isinstance(value, Path) else value,
 )
-def test_translation_files_are_complete(directory: Path, language: str) -> None:
+def test_translation_files_have_required_keys_and_valid_placeholders(directory: Path, language: str) -> None:
     assert language in available_languages(), f"{language} is not a core language"
     reference = _load(directory, FALLBACK_LANGUAGE)
     table = _load(directory, language)
-    assert sorted(set(reference) - set(table)) == [], "missing keys"
+    if directory == CORE_I18N_DIR:
+        assert sorted(set(reference) - set(table)) == [], "missing keys"
     assert sorted(set(table) - set(reference)) == [], "keys not present in the fallback language"
     for key, value in table.items():
         assert isinstance(value, str), f"{key} is {value!r} (quote values such as On/Off/Yes/No)"

@@ -336,7 +336,8 @@ def test_long_peer_names_are_elided_and_metrics_stay_inside_window(plugin):
 
 
 @pytest.mark.parametrize("reset", [True, False])
-def test_top_right_anchor_survives_scale_content_and_restart(plugin, store, reset):
+@pytest.mark.parametrize("saved_scale", [57, 100, 125, 200])
+def test_top_right_anchor_survives_scale_content_and_restart(plugin, store, reset, saved_scale):
     window = _window(plugin)
     if reset:
         plugin.overlay_config.reset_position()
@@ -344,7 +345,7 @@ def test_top_right_anchor_survives_scale_content_and_restart(plugin, store, rese
         window.move(120, 170)
         process_events()
     anchor = (window.x() + window.width(), window.y())
-    for scale in (57, 125, 200, 100):
+    for scale in (57, 125, 200, saved_scale):
         plugin.overlay_config.scale.set(scale)
         window.set_status(P2PStatus("steam_ready", "模拟"))
         window.set_peers(_peers())

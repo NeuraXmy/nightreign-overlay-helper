@@ -164,7 +164,8 @@ capture = ctx.services.require(CaptureApi)  # 缺失抛 LookupError
 ### INVARIANT
 
 - 核心词条必须覆盖每种语言且键与 `zh_CN` 一致。
-- 插件和教程当前阶段只要求 `zh_CN`；其他语言可选但提供后必须完整。
+- 插件 UI 词条只要求 `zh_CN` 完整；其他语言可以缺项并回退中文，已有词条的格式占位符必须与中文一致。教程至少提供 `zh_CN`。
+- 地图名称表是例外：各正式语言的 `<语言>-names.csv` 必须覆盖 `zh_CN-names.csv` 的全部 ID，名称不得为空。
 - 切换语言后提示重启生效。
 
 ---
