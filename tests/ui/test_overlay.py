@@ -285,6 +285,24 @@ def test_hud_scales_contributed_day_timer_content(core: Core, store: ConfigStore
     assert overlay.width() >= widget.width() + 24
 
 
+def test_day_timer_segments_keep_full_height_when_second_segment_is_active(
+    core: Core, store: ConfigStore
+) -> None:
+    overlay = HudOverlay(
+        core.overlays,
+        store.bind(OverlayConfig, "hud.overlay"),
+        store.bind(HudConfig, "plugins.hud"),
+        "HUD",
+    )
+    widget = _DayTimerHud([270, 180, 210, 180], "Waiting")
+    overlay.add_widget("day_timer", widget, order=0)
+    widget.segments[0].setValue(widget.segments[0].maximum())
+    widget.segments[1].setValue(widget.segments[1].maximum() // 2)
+    process_events()
+
+    assert [segment.height() for segment in widget.segments] == [16] * 4
+
+
 def test_hud_hide_text_hides_labels_but_keeps_progress(core: Core, store: ConfigStore) -> None:
     config = store.bind(HudConfig, "plugins.hud")
     overlay = HudOverlay(core.overlays, store.bind(OverlayConfig, "hud.overlay"), config, "HUD")

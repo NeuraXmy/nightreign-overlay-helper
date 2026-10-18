@@ -7,7 +7,15 @@ from typing import Any
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QProgressBar, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QGraphicsDropShadowEffect,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.core.debug import DebugImageApi
@@ -80,6 +88,11 @@ class _DayTimerHud(QWidget):
             segment.setRange(0, 10_000)
             segment.setTextVisible(False)
             segment.setMinimumWidth(10)
+            # Keep the bar's vertical extent stable when the HUD is refitted. Without
+            # an explicit fixed vertical policy, Qt can shrink a later segment to the
+            # style's minimum height after its value changes, leaving only a thin
+            # coloured strip visible.
+            segment.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             self._segments.append(segment)
             self._segments_layout.addWidget(segment, duration)
         self._layout.addLayout(self._segments_layout)
@@ -105,6 +118,8 @@ class _DayTimerHud(QWidget):
         style = _DAY_PROGRESS_STYLE.format(radius=max(1, round(height / 5)))
         for segment in self._segments:
             segment.setFixedHeight(height)
+            segment.setMinimumHeight(height)
+            segment.setMaximumHeight(height)
             segment.setStyleSheet(style)
         self.label.setStyleSheet(_DAY_TEXT_STYLE.format(font_size=round(self.BASE_FONT_SIZE * scale)))
 
