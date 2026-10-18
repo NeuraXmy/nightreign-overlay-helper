@@ -186,6 +186,32 @@ def test_overlay_rows_missing_metrics_and_colour_boundaries(plugin):
     assert window.status_label.toolTip() == "模拟初始化失败"
 
 
+@pytest.mark.parametrize(
+    ("etw_state", "expected_key"),
+    [("admin_required", "status.etw.admin_required"), ("error", "status.etw.error")],
+)
+def test_etw_failure_remains_visible_in_overlay_with_connected_peers(plugin, etw_state, expected_key):
+    window = _window(plugin)
+    window.set_status(P2PStatus("steam_ready", "ETW 网络跟踪启动失败", etw_state=etw_state))
+    window.set_peers(_peers())
+    process_events()
+
+    assert window.status_label.isVisible()
+    assert window.status_label.text() == plugin.ctx.tr(expected_key)
+    assert window.status_label.toolTip() == "ETW 网络跟踪启动失败"
+    assert window.peer_grid.count() == 9
+
+
+def test_etw_resource_error_does_not_claim_admin(plugin):
+    window = _window(plugin)
+    window.set_status(P2PStatus("steam_ready", "0x800705AA", etw_state="error"))
+    window.set_peers(_peers())
+    process_events()
+
+    assert "管理员" not in window.status_label.text()
+    assert "ETW" in window.status_label.text()
+
+
 def test_scaling_layout_position_opacity_and_modes(plugin):
     window = _window(plugin)
     window.set_status(P2PStatus("steam_ready", "模拟"))

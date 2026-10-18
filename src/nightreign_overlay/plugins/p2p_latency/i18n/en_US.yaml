@@ -46,5 +46,6 @@ status:
     waiting: Waiting for game
     starting: Starting
     ready: Enabled
-    error: Unavailable; run as administrator
+    error: Unavailable; check ETW resources and active tracing sessions
+    admin_required: ETW requires administrator privileges. Restart the app as administrator
     simulated: Simulated (ETW disabled)

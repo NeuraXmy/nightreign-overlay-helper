@@ -45,5 +45,6 @@ status:
     waiting: 等待遊戲
     starting: 正在啟動
     ready: 已啟用
-    error: 無法使用，請以管理員身分執行
+    error: 無法使用，請檢查 ETW 資源與系統追蹤工作階段
+    admin_required: ETW 需要管理員權限；請關閉後以管理員身分重新啟動程式
     simulated: 模擬資料（未啟用 ETW）
