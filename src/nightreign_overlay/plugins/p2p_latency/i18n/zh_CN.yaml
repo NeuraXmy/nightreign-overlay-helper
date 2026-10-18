@@ -35,5 +35,6 @@ status:
     waiting: 等待游戏
     starting: 正在启动
     ready: 已启用
-    error: 不可用，请以管理员身份运行
+    error: 不可用，请检查 ETW 资源和系统跟踪会话
+    admin_required: ETW 需要管理员权限；请退出后以管理员身份重新启动程序
     simulated: 模拟数据（未启用 ETW）

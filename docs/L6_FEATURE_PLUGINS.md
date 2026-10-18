@@ -311,13 +311,15 @@ HP implementation, input requirements, and screenshot regression tests: [`HP_DET
 
 Windows 主程序默认请求管理员权限，详见 [启动流程](./L1_STARTUP.md)。联机插件激活时再次检查权限；无权限则在创建悬浮窗和辅助进程之前抛出 `PermissionError`，由插件管理器标记启动失败，设置页显示需要管理员权限。
 
+ETW 权限以创建独立内核跟踪会话的实际结果为准，不使用 `TraceEventSession.IsElevated()` 预检，避免辅助进程权限探测误报。ETW 返回访问拒绝时，Steam 队友信息继续显示，悬浮窗同时提示需要管理员权限；其他 ETW 初始化错误也会显示在悬浮窗中。
+
 组件路径优先使用 `NIGHTREIGN_P2P_HELPER_PATH` 覆盖。打包运行仅使用 EXE 同级 `bin/NightreignP2PHelper.exe`。源码运行按顺序查找仓库内 `bin/`、`build/p2p/bin/`、原生项目 Debug 输出、Release 的 `publish/` 及 Release 输出目录；原生输出目标为 `net8.0-windows/win-x64`。查找与启动工作目录无关。若尚未构建，执行 `powershell -ExecutionPolicy Bypass -File scripts/build_p2p_helper.ps1`，生成组件及依赖；无需为了源码调试先打包整个应用。
 
 ### INVARIANT
 
 - 联机检测不受截图门控影响；但悬浮窗仍受显示门控约束。
 - macOS 明确显示为模拟数据，不伪装真实 ETW。
-- 原生 C# 项目原样复制，未修改检测算法。
+- ETW 只在独立会话创建被访问拒绝时报告管理员权限不足；Steam 连接查询不依赖 ETW 是否启动成功。
 
 ---
 

@@ -110,7 +110,7 @@ internal static class Program
                 etw?.Dispose();
                 etw = null;
                 etwError = ex.Message;
-                Protocol.SetEtwState("error");
+                Protocol.SetEtwState(IsAccessDenied(ex) ? "admin_required" : "error");
                 Protocol.LogError($"ETW latency detection unavailable: {ex}");
             }
         }
@@ -152,6 +152,13 @@ internal static class Program
         if (etwEnabled)
             parts.Add(etwError is null ? "ETW 延迟检测已启用" : $"ETW 不可用：{etwError}");
         return string.Join("，", parts);
+    }
+
+    private static bool IsAccessDenied(Exception exception)
+    {
+        return exception is UnauthorizedAccessException
+            or System.ComponentModel.Win32Exception { NativeErrorCode: 5 }
+            || exception.HResult == unchecked((int)0x80070005);
     }
 
     private static Process? FindGameProcess()

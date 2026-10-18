@@ -45,5 +45,6 @@ status:
     waiting: ゲーム待ち
     starting: 起動中
     ready: 有効
-    error: 利用不可。管理者として実行してください
+    error: 利用不可。ETWのリソースと実行中のトレースセッションを確認してください
+    admin_required: ETWには管理者権限が必要です。管理者としてアプリを再起動してください
     simulated: 模擬データ（ETW無効）

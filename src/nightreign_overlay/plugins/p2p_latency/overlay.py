@@ -70,9 +70,15 @@ class P2POverlay(OverlayWindow):
 
     def set_status(self, status: P2PStatus) -> None:
         self.status = status
-        self.status_label.setText(
-            self._tr("overlay.waiting") if status.state == "steam_ready" else status_message(status, self._tr)
-        )
+        if status.state == "steam_ready" and status.etw_state == "admin_required":
+            message = self._tr("status.etw.admin_required")
+        elif status.state == "steam_ready" and status.etw_state == "error":
+            message = self._tr("status.etw.error")
+        elif status.state == "steam_ready":
+            message = self._tr("overlay.waiting")
+        else:
+            message = status_message(status, self._tr)
+        self.status_label.setText(message)
         self.status_label.setToolTip(status.message)
         self._refresh_rows()
         self.update_visibility()
@@ -140,7 +146,8 @@ class P2POverlay(OverlayWindow):
     def _refresh_rows(self, _value: object = None) -> None:
         self._clear_grid()
         show_peers = self.status.state == "steam_ready"
-        self.status_label.setVisible(not show_peers or not self.peers)
+        etw_warning = self.status.etw_state in {"admin_required", "error"}
+        self.status_label.setVisible(not show_peers or not self.peers or etw_warning)
         font_size = int(13 * self.scale_factor)
         for row, peer in enumerate(self.peers if show_peers else []):
             name_label = QLabel(peer.name)

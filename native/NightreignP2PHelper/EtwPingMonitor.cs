@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
@@ -15,30 +16,79 @@ internal sealed class EtwPingMonitor : IDisposable
 
     public void Start()
     {
-        if (!(TraceEventSession.IsElevated() ?? false))
-            throw new UnauthorizedAccessException("ETW 网络跟踪需要管理员权限");
-
         // ETW sessions are machine-wide. Never use/restart the shared
         // "NT Kernel Logger" session because another profiler may own it.
         // Nightreign requires Windows 10+, where system providers support
         // independently named real-time kernel sessions.
+        CleanupStaleSessions();
         var sessionName = $"NightreignOverlayEtwKernel-{Environment.ProcessId}-{Guid.NewGuid():N}";
-        _session = new TraceEventSession(
+        var session = new TraceEventSession(
             sessionName,
             TraceEventSessionOptions.Create | TraceEventSessionOptions.NoRestartOnCreate)
         {
             StopOnDispose = true,
         };
-        _session.EnableKernelProvider(KernelTraceEventParser.Keywords.NetworkTCPIP);
-        _session.Source.Kernel.UdpIpSend += OnUdpSend;
-        _session.Source.Kernel.UdpIpRecv += OnUdpReceive;
+        try
+        {
+            session.EnableKernelProvider(KernelTraceEventParser.Keywords.NetworkTCPIP);
+            session.Source.Kernel.UdpIpSend += OnUdpSend;
+            session.Source.Kernel.UdpIpRecv += OnUdpReceive;
+            _session = session;
+        }
+        catch
+        {
+            session.Dispose();
+            throw;
+        }
 
-        _eventThread = new Thread(() => _session.Source.Process())
+        _eventThread = new Thread(() => session.Source.Process())
         {
             IsBackground = true,
             Name = "Nightreign ETW network events",
         };
         _eventThread.Start();
+    }
+
+    private static void CleanupStaleSessions()
+    {
+        const string prefix = "NightreignOverlayEtwKernel-";
+        foreach (var name in TraceEventSession.GetActiveSessionNames())
+        {
+            if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var separator = name.IndexOf('-', prefix.Length);
+            if (separator < 0 || !int.TryParse(name.AsSpan(prefix.Length, separator - prefix.Length), out var processId))
+                continue;
+
+            try
+            {
+                using var process = Process.GetProcessById(processId);
+                if (!process.HasExited)
+                    continue;
+            }
+            catch (ArgumentException)
+            {
+                // The owning process no longer exists; the session is stale.
+            }
+            catch (InvalidOperationException)
+            {
+                // The process exited between lookup and HasExited.
+            }
+
+            try
+            {
+                using var stale = new TraceEventSession(name, TraceEventSessionOptions.Attach)
+                {
+                    StopOnDispose = true,
+                };
+                stale.Stop();
+            }
+            catch
+            {
+                // Another process may have reclaimed or stopped the session.
+            }
+        }
     }
 
     public void SyncTargets(IReadOnlyDictionary<ulong, ulong> targets)
