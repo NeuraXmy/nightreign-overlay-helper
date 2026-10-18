@@ -36,3 +36,4 @@
 
 - Debug image storage and retention -> [DEBUG_IMAGES.md](./DEBUG_IMAGES.md)
 - 日志与调试图片打包、问题描述及附件导出 → [DIAGNOSTIC_EXPORT.md](./DIAGNOSTIC_EXPORT.md)
+- 发布前全项目检查与按严重性分类的问题清单（2026-10-19） → [RELEASE_AUDIT_2026-10-19.md](./RELEASE_AUDIT_2026-10-19.md)
