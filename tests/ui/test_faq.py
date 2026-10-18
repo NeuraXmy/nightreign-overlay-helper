@@ -61,7 +61,7 @@ def test_about_page_contains_screenshot_only_security_statement(qapp: QApplicati
         cards = page.findChildren(SettingCard)
         security = next(card for card in cards if card.titleLabel.text() == "安全性声明")
         assert "截图" in security.contentLabel.text()
-        assert "不读取、不写入" in security.contentLabel.text()
+        assert "不读取/写入" in security.contentLabel.text()
         assert "官方联机模式" in security.contentLabel.text()
     finally:
         delete_qobjects(page)

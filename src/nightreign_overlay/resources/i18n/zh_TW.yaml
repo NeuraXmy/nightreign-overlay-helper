@@ -141,7 +141,10 @@ about:
   project:
     title: 專案
     repo_button: 前往儲存庫
-    repo_content: 版本 {version}
+    repo_content: "作者：NeuraXmy / ルナ茶@Bilibili - 版本 {version}"
+  security:
+    title: 安全性聲明
+    content: 本程式獨立於遊戲程序，識別功能主要依靠遊戲畫面截圖和圖像分析，不讀取／寫入任何遊戲程序記憶體，也不會修改遊戲資料或檔案。本程式不會向遊戲注入程式碼或改變遊戲執行邏輯，因此基本不存在反作弊風險，可以在官方連線模式下使用。
   credits:
     title: 致謝
     visit: 前往
