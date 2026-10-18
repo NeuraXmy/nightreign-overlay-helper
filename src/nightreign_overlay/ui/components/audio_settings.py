@@ -59,14 +59,27 @@ class AudioSettingCard(SettingCard):
         self.hBoxLayout.addSpacing(16)
         self.selectButton.clicked.connect(self._select_file)
         self.clearButton.clicked.connect(self._clear)
-        self.testButton.clicked.connect(lambda: notifications.play(self.cue))
+        self.testButton.clicked.connect(self._toggle_test)
         self.slider.valueChanged.connect(self.cue.volume.set)
         self.spinBox.valueChanged.connect(self.cue.seconds.set)
         for item in self.cue.items().values():
             item.valueChanged.connect(self._sync)
         self._sync()
 
+    def _toggle_test(self) -> None:
+        if self._notifications.is_test_playing():
+            self._notifications.stop_test()
+        else:
+            self._notifications.play_test(self.cue)
+        self._sync_test_button()
+
+    def _sync_test_button(self, *_args: object) -> None:
+        self.testButton.setText(
+            tr("audio.stop_test" if self._notifications.is_test_playing() else "audio.test")
+        )
+
     def _select_file(self) -> None:
+        self._notifications.stop_test()
         path, _ = QFileDialog.getOpenFileName(
             self,
             tr("audio.select"),
@@ -77,6 +90,7 @@ class AudioSettingCard(SettingCard):
             self.cue.path.set(path)
 
     def _clear(self) -> None:
+        self._notifications.stop_test()
         self.cue.path.set("")
 
     def _sync(self, *_args: object) -> None:
@@ -90,6 +104,7 @@ class AudioSettingCard(SettingCard):
         self.selectButton.setText(tr("audio.change" if path else "audio.select"))
         self.clearButton.setEnabled(bool(path))
         self.testButton.setEnabled(bool(path))
+        self._sync_test_button()
 
 
 def audio_section(notifications: AudioNotifications, advance: tuple[str, ...]) -> SettingSection:

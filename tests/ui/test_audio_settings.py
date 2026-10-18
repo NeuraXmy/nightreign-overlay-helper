@@ -31,11 +31,22 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
     calls = []
 
     class Preview(AudioApi):
+        def __init__(self):
+            self.playing = False
+
         def play(self, path, volume=100, *, owner=""):
             calls.append((path, volume, owner))
+            self.playing = True
             return True
 
-    services.register(AudioApi, Preview(), owner="audio")
+        def stop(self, owner=None):
+            self.playing = False
+
+        def is_playing(self, owner=None):
+            return self.playing
+
+    preview = Preview()
+    services.register(AudioApi, preview, owner="audio")
     ctx = context("rain_timer", store, services)
     monkeypatch.setattr(i18n, "_translator", ctx._translator)
     notifications = AudioNotifications(ctx, ("start", "end"))
@@ -50,7 +61,10 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
     card.slider.setValue(42)
     card.spinBox.setValue(1.5)
     card.testButton.click()
-    assert calls == [("提示音.wav", 42, "rain_timer")]
+    assert calls == [("提示音.wav", 42, "rain_timer:test")]
+    assert card.testButton.text() == i18n.tr("audio.stop_test")
+    card.testButton.click()
+    assert card.testButton.text() == i18n.tr("audio.test")
     assert cue.volume.value == 42 and cue.seconds.value == 1.5
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_: ("other.mp3", ""))
     card.selectButton.click()

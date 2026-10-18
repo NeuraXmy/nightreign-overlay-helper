@@ -19,6 +19,10 @@ class AudioApi:
         """Stop playback, optionally only if it belongs to the given feature."""
         raise NotImplementedError
 
+    def is_playing(self, owner: str | None = None) -> bool:
+        """Whether the shared player is currently playing audio, optionally for one owner."""
+        return False
+
 
 class AudioNotifications:
     """Feature-owned cue settings and history; playback always uses the shared service."""
@@ -39,3 +43,15 @@ class AudioNotifications:
 
     def update(self, elapsed: float, deadlines: dict[str, float]) -> None:
         self.timeline.update(elapsed, [(key, value, self.cues[key]) for key, value in deadlines.items()])
+
+    def play_test(self, cue: AudioCueConfig) -> None:
+        if (audio := self.ctx.services.get(AudioApi)) is not None:
+            audio.play(cue.path.value, cue.volume.value, owner=f"{self.ctx.plugin_id}:test")
+
+    def stop_test(self) -> None:
+        if (audio := self.ctx.services.get(AudioApi)) is not None:
+            audio.stop(f"{self.ctx.plugin_id}:test")
+
+    def is_test_playing(self) -> bool:
+        audio = self.ctx.services.get(AudioApi)
+        return audio is not None and audio.is_playing(f"{self.ctx.plugin_id}:test")

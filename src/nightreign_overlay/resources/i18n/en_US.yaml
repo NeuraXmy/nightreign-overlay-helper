@@ -180,6 +180,7 @@ audio:
   delay: Delay
   advance: Advance
   test: Test playback
+  stop_test: Stop test
   filter: Audio files (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;All files (*)
 
 overlay_settings:
