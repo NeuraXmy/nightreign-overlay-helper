@@ -146,7 +146,7 @@ about:
     repo_content: "Author: NeuraXmy / ルナ茶@Bilibili - Version {version}"
   security:
     title: Security statement
-    content: This program runs independently of the game process. Its recognition relies mainly on screenshots of the game and image analysis; it does not read or write game process memory, modify game data or files, inject code into the game, or change its runtime logic. Therefore, it presents essentially no anti-cheat risk and can be used in the official online mode.
+    content: This program is not a mod or plugin for NIGHTREIGN, but an independent application. Its recognition relies mainly on screenshots of the game and image analysis; it does not read or write game process memory, modify game data or files, inject code into the game, change its runtime logic, or capture game network packets. Therefore, it presents essentially no anti-cheat risk and can be used in the official online mode.
   credits:
     title: Credits
     visit: Visit
