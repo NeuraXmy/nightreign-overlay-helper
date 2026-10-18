@@ -105,6 +105,7 @@ class MarkdownTextBrowser(TextBrowser):
         if width <= 0:
             return
         document = self.document()
+        resized = False
         block = document.begin()
         while block.isValid():
             iterator = block.begin()
@@ -129,8 +130,13 @@ class MarkdownTextBrowser(TextBrowser):
                             fragment.length(),
                         )
                         cursor.setCharFormat(image_format)
+                        resized = True
                 iterator += 1
             block = block.next()
+        if resized:
+            # Image edits can leave later blocks without a layout in Qt's lazy
+            # layout cache. Invalidate the whole document after resizing them.
+            document.markContentsDirty(0, document.characterCount())
 
 
 def configure_markdown_browser(browser: TextBrowser) -> None:
@@ -153,9 +159,7 @@ def configure_markdown_browser(browser: TextBrowser) -> None:
                 break
             fragment_iterator += 1
         font = (
-            fragment_format.charFormat().font()
-            if fragment_format is not None
-            else block.charFormat().font()
+            fragment_format.charFormat().font() if fragment_format is not None else block.charFormat().font()
         )
         font_size = font.pointSizeF()
         if font_size <= 0:
