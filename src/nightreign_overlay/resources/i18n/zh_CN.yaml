@@ -142,10 +142,10 @@ about:
   project:
     title: 项目
     repo_button: 访问仓库
-    repo_content: "版本 {version}"
+    repo_content: "作者: NeuraXmy / ルナ茶@Bilibili - 版本 {version}"
   security:
     title: 安全性声明
-    content: 本程序的识别功能主要依靠游戏画面截图和图像分析，不读取、不写入任何游戏进程内存，也不会修改游戏数据或文件。程序不会向游戏注入代码或改变游戏运行逻辑，因此基本不存在反作弊风险，可以在官方联机模式下使用。
+    content: 本程序独立于游戏进程，识别功能主要依靠游戏画面截图和图像分析，不读取/写入任何游戏进程内存，也不会修改游戏数据或文件。程序不会向游戏注入代码或改变游戏运行逻辑，因此基本不存在反作弊风险，可以在官方联机模式下使用。
   credits:
     title: 致谢
     visit: 访问
