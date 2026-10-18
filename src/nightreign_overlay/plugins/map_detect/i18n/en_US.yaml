@@ -52,6 +52,16 @@ drawing:
   day2_circle: 'Day 2 first circle: {position}'
   event: 'Special event: {name}'
 settings:
+  browser:
+    card_title: Query a specific map
+    browse: Query
+    window_title: Query a specific map
+    input_label: 'Enter map ID:'
+    placeholder: Enter map ID
+    drawing: Drawing...
+    invalid: Enter a valid map ID
+    not_found: Map ID not found
+    done: "Map #{id}"
   force_display:
     title: Force overlay display
     content: Open the overlay for manual filtering if detection fails. Calibrate the map area first

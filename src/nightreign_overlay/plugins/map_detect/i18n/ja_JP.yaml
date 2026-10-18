@@ -52,6 +52,16 @@ drawing:
   day2_circle: Day2 最初の収縮位置：{position}
   event: 特殊イベント：{name}
 settings:
+  browser:
+    card_title: 指定マップを検索
+    browse: 検索
+    window_title: 指定マップを検索
+    input_label: マップIDを入力：
+    placeholder: マップ ID を入力
+    drawing: 描画中...
+    invalid: 有効なマップ ID を入力してください
+    not_found: 指定したマップ ID が見つかりません
+    done: "マップ #{id}"
   force_display:
     title: オーバーレイを強制表示
     content: 認識できない場合に強制表示して手動で絞り込めます。事前にマップ範囲の指定が必要

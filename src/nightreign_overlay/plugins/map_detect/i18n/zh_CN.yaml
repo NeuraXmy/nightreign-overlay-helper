@@ -52,6 +52,16 @@ drawing:
   day2_circle: "Day2第一次缩圈位置：{position}"
   event: "特殊事件: {name}"
 settings:
+  browser:
+    card_title: 查询指定地图
+    browse: 查询
+    window_title: 查询指定地图
+    input_label: "输入地图ID："
+    placeholder: 输入地图 ID
+    drawing: 绘制中...
+    invalid: 请输入有效的地图 ID
+    not_found: 未找到该地图 ID
+    done: "地图 #{id}"
   force_display:
     title: 强制显示悬浮窗
     content: 因某些原因无法识别时，可以通过该选项强制打开悬浮窗，进行手动筛选；仍然需要预先标定地图区域
