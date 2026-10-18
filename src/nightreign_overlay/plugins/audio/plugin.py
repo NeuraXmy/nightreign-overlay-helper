@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import QUrl
+from PyQt6.QtMultimedia import QMediaPlayer
 
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.audio.api import AudioApi
@@ -70,6 +71,14 @@ class AudioPlugin(Plugin, AudioApi):
                 self._player.setSource(QUrl())
             except Exception:
                 self.ctx.log.exception("Could not stop audio")
+
+    def is_playing(self, owner: str | None = None) -> bool:
+        if owner is not None and owner != self._owner:
+            return False
+        return (
+            self._player is not None
+            and self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState
+        )
 
     def on_deactivate(self) -> None:
         self.stop()

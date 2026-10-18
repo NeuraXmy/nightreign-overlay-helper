@@ -184,6 +184,7 @@ audio:
   delay: 延迟时间
   advance: 提前时间
   test: 播放测试
+  stop_test: 停止测试
   filter: 音频文件 (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;所有文件 (*)
 
 overlay_settings:
