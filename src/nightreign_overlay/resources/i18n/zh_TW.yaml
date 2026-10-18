@@ -15,6 +15,7 @@ nav:
 home:
   subtitle: 《艾爾登法環 黑夜君臨》懸浮助手
   version: 版本 {version}
+  first_use_hint: 初次使用請進入各功能的頁面查看教學，遇到問題可參閱「常見問題」頁面
   status:
     title: 執行狀態
     game: 遊戲視窗

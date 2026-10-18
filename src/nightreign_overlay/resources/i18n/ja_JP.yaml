@@ -11,6 +11,7 @@ nav:
 home:
   subtitle: ELDEN RING NIGHTREIGN オーバーレイヘルパー
   version: バージョン {version}
+  first_use_hint: 初めて使用する場合は、各機能のページでチュートリアルを確認してください。問題が発生したときは「よくある質問」ページを参照してください。
   status:
     title: 動作状況
     game: ゲームウィンドウ

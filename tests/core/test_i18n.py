@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import re
 import string
 from collections import Counter
 from pathlib import Path
@@ -24,6 +25,9 @@ SRC = PROJECT_ROOT / "src" / "nightreign_overlay"
 CORE_I18N_DIR = SRC / "resources" / "i18n"
 PLUGIN_I18N_DIRS = sorted((SRC / "plugins").glob("*/i18n"))
 TUTORIAL_DIRS = sorted((SRC / "plugins").glob("*/tutorial"))
+DOC_FILES = sorted(path for directory in TUTORIAL_DIRS for path in directory.glob("*.md")) + sorted(
+    (SRC / "resources" / "faq").glob("*.md")
+)
 
 
 @pytest.mark.parametrize(
@@ -242,3 +246,15 @@ def test_tutorials_have_the_fallback_language(directory: Path) -> None:
     assert (directory / f"{FALLBACK_LANGUAGE}.md").is_file()
     for path in directory.glob("*.md"):
         assert path.stem in available_languages(), f"{path.name} is not a core language"
+
+
+@pytest.mark.parametrize("path", DOC_FILES, ids=lambda path: str(path.relative_to(SRC)))
+def test_documentation_resources_are_valid_utf8(path: Path) -> None:
+    """Documentation must not contain encoding replacement characters."""
+    text = path.read_text(encoding="utf-8")
+    assert "\ufffd" not in text
+    if path.stem in {"ja_JP", "zh_TW"}:
+        assert any(ord(char) > 127 for char in text), f"{path} appears to have lost its non-ASCII text"
+    if path.stem == "en_US":
+        assert not re.search(r"\?[A-Za-z][^?\n]*\?", text), f"{path} contains replaced quoted text"
+        assert not re.search(r"[A-Za-z]\?[A-Za-z]", text), f"{path} contains a replacement question mark"

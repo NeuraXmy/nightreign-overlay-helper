@@ -11,6 +11,7 @@ nav:
 home:
   subtitle: ELDEN RING NIGHTREIGN Overlay Helper
   version: Version {version}
+  first_use_hint: For first-time use, open each feature page to read its tutorial. If you encounter problems, see the “FAQ” page.
   status:
     title: Status
     game: Game window
