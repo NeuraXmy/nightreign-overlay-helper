@@ -11,6 +11,7 @@ import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
 
+from nightreign_overlay.core.images import read_cv2_image
 from nightreign_overlay.plugins.capture.api import crop_rgb, hdr_to_sdr, resize_to_height
 
 LANGUAGES = ("chs", "cht", "eng", "jp")
@@ -40,8 +41,9 @@ class DayDetector:
         for language in LANGUAGES:
             masks = []
             for day in range(1, 4):
-                image = cv2.imread(str(template_dir / f"{language}_{day}.png"))
-                if image is None:
+                try:
+                    image = read_cv2_image(template_dir / f"{language}_{day}.png")
+                except OSError:
                     break
                 masks.append(
                     _white_mask(cv2.cvtColor(resize_to_height(image, TEMPLATE_HEIGHT), cv2.COLOR_BGR2RGB))

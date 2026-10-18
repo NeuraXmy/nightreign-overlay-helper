@@ -12,6 +12,7 @@ The application stores diagnostic images through `DebugImageApi` in `src/nightre
 - `cooldown_seconds` prevents a result from being queued again until the cooldown expires.
 - A single background worker performs conversion, compression, JSON writing, and retention cleanup, so detector and UI threads do not block on disk I/O.
 - Diagnostics are enabled by default and can be disabled from General Settings. When disabled, submissions are ignored.
+- NumPy images use `write_cv2_image()` (OpenCV encoding plus Python file I/O), so Unicode user data paths work on Windows. Qt and Pillow images use their own Unicode-capable save methods.
 
 ## Integrated result names
 

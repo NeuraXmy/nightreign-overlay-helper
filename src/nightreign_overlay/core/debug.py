@@ -16,6 +16,7 @@ from PIL import Image
 from PyQt6.QtGui import QImage
 
 from nightreign_overlay.core.config import ConfigItem
+from nightreign_overlay.core.images import write_cv2_image
 from nightreign_overlay.core.paths import user_data_dir
 
 DEFAULT_KEEP = 10
@@ -133,15 +134,14 @@ def _write_jpeg(path: Path, image: QImage | Image.Image | np.ndarray) -> None:
         return
     array = np.asarray(image)
     if array.ndim == 2:
-        encoded = array
+        pixels = array
     elif array.ndim == 3 and array.shape[2] == 4:
-        encoded = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
+        pixels = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
     elif array.ndim == 3 and array.shape[2] == 3:
-        encoded = cv2.cvtColor(array, cv2.COLOR_RGB2BGR)
+        pixels = cv2.cvtColor(array, cv2.COLOR_RGB2BGR)
     else:
         raise ValueError(f"unsupported debug image shape: {array.shape}")
-    if not cv2.imwrite(str(path), encoded, [cv2.IMWRITE_JPEG_QUALITY, DEFAULT_JPEG_QUALITY]):
-        raise OSError(f"failed to write debug image {path}")
+    write_cv2_image(path, pixels, [cv2.IMWRITE_JPEG_QUALITY, DEFAULT_JPEG_QUALITY])
 
 
 def _json_safe(value: Any) -> Any:

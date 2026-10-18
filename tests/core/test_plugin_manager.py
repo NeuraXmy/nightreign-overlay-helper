@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
@@ -19,6 +20,7 @@ from nightreign_overlay.plugin import (
     PluginState,
     SettingsScope,
 )
+from nightreign_overlay.plugin import manager as manager_module
 
 #: Lifecycle calls recorded by the fake plugins, e.g. ``("activate", "a")``.
 Calls = list[tuple[str, str]]
@@ -260,3 +262,35 @@ def test_builtin_plugins_are_discovered(store: ConfigStore, qapp: QApplication) 
     assert hud and hud.manifest.settings_scope == SettingsScope.GENERAL
     assert input_plugin and input_plugin.manifest.settings_scope == SettingsScope.HIDDEN
     assert region and region.manifest.settings_scope == SettingsScope.HIDDEN
+
+
+@pytest.mark.parametrize("lazy", [False, True])
+def test_discovery_continues_after_import_failure(store, qapp, monkeypatch, caplog, calls, lazy):
+    package = ModuleType("test_plugins")
+    package.__path__ = []
+    broken = ModuleType("test_plugins.broken")
+    healthy = ModuleType("test_plugins.healthy")
+    healthy.PLUGIN = make_plugin("healthy", calls)
+
+    def fail_export(name):
+        raise OSError("Cannot decode image: maps/0.jpg")
+
+    broken.__getattr__ = fail_export
+
+    def import_module(name):
+        if name == broken.__name__ and not lazy:
+            raise OSError("Cannot decode image: maps/0.jpg")
+        return {package.__name__: package, broken.__name__: broken, healthy.__name__: healthy}[name]
+
+    monkeypatch.setattr(manager_module.importlib, "import_module", import_module)
+    monkeypatch.setattr(
+        manager_module.pkgutil,
+        "iter_modules",
+        lambda _: [SimpleNamespace(name=name, ispkg=True) for name in ("broken", "healthy")],
+    )
+    manager = PluginManager(store, Translator("zh_CN"), ServiceRegistry(), EventBus())
+    manager.discover(package.__name__)
+
+    assert manager.get("healthy") is not None
+    assert "Failed to import plugin package test_plugins.broken" in caplog.text
+    assert "Cannot decode image: maps/0.jpg" in caplog.text
