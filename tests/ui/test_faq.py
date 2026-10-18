@@ -76,7 +76,7 @@ def test_packaged_faq_and_shared_compact_banners(qapp: QApplication, store: Conf
     overlays = OverlayManager(backend, config, monitor)
     pages = (HomePage(config, plugins, overlays, monitor), AboutPage(), faq.FaqPage())
     try:
-        assert "地图识别" in pages[2].browser.toPlainText()
+        assert "识别错误，识别不准" in pages[2].browser.toPlainText()
         for page in pages[:2]:
             banner = page.findChild(Banner)
             assert banner is not None
