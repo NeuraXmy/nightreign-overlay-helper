@@ -21,6 +21,7 @@ from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, cr
 from nightreign_overlay.plugins.day_timer.api import DayStarted
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.map_detect.api import MapRecognitionApi
+from nightreign_overlay.plugins.map_detect.browser import MapBrowserWindow
 from nightreign_overlay.plugins.map_detect.config import MapDetectConfig, MapDetectionSettings
 from nightreign_overlay.plugins.map_detect.controls import MapControlsOverlay
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam, MapDetectResult
@@ -142,6 +143,7 @@ class MapDetectPlugin(Plugin):
         self._manual_entry_recognition = False
         self._last_match = 0.0
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
+        self._browser: MapBrowserWindow | None = None
 
     def on_activate(self) -> None:
         self._active = True
@@ -186,6 +188,9 @@ class MapDetectPlugin(Plugin):
         self.ctx.on_cleanup(lambda: capture.release_stream(self.id))
 
     def on_deactivate(self) -> None:
+        if self._browser is not None:
+            self._browser.close()
+            self._browser = None
         self._set_force_display(False)
         self._active = False
         self._generation += 1
@@ -1009,6 +1014,13 @@ class MapDetectPlugin(Plugin):
                 formatter=lambda value: f"{value}%",
             ),
         )
+        browse_card = PushSettingCard(
+            self.ctx.tr("settings.browser.browse"),
+            FluentIcon.GLOBE,
+            self.ctx.tr("settings.browser.card_title"),
+        )
+        browse_card.button.clicked.connect(self._open_browser)
+        basic.addCards(browse_card)
         panel.addSection(basic)
         panel.addSection(shortcuts)
         advanced = SettingSection(self.ctx.tr("settings.advanced"))
@@ -1115,6 +1127,13 @@ class MapDetectPlugin(Plugin):
         )
         panel.addSection(advanced)
         return panel
+
+    def _open_browser(self) -> None:
+        if self._browser is None:
+            self._browser = MapBrowserWindow(self.ctx.tr, self.ctx.language)
+        self._browser.show()
+        self._browser.raise_()
+        self._browser.activateWindow()
 
     def reset_settings(self) -> None:
         self._set_force_display(False)

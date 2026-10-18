@@ -52,6 +52,16 @@ drawing:
   day2_circle: Day2 首次縮圈位置：{position}
   event: 特殊事件：{name}
 settings:
+  browser:
+    card_title: 查詢指定地圖
+    browse: 查詢
+    window_title: 查詢指定地圖
+    input_label: "輸入地圖ID："
+    placeholder: 輸入地圖 ID
+    drawing: 繪製中...
+    invalid: 請輸入有效的地圖 ID
+    not_found: 找不到該地圖 ID
+    done: "地圖 #{id}"
   force_display:
     title: 強制顯示懸浮窗
     content: 無法辨識時可強制開啟懸浮窗進行手動篩選；仍須先標定地圖區域
