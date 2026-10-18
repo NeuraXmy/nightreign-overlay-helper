@@ -7,12 +7,14 @@ import pytest
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QImage, QTextDocument
 from PyQt6.QtWidgets import QApplication
+from qfluentwidgets import SettingCard
 
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.game_window import GameWindowMonitor
-from nightreign_overlay.core.i18n import Translator
+from nightreign_overlay.core.i18n import Translator, install
+from nightreign_overlay.core.paths import resource_path
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin import PluginManager
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -46,6 +48,21 @@ def test_faq_resolves_markdown_and_relative_images_with_language_fallback(
         assert not loaded.isNull()
         assert loaded.size() == image.size()
         assert page.browser.openExternalLinks()
+    finally:
+        delete_qobjects(page)
+
+
+def test_about_page_contains_screenshot_only_security_statement(qapp: QApplication) -> None:
+    translator = Translator("zh_CN")
+    translator.load_dir("core", resource_path("i18n"))
+    install(translator)
+    page = AboutPage()
+    try:
+        cards = page.findChildren(SettingCard)
+        security = next(card for card in cards if card.titleLabel.text() == "安全性声明")
+        assert "截图" in security.contentLabel.text()
+        assert "不读取、不写入" in security.contentLabel.text()
+        assert "官方联机模式" in security.contentLabel.text()
     finally:
         delete_qobjects(page)
 

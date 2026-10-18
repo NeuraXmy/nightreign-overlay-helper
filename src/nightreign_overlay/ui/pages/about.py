@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon, HyperlinkCard, PushSettingCard
+from qfluentwidgets import FluentIcon, HyperlinkCard, PushSettingCard, SettingCard
 
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME, APP_VERSION, REPO_URL
@@ -35,6 +35,11 @@ class AboutPage(ScrollPage):
                 tr("about.project.repo_content", version=APP_VERSION),
             ),
             self._feedback_card(),
+            SettingCard(
+                FluentIcon.INFO,
+                tr("about.security.title"),
+                tr("about.security.content"),
+            ),
         )
         self.addWidget(project)
 
