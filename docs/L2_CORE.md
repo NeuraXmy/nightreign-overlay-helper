@@ -17,6 +17,16 @@
 | [`src/nightreign_overlay/core/log.py`](../src/nightreign_overlay/core/log.py) | 分模块日志 |
 | [`src/nightreign_overlay/core/app_config.py`](../src/nightreign_overlay/core/app_config.py) | 应用级配置声明 |
 | [`src/nightreign_overlay/core/input.py`](../src/nightreign_overlay/core/input.py) | 输入设备枚举、HotkeyBinding 类型 |
+| [`src/nightreign_overlay/core/images.py`](../src/nightreign_overlay/core/images.py) | 支持 Unicode 路径的 OpenCV 图片读写 |
+
+OpenCV 图片资源统一使用 `read_cv2_image(path, flags)`：通过 `Path.read_bytes()` 读取，再用
+`cv2.imdecode()` 解码，避免 Windows 上 `cv2.imread()` 无法读取中文安装路径。默认返回 BGR，
+`IMREAD_UNCHANGED` 保留透明通道；文件缺失抛 `FileNotFoundError`，解码失败抛包含资源路径的
+`OSError`。调用方负责颜色转换及缺失资源的降级策略。
+
+图片写入使用 `write_cv2_image(path, image, params)`：先 `cv2.imencode()` 编码，再通过
+`Path.write_bytes()` 写入，避免 `cv2.imwrite()` 在中文用户数据目录下写入失败。输入沿用
+OpenCV 的 BGR/BGRA 或灰度格式，编码失败抛包含目标路径的 `OSError`；文件系统错误原样传播。
 
 ---
 

@@ -99,10 +99,11 @@ class PluginManager(QObject):
             module_name = f"{package_name}.{module_info.name}"
             try:
                 module = importlib.import_module(module_name)
+                # Lazy package exports can import the implementation in __getattr__.
+                plugin_cls = getattr(module, PLUGIN_ATTRIBUTE, None)
             except Exception:
                 log.exception("Failed to import plugin package %s", module_name)
                 continue
-            plugin_cls = getattr(module, PLUGIN_ATTRIBUTE, None)
             if plugin_cls is None:
                 log.warning("Plugin package %s does not define %s", module_name, PLUGIN_ATTRIBUTE)
                 continue

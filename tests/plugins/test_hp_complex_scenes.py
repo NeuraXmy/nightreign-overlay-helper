@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pytest
 
+from nightreign_overlay.core.images import read_cv2_image
 from tests.support.hp_assertions import assert_rejection_duration, assert_rejection_ratio
 from tests.support.hp_scene_evaluation import evaluate_scene, scene_geometry, scene_labels
 from tests.support.hp_video import VIDEO_ROOT
@@ -32,7 +33,7 @@ def test_lossless_scene_fixture_and_reference_frames(label):
             assert frame.shape == (label["fixture_crop_xywh"][3], label["fixture_crop_xywh"][2], 3)
             pixels.update(frame.tobytes())
             if count in references:
-                reference = cv2.imread(str(VIDEO_ROOT / references[count]))
+                reference = read_cv2_image(VIDEO_ROOT / references[count])
                 assert reference is not None
                 assert np.array_equal(frame, reference)
             count += 1

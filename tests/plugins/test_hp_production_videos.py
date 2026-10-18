@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import pytest
 
+from nightreign_overlay.core.images import read_cv2_image
 from nightreign_overlay.plugins.hp_marker import material
 from tests.support.hp_assertions import assert_rejection_duration, assert_rejection_ratio
 from tests.support.hp_production_evaluation import evaluate_production, heldout_block_label, production_labels
@@ -96,7 +97,7 @@ def test_production_capacity_fixtures_preserve_all_pixels_and_reference_frames(l
                 break
             digest.update(frame.tobytes())
             if count in references:
-                assert np.array_equal(frame, cv2.imread(str(VIDEO_ROOT / references[count])))
+                assert np.array_equal(frame, read_cv2_image(VIDEO_ROOT / references[count]))
             count += 1
     finally:
         capture.release()

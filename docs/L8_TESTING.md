@@ -29,6 +29,7 @@ tests/
 | 目录 | 测试模块 | 覆盖内容 |
 |------|----------|----------|
 | `core/` | `test_config.py`、`test_events_services.py`、`test_i18n.py`、`test_plugin_manager.py` | 配置、事件/服务、翻译、插件依赖与生命周期 |
+| `core/`、`plugins/` | `test_images.py`、`test_debug_images.py`、`test_image_resources.py`、`test_unicode_installation.py` | Unicode 路径下图片/模板读写、异步诊断图片与元数据、损坏资源诊断，以及复制安装目录后的插件、字体、ONNX 和截图 DLL 加载 |
 | `plugins/` | `test_capture_backends.py`、`test_infrastructure_plugins.py`、`test_region_preview.py` | 截图后端、输入/HUD/区域服务、区域预览 |
 | `plugins/` | `test_capture_multiscreen.py`、`test_capture_diagnostic.py` | Windows/macOS 四方向副屏、负坐标、混合 DPI、DLL 客户区、标定/预览/地图叠加坐标一致性 |
 | `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
@@ -80,6 +81,11 @@ git diff --check
 ```
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
+
+Windows 文件路径兼容性回归可将 `--basetemp` 指向仓库内含中文的临时目录，例如
+`--basetemp .tmp/中文路径回归`，覆盖配置导入导出、音频、诊断 ZIP 等使用 `tmp_path` 的测试。
+`test_unicode_installation.py` 另外将整个程序包复制到含中文、日文、重音字符和 emoji 的安装路径，
+通过独立进程加载实际资源；它不启动截图、输入监听或 Steam/ETW。
 
 ### Qt 页面清理
 

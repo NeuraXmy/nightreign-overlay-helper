@@ -10,6 +10,7 @@ import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
 
+from nightreign_overlay.core.images import read_cv2_image
 from nightreign_overlay.plugins.capture.api import crop_rgb, hdr_to_sdr, resize_to_height
 
 ART_TYPES = ("duchess", "recluse", "revenant", "scholar", "executor")
@@ -29,8 +30,11 @@ class ArtDetector:
     def __init__(self, icon_dir: Path) -> None:
         self._templates: dict[str, tuple[np.ndarray, np.ndarray]] = {}
         for art_type in ART_TYPES:
-            image = cv2.imread(str(icon_dir / f"{art_type}.png"), cv2.IMREAD_UNCHANGED)
-            if image is None or image.ndim != 3 or image.shape[2] != 4:
+            try:
+                image = read_cv2_image(icon_dir / f"{art_type}.png", cv2.IMREAD_UNCHANGED)
+            except OSError:
+                continue
+            if image.ndim != 3 or image.shape[2] != 4:
                 continue
             rgba = cv2.cvtColor(resize_to_height(image, STANDARD_SIZE), cv2.COLOR_BGRA2RGBA)
             # Only the icon centre is matched; the binarized alpha ignores the transparent background.

@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from nightreign_overlay.core.images import read_cv2_image
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.plugins.map_detect.config import MapDetectionSettings
 from nightreign_overlay.plugins.map_detect.image_utils import (
@@ -55,7 +56,7 @@ def open_cv2_image(path: str, size: tuple[int, int] | None = None) -> np.ndarray
     path = get_data_path(path)
     if not os.path.exists(path):
         raise FileNotFoundError(f"Image file not found: {path}")
-    image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(read_cv2_image(path), cv2.COLOR_BGR2RGB)
     if size is not None:
         image = cv2.resize(image, size, interpolation=CV2_RESIZE_METHOD)
     return image
