@@ -184,6 +184,9 @@ class HomePage(ScrollPage):
         self._game_monitor = game_monitor
 
         self.addWidget(Banner(self.view))
+        self.hintLabel = BodyLabel(tr("home.first_use_hint"), self.view)
+        self.hintLabel.setWordWrap(True)
+        self.addWidget(self.hintLabel)
         self._init_status()
         self._init_plugins()
 
