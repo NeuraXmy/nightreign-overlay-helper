@@ -8,6 +8,8 @@ APP_ID = "nightreign-overlay-helper"
 APP_NAME = "Nightreign Overlay Helper"
 APP_AUTHOR = "NeuraXmy"
 APP_VERSION = __version__
+# Stable across versions and source/frozen entry points for Windows taskbar grouping.
+WINDOWS_APP_USER_MODEL_ID = "NeuraXmy.NightreignOverlayHelper"
 
 # Directory name used for user data; distinct from v1 so both versions can coexist.
 APP_DATA_DIR_NAME = "NightreignOverlayHelper"

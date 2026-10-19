@@ -24,6 +24,7 @@ from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.core.single_instance import SingleInstance
 from nightreign_overlay.meta import APP_AUTHOR, APP_ID, APP_NAME, APP_VERSION
 from nightreign_overlay.platforms import PlatformBackend, create_backend
+from nightreign_overlay.platforms.shell import configure_taskbar_identity
 from nightreign_overlay.plugin import PluginManager
 from nightreign_overlay.ui.main_window import MainWindow
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -198,6 +199,7 @@ def run(argv: Sequence[str]) -> int:
         os.environ[DATA_DIR_ENV] = os.path.abspath(args.data_dir)
     setup_logging(log_dir(), "DEBUG" if args.debug else "INFO")
 
+    configure_taskbar_identity()
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     qt_app = QApplication(list(argv))
     qt_app.setApplicationName(APP_NAME)
