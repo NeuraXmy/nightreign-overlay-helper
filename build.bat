@@ -41,8 +41,13 @@ if errorlevel 1 goto build_failed
 uv run --no-sync python scripts\prepare_release_licenses.py
 if errorlevel 1 goto build_failed
 
+if not defined CI (
+    uv run --no-sync python -m scripts.package_release
+    if errorlevel 1 goto build_failed
+)
+
 echo Build complete: %cd%\dist\nightreign-overlay-helper
-echo Distribute the entire folder, including _internal, bin and third-party.
+echo Distribute the Windows ZIP and keep the matching sources ZIP available.
 popd
 if not defined CI pause
 exit /b 0

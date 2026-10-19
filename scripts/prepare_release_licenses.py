@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tarfile
@@ -13,7 +14,7 @@ import urllib.request
 import zipfile
 from importlib.metadata import distribution
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 DEPENDENCIES = {
@@ -89,6 +90,32 @@ def verify_fluent_resource_sources(sdist: Path, upstream: Path) -> None:
             raise ValueError("Fluent Widgets sdist has no Python source")
 
 
+def source_directory(bundle: Path) -> Path:
+    return bundle.parent / "release-sources"
+
+
+def release_label(root: Path) -> str:
+    if os.environ.get("GITHUB_REF_TYPE") == "tag":
+        return os.environ["GITHUB_REF_NAME"]
+    revision = git(root, "rev-parse", "--short=7", "HEAD")
+    return f"manual-dev-{revision}-{os.environ.get('GITHUB_RUN_NUMBER', 'local')}"
+
+
+def source_notice(root: Path) -> str:
+    legal = root / "src/nightreign_overlay/resources/licenses"
+    archive = f"{release_label(root)}-sources.zip"
+    location = f"../{archive}"
+    if os.environ.get("GITHUB_REF_TYPE") == "tag":
+        repository = os.environ.get("GITHUB_REPOSITORY", "NeuraXmy/nightreign-overlay-helper")
+        tag = quote(os.environ["GITHUB_REF_NAME"], safe="")
+        location = f"https://github.com/{repository}/releases/download/{tag}/{quote(archive, safe='')}"
+    return (legal / "SOURCE.md").read_text(encoding="utf-8") + (
+        f"\n## This build / 本次构建\n\n"
+        f"- Commit: `{git(root, 'rev-parse', 'HEAD')}`\n"
+        f"- Corresponding source / 对应源码: [{archive}]({location})\n"
+    )
+
+
 def prepare(root: Path, bundle: Path) -> None:
     check_tree(root)
     packages = locked_dependencies(root)
@@ -111,15 +138,21 @@ def prepare(root: Path, bundle: Path) -> None:
     (bundle / "licenses").mkdir(parents=True, exist_ok=True)
     for filename in LEGAL_FILES:
         shutil.copyfile(legal / filename, bundle / "licenses" / filename)
-    shutil.copyfile(legal / "SOURCE.md", bundle / "SOURCE.md")
+    (bundle / "SOURCE.md").write_text(source_notice(root), encoding="utf-8")
     shutil.copyfile(root / "LICENSE", bundle / "LICENSE")
     third_party = bundle / "third-party"
     third_party.mkdir(exist_ok=True)
     shutil.copyfile(root / "native/THIRD-PARTY-NOTICES.txt", third_party / "THIRD-PARTY-NOTICES.txt")
     shutil.copytree(root / "native/licenses", third_party / "licenses", dirs_exist_ok=True)
 
-    sources = bundle / "source"
-    sources.mkdir(exist_ok=True)
+    # Remove the previous layout from incremental local builds as well.
+    legacy_sources = bundle / "source"
+    if legacy_sources.exists():
+        shutil.rmtree(legacy_sources)
+    sources = source_directory(bundle)
+    if sources.exists():
+        shutil.rmtree(sources)
+    sources.mkdir(parents=True)
     revision = git(root, "rev-parse", "HEAD")
     snapshot = sources / "nightreign-overlay-helper-source.zip"
     subprocess.run(
@@ -153,6 +186,9 @@ def prepare(root: Path, bundle: Path) -> None:
         download_source(record["url"], sources / record["archive"], record["sha256"])
     manifest["supplements"] = supplements
     (sources / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    shutil.copyfile(sources / "manifest.json", bundle / "licenses/source-manifest.json")
+    shutil.copyfile(bundle / "SOURCE.md", sources / "SOURCE.md")
+    shutil.copyfile(root / "LICENSE", sources / "LICENSE")
     check_tree(root)
     if git(root, "rev-parse", "HEAD") != revision:
         raise ValueError("Git revision changed while preparing release sources")
@@ -165,13 +201,22 @@ def check_bundle(root: Path, bundle: Path) -> None:
         **{f"licenses/{name}": legal / name for name in LEGAL_FILES},
         **{f"third-party/licenses/{name}": root / "native/licenses" / name for name in MIT_FILES},
         "third-party/THIRD-PARTY-NOTICES.txt": root / "native/THIRD-PARTY-NOTICES.txt",
-        "SOURCE.md": legal / "SOURCE.md",
         "LICENSE": root / "LICENSE",
     }
     for relative, original in required.items():
         if (bundle / relative).read_bytes() != original.read_bytes():
             raise ValueError(f"Missing or incorrect release license/notice: {relative}")
-    sources = bundle / "source"
+    if (bundle / "source").exists():
+        raise ValueError("Runtime bundle must not contain source archives")
+    if (bundle / "SOURCE.md").read_text(encoding="utf-8") != source_notice(root):
+        raise ValueError("Runtime source download notice does not match this build")
+    sources = source_directory(bundle)
+    if (sources / "SOURCE.md").read_bytes() != (bundle / "SOURCE.md").read_bytes():
+        raise ValueError("Source archive download notice does not match runtime")
+    if (sources / "LICENSE").read_bytes() != (root / "LICENSE").read_bytes():
+        raise ValueError("Source archive license does not match project")
+    if (bundle / "licenses/source-manifest.json").read_bytes() != (sources / "manifest.json").read_bytes():
+        raise ValueError("Runtime source manifest does not match corresponding source")
     manifest = json.loads((sources / "manifest.json").read_text(encoding="utf-8"))
     packages = locked_dependencies(root)
     if set(manifest["dependencies"]) != set(packages):

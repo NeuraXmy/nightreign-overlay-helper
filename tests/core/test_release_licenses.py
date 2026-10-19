@@ -82,9 +82,14 @@ def test_bundle_includes_verified_source_and_full_licenses(release_checkout):
     root, bundle = release_checkout
     release.prepare(root, bundle)
     release.check_bundle(root, bundle)
-    manifest = json.loads((bundle / "source/manifest.json").read_text())
+    manifest = json.loads((release.source_directory(bundle) / "manifest.json").read_text())
     assert manifest["project"]["commit"] == release.git(root, "rev-parse", "HEAD")
     assert set(manifest["dependencies"]) == set(release.DEPENDENCIES)
+    assert not (bundle / "source").exists()
+    assert "-sources.zip" in (bundle / "SOURCE.md").read_text()
+    assert (bundle / "licenses/source-manifest.json").read_bytes() == (
+        release.source_directory(bundle) / "manifest.json"
+    ).read_bytes()
 
 
 @pytest.mark.parametrize(
@@ -101,7 +106,7 @@ def test_missing_license_blocks_release(release_checkout, filename):
 def test_corrupted_dependency_source_blocks_release(release_checkout):
     root, bundle = release_checkout
     release.prepare(root, bundle)
-    (bundle / "source/pyqt6.tar.gz").write_bytes(b"corrupted")
+    (release.source_directory(bundle) / "pyqt6.tar.gz").write_bytes(b"corrupted")
     with pytest.raises(ValueError, match="SHA-256 mismatch"):
         release.check_bundle(root, bundle)
 
@@ -123,10 +128,11 @@ def test_uncommitted_source_cannot_be_paired_with_old_snapshot(release_checkout)
 def test_manifest_cannot_substitute_another_dependency_version(release_checkout):
     root, bundle = release_checkout
     release.prepare(root, bundle)
-    path = bundle / "source/manifest.json"
+    path = release.source_directory(bundle) / "manifest.json"
     manifest = json.loads(path.read_text())
     manifest["dependencies"]["pyqt6"]["version"] = "0.0.0"
     path.write_text(json.dumps(manifest))
+    (bundle / "licenses/source-manifest.json").write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match=r"does not match uv\.lock"):
         release.check_bundle(root, bundle)
 
@@ -143,3 +149,48 @@ def test_unrelated_upstream_source_cannot_replace_resource_inputs(tmp_path):
         archive.writestr("repo/resources/resource.qrc", "<RCC/>")
     with pytest.raises(ValueError, match="does not match sdist"):
         release.verify_fluent_resource_sources(sdist, upstream)
+
+
+def test_incremental_build_removes_legacy_embedded_sources(release_checkout):
+    root, bundle = release_checkout
+    legacy = bundle / "source"
+    legacy.mkdir(parents=True)
+    (legacy / "old-source.zip").write_bytes(b"old archive")
+    release.prepare(root, bundle)
+    assert not legacy.exists()
+    release.check_bundle(root, bundle)
+
+
+def test_release_archives_separate_runtime_and_matching_sources(release_checkout, monkeypatch):
+    from scripts import package_release
+
+    root, bundle = release_checkout
+    monkeypatch.setenv("GITHUB_REF_TYPE", "tag")
+    monkeypatch.setenv("GITHUB_REF_NAME", "v1.0.0-dev.2")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "NeuraXmy/nightreign-overlay-helper")
+    release.prepare(root, bundle)
+    for filename in package_release.REQUIRED_RUNTIME_FILES:
+        path = bundle / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"runtime fixture")
+    runtime, sources = package_release.package(root, bundle)
+    assert runtime.name == "nightreign-overlay-helper-v1.0.0-dev.2-windows-x64.zip"
+    assert sources.name == "v1.0.0-dev.2-sources.zip"
+    with zipfile.ZipFile(runtime) as archive:
+        assert not any(name.endswith((".zip", ".tar.gz")) for name in archive.namelist())
+        notice = archive.read("app/SOURCE.md").decode()
+        assert "releases/download/v1.0.0-dev.2/v1.0.0-dev.2-sources.zip" in notice
+        manifest = archive.read("app/licenses/source-manifest.json")
+    with zipfile.ZipFile(sources) as archive:
+        assert archive.read("manifest.json") == manifest
+        assert "nightreign-overlay-helper-source.zip" in archive.namelist()
+        assert "pyqt6.tar.gz" in archive.namelist()
+        assert archive.read("SOURCE.md").decode() == notice
+
+
+def test_runtime_manifest_cannot_point_at_unrelated_sources(release_checkout):
+    root, bundle = release_checkout
+    release.prepare(root, bundle)
+    (bundle / "licenses/source-manifest.json").write_text("{}")
+    with pytest.raises(ValueError, match="manifest does not match"):
+        release.check_bundle(root, bundle)

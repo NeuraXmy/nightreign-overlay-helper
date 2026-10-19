@@ -111,4 +111,4 @@ Licensed under [AGPL-3.0-only](LICENSE). Use, modification, and redistribution, 
 
 Third-party components retain their own licenses: MIT for SteamP2PInfo, and GPLv3 for PyQt6-Fluent-Widgets and PyQt6. See the [third-party notices](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md) and [corresponding source and build instructions](src/nightreign_overlay/resources/licenses/SOURCE.md) for full texts and details.
 
-Windows releases include `licenses/`, `third-party/`, `source/`, and `SOURCE.md`; keep the complete folder when redistributing. License texts are also available offline under **About → Licenses and source**.
+Windows runtime ZIPs include `licenses/`, `third-party/`, and `SOURCE.md`. Corresponding source is available separately as `<version>-sources.zip` in the same Release. Preserve the complete runtime folder and provide access to the matching source when redistributing. License texts are also available offline under **About → Licenses and source**.
