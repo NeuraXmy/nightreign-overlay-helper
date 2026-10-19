@@ -10,6 +10,7 @@
 |------|------|
 | [`src/nightreign_overlay/__main__.py`](../../src/nightreign_overlay/__main__.py) | Windows 管理员权限检查、屏蔽 qfluentwidgets 启动横幅，调用 `app.run()` |
 | [`src/nightreign_overlay/platforms/elevation.py`](../../src/nightreign_overlay/platforms/elevation.py) | 使用 Windows UAC 请求管理员权限，处理取消与启动失败 |
+| [`src/nightreign_overlay/platforms/shell.py`](../../src/nightreign_overlay/platforms/shell.py) | 在 Qt 创建窗口前设置稳定的 Windows 任务栏 AppUserModelID |
 | [`src/nightreign_overlay/app.py`](../../src/nightreign_overlay/app.py) | `Application` 类：构造所有长生命周期对象、连接信号、启动、退出、重启 |
 | [`src/nightreign_overlay/meta.py`](../../src/nightreign_overlay/meta.py) | 应用常量：ID、名称、版本、游戏窗口标题 |
 | [`src/nightreign_overlay/core/single_instance.py`](../../src/nightreign_overlay/core/single_instance.py) | 单实例锁 |
@@ -22,6 +23,7 @@ __main__.main()
   └─ app.run(argv)
        ├─ parse_args(argv) → --minimized, --data-dir, --debug
        ├─ setup_logging(log_dir(), level)
+       ├─ configure_taskbar_identity()  # Windows AppUserModelID，早于任何 Qt 窗口
        ├─ QApplication 创建
        ├─ SingleInstance(APP_ID).acquire()
        │     └─ 若已存在实例：发送激活信号并退出
@@ -44,6 +46,13 @@ __main__.main()
 ```
 
 ## Application.start()
+
+Windows 任务栏使用稳定的 `NeuraXmy.NightreignOverlayHelper` 进程标识，源码和打包入口共用，
+不随版本号变化。它与 Qt 应用名称、托盘图标属于不同设置。Qt 应用和主窗口均设置
+`resources/icons/app.ico`；PyInstaller 也将同一 ICO 嵌入 EXE。该文件包含 16、20、24、32、
+40、48、64、128、256 像素档位，覆盖任务栏、窗口切换及不同 DPI 的图标需求。
+任务栏身份设置失败时记录警告，应用继续启动。Windows 实机验收需分别检查源码启动、
+打包启动、最小化恢复以及任务栏图标；旧固定快捷方式可能需要取消固定后重新固定。
 
 Windows 默认以管理员权限运行，以满足联机延迟 ETW 的要求。打包 EXE 使用 `uac_admin=True` 启动清单；源码入口（`python main.py`、`python -m nightreign_overlay`）在构造 Qt 界面、创建单实例锁和启动插件前，通过 `ShellExecuteW("runas")` 请求提权。保留原 Python 启动参数、应用参数和工作目录。已提权进程直接继续，macOS 不请求提权。用户取消 UAC 或交接失败时显示说明并退出，不启动无权限实例。
 
