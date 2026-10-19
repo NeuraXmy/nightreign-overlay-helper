@@ -10,6 +10,8 @@
 
 项目使用 **GPT-6.1-Sol** 辅助开发与翻译。
 
+当前版本在 [`main`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/main) 分支开发（原 `rewrite` 分支）。旧版主线已迁移至 [`legacy`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/legacy)（原 `main`），旧版开发分支已迁移至 [`legacy-dev`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/legacy-dev)（原 `dev`）。维护旧版的 fork 请从 `legacy` 或 `legacy-dev` 同步；`main` 现在对应新版代码。
+
 ## 功能
 
 - **缩圈计时**：识别每天开始时的 DAY I / DAY II / DAY III 图标，自动在悬浮窗显示缩圈倒计时，也可用快捷键手动计时。
