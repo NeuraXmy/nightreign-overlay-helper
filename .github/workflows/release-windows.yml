@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 45
     outputs:
-      artifact-name: ${{ steps.package.outputs.name }}
+      artifact-ids: ${{ steps.upload-runtime.outputs.artifact-id }},${{ steps.upload-sources.outputs.artifact-id }}
       prerelease: ${{ steps.version.outputs.prerelease }}
     env:
       CI: '1'
@@ -96,21 +96,21 @@ jobs:
         run: uv run --no-sync python -m scripts.package_release
 
       - name: Upload Windows runtime ZIP
-        uses: actions/upload-artifact@v4
+        id: upload-runtime
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.package.outputs.name }}
           path: ${{ steps.package.outputs.path }}
           if-no-files-found: error
-          compression-level: 0
+          archive: false
           retention-days: 30
 
       - name: Upload corresponding source ZIP
-        uses: actions/upload-artifact@v4
+        id: upload-sources
+        uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.package.outputs.name }}-sources
           path: ${{ steps.package.outputs.sources-path }}
           if-no-files-found: error
-          compression-level: 0
+          archive: false
           retention-days: 30
 
   publish-release:
@@ -122,9 +122,9 @@ jobs:
       contents: write
     steps:
       - name: Download verified runtime and source ZIPs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
-          pattern: ${{ needs.build-windows.outputs.artifact-name }}*
+          artifact-ids: ${{ needs.build-windows.outputs.artifact-ids }}
           merge-multiple: true
           path: release
 

@@ -75,6 +75,8 @@ tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v1.0.0-windows-x64.zip
 `scripts/prepare_release_licenses.py --check` 还会离线核对完整许可证内容、
 独立源码目录的归档 SHA-256、依赖版本和项目提交，并核对程序内清单；任何缺失或不一致都阻止打包。
 `scripts/package_release.py` 统一为本地和 CI 生成两个附件，ZIP 使用 Deflate 最高压缩级别 9。
+Actions 通过 `upload-artifact@v7` 的 `archive: false` 直接上传这两个 ZIP，保留原文件名，避免下载时出现 ZIP 内再套 ZIP。
+发布任务通过上传步骤返回的 artifact ID 下载原始 ZIP，再作为 Release 附件发布。
 程序 ZIP 不包含源码归档；源码附件与程序一起发布，用户运行程序只需下载 Windows ZIP。
 版本 tag 必须与 `src/nightreign_overlay/__init__.py` 的版本一致；支持可选 `v` 前缀和
 `1.0.0-dev.2`／`1.0.0.dev2` 等 PEP 440 等价预发布写法。不一致时构建失败。
