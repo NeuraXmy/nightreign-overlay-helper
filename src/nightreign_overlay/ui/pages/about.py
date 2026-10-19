@@ -9,6 +9,7 @@ from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME, APP_VERSION, REPO_URL
 from nightreign_overlay.ui.components import ScrollPage, SettingSection
 from nightreign_overlay.ui.components.diagnostic_export import DiagnosticExportDialog
+from nightreign_overlay.ui.components.licenses import LicensesDialog
 from nightreign_overlay.ui.pages.home import Banner
 
 #: (translation key, display name, url)
@@ -17,6 +18,7 @@ CREDITS = (
     ("quexuan", "雀煊", "https://space.bilibili.com/391379672"),
     ("steam_p2p_info", "SteamP2PInfo", "https://github.com/tremwil/SteamP2PInfo"),
     ("fluent_widgets", "PyQt-Fluent-Widgets", "https://github.com/zhiyiYo/PyQt-Fluent-Widgets"),
+    ("pyqt6", "PyQt6", "https://www.riverbankcomputing.com/software/pyqt/"),
 )
 
 
@@ -35,6 +37,7 @@ class AboutPage(ScrollPage):
                 tr("about.project.repo_content", version=APP_VERSION),
             ),
             self._feedback_card(),
+            self._licenses_card(),
             SettingCard(
                 FluentIcon.INFO,
                 tr("about.security.title"),
@@ -51,6 +54,21 @@ class AboutPage(ScrollPage):
                 )
             )
         self.addWidget(credits)
+
+    def _licenses_card(self) -> PushSettingCard:
+        card = PushSettingCard(
+            tr("about.licenses.open"),
+            FluentIcon.INFO,
+            tr("about.licenses.title"),
+            tr("about.licenses.content"),
+        )
+        card.clicked.connect(self._show_licenses)
+        return card
+
+    def _show_licenses(self) -> None:
+        dialog = LicensesDialog(self.window())
+        dialog.exec()
+        dialog.deleteLater()
 
     def _feedback_card(self) -> PushSettingCard:
         card = PushSettingCard(

@@ -13,6 +13,7 @@
 | 排查截图、DPI 或导出诊断信息 | [使用与诊断指南](guides/README.md) |
 | 修改代码、补充测试或准备发布 | [开发维护](development/README.md) |
 | 查询以往发布问题与处理结果 | [发布记录](development/releases/README.md) |
+| 查看许可、第三方声明及对应源码 | [许可证与源码分发](development/releases/licensing.md) |
 | 查阅算法实验与旧评估 | [实验记录](development/experiments/README.md) |
 
 ## 目录分层

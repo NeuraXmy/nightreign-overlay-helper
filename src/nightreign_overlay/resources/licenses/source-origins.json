@@ -1,0 +1,9 @@
+{
+  "pyqt6-fluent-widgets": {
+    "version": "1.11.3",
+    "commit": "e5629d39fe966219e0ead39900345bc48186f201",
+    "url": "https://codeload.github.com/zhiyiYo/PyQt-Fluent-Widgets/zip/e5629d39fe966219e0ead39900345bc48186f201",
+    "archive": "pyqt6-fluent-widgets-1.11.3-upstream.zip",
+    "sha256": "94d180b30a8f1e7e101a9dbf2d27fc36846baa88518fb635eed4a4bb1b47e26a"
+  }
+}
