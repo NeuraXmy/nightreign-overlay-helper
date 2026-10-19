@@ -1,6 +1,6 @@
 # Nightreign Overlay Helper
 
-《艾尔登法环 黑夜君临》悬浮窗辅助工具的重写版本。目前已迁移缩圈、雨中、绝招计时、地图信息、血量阈值标记和联机状态，并提供独立的悬浮窗测试插件。
+《艾尔登法环 黑夜君临》悬浮窗辅助工具的重写版本。目前已迁移缩圈、雨中、绝招计时、地图信息、血量阈值标记和联机状态。
 
 ## 运行环境
 
@@ -12,7 +12,7 @@
 使用 `uv`：
 
 ```bash
-uv sync --dev
+uv sync --locked --dev
 uv run python main.py
 ```
 
@@ -36,11 +36,11 @@ nightreign-overlay-helper
 
 ```bash
 uv run pytest
-uv run ruff check src tests
-uv run ruff format --check src tests
+uv run ruff check .
+uv run ruff format --check .
 ```
 
-启动后可在「悬浮窗测试」页面验证拖动、缩放、透明度、鼠标穿透和普通窗口 fallback。macOS 无法检测游戏前台窗口；如果透明悬浮窗显示异常，请在「设置 → 悬浮窗显示方式」中选择「普通窗口」。
+启动后可在各功能设置页调整悬浮窗，在通用设置中调整显示方式、透明度与鼠标穿透。macOS 无法检测游戏前台窗口；如果透明悬浮窗显示异常，请在「设置 → 悬浮窗显示方式」中选择「普通窗口」。
 
 架构及后续迁移路线见 [重写计划](docs/REWRITE_PLAN.md)。
 
@@ -52,7 +52,7 @@ uv run ruff format --check src tests
 build.bat
 ```
 
-脚本从自身所在目录执行，使用 Python 3.13（由 `uv` 管理），同步 `build` 依赖组，
+脚本从自身所在目录执行，使用 Python 3.13（由 `uv` 管理），按纳入版本管理的 `uv.lock` 锁定同步 `build` 依赖组，
 构建 Steam/ETW 辅助程序，再通过 `nightreign-overlay-helper.spec` 构建主程序。
 首次构建需要联网下载 Python、Python 依赖与 NuGet 包。自动化环境可设置 `CI=1` 跳过结束时的暂停。
 
@@ -88,8 +88,13 @@ Windows EXE 必须在 Windows 上构建；macOS 开发环境不能直接生成�
 - 下载：在成功的 workflow 运行页面的 **Artifacts** 中下载产物，内含最终分发用 ZIP；保留时间为 30 天。
 
 tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v0.11.0-windows-x64.zip`；
-手动构建名称包含提交短 SHA 与运行编号。解压后保留完整的 `nightreign-overlay-helper/` 文件夹，
-运行其中的 EXE。构建会检查主程序、截图 DLL、POI ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
+手动构建以 `manual-dev` 标记，名称包含提交短 SHA 与运行编号。解压后保留完整的 `nightreign-overlay-helper/` 文件夹，
+运行其中的 EXE。CI 在打包前运行完整 pytest、Ruff 检查及格式检查，并通过
+`scripts/check_runtime_resources.py` 实际加载和推理 POI、血条材质与端帽模型，检查内置插件发现和加载。
+打包后检查主程序、截图 DLL、三个 ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
+版本 tag 必须与 `src/nightreign_overlay/__init__.py` 的版本一致；支持可选 `v` 前缀和
+`1.0.0-dev.2`／`1.0.0.dev2` 等 PEP 440 等价预发布写法。不一致时构建失败。
+分发 EXE 的真实启动、Steam/ETW 与截图设备行为仍需在 Windows 发布验收中确认。
 workflow 文件需存在于所构建的 tag 中；GitHub 的手动运行入口需要该 workflow 先进入默认分支。
 
 ## 联机状态

@@ -1,0 +1,62 @@
+"""Load release-critical models and discover plugins without a game or input hooks."""
+
+from __future__ import annotations
+
+import tempfile
+from pathlib import Path
+
+import numpy as np
+import onnxruntime as ort
+from PyQt6.QtWidgets import QApplication
+
+from nightreign_overlay.core.config import ConfigStore
+from nightreign_overlay.core.events import EventBus
+from nightreign_overlay.core.i18n import Translator
+from nightreign_overlay.core.paths import PACKAGE_DIR
+from nightreign_overlay.core.services import ServiceRegistry
+from nightreign_overlay.plugin import PluginManager, PluginState
+
+EXPECTED_PLUGINS = {
+    "art_timer",
+    "audio",
+    "capture",
+    "day_timer",
+    "hp_marker",
+    "hud",
+    "input",
+    "map_detect",
+    "p2p_latency",
+    "rain_timer",
+    "region",
+}
+
+
+def main() -> None:
+    app = QApplication.instance() or QApplication([])
+    plugins = PACKAGE_DIR / "plugins"
+    for relative in (
+        "map_detect/data/poi_cnn/epoch-42.onnx",
+        "hp_marker/data/material_v1.onnx",
+        "hp_marker/data/cap_v1.onnx",
+    ):
+        session = ort.InferenceSession(str(plugins / relative), providers=["CPUExecutionProvider"])
+        feeds = {}
+        for value in session.get_inputs():
+            shape = [size if isinstance(size, int) else 1 for size in value.shape]
+            feeds[value.name] = np.zeros(shape, dtype=np.float32)
+        session.run(None, feeds)
+    with tempfile.TemporaryDirectory() as temporary:
+        store = ConfigStore(Path(temporary) / "settings.yaml")
+        manager = PluginManager(store, Translator("zh_CN"), ServiceRegistry(), EventBus())
+        manager.discover()
+        manager.load_all()
+        records = manager.records()
+        if {record.id for record in records} != EXPECTED_PLUGINS:
+            raise RuntimeError("Release plugin discovery is incomplete")
+        if any(record.state != PluginState.INACTIVE for record in records):
+            raise RuntimeError("Release plugin loading failed")
+    app.processEvents()
+
+
+if __name__ == "__main__":
+    main()

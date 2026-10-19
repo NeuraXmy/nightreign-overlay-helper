@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
+from PyQt6.QtCore import QRect
 
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
@@ -14,6 +15,7 @@ from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.day_timer import plugin as day_module
 from nightreign_overlay.plugins.day_timer.plugin import DayTimerPlugin
 from nightreign_overlay.plugins.rain_timer.plugin import RainTimerPlugin
+from nightreign_overlay.plugins.region.api import RegionApi
 
 
 class RecordingAudio(AudioApi):
@@ -123,7 +125,9 @@ def test_art_uses_effect_start_and_character_duration(make_timer, monkeypatch):
     plugin._audio.cues["end"].seconds.set(3.5)
     monkeypatch.setattr(art_module, "crop_rgb", lambda *_: None)
     frame = SimpleNamespace(image=None, hdr=False)
-    plugin._on_art_frame(frame, None, plugin._detect_generation)
+    region = QRect(0, 0, 50, 50)
+    plugin.ctx.services.register(RegionApi, SimpleNamespace(region=lambda _key: region))
+    plugin._on_art_frame(frame, region, plugin._detect_generation)
     clock[0] += 2.4
     plugin._update_timer()
     assert audio.calls == []

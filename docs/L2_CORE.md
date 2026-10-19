@@ -56,8 +56,8 @@ cfg.opacity.set(80)  # validated, persisted, emitted
 ### 持久化
 
 - 路径：`settings.yaml`，位于平台用户配置目录。
-- 写入：`tmp` 文件 → `os.replace`，失败时删除 tmp。
-- 加载失败：备份为 `.broken-<timestamp>.yaml`，清空配置。
+- 写入：同目录唯一临时文件 → `os.replace`；目录创建、替换和临时文件清理均处理 I/O 异常。失败保留 dirty 状态，发出 `saveFailed`，应用显示未保存提示；后续 `flush()` 可重试。
+- 加载失败：尝试备份为 `.broken-<timestamp>.yaml`，使用默认配置继续启动。备份失败保留原文件并记录错误。
 
 ### 导出与导入
 
@@ -68,7 +68,7 @@ cfg.opacity.set(80)  # validated, persisted, emitted
 ### INVARIANT
 
 - `ConfigItem.set()` 必须在 GUI 线程调用。
-- 非法值回退默认值并记录 warning；不会崩溃。
+- 启动读取非法值回退默认值并记录 warning；运行时 `set()` 和导入拒绝非法值。数值选项拒绝 NaN、Infinity 与无法表示的数值。
 - 配置命名空间使用 `.` 分隔，如 `app.language`、`plugins.capture.mode`。
 
 ---
@@ -193,7 +193,7 @@ capture = ctx.services.require(CaptureApi)  # 缺失抛 LookupError
 - `resource_path(*parts)`：包内资源路径。
 - `user_data_dir()`：用户数据目录（settings.yaml、诊断图）。
 - `log_dir()`：日志目录。
-- 支持环境变量 `NIGHTREIGN_OVERLAY_DATA_DIR` 覆盖。
+- 支持环境变量 `NROH_DATA_DIR` 覆盖。
 
 ### 日志模块
 

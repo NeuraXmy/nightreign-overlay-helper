@@ -127,22 +127,31 @@ class PluginManager(QObject):
             self._translator.load_dir(plugin_id, root_dir / "i18n")
             if record.state == PluginState.UNAVAILABLE:
                 continue
-            try:
-                ctx = PluginContext(
-                    plugin_id,
-                    root_dir,
-                    self._store,
-                    self._translator,
-                    self._services,
-                    self._events,
-                )
-                record.plugin = record.cls(ctx)
-                record.plugin.on_load()
-            except Exception as e:
-                log.exception("Failed to load plugin %s", plugin_id)
-                record.plugin = None
-                record.state = PluginState.FAILED
-                record.error = str(e)
+            self._load_plugin(record)
+
+    def _load_plugin(self, record: PluginRecord) -> bool:
+        ctx = PluginContext(
+            record.id,
+            _plugin_root(record.cls),
+            self._store,
+            self._translator,
+            self._services,
+            self._events,
+        )
+        try:
+            record.plugin = record.cls(ctx)
+            record.plugin.on_load()
+        except Exception as e:
+            log.exception("Failed to load plugin %s", record.id)
+            ctx.release()
+            record.plugin = None
+            record.state = PluginState.FAILED
+            record.error = str(e)
+            self.stateChanged.emit(record.id)
+            return False
+        record.state = PluginState.INACTIVE
+        record.error = ""
+        return True
 
     def start(self) -> None:
         """Activate all enabled plugins in dependency order."""
@@ -250,7 +259,7 @@ class PluginManager(QObject):
 
     def _activate(self, plugin_id: str) -> None:
         record = self._records[plugin_id]
-        if record.plugin is None:
+        if record.plugin is None and not self._load_plugin(record):
             return
         inactive = [p for p in record.manifest.requires if not self.is_active(p)]
         if inactive:

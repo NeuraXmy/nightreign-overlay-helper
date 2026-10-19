@@ -46,6 +46,10 @@ plugin_page:
     tutorial: 使い方
   no_settings: この機能に設定項目はありません
   no_tutorial: この機能の説明はまだありません
+settings_save:
+  failed_title: 設定を保存できませんでした
+  failed_content: "変更は保存されていません。フォルダーの権限とディスクの空き容量を確認し、再試行してください。\n{error}"
+
 settings_reset:
   button: リセット
   title: 設定をリセット

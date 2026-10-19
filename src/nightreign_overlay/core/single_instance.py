@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import getpass
+import hashlib
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QDir, QLockFile, QObject, pyqtSignal
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 from nightreign_overlay.core.log import get_logger
@@ -22,23 +23,34 @@ class SingleInstance(QObject):
         super().__init__(parent)
         self._key = f"{key}-{getpass.getuser()}"
         self._server: QLocalServer | None = None
+        digest = hashlib.sha256(self._key.encode()).hexdigest()
+        self._lock = QLockFile(f"{QDir.tempPath()}/{digest}.lock")
 
     def acquire(self) -> bool:
         """Return True if this is the primary instance; otherwise notify the primary and return False."""
-        socket = QLocalSocket()
-        socket.connectToServer(self._key)
-        if socket.waitForConnected(_TIMEOUT_MS):
-            socket.write(_ACTIVATE_MESSAGE)
-            socket.waitForBytesWritten(_TIMEOUT_MS)
-            socket.disconnectFromServer()
+        if self._notify_primary():
             return False
-
-        # A crashed instance may leave a stale socket file behind on Unix.
+        # Serialize stale-address removal and listening across simultaneous launches.
+        if not self._lock.tryLock(0):
+            self._notify_primary()
+            return False
         QLocalServer.removeServer(self._key)
         self._server = QLocalServer(self)
         if not self._server.listen(self._key):
-            log.warning("Single instance server failed to listen: %s", self._server.errorString())
+            log.error("Single instance server failed to listen: %s", self._server.errorString())
+            self.release()
+            return False
         self._server.newConnection.connect(self._on_new_connection)
+        return True
+
+    def _notify_primary(self) -> bool:
+        socket = QLocalSocket()
+        socket.connectToServer(self._key)
+        if not socket.waitForConnected(_TIMEOUT_MS):
+            return False
+        socket.write(_ACTIVATE_MESSAGE)
+        socket.waitForBytesWritten(_TIMEOUT_MS)
+        socket.disconnectFromServer()
         return True
 
     def release(self) -> None:
@@ -46,6 +58,7 @@ class SingleInstance(QObject):
         if self._server is not None:
             self._server.close()
             self._server = None
+        self._lock.unlock()
 
     def _on_new_connection(self) -> None:
         assert self._server is not None

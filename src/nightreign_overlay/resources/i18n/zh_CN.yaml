@@ -52,6 +52,10 @@ plugin_page:
   no_settings: 该功能没有可调整的选项。
   no_tutorial: 该功能暂无教程。
 
+settings_save:
+  failed_title: 设置保存失败
+  failed_content: "更改尚未保存，请检查目录权限和磁盘空间后重试。\n{error}"
+
 settings_reset:
   button: 重置
   title: 重置设置

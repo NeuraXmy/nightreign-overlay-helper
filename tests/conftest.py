@@ -19,6 +19,7 @@ with contextlib.redirect_stdout(io.StringIO()):
 from PyQt6.QtWidgets import QApplication
 
 from nightreign_overlay.core.config import ConfigStore
+from nightreign_overlay.core.paths import user_data_dir
 
 
 @pytest.fixture(scope="session")
@@ -29,8 +30,13 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture(autouse=True)
-def _isolated_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def _isolated_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("NROH_DATA_DIR", str(tmp_path / "data"))
+    user_data_dir.cache_clear()
+    try:
+        yield
+    finally:
+        user_data_dir.cache_clear()
 
 
 @pytest.fixture

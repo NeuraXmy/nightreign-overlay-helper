@@ -92,7 +92,9 @@ ctx.subscribe(DayStarted, on_day_started)
 
 - 消费方插件只允许 import 提供方的 `api.py`，禁止导入其实现模块。
 - `on_load()` 即使插件禁用也会调用，因此设置页能正常工作。
-- `on_activate()` 可能失败；失败后 `ctx.release()` 会被调用，状态变为 `FAILED`。
+- 构造、`on_load()` 或 `on_activate()` 失败时均释放 context 的服务、订阅及 cleanup，状态变为 `FAILED`。
+- 加载失败后启用会重新创建 context／插件并重试 `on_load()`；激活失败重试复用已加载插件。
+- 初始化资源前登记幂等 cleanup；`on_load()` 提供的设置服务在 context 释放后的激活重试中须重新提供。
 - 插件启用状态持久化在 `plugin_manager.enabled`。
 
 ## PATTERN：新增一个插件

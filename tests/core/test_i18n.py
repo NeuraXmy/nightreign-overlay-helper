@@ -258,3 +258,10 @@ def test_documentation_resources_are_valid_utf8(path: Path) -> None:
     if path.stem == "en_US":
         assert not re.search(r"\?[A-Za-z][^?\n]*\?", text), f"{path} contains replaced quoted text"
         assert not re.search(r"[A-Za-z]\?[A-Za-z]", text), f"{path} contains a replacement question mark"
+
+
+@pytest.mark.parametrize("path", sorted((PROJECT_ROOT / "docs").glob("*.md")), ids=lambda p: p.name)
+def test_project_documents_are_readable_utf8(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    assert "\ufffd" not in text
+    assert not re.search(r"\?{4,}", text), f"{path.name} contains lost text"

@@ -31,12 +31,39 @@ jobs:
           enable-cache: true
           cache-dependency-glob: |
             pyproject.toml
+            uv.lock
             .python-version
 
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Install locked dependencies
+        run: uv sync --locked --python 3.13 --group build
+
+      - name: Check release tag against application version
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: uv run --no-sync python scripts/validate_release_version.py "$env:GITHUB_REF_NAME"
+
+      - name: Lint source
+        run: uv run --no-sync ruff check .
+
+      - name: Check formatting
+        run: uv run --no-sync ruff format --check .
+
+      - name: Run full regression suite
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync pytest -q
+
+      - name: Load runtime resources and discover plugins
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync python scripts/check_runtime_resources.py
 
       - name: Build application and P2P helper
         shell: cmd
@@ -52,6 +79,8 @@ jobs:
             'nightreign-overlay-helper.exe',
             '_internal/nightreign_overlay/plugins/capture/native/MaaWin32Screencap.dll',
             '_internal/nightreign_overlay/plugins/map_detect/data/poi_cnn/epoch-42.onnx',
+            '_internal/nightreign_overlay/plugins/hp_marker/data/material_v1.onnx',
+            '_internal/nightreign_overlay/plugins/hp_marker/data/cap_v1.onnx',
             'bin/NightreignP2PHelper.exe',
             'bin/amd64/KernelTraceControl.dll',
             'bin/amd64/msdia140.dll',
@@ -67,7 +96,7 @@ jobs:
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
             $label = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
           } else {
-            $label = 'manual-{0}-{1}' -f $env:GITHUB_SHA.Substring(0, 7), $env:GITHUB_RUN_NUMBER
+            $label = 'manual-dev-{0}-{1}' -f $env:GITHUB_SHA.Substring(0, 7), $env:GITHUB_RUN_NUMBER
           }
           $name = "nightreign-overlay-helper-$label-windows-x64"
           $archive = Join-Path $PWD "dist/$name.zip"

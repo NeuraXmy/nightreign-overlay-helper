@@ -88,7 +88,12 @@ class RangeOption(Option[T]):
     def normalize(self, raw: Any) -> T:
         if isinstance(raw, bool) or not isinstance(raw, int | float):
             raise ValueError(f"{self.name!r} expects a number, got {raw!r}")
-        value = round(raw) if isinstance(self.default, int) else float(raw)
+        try:
+            if not math.isfinite(raw):
+                raise ValueError(f"{self.name!r} expects a finite number")
+            value = round(raw) if isinstance(self.default, int) else float(raw)
+        except OverflowError as e:
+            raise ValueError(f"{self.name!r} number is out of range") from e
         return min(max(value, self.minimum), self.maximum)  # type: ignore[return-value]
 
 
@@ -206,6 +211,7 @@ class ConfigStore(QObject):
     """Holds the settings document and writes it back with debouncing and atomic replacement."""
 
     SAVE_DELAY_MS = 500
+    saveFailed = pyqtSignal(str)
 
     def __init__(self, path: Path, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -327,23 +333,22 @@ class ConfigStore(QObject):
             os.replace(temporary, path)
         finally:
             if temporary is not None:
-                temporary.unlink(missing_ok=True)
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError:
+                    log.warning("Could not remove temporary settings file %s", temporary, exc_info=True)
 
     def flush(self) -> None:
         """Write pending changes to disk immediately."""
         self._save_timer.stop()
         if not self._dirty:
             return
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.path.with_suffix(self.path.suffix + ".tmp")
         try:
-            with tmp.open("w", encoding="utf-8") as f:
-                yaml.safe_dump(self._data, f, allow_unicode=True, sort_keys=False)
-            os.replace(tmp, self.path)
+            self._write_document(self.path, self._data)
             self._dirty = False
-        except OSError:
+        except (OSError, yaml.YAMLError) as e:
             log.exception("Failed to save settings to %s", self.path)
-            tmp.unlink(missing_ok=True)
+            self.saveFailed.emit(str(e))
 
     def _load(self) -> None:
         if not self.path.exists():
@@ -356,8 +361,12 @@ class ConfigStore(QObject):
             self._data = data
         except (OSError, yaml.YAMLError, ValueError) as e:
             backup = self.path.with_name(f"{self.path.stem}.broken-{int(time.time())}{self.path.suffix}")
-            log.error("Settings file is corrupted (%s); moved to %s", e, backup)
-            os.replace(self.path, backup)
+            try:
+                os.replace(self.path, backup)
+            except OSError:
+                log.exception("Settings could not be read (%s); backup failed; original preserved", e)
+            else:
+                log.error("Settings file could not be read (%s); moved to %s", e, backup)
             self._data = {}
 
     def _section(self, namespace: str, *, create: bool) -> dict[str, Any] | None:

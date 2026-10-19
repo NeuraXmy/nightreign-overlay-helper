@@ -197,3 +197,24 @@ def test_settings_page_builds_before_activation_with_advanced_options(
     panel = plugin.create_settings_widget(parent)
     labels = [card.valueLabel.text() for card in panel.findChildren(ConfigRangeCard)]
     assert labels == ["500 ms", "0.020"]
+
+
+@pytest.mark.parametrize("change", ["reset", "region"])
+def test_reset_or_region_change_discards_in_flight_art(store, tmp_path, monkeypatch, change):
+    plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    fakes.region.regions[_REGION] = QRect(5, 6, 50, 50)
+    callbacks = []
+    fakes.capture.request_frame = callbacks.append
+    monkeypatch.setattr(plugin._detector, "detect", lambda *_args, **_kwargs: _scores("duchess", 0.01))
+    plugin._use_art()
+    plugin._detect_art()
+    assert len(callbacks) == 1
+    if change == "reset":
+        plugin.reset_settings()
+        assert not plugin._detect_timer.isActive()
+    else:
+        fakes.region.regions[_REGION] = QRect(15, 6, 50, 50)
+    callbacks[0](FrameCaptured(solid_image(100, 100, (0, 0, 0)), 0.0))
+    assert plugin._art_type is plugin._art_started is None
+    plugin.ctx.release()

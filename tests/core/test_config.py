@@ -134,3 +134,69 @@ def test_changes_are_saved_after_debounce(store: ConfigStore) -> None:
     assert not store.path.exists()
     process_events(ConfigStore.SAVE_DELAY_MS + 200)
     assert yaml.safe_load(store.path.read_text(encoding="utf-8")) == {"sample": {"enabled": False}}
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan"), 10**400])
+@pytest.mark.parametrize("name", ["opacity", "ratio"])
+def test_nonfinite_numbers_fail_safely_at_all_config_entries(store, value, name):
+    store.path.write_text(yaml.safe_dump({"sample": {name: value}}), encoding="utf-8")
+    loaded = ConfigStore(store.path).bind(SampleConfig, "sample")
+    assert loaded.item(name).value == loaded.item(name).default
+    cfg = store.bind(SampleConfig, "sample")
+    with pytest.raises(ValueError):
+        cfg.item(name).set(value)
+    with pytest.raises(ValueError):
+        store.replace_for_restart({"sample": {name: value}})
+
+
+def test_broken_settings_backup_failure_preserves_original(tmp_path, qapp, monkeypatch):
+    from nightreign_overlay.core import config
+
+    path = tmp_path / "settings.yaml"
+    path.write_text("[broken", encoding="utf-8")
+
+    def fail(*args):
+        raise PermissionError("backup denied")
+
+    monkeypatch.setattr(config.os, "replace", fail)
+    loaded = ConfigStore(path)
+    assert loaded.bind(SampleConfig, "sample").opacity.value == 90
+    assert path.read_text(encoding="utf-8") == "[broken"
+
+
+def test_save_failure_keeps_dirty_and_notifies_then_retries(store):
+    errors = []
+    store.saveFailed.connect(errors.append)
+    cfg = store.bind(SampleConfig, "sample")
+    cfg.opacity.set(35)
+    blocker = store.path.parent / "blocker"
+    blocker.write_text("file", encoding="utf-8")
+    original = store.path
+    store.path = blocker / "settings.yaml"
+    store.flush()
+    assert errors and store._dirty
+    store.path = original
+    store.flush()
+    assert not store._dirty
+    assert yaml.safe_load(original.read_text(encoding="utf-8"))["sample"]["opacity"] == 35
+
+
+def test_temporary_cleanup_failure_does_not_escape_flush(store, monkeypatch):
+    from nightreign_overlay.core import config
+
+    store.bind(SampleConfig, "sample").opacity.set(35)
+
+    def fail(*args, **kwargs):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr(config.os, "replace", fail)
+    monkeypatch.setattr(Path, "unlink", fail)
+    store.flush()
+    assert store._dirty
+
+
+@pytest.mark.parametrize("iteration", [1, 2])
+def test_data_directory_cache_is_isolated_for_each_test(tmp_path, iteration):
+    from nightreign_overlay.core.paths import user_data_dir
+
+    assert user_data_dir() == tmp_path / "data"
