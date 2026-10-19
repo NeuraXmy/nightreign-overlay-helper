@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tarfile
 import zipfile
+from pathlib import Path
 
 import pytest
 from scripts import prepare_release_licenses as release
@@ -23,7 +24,7 @@ def release_checkout(tmp_path, monkeypatch):
     for name in ("src/nightreign_overlay/resources/licenses", "native/licenses"):
         shutil.copytree(release.ROOT / name, root / name)
     shutil.copyfile(release.ROOT / "native/THIRD-PARTY-NOTICES.txt", root / "native/THIRD-PARTY-NOTICES.txt")
-    (root / ".gitignore").write_text("dist/\n")
+    (root / ".gitignore").write_text("dist/\n", encoding="utf-8")
     module = b'__version__ = "test"\n'
     tar_buffer = io.BytesIO()
     with tarfile.open(fileobj=tar_buffer, mode="w:gz") as archive:
@@ -44,13 +45,13 @@ def release_checkout(tmp_path, monkeypatch):
         f'sdist = {{ url = "https://example.test/{name}.tar.gz", hash = "sha256:{digest}" }}\n'
         for name, package in packages.items()
     )
-    (root / "uv.lock").write_text(lock)
+    (root / "uv.lock").write_text(lock, encoding="utf-8")
     origins = root / "src/nightreign_overlay/resources/licenses/source-origins.json"
-    records = json.loads(origins.read_text())
+    records = json.loads(origins.read_text(encoding="utf-8"))
     records["pyqt6-fluent-widgets"].update(
         url="https://example.test/upstream.zip", sha256=hashlib.sha256(upstream).hexdigest()
     )
-    origins.write_text(json.dumps(records))
+    origins.write_text(json.dumps(records), encoding="utf-8")
     subprocess.run(["git", "init", "--quiet", str(root)], check=True)
     subprocess.run(["git", "add", "."], cwd=root, check=True)
     subprocess.run(
@@ -78,15 +79,24 @@ def release_checkout(tmp_path, monkeypatch):
     return root, root / "dist/app"
 
 
-def test_bundle_includes_verified_source_and_full_licenses(release_checkout):
+def test_bundle_includes_verified_source_and_full_licenses(release_checkout, monkeypatch):
+    # Match Windows runners where text files default to a legacy code page.
+    original_open = Path.open
+
+    def open_with_windows_default(path, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
+        if "b" not in mode and encoding is None:
+            encoding = "cp1252"
+        return original_open(path, mode, buffering, encoding, errors, newline)
+
+    monkeypatch.setattr(Path, "open", open_with_windows_default)
     root, bundle = release_checkout
     release.prepare(root, bundle)
     release.check_bundle(root, bundle)
-    manifest = json.loads((release.source_directory(bundle) / "manifest.json").read_text())
+    manifest = json.loads((release.source_directory(bundle) / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["project"]["commit"] == release.git(root, "rev-parse", "HEAD")
     assert set(manifest["dependencies"]) == set(release.DEPENDENCIES)
     assert not (bundle / "source").exists()
-    assert "-sources.zip" in (bundle / "SOURCE.md").read_text()
+    assert "-sources.zip" in (bundle / "SOURCE.md").read_text(encoding="utf-8")
     assert (bundle / "licenses/source-manifest.json").read_bytes() == (
         release.source_directory(bundle) / "manifest.json"
     ).read_bytes()
@@ -120,7 +130,7 @@ def test_bad_download_cannot_become_a_release(release_checkout, monkeypatch):
 
 def test_uncommitted_source_cannot_be_paired_with_old_snapshot(release_checkout):
     root, bundle = release_checkout
-    (root / "build.bat").write_text("modified build script")
+    (root / "build.bat").write_text("modified build script", encoding="utf-8")
     with pytest.raises(ValueError, match="clean Git worktree"):
         release.prepare(root, bundle)
 
@@ -129,10 +139,10 @@ def test_manifest_cannot_substitute_another_dependency_version(release_checkout)
     root, bundle = release_checkout
     release.prepare(root, bundle)
     path = release.source_directory(bundle) / "manifest.json"
-    manifest = json.loads(path.read_text())
+    manifest = json.loads(path.read_text(encoding="utf-8"))
     manifest["dependencies"]["pyqt6"]["version"] = "0.0.0"
-    path.write_text(json.dumps(manifest))
-    (bundle / "licenses/source-manifest.json").write_text(json.dumps(manifest))
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    (bundle / "licenses/source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(ValueError, match=r"does not match uv\.lock"):
         release.check_bundle(root, bundle)
 
@@ -191,6 +201,6 @@ def test_release_archives_separate_runtime_and_matching_sources(release_checkout
 def test_runtime_manifest_cannot_point_at_unrelated_sources(release_checkout):
     root, bundle = release_checkout
     release.prepare(root, bundle)
-    (bundle / "licenses/source-manifest.json").write_text("{}")
+    (bundle / "licenses/source-manifest.json").write_text("{}", encoding="utf-8")
     with pytest.raises(ValueError, match="manifest does not match"):
         release.check_bundle(root, bundle)
