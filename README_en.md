@@ -86,7 +86,7 @@ This application is a standalone program, not a mod or plugin for ELDEN RING NIG
 
 - [Fuwish](https://github.com/Fuwishx): Extracted map data.
 - [雀煊](https://space.bilibili.com/391379672): Shared Great Hollow crystal layouts.
-- [SteamP2PInfo](https://github.com/tremwil/SteamP2PInfo): The `steam_p2p_info` approach to P2P connection queries and ETW latency measurement (MIT license).
+- [SteamP2PInfo](https://github.com/tremwil/SteamP2PInfo): Approach to P2P connection queries and ETW latency measurement.
 - [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/): Fluent Design UI components.
 
 ## License

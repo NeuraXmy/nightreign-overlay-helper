@@ -86,7 +86,7 @@ uv run ruff format --check .
 
 - [Fuwish](https://github.com/Fuwishx): 地图解包数据支持。
 - [雀煊](https://space.bilibili.com/391379672): 大空洞水晶布局分享。
-- [SteamP2PInfo](https://github.com/tremwil/SteamP2PInfo): `steam_p2p_info` P2P 连接查询与 ETW 延迟测量思路（MIT 许可）。
+- [SteamP2PInfo](https://github.com/tremwil/SteamP2PInfo): P2P 连接查询与 ETW 延迟测量思路。
 - [PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets/): Fluent Design 风格界面组件库。
 
 ## 许可证
