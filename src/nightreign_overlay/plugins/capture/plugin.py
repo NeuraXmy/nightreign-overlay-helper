@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -273,17 +274,29 @@ class _CaptureWorker(QObject):
         self._log = log
         self._backend: _MaaCapture | _MssCapture | None = None
         self._backend_key: str | None = None
+        self._last_error: tuple[str, type[Exception], str] | None = None
+        self._last_error_time = 0.0
 
     @pyqtSlot(int, int, str, bool)
     def grab(self, request_id: int, generation: int, mode: str, hdr: bool) -> None:
         frame = None
         try:
             image = self._grab(mode)
-        except Exception:
-            self._log.exception("Capture failed in %s mode; will retry", mode)
+        except Exception as error:
+            signature = (mode, type(error), str(error))
+            now = time.monotonic()
+            if signature != self._last_error or now - self._last_error_time >= 60:
+                self._log.exception(
+                    "Capture failed in %s mode; will retry (repeats limited to once/minute)", mode
+                )
+                self._last_error_time = now
+            self._last_error = signature
             self.close()
         else:
             if image is not None and not image.isNull():
+                if self._last_error is not None:
+                    self._log.info("Capture recovered in %s mode", mode)
+                    self._last_error = None
                 # Detached copy: nothing on this thread references the frame after it is emitted.
                 frame = make_frame(image, hdr=hdr)
         self.grabbed.emit(request_id, generation, frame)

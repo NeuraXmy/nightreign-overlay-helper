@@ -50,6 +50,10 @@ plugin_page:
     tutorial: 教學
   no_settings: 此功能沒有可調整的選項
   no_tutorial: 此功能暫無教學
+settings_save:
+  failed_title: 設定儲存失敗
+  failed_content: "變更尚未儲存，請檢查目錄權限和磁碟空間後重試。\n{error}"
+
 settings_reset:
   button: 重設
   title: 重設設定

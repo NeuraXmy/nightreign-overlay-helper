@@ -116,10 +116,12 @@ class InputPlugin(Plugin):
         self.ctx.provide(HotkeyApi, self._service)
 
     def on_activate(self) -> None:
+        if self.ctx.services.get(HotkeyApi) is None:
+            self.ctx.provide(HotkeyApi, self._service)
+        self.ctx.on_cleanup(self._stop_listeners)
         self._service.foreground = self.ctx.services.get(ForegroundPolicy)
         if self.config.enable_global_listener.value:
             self._start_keyboard_listener()
-        self.ctx.on_cleanup(self._stop_listeners)
 
     def on_deactivate(self) -> None:
         self._service._callbacks.clear()
@@ -200,9 +202,9 @@ class InputPlugin(Plugin):
         except ImportError:
             self.ctx.log.warning("pygame is not installed; controller input is unavailable")
             return
+        self._pygame = pygame
         pygame.init()
         pygame.joystick.init()
-        self._pygame = pygame
         self._joystick_timer.start()
 
     def _scan_joysticks(self, pygame: Any) -> None:
@@ -264,11 +266,11 @@ class InputPlugin(Plugin):
                 self._release(InputDevice.JOYSTICK, inputs, trigger)
         elif event.hat == 0:
             direction = _HAT_DIRECTIONS.get(tuple(event.value))
+            for released in _HAT_DIRECTIONS.values():
+                if released != direction:
+                    self._release(InputDevice.JOYSTICK, inputs, released)
             if direction is not None:
                 self._press(InputDevice.JOYSTICK, inputs, direction)
-            else:
-                for released in _HAT_DIRECTIONS.values():
-                    self._release(InputDevice.JOYSTICK, inputs, released)
 
     def _emit_input_state(self, device: InputDevice, inputs: list[_PressedInput], *, pressed: bool) -> None:
         keys = tuple(item.identifier for item in inputs)
@@ -279,8 +281,11 @@ class InputPlugin(Plugin):
         for attribute in ("_keyboard_listener", "_mouse_listener"):
             listener = getattr(self, attribute)
             if listener is not None:
-                listener.stop()
                 setattr(self, attribute, None)
+                try:
+                    listener.stop()
+                except Exception:
+                    self.ctx.log.exception("Failed to stop %s", attribute)
         if self._pygame is not None:
             self._joysticks.clear()
             if not self._polling_joysticks:

@@ -46,6 +46,10 @@ plugin_page:
     tutorial: Guide
   no_settings: No settings for this feature
   no_tutorial: No guide available yet
+settings_save:
+  failed_title: Could not save settings
+  failed_content: "Changes have not been saved. Check directory permissions and disk space, then try again.\n{error}"
+
 settings_reset:
   button: Reset
   title: Reset settings

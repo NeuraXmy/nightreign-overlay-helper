@@ -133,6 +133,9 @@ class ArtTimerPlugin(Plugin):
     def _on_art_frame(self, frame: FrameCaptured | None, region: QRect, generation: int) -> None:
         if generation != self._detect_generation or self._calibrating or self._detector is None:
             return
+        regions = self.ctx.services.get(RegionApi)
+        if regions is None or regions.region(_REGION_KEY) != region:
+            return
         result = (
             self._detector.detect(
                 frame.image, region, self.config.match_threshold.value / 1000, hdr=frame.hdr
@@ -264,7 +267,11 @@ class ArtTimerPlugin(Plugin):
         return panel
 
     def reset_settings(self) -> None:
+        self._detect_timer.stop()
+        self._detect_generation += 1
+        self._art_type = self._art_started = None
         self._audio.reset()
+        self._update_timer()
         super().reset_settings()
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action in _HOTKEYS:

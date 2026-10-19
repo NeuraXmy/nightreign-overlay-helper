@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from PyQt6.QtCore import QLocale, QObject, QProcess, Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
-from qfluentwidgets import FluentTranslator
+from qfluentwidgets import FluentTranslator, InfoBar
 
 from nightreign_overlay.core import i18n
 from nightreign_overlay.core.app_config import APP_CONFIG_NAMESPACE, AppConfig
@@ -98,6 +98,7 @@ class Application(QObject):
         log.info("Language: %s", language)
 
     def _connect_signals(self) -> None:
+        self.store.saveFailed.connect(self._on_settings_save_failed)
         self._instance.activationRequested.connect(self.window.bring_to_front)
         self.overlays.mainWindowRequested.connect(self.window.bring_to_front)
         self.overlays.mainWindowHideRequested.connect(self._hide_window_for_selection)
@@ -115,6 +116,15 @@ class Application(QObject):
             self.tray.menu.aboutToShow.connect(lambda: foreground.set_ui_active("tray_menu", True))
             self.tray.menu.aboutToHide.connect(lambda: foreground.set_ui_active("tray_menu", False))
         self._qt_app.aboutToQuit.connect(self._shutdown)
+
+    def _on_settings_save_failed(self, error: str) -> None:
+        self.window.bring_to_front()
+        InfoBar.error(
+            title=i18n.tr("settings_save.failed_title"),
+            content=i18n.tr("settings_save.failed_content", error=error),
+            duration=-1,
+            parent=self.window,
+        )
 
     def start(self) -> None:
         log.info(

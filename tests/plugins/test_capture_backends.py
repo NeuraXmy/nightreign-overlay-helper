@@ -1,6 +1,7 @@
 """Capture backend regression tests without Windows or desktop permissions."""
 
 import threading
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -228,3 +229,36 @@ def test_dll_receives_only_requested_methods(tmp_path, monkeypatch, mode, mask):
     assert calls == [(123, mask)] and backend.selected_method == "test-method"
     backend.close()
     assert calls[-1] == "closed"
+
+
+def test_repeated_capture_failures_are_throttled_and_recovery_is_logged(qapp, monkeypatch, caplog):
+    import logging
+
+    from nightreign_overlay.plugins.capture import plugin as capture
+
+    clock = [0.0]
+    monkeypatch.setattr(capture.time, "monotonic", lambda: clock[0])
+    worker = capture._CaptureWorker(Path(), logging.getLogger("test.capture.retries"))
+    frames = []
+    worker.grabbed.connect(lambda *_args: frames.append(_args[-1]))
+
+    def fail(mode):
+        raise RuntimeError("game window not found")
+
+    monkeypatch.setattr(worker, "_grab", fail)
+    with caplog.at_level(logging.INFO):
+        for index in range(100):
+            worker.grab(index, 0, "background", False)
+        assert sum("Capture failed" in message for message in caplog.messages) == 1
+        clock[0] = 61
+        worker.grab(100, 0, "background", False)
+        assert sum("Capture failed" in message for message in caplog.messages) == 2
+        image = QImage(2, 2, QImage.Format.Format_RGB32)
+        image.fill(0)
+        monkeypatch.setattr(worker, "_grab", lambda mode: image)
+        worker.grab(101, 0, "background", False)
+        assert frames[-1] is not None
+        assert "Capture recovered in background mode" in caplog.messages
+        monkeypatch.setattr(worker, "_grab", fail)
+        worker.grab(102, 0, "background", False)
+        assert sum("Capture failed" in message for message in caplog.messages) == 3

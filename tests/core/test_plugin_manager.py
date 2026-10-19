@@ -294,3 +294,46 @@ def test_discovery_continues_after_import_failure(store, qapp, monkeypatch, capl
     assert manager.get("healthy") is not None
     assert "Failed to import plugin package test_plugins.broken" in caplog.text
     assert "Cannot decode image: maps/0.jpg" in caplog.text
+
+
+@pytest.mark.parametrize("fail_constructor", [False, True])
+def test_load_failure_releases_resources_and_enable_retries(store, qapp, fail_constructor):
+    services, events = ServiceRegistry(), EventBus()
+    received, cleaned = [], []
+    attempts = []
+
+    class Recoverable(Plugin):
+        manifest = PluginManifest(id="recoverable")
+
+        def __init__(self, ctx):
+            super().__init__(ctx)
+            if fail_constructor:
+                self.initialize()
+
+        def initialize(self):
+            attempts.append(True)
+            self.ctx.provide(Greeter, Greeter())
+            self.ctx.subscribe(str, received.append)
+            self.ctx.on_cleanup(lambda: cleaned.append(True))
+            if len(attempts) == 1:
+                raise OSError("temporarily unavailable")
+
+        def on_load(self):
+            if not fail_constructor:
+                self.initialize()
+
+    manager = PluginManager(store, Translator("zh_CN"), services, events)
+    manager.register(Recoverable)
+    manager.load_all()
+    assert manager.get("recoverable").state == PluginState.FAILED
+    assert services.get(Greeter) is None
+    events.publish("stale")
+    assert received == [] and cleaned == [True]
+    manager.set_enabled("recoverable", False)
+    manager.set_enabled("recoverable", True)
+    assert manager.is_active("recoverable")
+    assert services.get(Greeter) is not None
+    events.publish("recovered")
+    assert received == ["recovered"]
+    manager.shutdown()
+    assert cleaned == [True, True]

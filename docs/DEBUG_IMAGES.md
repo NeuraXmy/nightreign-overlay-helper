@@ -10,6 +10,8 @@ The application stores diagnostic images through `DebugImageApi` in `src/nightre
 - JPEG quality is 85. A metadata dictionary is written beside the image as the same timestamp with a `.json` suffix.
 - The default retention is 10 image/metadata pairs. Callers can pass a different `keep` value; calibration results use `keep=1`.
 - `cooldown_seconds` prevents a result from being queued again until the cooldown expires.
+- At most 8 submissions and 64 MiB of image snapshots may be pending, including the running write. Excess submissions return `False` before copying the image.
+- Closing rejects new submissions, allows at most one second for the bounded batch to finish, then cancels waiting writes. A write already running finishes on its background thread.
 - A single background worker performs conversion, compression, JSON writing, and retention cleanup, so detector and UI threads do not block on disk I/O.
 - Diagnostics are enabled by default and can be disabled from General Settings. When disabled, submissions are ignored.
 - NumPy images use `write_cv2_image()` (OpenCV encoding plus Python file I/O), so Unicode user data paths work on Windows. Qt and Pillow images use their own Unicode-capable save methods.

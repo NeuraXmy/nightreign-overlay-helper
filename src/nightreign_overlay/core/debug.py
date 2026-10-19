@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +21,9 @@ from nightreign_overlay.core.paths import user_data_dir
 
 DEFAULT_KEEP = 10
 DEFAULT_JPEG_QUALITY = 85
+MAX_PENDING_IMAGES = 8
+MAX_PENDING_BYTES = 64 * 1024 * 1024
+CLOSE_TIMEOUT_SECONDS = 1.0
 
 
 class DebugImageApi:
@@ -50,6 +53,9 @@ class DebugImageService(DebugImageApi):
         self._lock = threading.Lock()
         self._last_saved: dict[str, float] = {}
         self._closed = False
+        self._pending: set[Future] = set()
+        self._pending_bytes = 0
+        self._directory = user_data_dir() / "debug"
 
     def save(
         self,
@@ -60,18 +66,33 @@ class DebugImageService(DebugImageApi):
         keep: int = DEFAULT_KEEP,
         cooldown_seconds: float = 0,
     ) -> bool:
-        if not self._enabled.value or self._closed or keep < 1:
+        if not self._enabled.value or keep < 1:
             return False
         name = _safe_name(result_name)
         now = time.monotonic()
+        size = _image_bytes(image)
         with self._lock:
+            if (
+                self._closed
+                or len(self._pending) >= MAX_PENDING_IMAGES
+                or self._pending_bytes + size > MAX_PENDING_BYTES
+            ):
+                return False
             previous = self._last_saved.get(name)
             if previous is not None and now - previous < max(0.0, cooldown_seconds):
                 return False
+            snapshot = _copy_image(image)
+            future = self._executor.submit(self._write, name, snapshot, dict(meta or {}), max(1, keep))
+            self._pending.add(future)
+            self._pending_bytes += size
             self._last_saved[name] = now
-        snapshot = _copy_image(image)
-        metadata = dict(meta or {})
-        self._executor.submit(self._write, name, snapshot, metadata, max(1, keep))
+
+        def completed(done: Future) -> None:
+            with self._lock:
+                self._pending.discard(done)
+                self._pending_bytes -= size
+
+        future.add_done_callback(completed)
         return True
 
     def close(self) -> None:
@@ -79,7 +100,10 @@ class DebugImageService(DebugImageApi):
             if self._closed:
                 return
             self._closed = True
-        self._executor.shutdown(wait=True, cancel_futures=False)
+            pending = tuple(self._pending)
+        # Finish a bounded batch when the disk is responsive. A stuck write must not block the UI.
+        wait(pending, timeout=CLOSE_TIMEOUT_SECONDS)
+        self._executor.shutdown(wait=False, cancel_futures=True)
 
     def _write(
         self,
@@ -89,7 +113,7 @@ class DebugImageService(DebugImageApi):
         keep: int,
     ) -> None:
         try:
-            directory = user_data_dir() / "debug" / name
+            directory = self._directory / name
             directory.mkdir(parents=True, exist_ok=True)
             stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
             path = directory / f"{stamp}.jpg"
@@ -115,6 +139,14 @@ class DebugImageService(DebugImageApi):
 def _safe_name(name: str) -> str:
     value = "_".join(part for part in name.replace("\\", "/").split("/") if part not in ("", ".", ".."))
     return "".join(char if char.isalnum() or char in "._-" else "_" for char in value) or "result"
+
+
+def _image_bytes(image: QImage | Image.Image | np.ndarray) -> int:
+    if isinstance(image, QImage):
+        return image.sizeInBytes()
+    if isinstance(image, Image.Image):
+        return image.width * image.height * max(4, len(image.getbands()))
+    return image.nbytes
 
 
 def _copy_image(image: QImage | Image.Image | np.ndarray) -> QImage | Image.Image | np.ndarray:

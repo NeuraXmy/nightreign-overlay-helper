@@ -325,7 +325,9 @@ def test_joysticks_report_triggers_dpad_and_keep_separate_states(
 
     send(0, pygame.JOYHATMOTION, hat=0, value=(0, 1))
     send(0, pygame.JOYHATMOTION, hat=0, value=(1, 0))
-    assert [item.identifier for item in plugin._pressed_joystick[0]] == ["button_4", "dpad_up", "dpad_right"]
+    assert [item.identifier for item in plugin._pressed_joystick[0]] == ["button_4", "dpad_right"]
+    send(0, pygame.JOYHATMOTION, hat=0, value=(1, 1))
+    assert [item.identifier for item in plugin._pressed_joystick[0]] == ["button_4"]
     send(0, pygame.JOYHATMOTION, hat=0, value=(0, 0))
     assert [item.identifier for item in plugin._pressed_joystick[0]] == ["button_4"]
 
@@ -397,3 +399,83 @@ def test_region_values_accept_global_pixel_rectangles(store: ConfigStore) -> Non
     config.regions.set({"hp_bar": [rect.x(), rect.y(), rect.width(), rect.height()]})
 
     assert config.regions.value["hp_bar"] == [100, 200, 300, 40]
+
+
+def test_input_partial_initialization_is_cleaned_and_service_recovers(store, tmp_path, monkeypatch):
+    import pytest
+
+    plugin = _input_plugin(store, tmp_path)
+    stopped = []
+
+    def fail():
+        plugin._keyboard_listener = SimpleNamespace(stop=lambda: stopped.append("keyboard"))
+        plugin._mouse_listener = SimpleNamespace(stop=lambda: stopped.append("mouse"))
+        plugin._pygame = _FakePygame()
+        raise RuntimeError("pygame initialization failed")
+
+    monkeypatch.setattr(plugin, "_start_keyboard_listener", fail)
+    plugin.config.enable_global_listener.set(True)
+    with pytest.raises(RuntimeError):
+        plugin.on_activate()
+    pygame = plugin._pygame
+    plugin.ctx.release()
+    assert stopped == ["keyboard", "mouse"]
+    assert pygame.calls == ["quit"]
+    assert plugin._keyboard_listener is plugin._mouse_listener is plugin._pygame is None
+    assert plugin.ctx.services.get(HotkeyApi) is None
+    plugin.config.enable_global_listener.set(False)
+    plugin.on_activate()
+    assert plugin.ctx.services.get(HotkeyApi) is plugin._service
+    plugin.ctx.release()
+
+
+def test_region_bounds_validate_storage_import_and_runtime(store):
+    import pytest
+
+    config = store.bind(RegionConfig, "plugins.region")
+    for rect in ([0, 0, 2**40, 20], [0, 0, 0, 20], [0, 0, 20, -1], [2**31 - 2, 0, 5, 1]):
+        with pytest.raises(ValueError):
+            config.regions.set({"test": rect})
+        with pytest.raises(ValueError):
+            store.replace_for_restart({"plugins": {"region": {"regions": {"test": rect}}}})
+        loaded = RegionConfig("plugins.region", {"regions": {"test": rect}}, lambda *_: None)
+        assert loaded.regions.value == {}
+    config.regions.set({"secondary": [-1920, -1080, 100, 20]})
+    assert config.regions.value["secondary"] == [-1920, -1080, 100, 20]
+
+
+def test_real_input_initialization_cleans_keyboard_when_mouse_start_fails(store, tmp_path, monkeypatch):
+    import sys
+
+    import pytest
+
+    calls = []
+
+    class Keyboard:
+        def __init__(self, **kwargs):
+            pass
+
+        def start(self):
+            calls.append("keyboard started")
+
+        def stop(self):
+            calls.append("keyboard stopped")
+
+    class Mouse(Keyboard):
+        def start(self):
+            raise RuntimeError("mouse unavailable")
+
+        def stop(self):
+            calls.append("mouse stopped")
+
+    monkeypatch.setitem(
+        sys.modules,
+        "pynput",
+        SimpleNamespace(keyboard=SimpleNamespace(Listener=Keyboard), mouse=SimpleNamespace(Listener=Mouse)),
+    )
+    plugin = _input_plugin(store, tmp_path)
+    plugin.config.enable_global_listener.set(True)
+    with pytest.raises(RuntimeError, match="mouse unavailable"):
+        plugin.on_activate()
+    plugin.ctx.release()
+    assert calls == ["keyboard started", "keyboard stopped", "mouse stopped"]

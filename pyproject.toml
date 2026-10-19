@@ -26,6 +26,7 @@ nightreign-overlay-helper = "nightreign_overlay.__main__:main"
 [dependency-groups]
 build = [
     "pyinstaller>=6.11,<7",
+    "packaging>=24",
 ]
 dev = [
     "pytest>=8",
@@ -43,7 +44,7 @@ path = "src/nightreign_overlay/__init__.py"
 packages = ["src/nightreign_overlay"]
 
 [[tool.uv.index]]
-url = "https://mirrors.cloud.tencent.com/pypi/simple/"
+url = "https://pypi.org/simple"
 default = true
 
 [tool.ruff]

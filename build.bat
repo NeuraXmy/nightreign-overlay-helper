@@ -16,7 +16,7 @@ if errorlevel 1 (
 )
 
 :: Release builds use Python 3.13 on Windows x64, as specified in REWRITE_PLAN.md.
-uv sync --python 3.13 --group build
+uv sync --locked --python 3.13 --group build
 if errorlevel 1 goto build_failed
 uv run --no-sync python -c "import struct, sys; sys.exit(0 if sys.platform == 'win32' and struct.calcsize('P') == 8 else 'Windows x64 Python is required')"
 if errorlevel 1 goto build_failed
