@@ -94,7 +94,7 @@ The [documentation index](docs/INDEX.md) covers the project overview, architectu
 
 ## Safety Statement
 
-This is a standalone application, not a game mod or plugin. Recognition relies primarily on screenshots and image analysis. It does not read or write game process memory, modify game data or files, inject code, change game logic, or capture game network packets. As such, it poses essentially no anti-cheat risk and can be used in official online multiplayer.
+This is a standalone application, not a game mod or plugin. Recognition relies primarily on screenshots and image analysis. It does not read or write game process memory, modify game data or files, inject code, or change game logic. It reads Steam P2P network packets solely to measure latency, without intercepting or modifying game information. Given how it currently operates, this tool is generally not expected to trigger anti-cheat detection and can be used normally in official online multiplayer. However, any third-party software carries potential risks, and there is no guarantee that anti-cheat systems will never flag it. Please assess these risks yourself and use the tool at your own risk.
 
 ## Acknowledgments
 
