@@ -72,6 +72,9 @@ jobs:
       - name: Check formatting
         run: uv run --no-sync ruff format --check .
 
+      - name: Run P2P helper regression tests
+        run: dotnet run --project native/NightreignP2PHelper.Tests -c Release
+
       - name: Run full regression suite
         env:
           QT_QPA_PLATFORM: offscreen

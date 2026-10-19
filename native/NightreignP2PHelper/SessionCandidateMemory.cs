@@ -1,19 +1,5 @@
 namespace NightreignP2PHelper;
 
-internal static class CandidatePolicy
-{
-    internal const uint NightreignAppId = 2622380;
-    internal const long RecentPlayerWindowSeconds = 30 * 60;
-
-    public static bool IsRecentNightreign(uint appId, long playedAt, long now)
-    {
-        if (appId != NightreignAppId || playedAt <= 0)
-            return false;
-        var age = now - playedAt;
-        return age is >= 0 and <= RecentPlayerWindowSeconds;
-    }
-}
-
 internal sealed class SessionCandidateMemory
 {
     private readonly HashSet<ulong> _activeSessionPeers = new();
