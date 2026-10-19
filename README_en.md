@@ -1,45 +1,57 @@
-# Nightreign Overlay Helper
+<div align="center">
+  <h1>Nightreign Overlay Helper</h1>
+  <p>A desktop overlay for ELDEN RING NIGHTREIGN with timers, map details, HP markers, and co-op status.</p>
+  <p>
+    <a href="https://github.com/NeuraXmy/nightreign-overlay-helper/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/NeuraXmy/nightreign-overlay-helper/total?logo=github&style=flat-square&color=1E9BFA"></a>
+    <a href="https://github.com/NeuraXmy/nightreign-overlay-helper/releases"><img alt="Release" src="https://img.shields.io/github/v/release/NeuraXmy/nightreign-overlay-helper?style=flat-square&color=1E9BFA"></a>
+  </p>
+  <p><a href="https://github.com/NeuraXmy/nightreign-overlay-helper/releases">Download for Windows</a> · <a href="README.md">中文版</a></p>
+</div>
 
-[中文版](README.md)
-
-A desktop overlay companion for **ELDEN RING NIGHTREIGN**, with circle timers, a rain exposure timer, Ultimate Art timers, map information, HP threshold markers, and co-op connection status. **GPT-6.1-Sol** assists with development and translation.
+Developed and translated with assistance from **GPT-6.1-Sol**.
 
 ## Features
 
-- **Circle Timer**: Recognizes the DAY I / DAY II / DAY III banner at the start of each day and displays an automatic circle countdown in the overlay. Manual timing is also available through shortcuts.
-- **Rain Exposure Timer**: Periodically captures the screen and checks the HP bar color. When it changes to the rain exposure color, a countdown shows the time remaining before heavy damage begins. The countdown stops automatically when the normal color returns.
-- **Ultimate Art Timer**: Displays the remaining duration of an Ultimate Art when you press its bound key and the Art icon lights up. Supports Duchess, Recluse, Executor, Revenant, and Scholar.
-- **Map Information**: Identifies Shifting Earth terrain, the Nightlord portrait, and point-of-interest types to narrow down the map seed and display detailed location information. Supports all maps, including DLC maps, as well as events that hide the Nightlord or map details; some cases require manual filtering.
-- **HP Threshold Markers**: Periodically captures the screen and detects the HP bar length, then displays reference markers for effects that activate when HP is below maximum or when HP is low.
-- **Co-op Status**: Displays the nicknames, ping, and connection stability of your Steam co-op teammates.
+- **Circle Timer**: Recognizes the DAY I / DAY II / DAY III banner at the start of each day and shows a circle countdown in the overlay. You can also start timing manually with shortcuts.
+- **Rain Exposure Timer**: Periodically checks the HP bar color in screenshots. When the rain exposure color appears, a countdown shows the time before heavy damage begins; it stops when the normal color returns.
+- **Ultimate Art Timer**: Shows the remaining active duration when you press the in-game Ultimate Art key and the Art icon lights up. Supports Duchess, Recluse, Executor, Revenant, and Scholar.
+- **Map Information**: Recognizes Shifting Earth terrain, the Nightlord portrait, and point-of-interest types to narrow down the map seed and show detailed location information. Supports all maps, including DLC, and events that hide the Nightlord or map details. Some cases need manual filtering.
+- **HP Threshold Markers**: Periodically detects HP bar length in screenshots and shows reference lines for effects that activate below maximum HP or at low HP.
+- **Co-op Status**: Shows your Steam co-op teammates' nicknames, ping, and connection stability.
 
 ## Usage
 
-1. Extract the complete Windows release ZIP. Keep `_internal/`, `bin/`, `third-party/`, and the other bundled files alongside `nightreign-overlay-helper.exe`; do not move the EXE on its own. The release includes the Python and .NET runtimes, so you do not need to install them separately.
-2. Run `nightreign-overlay-helper.exe` and approve the Windows administrator prompt. Co-op Status requires you to be signed in to Steam.
-3. Open the **Guide** tab on each feature page and complete its initial setup, including region calibration, game language selection, and shortcut configuration. Run the game in windowed or borderless windowed mode.
-4. Right-click an overlay or the system tray icon to open the main window. Closing the main window hides it to the tray; to exit completely, choose **Quit** from the context menu.
+1. Download and fully extract the [Windows release ZIP](https://github.com/NeuraXmy/nightreign-overlay-helper/releases). Keep `_internal/`, `bin/`, `third-party/`, and all other bundled files alongside the EXE. Do not move the EXE on its own. Python and .NET runtimes are included; no separate installation is needed.
+2. Run `nightreign-overlay-helper.exe` and approve the administrator prompt. Sign in to Steam before using Co-op Status.
+3. Set the game to windowed or borderless windowed mode, then follow the **Guide** tab on each feature page to calibrate regions, select the game language, and configure shortcuts.
+4. Right-click an overlay or the system tray icon to open the main window. Closing it hides the app to the tray; choose **Quit** from the context menu to exit completely.
 
-You can adjust overlay positions while the main window is open. General Settings provides display mode, opacity, and other options. If recognition fails, first check that the calibrated region is accurate and unobstructed. Recalibrate after changing monitors, resolution, display scaling, or the game window size. To report an issue, export a diagnostic ZIP using the **Report** button on the **About** page.
+Move the overlays while the main window is open. Display mode, opacity, and other options are available in General Settings.
+
+### Recognition and Issue Reports
+
+- If recognition fails, check that the calibrated region is accurate and no other window covers it.
+- Recalibrate after changing monitors, resolution, display scaling, or the game window size.
+- To report an issue, export a diagnostic ZIP with the **Report** button on the **About** page.
 
 ## Running from Source
 
 ### Requirements
 
-- Python 3.11 or later.
-- Windows is the primary supported platform. macOS is for development and debugging only; Co-op Status uses simulated data there.
-- On macOS, game foreground detection is unavailable and screen capture requires Screen Recording permission. If transparent overlays do not display correctly, select **Standard window** in General Settings.
+- Python 3.11 or later. Windows is the primary supported platform.
+- macOS is for development and debugging only. Co-op Status uses simulated data, and game foreground detection is unavailable.
+- Screen capture on macOS requires Screen Recording permission. If transparent overlays display incorrectly, select **Standard window** in General Settings.
 
 ### Installation and Startup
 
-Run all commands from the repository root. Using `uv` is recommended to install dependencies from `uv.lock`:
+Run these commands from the repository root. We recommend `uv` to install dependencies from `uv.lock`:
 
 ```bash
 uv sync --locked --dev
 uv run python main.py
 ```
 
-Alternatively, use a standard `venv`. On Windows PowerShell:
+You can also use a standard `venv`. On Windows PowerShell:
 
 ```powershell
 python -m venv .venv
@@ -55,7 +67,7 @@ python3 -m venv .venv
 .venv/bin/python main.py
 ```
 
-After installation, you can also launch the application with `nightreign-overlay-helper` from an activated virtual environment. To use Co-op Status when running from source on Windows, build the helper program separately; see the [Co-op Status documentation](docs/features/p2p.md) (Chinese).
+Once installed, you can also run `nightreign-overlay-helper` from an activated virtual environment. To use Co-op Status from source on Windows, build the helper program separately; see the [Co-op Status documentation](docs/features/p2p.md) (Chinese).
 
 ### Verification
 
@@ -67,20 +79,22 @@ uv run ruff format --check .
 
 ### Windows Build
 
-Install `uv` and the .NET 8 SDK on Windows x64, then run `build.bat`. The script uses Python 3.13 and locked dependencies to produce a complete release folder. See the [release guide](docs/development/releases/README.md) (Chinese) for the build process, GitHub Actions ZIP downloads, and release acceptance requirements.
+Install `uv` and the .NET 8 SDK on Windows x64, then run `build.bat`. The script uses Python 3.13 and locked dependencies to create a complete release folder.
+
+See the [release guide](docs/development/releases/README.md) (Chinese) for build steps, GitHub Actions ZIP downloads, and release acceptance requirements.
 
 ## Project Documentation
 
-The [documentation index](docs/INDEX.md) organizes the project overview, architecture, features, usage guides, and development resources. These technical documents are primarily in Chinese; localized feature tutorials are available in the application.
+The [documentation index](docs/INDEX.md) covers the project overview, architecture, features, usage, and development. Technical documents are primarily in Chinese; localized feature tutorials are available in the app.
 
-- Understand the project: [Overview](docs/overview.md) and [Architecture](docs/architecture/README.md).
-- Explore features: [Feature documentation](docs/features/README.md) and the in-app tutorials.
+- Understand the project: [Overview](docs/overview.md), [Architecture](docs/architecture/README.md).
+- Explore features: [Feature documentation](docs/features/README.md), in-app tutorials.
 - Troubleshoot issues: [Usage and diagnostic guides](docs/guides/README.md).
-- Develop and release: [Development guidelines](docs/development/contributing.md), [Testing strategy](docs/development/testing/README.md), and [Windows builds and releases](docs/development/releases/README.md).
+- Develop and release: [Development guidelines](docs/development/contributing.md), [Testing strategy](docs/development/testing/README.md), [Windows builds and releases](docs/development/releases/README.md).
 
 ## Safety Statement
 
-This application is a standalone program, not a mod or plugin for ELDEN RING NIGHTREIGN. Its recognition features rely primarily on screenshots and image analysis. It does not read or write any game process memory, modify game data or files, inject code into the game, alter game logic, or capture game network packets. As such, it poses essentially no anti-cheat risk and can be used in official online multiplayer.
+This is a standalone application, not a game mod or plugin. Recognition relies primarily on screenshots and image analysis. It does not read or write game process memory, modify game data or files, inject code, change game logic, or capture game network packets. As such, it poses essentially no anti-cheat risk and can be used in official online multiplayer.
 
 ## Acknowledgments
 
@@ -91,13 +105,8 @@ This application is a standalone program, not a mod or plugin for ELDEN RING NIG
 
 ## License
 
-[AGPL-3.0-only](LICENSE)
+Licensed under [AGPL-3.0-only](LICENSE). Use, modification, and redistribution, including commercial use, are permitted under the license, WITHOUT ANY WARRANTY.
 
-Use, modification and redistribution, including commercial use, are permitted under
-the license, WITHOUT ANY WARRANTY. Third-party components retain their own terms:
-SteamP2PInfo uses MIT; PyQt6-Fluent-Widgets and PyQt6 use GPLv3.
-See the [third-party notices](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md)
-and [corresponding source and build instructions](src/nightreign_overlay/resources/licenses/SOURCE.md).
-Windows releases include `licenses/`, `third-party/`, `source/` and `SOURCE.md`;
-preserve the complete folder when redistributing. License texts are also available
-offline under **About → Licenses and source**.
+Third-party components retain their own licenses: MIT for SteamP2PInfo, and GPLv3 for PyQt6-Fluent-Widgets and PyQt6. See the [third-party notices](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md) and [corresponding source and build instructions](src/nightreign_overlay/resources/licenses/SOURCE.md) for full texts and details.
+
+Windows releases include `licenses/`, `third-party/`, `source/`, and `SOURCE.md`; keep the complete folder when redistributing. License texts are also available offline under **About → Licenses and source**.
