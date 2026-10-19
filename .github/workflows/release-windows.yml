@@ -124,12 +124,19 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Check out release validation and notes
+        uses: actions/checkout@v4
+
       - name: Download verified runtime and source ZIPs
         uses: actions/download-artifact@v8
         with:
           artifact-ids: ${{ needs.build-windows.outputs.artifact-ids }}
           merge-multiple: true
+          skip-decompress: true
           path: release
+
+      - name: Verify release attachments
+        run: python scripts/validate_release_assets.py release "${{ github.ref_name }}"
 
       - name: Publish release with runtime and source ZIPs
         env:
@@ -139,14 +146,22 @@ jobs:
           PRERELEASE: ${{ needs.build-windows.outputs.prerelease }}
         shell: bash
         run: |
-          args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
+          args=(--verify-tag --title "$RELEASE_TAG")
           if [[ "$PRERELEASE" == 'true' ]]; then
             args+=(--prerelease --latest=false)
           else
             args+=(--latest)
           fi
-          printf '%s\n' \
-            "Windows: nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip" \
-            "Corresponding source / 对应源码: ${RELEASE_TAG}-sources.zip (same release, free download)." \
-            > release-notes.md
-          gh release create "$RELEASE_TAG" release/*.zip --notes-file release-notes.md "${args[@]}"
+          notes="docs/development/releases/${RELEASE_TAG}.md"
+          if [[ ! -f "$notes" ]]; then
+            printf '%s\n' \
+              "Windows: nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip" \
+              "Corresponding source / 对应源码: ${RELEASE_TAG}-sources.zip (same release, free download)." \
+              > release-notes.md
+            notes=release-notes.md
+            args+=(--generate-notes)
+          fi
+          gh release create "$RELEASE_TAG" \
+            "release/nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip" \
+            "release/${RELEASE_TAG}-sources.zip" \
+            --notes-file "$notes" "${args[@]}"
