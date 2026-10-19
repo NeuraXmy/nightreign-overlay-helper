@@ -81,6 +81,8 @@ git diff --check
 ```
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
+排查耗时可追加 `--durations=20`，查看最慢的测试调用、fixture setup 与 teardown；
+两个 Windows workflow 默认输出该排名，避免将 fixture 中的视频评估耗时误认为断言本身耗时。
 
 Windows 文件路径兼容性回归可将 `--basetemp` 指向仓库内含中文的临时目录，例如
 `--basetemp .tmp/中文路径回归`，覆盖配置导入导出、音频、诊断 ZIP 等使用 `tmp_path` 的测试。

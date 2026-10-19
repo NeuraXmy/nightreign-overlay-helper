@@ -53,7 +53,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONIOENCODING: utf-8
-        run: uv run --no-sync pytest -q
+        run: uv run --no-sync pytest -q --durations=20
 
       - name: Load runtime resources and discover plugins
         env:
