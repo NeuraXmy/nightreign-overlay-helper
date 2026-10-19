@@ -10,6 +10,8 @@
 
 Developed and translated with assistance from **GPT-6.1-Sol**.
 
+The current version is developed on [`main`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/main), formerly `rewrite`. The legacy main branch has moved to [`legacy`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/legacy), formerly `main`, and the legacy development branch has moved to [`legacy-dev`](https://github.com/NeuraXmy/nightreign-overlay-helper/tree/legacy-dev), formerly `dev`. Forks maintaining the legacy version should sync from `legacy` or `legacy-dev`; `main` now contains the new version.
+
 ## Features
 
 - **Circle Timer**: Recognizes the DAY I / DAY II / DAY III banner at the start of each day and shows a circle countdown in the overlay. You can also start timing manually with shortcuts.
