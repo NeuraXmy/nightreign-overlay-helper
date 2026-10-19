@@ -27,4 +27,4 @@ python -m tests.support.hp_production_evaluation --model-dir .tmp/hp_holdout --h
 
 训练仅包含 0–5、10–15 等交替五秒块，评分只包含 5–10、15–20 等留出块与稳定 GT 区间的交集。忽略评分的帧仍按正常顺序输入检测器，模型看不到 GT。评估命令核对训练元数据，拒绝将全数据训练模型伪装成留出验证。该划分仍来自相同源录像，不能替代录像级独立验证；`--exclude-video <id>` 可进行整段录像留出实验。
 
-打包模型的四段回归全部达标，但独立时间块下仍有罕见特效误报。当前结论与完整数值见 [算法文档](../../docs/HP_MATERIAL_DETECTION.md)，不要将四段同集成绩表述为新录像的泛化保证。
+2026-10-17 的四段回归全部达标，但时间块留出仍有罕见特效误报；完整数值见[模型评估记录](../../docs/development/experiments/hp/material-regression-2026-10-17.md)。当前实现见[算法文档](../../docs/features/hp/material-detection.md)，后续拒识限制见[2026-10-19 优化状态](../../docs/development/experiments/hp/optimization-status.md)。不要将四段同集成绩表述为新录像的泛化保证。

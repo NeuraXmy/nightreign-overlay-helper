@@ -1,6 +1,6 @@
 # 血条视频与 GT
 
-新增复杂背景测试集由 `scene_annotations.json` 独立描述，详见 [复杂背景评估](../../../../docs/HP_SCENE_EVALUATION.md)：
+新增复杂背景测试集由 `scene_annotations.json` 独立描述，详见 [复杂背景评估](../../../../docs/development/experiments/hp/complex-scenes.md)：
 
 - `hp_pink_complex.mkv`：来自 `2026-10-16 20-19-02.mp4`，红／粉／空血，无灰段，1835 帧，GT 恒定 425 px。源裁剪 `(18, 6, 1250, 30)` 保留主程序完整输入。
 - `hp_yellow_complex.mkv`：来自 `hp_3.mp4`，红／黄／空血，无灰段，1404 帧，GT 恒定 320 px。源裁剪 `(8, 2, 712, 30)`；由于视频编码器会截断奇数宽度，存储时保留一个真实左侧上下文像素，评估时移除第一列，实际输入为 `(9, 2, 711, 30)`，右侧紧贴屏幕边界。
@@ -31,7 +31,7 @@ python -m tests.support.hp_production_evaluation --output .tmp/hp_production_rep
 python -m tests.support.hp_production_evaluation --source-dir sandbox --output .tmp/hp_source_report.json
 ```
 
-另外新增 `rectangle_length_3.mkv` 用于扩大区域的二维血条实验，包含红血、粉血和空血，无扣上限灰段，GT 为 425 px。它的裁剪范围、标注和评估与下面两段 10 px 高的视频独立，详见 [矩形实验报告](../../../../docs/HP_RECTANGLE_EXPERIMENT.md) 及 `rectangle_annotations.json`。
+另外新增 `rectangle_length_3.mkv` 用于扩大区域的二维血条实验，包含红血、粉血和空血，无扣上限灰段，GT 为 425 px。它的裁剪范围、标注和评估与下面两段 10 px 高的视频独立，详见 [矩形实验报告](../../../../docs/development/experiments/hp/rectangle.md) 及 `rectangle_annotations.json`。
 
 两段录像的血条可用总长度分别固定为 **396 px**、**424 px**；当前血量、短暂掉血与场景会变化。GT 包含空血部分，不随红色或黄色填充长度变化。
 
@@ -56,4 +56,4 @@ python -m pytest tests/plugins/test_hp_detection_video.py -q
 
 两段录像均用于此次优化，结果不代表未见场景的泛化准确率。
 
-增加 `--augmentations` 可复现之前截图测试的 32 组完整 RGB 图像增强，支持与 `--interval 0.25` 组合。每组单独新建检测器，缩放时同比调整 GT 与容差。`augmentation_full_report.json` 和 `augmentation_250ms_report.json` 保存完整结果，汇总见[连续视频增强评估](../../../../docs/HP_VIDEO_AUGMENTATION_REPORT.md)。存在不达标组时评估命令返回 1，不会修改算法或放宽测试标准。
+增加 `--augmentations` 可复现之前截图测试的 32 组完整 RGB 图像增强，支持与 `--interval 0.25` 组合。每组单独新建检测器，缩放时同比调整 GT 与容差。`augmentation_full_report.json` 和 `augmentation_250ms_report.json` 保存完整结果，汇总见[连续视频增强评估](../../../../docs/development/experiments/hp/video-augmentation-2026-10-16.md)。存在不达标组时评估命令返回 1，不会修改算法或放宽测试标准。

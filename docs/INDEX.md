@@ -1,40 +1,54 @@
-# 黑夜君临悬浮助手 · 模块知识卡片索引
+# 项目文档
 
-> 面向 AI 的分层知识库。每张卡片只描述一个层级，便于按任务需要单独加载，不要一次性读取全部。
+这里按阅读目的组织资料：通用文档说明项目当前的使用方式与实现；开发文档说明修改约束、验证方法及历史记录。所有命令均从仓库根目录执行，代码路径也以仓库根目录为基准；Markdown 链接相对于所在文档。
 
-## 阅读指引
+## 从哪里开始
 
-- 先读 [`L0_PROJECT_OVERVIEW.md`](./L0_PROJECT_OVERVIEW.md) 了解目标、范围、目录结构。
-- 按任务类型选择对应卡片：
-  - 启动/退出/单实例/生命周期 → [`L1_STARTUP.md`](./L1_STARTUP.md)
-  - 配置/事件/服务/i18n/前台策略 → [`L2_CORE.md`](./L2_CORE.md)
-  - Windows/macOS 平台差异 → [`L3_PLATFORM.md`](./L3_PLATFORM.md)
-  - 插件协议/生命周期/依赖解析 → [`L4_PLUGIN_SYSTEM.md`](./L4_PLUGIN_SYSTEM.md)
-  - capture/input/hud/region → [`L5_INFRA_PLUGINS.md`](./L5_INFRA_PLUGINS.md)
-  - day_timer/rain_timer/art_timer/map_detect/hp_marker/p2p_latency → [`L6_FEATURE_PLUGINS.md`](./L6_FEATURE_PLUGINS.md)
-  - 主窗口/页面/悬浮窗/设置卡片 → [`L7_UI.md`](./L7_UI.md)
-  - 测试策略与 fixture 约定 → [`L8_TESTING.md`](./L8_TESTING.md)
-  - POI CNN 部署、算法切换与验收 → [`POI_CNN.md`](./POI_CNN.md)
-  - 多屏截图、DPI 与实机诊断 → [`MULTISCREEN_CAPTURE.md`](./MULTISCREEN_CAPTURE.md)
-  - 地图识别样本与回归测试 → [`MAP_DETECT_TESTING.md`](./MAP_DETECT_TESTING.md)
-  - 血条识别算法切换、拒识行为与回归测试 → [`HP_DETECTION.md`](./HP_DETECTION.md)
-  - 血条算法优化过程、实验结论与当前遗留问题 → [`HP_DETECTION_OPTIMIZATION_STATUS.md`](./HP_DETECTION_OPTIMIZATION_STATUS.md)
-  - 血条材质分割、ONNX 模型、四段联合验收与留出验证 → [`HP_MATERIAL_DETECTION.md`](./HP_MATERIAL_DETECTION.md)
-  - 复杂背景粉血／黄血回归、历史基线及适用边界 → [`HP_SCENE_EVALUATION.md`](./HP_SCENE_EVALUATION.md)
-  - 扩大截图区域的血条矩形原型与新视频验证 → [`HP_RECTANGLE_EXPERIMENT.md`](./HP_RECTANGLE_EXPERIMENT.md)
-- 修改代码前对照 [`L9_AI_CHECKLIST.md`](./L9_AI_CHECKLIST.md) 核对约束。
+| 目的 | 阅读入口 |
+| --- | --- |
+| 安装、启动或下载后的使用 | [项目 README](../README.md) |
+| 了解项目功能、平台与目录 | [项目概览](overview.md) |
+| 理解模块边界与调用链 | [架构文档](architecture/README.md) |
+| 查找某项功能的实现与配置 | [功能文档](features/README.md) |
+| 排查截图、DPI 或导出诊断信息 | [使用与诊断指南](guides/README.md) |
+| 修改代码、补充测试或准备发布 | [开发维护](development/README.md) |
+| 查询以往发布问题与处理结果 | [发布记录](development/releases/README.md) |
+| 查阅算法实验与旧评估 | [实验记录](development/experiments/README.md) |
 
-## 文档约定
+## 目录分层
 
-- 文档（包括各目录的 README）只记录对项目使用、维护或复现有普遍价值的信息，避免记录仅与本地开发有关的细节，例如个人环境配置、临时绕过措施和内部工具执行过程。具有普遍性的兼容问题应说明适用条件及通用解决方法。
-- 不记录敏感信息，包括真实姓名、个人用户目录及绝对路径、账号、凭据、令牌和私有服务地址。示例优先使用仓库相对路径；必须使用环境相关参数时，使用占位符或环境变量。
-- 提交文档前检查正文、命令示例、日志和截图，确认没有泄露本地开发信息或敏感信息。
-- 文件路径均相对于仓库根目录 `nightreign-overlay-helper-rewrite/`。
-- `→` 表示调用/依赖/数据流向。
-- `INVARIANT` 表示不可破坏的约束。
-- `PATTERN` 表示推荐的标准做法。
+```text
+docs/
+├── INDEX.md                 # 总入口与文档维护规则
+├── overview.md              # 项目目标、范围、技术栈与代码布局
+├── architecture/            # 当前架构：启动、核心、平台、插件系统、UI
+├── features/                # 当前功能：基础能力、计时、地图、血条、联机
+├── guides/                  # 使用与诊断：多屏、调试图片、诊断导出
+└── development/             # 开发资料，与通用说明分开
+    ├── contributing.md      # 人类开发者与 AI 共用的修改约束
+    ├── testing/             # 测试策略、样本与复测方法
+    ├── releases/            # 构建发布、审计快照与修复记录
+    └── experiments/         # 有日期、数据集和版本边界的实验记录
+```
 
-- Debug image storage and retention -> [DEBUG_IMAGES.md](./DEBUG_IMAGES.md)
-- 日志与调试图片打包、问题描述及附件导出 → [DIAGNOSTIC_EXPORT.md](./DIAGNOSTIC_EXPORT.md)
-- 发布前全项目检查与按严重性分类的问题清单（2026-10-19） → [RELEASE_AUDIT_2026-10-19.md](./RELEASE_AUDIT_2026-10-19.md)
-- 发布审计逐项修复与回归验证（2026-10-19） → [RELEASE_FIXES_2026-10-19.md](./RELEASE_FIXES_2026-10-19.md)
+## 按任务阅读
+
+先阅读项目概览，再选择与任务相关的文档即可；无需一次加载全部资料。修改代码前阅读[开发约定](development/contributing.md)，再核对目标模块、实际配置与对应测试。
+
+- 启动、退出、单实例、重启：[启动与生命周期](architecture/startup.md)。
+- 配置、事件、服务、国际化、前台策略：[核心底座](architecture/core.md)。
+- Windows 与 macOS 差异：[平台抽象](architecture/platform.md)。
+- 插件依赖、启停与资源清理：[插件系统](architecture/plugin-system.md)。
+- 截图、热键、共享 HUD、区域标定：[基础能力](features/infrastructure.md)。
+- 地图识别、数据与 CNN：[地图信息](features/map/README.md)。
+- 血条输入、拒识行为与模型：[血量阈值标记](features/hp/README.md)。
+- 页面、设置卡片与悬浮窗：[UI 层](architecture/ui.md)。
+
+## 文档维护规则
+
+1. 通用文档描述当前行为、稳定接口、操作方法与已知限制。修复过程、单次测试成绩、临时结论放入开发记录，不写成永久能力保证。
+2. 发布审计与实验是历史快照，必须说明日期、基线或数据范围，并链接当前说明或后续处理结果。历史“失败”“通过”不能直接当作当前状态。
+3. 修改行为时同步更新对应主题；新增或移动文档时更新所在目录索引及所有入站链接。过时计划和重复内容直接清理，已提交的历史可从 Git 查询。
+4. 使用 UTF-8、清晰标题和可点击的仓库相对链接。代码标识保留原名；说明以中文为主，避免只面向 AI 的速记和没有日期的“本轮”“下一步”。
+5. 不记录凭据、个人目录、私有服务地址或仅适用于某台开发机器的绕过步骤。命令使用通用环境、相对路径或占位符。
+6. 验证说明需区分自动测试、合成样本、独立录像与实机验收。仅在对应验证已完成时声明通过。
