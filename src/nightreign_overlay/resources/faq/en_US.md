@@ -18,7 +18,7 @@ Please check the following:
 2. Make sure the calibrated region is accurate. Each feature has its own requirements for the calibration region.
 3. In general "Settings", the "Detection interval" may be too large, making detection less responsive. The recommended default is 250 ms.
 4. Make sure the region to be detected (the map or HP bar) is not covered by this helper's overlay or another application overlay.
-5. If HDR is enabled, or another setting changes the game's colors, recognition may become inaccurate. Try enabling "HDR image processing" in general "Settings"; it may help.
+5. If HDR (Display Settings → High Dynamic Range) is enabled in the game, or another setting changes the game's colors, recognition may become inaccurate. Try enabling "HDR image processing" in general "Settings"; it may help, but changing this setting does not guarantee a fix. We recommend disabling HDR when using the helper.
 6. If the number or resolution of your monitors changes, or the game window size changes, calibrate the region again.
 
 ## The system or game stutters after enabling the helper. What should I check?
