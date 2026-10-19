@@ -11,10 +11,8 @@ internal sealed class SteamPeerReader(EtwPingMonitor? etw = null)
     public IReadOnlyList<PeerSnapshot> ReadPeers()
     {
         var steamFriendsCandidates = GetSteamFriendsCandidates();
-        // Recently-played is only a discovery source. Once a real Steam P2P
-        // session is confirmed, keep querying it even after Steam's 30-minute
-        // coplay timestamp expires. Session state/ETW, rather than that timestamp,
-        // decides when a player has actually left this expedition.
+        // Discovery lists can disappear or contain stale metadata. Keep checking
+        // confirmed sessions; actual session state/ETW determines peer presence.
         var candidates = _sessionCandidateMemory.BuildCandidates(steamFriendsCandidates);
 
         var localUser = SteamUser.GetSteamID().m_SteamID;
@@ -84,29 +82,27 @@ internal sealed class SteamPeerReader(EtwPingMonitor? etw = null)
     private static HashSet<ulong> GetSteamFriendsCandidates()
     {
         var candidates = new HashSet<ulong>();
-        const EFriendFlags flags = EFriendFlags.k_EFriendFlagOnGameServer;
-
-        var serverCount = SteamFriends.GetFriendCount(flags);
-        for (var i = 0; i < Math.Max(0, serverCount); i++)
+        // Nightreign's lobby does not reliably populate OnGameServer or coplay.
+        // Query friends too, then let the active-session checks reject unrelated
+        // players. Presence/game metadata is not proof of a connection.
+        foreach (var flags in new[] { EFriendFlags.k_EFriendFlagImmediate, EFriendFlags.k_EFriendFlagOnGameServer })
         {
-            var id = SteamFriends.GetFriendByIndex(i, flags);
-            if (id.m_SteamID != 0)
-                candidates.Add(id.m_SteamID);
+            var count = SteamFriends.GetFriendCount(flags);
+            for (var i = 0; i < Math.Max(0, count); i++)
+            {
+                var id = SteamFriends.GetFriendByIndex(i, flags);
+                if (id.m_SteamID != 0)
+                    candidates.Add(id.m_SteamID);
+            }
         }
 
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        // A coplay timestamp/last game can be old even while this app has an
+        // active P2P session. Use these IDs for discovery without a time cutoff.
         var coplayCount = SteamFriends.GetCoplayFriendCount();
         for (var i = 0; i < Math.Max(0, coplayCount); i++)
         {
             var id = SteamFriends.GetCoplayFriend(i);
-            if (id.m_SteamID == 0)
-                continue;
-
-            var playedAt = SteamFriends.GetFriendCoplayTime(id);
-            if (CandidatePolicy.IsRecentNightreign(
-                SteamFriends.GetFriendCoplayGame(id).m_AppId,
-                playedAt,
-                now))
+            if (id.m_SteamID != 0)
                 candidates.Add(id.m_SteamID);
         }
 

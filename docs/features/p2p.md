@@ -27,6 +27,10 @@ Windows 主程序默认请求管理员权限，详见 [启动流程](../architec
 
 ETW 权限以创建独立内核跟踪会话的实际结果为准，不使用 `TraceEventSession.IsElevated()` 预检，避免辅助进程权限探测误报。ETW 返回访问拒绝时，Steam 队友信息继续显示，悬浮窗同时提示需要管理员权限；其他 ETW 初始化错误也会显示在悬浮窗中。
 
+队友候选取自 Steam 好友、同服务器用户和一起玩过的用户列表，再通过当前 App 的 P2P 会话状态确认连接。
+不以历史记录的时间或最后游戏过滤候选：受邀好友可能没有同服务器记录，一起玩过的记录也可能延迟更新。
+候选列表中的离线好友、历史玩家及连接错误不会直接作为队友显示。ETW 启动成功仅代表跟踪会话已启动，不代表已发现队友。
+
 组件路径优先使用 `NIGHTREIGN_P2P_HELPER_PATH` 覆盖。打包运行仅使用 EXE 同级 `bin/NightreignP2PHelper.exe`。源码运行按顺序查找仓库内 `bin/`、`build/p2p/bin/`、原生项目 Debug 输出、Release 的 `publish/` 及 Release 输出目录；原生输出目标为 `net8.0-windows/win-x64`。查找与启动工作目录无关。若尚未构建，执行 `powershell -ExecutionPolicy Bypass -File scripts/build_p2p_helper.ps1`，生成组件及依赖；无需为了源码调试先打包整个应用。
 
 ## 必须保持的约束
@@ -52,6 +56,11 @@ ETW 不可用时仍会查询 Steam 连接。发布版无需另行安装 .NET。
 `NIGHTREIGN_P2P_HELPER_PATH` 环境变量覆盖。原生项目及 NuGet 锁文件位于 `native/NightreignP2PHelper`。
 单独构建脚本默认使用单文件发布；添加 `-NoSingleFile` 可改为多文件发布，
 完整的 `build.bat` 已使用该选项，并复制整个辅助程序目录。
+
+执行 `dotnet run --project native/NightreignP2PHelper.Tests -c Release` 可运行原生队友发现回归测试。
+测试链接实际的队友读取代码，使用内存中的 Steam／ETW 响应，覆盖受邀好友缺失同服务器记录、
+过期历史记录、无效会话过滤、会话保持与断开、ETW 暂无指标等场景，无需运行 Steam 或游戏。
+构建和发布 workflow 均执行这些检查。
 
 macOS 开发运行自动使用独立 Python 模拟子进程，无需 .NET、Steam 或管理员权限。约 32 秒循环演示等待、
 未知指标、延迟分色和队友更换；设置页明确标明模拟数据。此模式用于验证设置、悬浮窗和进程生命周期，

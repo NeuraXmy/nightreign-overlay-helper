@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../NightreignP2PHelper/SteamPeerReader.cs" Link="SteamPeerReader.cs" />
+    <Compile Include="../NightreignP2PHelper/SessionCandidateMemory.cs" Link="SessionCandidateMemory.cs" />
+    <Compile Include="../NightreignP2PHelper/PeerPresencePolicy.cs" Link="PeerPresencePolicy.cs" />
+    <Compile Include="../NightreignP2PHelper/PingAccumulator.cs" Link="PingAccumulator.cs" />
+    <Compile Include="../NightreignP2PHelper/Protocol.cs" Link="Protocol.cs" />
+  </ItemGroup>
+</Project>
