@@ -24,19 +24,20 @@ README 中的链接与“关于 → 许可证与源码”提供入口。查看�
    避免程序来自本地修改、源码却来自旧提交。忽略的构建输出不影响检查。
 2. 运行 `build.bat`。脚本核对已安装的两个 GPL 组件版本与 `uv.lock`，
    比较安装包与仓库中的完整许可证文本；不一致时要求维护者审核更新。
-3. 脚本通过 `git archive HEAD` 生成项目源码 ZIP；按 `uv.lock` 的 sdist URL
+3. 脚本在程序目录之外通过 `git archive HEAD` 生成项目源码 ZIP；按 `uv.lock` 的 sdist URL
    下载上述两个依赖的原始源码归档并校验 SHA-256。Fluent Widgets 的 sdist
    不含可编辑的 Qt 资源，还要按 `source-origins.json` 下载固定提交的上游 ZIP，
    补齐 QRC、图片和样式，并核对其中全部 Python 源码与 sdist 一致。下载失败或哈希不符时
    构建失败，不回退到上游默认分支或不同版本。
-4. 在发布目录生成 `source/manifest.json`，记录 Git 提交、归档名、依赖版本、
-   原始 URL 和 SHA-256；复制 `licenses/`、`SOURCE.md` 及辅助程序 MIT 文件。
+4. 在独立的 `dist/release-sources/` 目录生成 `manifest.json`，记录 Git 提交、归档名、依赖版本、
+   原始 URL 和 SHA-256；将同一清单复制为程序目录中的 `licenses/source-manifest.json`；复制 `licenses/`、`SOURCE.md` 及辅助程序 MIT 文件。
 5. CI 再运行 `uv run --no-sync python scripts/prepare_release_licenses.py --check`，
-   检查许可证原文、源码归档哈希、锁定版本与项目提交，然后压缩完整目录。
+   检查许可证原文、源码归档哈希、锁定版本与项目提交，然后由 `scripts/package_release.py` 分别生成程序 ZIP 和 `<版本>-sources.zip`。
 
-发布 ZIP 自带这些源码，无须用户另行索取。将发布包上传到 Release 时，应在
-下载说明中保留源码随包提供的提示。GitHub Actions 的临时 Artifact 有保留期限，
-不能作为长期源码可得性的唯一安排；重新托管或转发二进制时一起保留源码材料。
+程序 ZIP 只保留许可证、版权声明、源码下载说明和小型清单，源码作为同一 Release 的
+`<版本>-sources.zip` 独立附件免费提供，无须用户另行申请。Release 描述和程序内 `SOURCE.md`
+提供源码获取入口。GitHub Actions 的临时 Artifact 有保留期限，
+不能作为长期源码可得性的唯一安排；重新托管或转发二进制时仍需明确提供对应源码获取入口。
 
 ## 升级与审计边界
 

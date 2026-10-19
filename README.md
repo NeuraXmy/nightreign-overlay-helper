@@ -111,4 +111,4 @@ uv run ruff format --check .
 
 第三方组件保留各自许可：SteamP2PInfo 为 MIT，PyQt6-Fluent-Widgets 和 PyQt6 为 GPLv3。完整文本与说明见[第三方声明](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md)及[对应源码获取与构建说明](src/nightreign_overlay/resources/licenses/SOURCE.md)。
 
-Windows 发布包附带 `licenses/`、`third-party/`、`source/` 和 `SOURCE.md`，分发时请保留完整文件夹。许可文本也可在“关于 → 许可证与源码”中离线查看。
+Windows 程序包附带 `licenses/`、`third-party/` 和 `SOURCE.md`；对应源码单独提供在同一 Release 的 `<版本>-sources.zip` 附件中。分发时保留完整程序文件夹，并提供对应源码下载入口。许可文本也可在“关于 → 许可证与源码”中离线查看。

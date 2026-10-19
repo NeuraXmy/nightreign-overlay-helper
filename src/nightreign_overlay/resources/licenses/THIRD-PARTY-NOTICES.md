@@ -16,9 +16,10 @@ continue to apply to those components.
   `PyQt6-Fluent-Widgets-LICENSE.txt`.
 - Source: https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/PyQt6
 - The application uses the public PyQt6-Fluent-Widgets distribution, without
-  local modifications. The exact version is recorded in `source/manifest.json`
-  and the accompanying `uv.lock`; its source distribution is included in `source/`,
-  together with a matching upstream repository archive containing editable Qt
+  local modifications. The exact version is recorded in `licenses/source-manifest.json`
+  and `uv.lock` in the source attachment. The separate `<version>-sources.zip`
+  Release attachment contains its source distribution, together with a matching
+  upstream repository archive containing editable Qt
   resources. The pinned commit and hash are recorded in the manifest.
 - The upstream README additionally describes GPL use as being for
   “non-commercial project” and directs commercial users to
@@ -34,8 +35,8 @@ continue to apply to those components.
 - This application uses the public GNU GPL version 3 distribution, without
   local modifications; see `PyQt6-LICENSE.txt`.
 - Homepage: https://www.riverbankcomputing.com/software/pyqt/
-- The exact version, source URL and hash are recorded in `source/manifest.json`;
-  the corresponding source distribution is included in `source/`.
+- The exact version, source URL and hash are recorded in `licenses/source-manifest.json`;
+  the corresponding source distribution is included in the separate `<version>-sources.zip` Release attachment.
 - Riverbank also offers commercial licenses. This release does not claim one.
   Qt itself is a separate dependency with its own licensing terms; this notice
   does not replace Qt's notices or constitute an audit of all bundled libraries.
