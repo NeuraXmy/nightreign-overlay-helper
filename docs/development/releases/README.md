@@ -18,7 +18,9 @@ build.bat
 
 脚本从自身所在目录执行，使用 Python 3.13（由 `uv` 管理），按纳入版本管理的 `uv.lock` 锁定同步 `build` 依赖组，
 构建 Steam/ETW 辅助程序，再通过 `nightreign-overlay-helper.spec` 构建主程序。
-首次构建需要联网下载 Python、Python 依赖与 NuGet 包。自动化环境可设置 `CI=1` 跳过结束时的暂停。
+构建前需要提交所有源码变更，脚本拒绝存在未提交修改或未忽略的新文件的工作区，
+保证源码快照与二进制对应。构建需要联网下载 Python、Python 依赖、NuGet 包，以及
+锁定版本的 PyQt6 和 Fluent Widgets 源码归档。自动化环境可设置 `CI=1` 跳过结束时的暂停。
 
 输出为完整文件夹，而非单个 EXE：
 
@@ -28,6 +30,9 @@ dist/nightreign-overlay-helper/
 ├── _internal/                 # Python、Qt、第三方库、核心与插件资源、截图 DLL
 ├── bin/                       # 联机辅助 EXE、.NET 运行库、Steam/ETW 依赖
 ├── third-party/               # 联机组件的第三方声明与许可证
+├── licenses/                  # 项目 AGPL、PyQt6 / Fluent Widgets GPL 及版权声明
+├── source/                    # 项目源码、两个 GPL 依赖 sdist、Fluent 资源源码、哈希清单
+├── SOURCE.md                  # 中英文源码位置与构建说明
 ├── LICENSE
 └── README.md
 ```
@@ -56,6 +61,8 @@ tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v1.0.0-windows-x64.zip
 运行其中的 EXE。CI 在打包前运行完整 pytest、Ruff 检查及格式检查，并通过
 `scripts/check_runtime_resources.py` 实际加载和推理 POI、血条材质与端帽模型，检查内置插件发现和加载。
 打包后检查主程序、截图 DLL、三个 ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
+`scripts/prepare_release_licenses.py --check` 还会离线核对完整许可证内容、
+源码归档 SHA-256、依赖版本和项目提交；任何缺失或不一致都阻止打包。
 版本 tag 必须与 `src/nightreign_overlay/__init__.py` 的版本一致；支持可选 `v` 前缀和
 `1.0.0-dev.2`／`1.0.0.dev2` 等 PEP 440 等价预发布写法。不一致时构建失败。
 分发 EXE 的真实启动、Steam/ETW 与截图设备行为仍需在 Windows 发布验收中确认。
@@ -79,5 +86,7 @@ git diff --check
 在目标 Windows 环境检查最终 ZIP 解压后的真实启动、UAC、首次配置与重启、全部功能启停、截图 DLL、输入设备、Steam／ETW、HDR 和多屏。保留验收环境、产物版本、未验证项与已接受限制；自动测试与 macOS 调试结果不能代替这些检查。
 
 联机辅助程序的单独构建与路径规则见[联机状态](../../features/p2p.md)，多屏诊断步骤见[多屏截图与 DPI](../../guides/multiscreen-capture.md)。
+
+许可证文件维护、源码准备和审计范围见[许可证与源码分发](licensing.md)。
 
 [返回开发维护](../README.md)

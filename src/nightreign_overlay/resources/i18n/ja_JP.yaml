@@ -143,6 +143,13 @@ about:
     title: プロジェクト
     repo_button: リポジトリを開く
     repo_content: "作者: NeuraXmy / ルナ茶@Bilibili - バージョン {version}"
+  licenses:
+    title: "ライセンスとソースコード"
+    open: "ライセンスを表示"
+    content: "© NeuraXmy と貢献者 · AGPL-3.0-only。ライセンスに従った使用・改変・再配布を許可しますが、一切の保証はありません。第三者ライセンスと対応するソースコードの入手方法を確認できます。"
+    notices: "著作権と第三者に関する通知"
+    source: "対応するソースコードとビルド手順"
+    close: "閉じる"
   security:
     title: セキュリティに関する声明
     content: 本プログラムはNIGHTREIGNのMod／プラグインではなく、独立したアプリケーションです。認識機能は主にゲーム画面のスクリーンショットと画像解析を使用し、ゲームプロセスのメモリを読み書きしたり、ゲームデータやファイルを変更したり、ゲームへコードを注入したり、実行ロジックを変更したり、ゲームのネットワークパケットを取得したりしません。そのためアンチチート上のリスクは基本的になく、公式オンラインモードで使用できます。
@@ -151,8 +158,9 @@ about:
     visit: 開く
     fuwish: マップデータ解析の支援
     quexuan: 大空洞の結晶配置の提供
-    steam_p2p_info: P2P接続照会とETW遅延計測の手法（MITライセンス）
+    steam_p2p_info: P2P接続照会とETW遅延計測の手法
     fluent_widgets: Fluent DesignのUIコンポーネント
+    pyqt6: Qt の Python バインディング
 tray:
   toggle: メイン画面を表示／非表示
   quit: 終了

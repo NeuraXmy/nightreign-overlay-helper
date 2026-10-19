@@ -69,6 +69,9 @@ jobs:
         shell: cmd
         run: call build.bat
 
+      - name: Verify release licenses and corresponding source
+        run: uv run --no-sync python scripts/prepare_release_licenses.py --check
+
       - name: Check bundle and create ZIP
         id: package
         shell: pwsh
@@ -85,6 +88,16 @@ jobs:
             'bin/amd64/KernelTraceControl.dll',
             'bin/amd64/msdia140.dll',
             'third-party/THIRD-PARTY-NOTICES.txt',
+            'third-party/licenses/SteamP2PInfo-LICENSE.txt',
+            'third-party/licenses/Steamworks.NET-LICENSE.txt',
+            'third-party/licenses/TraceEvent-LICENSE.txt',
+            'licenses/AGPL-3.0.txt',
+            'licenses/PyQt6-LICENSE.txt',
+            'licenses/PyQt6-Fluent-Widgets-LICENSE.txt',
+            'licenses/THIRD-PARTY-NOTICES.md',
+            'SOURCE.md',
+            'source/manifest.json',
+            'source/nightreign-overlay-helper-source.zip',
             'LICENSE',
             'README.md'
           )

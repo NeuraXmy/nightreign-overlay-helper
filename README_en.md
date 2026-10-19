@@ -92,3 +92,12 @@ This application is a standalone program, not a mod or plugin for ELDEN RING NIG
 ## License
 
 [AGPL-3.0-only](LICENSE)
+
+Use, modification and redistribution, including commercial use, are permitted under
+the license, WITHOUT ANY WARRANTY. Third-party components retain their own terms:
+SteamP2PInfo uses MIT; PyQt6-Fluent-Widgets and PyQt6 use GPLv3.
+See the [third-party notices](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md)
+and [corresponding source and build instructions](src/nightreign_overlay/resources/licenses/SOURCE.md).
+Windows releases include `licenses/`, `third-party/`, `source/` and `SOURCE.md`;
+preserve the complete folder when redistributing. License texts are also available
+offline under **About → Licenses and source**.

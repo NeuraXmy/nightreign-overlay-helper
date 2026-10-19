@@ -92,3 +92,10 @@ uv run ruff format --check .
 ## 许可证
 
 [AGPL-3.0-only](LICENSE)
+
+本项目允许依许可证使用、修改与再分发（包括商业使用），不提供任何担保。
+第三方组件保留各自许可：SteamP2PInfo 为 MIT，PyQt6-Fluent-Widgets 和 PyQt6 为 GPLv3。
+完整文本与说明见[第三方声明](src/nightreign_overlay/resources/licenses/THIRD-PARTY-NOTICES.md)
+及[对应源码获取与构建说明](src/nightreign_overlay/resources/licenses/SOURCE.md)。
+Windows 发布包随附 `licenses/`、`third-party/`、`source/` 和 `SOURCE.md`，分发时请保留完整文件夹。
+也可在“关于 → 许可证与源码”中离线查看许可文本。

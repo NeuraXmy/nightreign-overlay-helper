@@ -147,6 +147,13 @@ about:
     title: 專案
     repo_button: 前往儲存庫
     repo_content: "作者：NeuraXmy / ルナ茶@Bilibili - 版本 {version}"
+  licenses:
+    title: "授權條款與原始碼"
+    open: "檢視授權條款"
+    content: "© NeuraXmy 與貢獻者 · AGPL-3.0-only；允許依授權使用、修改及再散布，不提供任何擔保。檢視第三方授權及對應原始碼取得方式。"
+    notices: "版權與第三方聲明"
+    source: "對應原始碼與建置說明"
+    close: "關閉"
   security:
     title: 安全性聲明
     content: 本程式不是《黑夜君臨》的 Mod／插件，而是獨立的應用程式；識別功能主要依靠遊戲畫面截圖和圖像分析，不讀取或寫入任何遊戲程序記憶體，不修改遊戲資料或檔案，不會向遊戲注入程式碼或改變遊戲執行邏輯，也不會擷取遊戲網路封包；因此基本不存在反作弊風險，可以在官方連線模式下使用。
@@ -155,8 +162,9 @@ about:
     visit: 前往
     fuwish: 地圖解包資料支援
     quexuan: 大空洞結晶配置分享
-    steam_p2p_info: P2P 連線查詢與 ETW 延遲量測方法（MIT 授權）
+    steam_p2p_info: P2P 連線查詢與 ETW 延遲量測方法
     fluent_widgets: Fluent Design 風格介面元件庫
+    pyqt6: Python Qt 介面繫結
 tray:
   toggle: 顯示／隱藏主介面
   quit: 結束

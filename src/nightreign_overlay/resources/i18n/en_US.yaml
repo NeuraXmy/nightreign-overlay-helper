@@ -148,6 +148,13 @@ about:
     title: Project
     repo_button: View repository
     repo_content: "Author: NeuraXmy / ルナ茶@Bilibili - Version {version}"
+  licenses:
+    title: "Licenses and source"
+    open: "View licenses"
+    content: "© NeuraXmy and contributors · AGPL-3.0-only. Use, modification and redistribution are permitted under the license, WITHOUT ANY WARRANTY. View third-party terms and source access instructions."
+    notices: "Copyright and third-party notices"
+    source: "Corresponding source and build instructions"
+    close: "Close"
   security:
     title: Security statement
     content: This program is not a mod or plugin for NIGHTREIGN, but an independent application. Its recognition relies mainly on screenshots of the game and image analysis; it does not read or write game process memory, modify game data or files, inject code into the game, change its runtime logic, or capture game network packets. Therefore, it presents essentially no anti-cheat risk and can be used in the official online mode.
@@ -156,8 +163,9 @@ about:
     visit: Visit
     fuwish: Map data extraction support
     quexuan: Great Hollow crystal layouts
-    steam_p2p_info: P2P queries and ETW latency measurement approach (MIT license)
+    steam_p2p_info: P2P queries and ETW latency measurement approach
     fluent_widgets: Fluent Design UI components
+    pyqt6: Python bindings for Qt
 tray:
   toggle: Show / hide main window
   quit: Quit
