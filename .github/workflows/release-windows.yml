@@ -1,0 +1,176 @@
+name: Release Windows ZIP
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 45
+    outputs:
+      artifact-name: ${{ steps.package.outputs.name }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    env:
+      CI: '1'
+      # Use the public index on GitHub-hosted runners.
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python and uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+            .python-version
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install locked dependencies
+        run: uv sync --locked --python 3.13 --group build
+
+      - name: Check release tag against application version
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: uv run --no-sync python scripts/validate_release_version.py "$env:GITHUB_REF_NAME"
+
+      - name: Determine release channel
+        id: version
+        shell: uv run --no-sync python {0}
+        run: |
+          import os
+          from packaging.version import Version
+          from nightreign_overlay import __version__
+
+          version = Version(__version__)
+          prerelease = str(version.is_prerelease or version.is_devrelease).lower()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"prerelease={prerelease}\n")
+
+      - name: Lint source
+        run: uv run --no-sync ruff check .
+
+      - name: Check formatting
+        run: uv run --no-sync ruff format --check .
+
+      - name: Run full regression suite
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync pytest -q
+
+      - name: Load runtime resources and discover plugins
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync python scripts/check_runtime_resources.py
+
+      - name: Build application and P2P helper
+        shell: cmd
+        run: call build.bat
+
+      - name: Verify release licenses and corresponding source
+        run: uv run --no-sync python scripts/prepare_release_licenses.py --check
+
+      - name: Check bundle and create ZIP
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path $PWD 'dist/nightreign-overlay-helper'
+          $requiredFiles = @(
+            'nightreign-overlay-helper.exe',
+            '_internal/nightreign_overlay/plugins/capture/native/MaaWin32Screencap.dll',
+            '_internal/nightreign_overlay/plugins/map_detect/data/poi_cnn/epoch-42.onnx',
+            '_internal/nightreign_overlay/plugins/hp_marker/data/material_v1.onnx',
+            '_internal/nightreign_overlay/plugins/hp_marker/data/cap_v1.onnx',
+            'bin/NightreignP2PHelper.exe',
+            'bin/amd64/KernelTraceControl.dll',
+            'bin/amd64/msdia140.dll',
+            'third-party/THIRD-PARTY-NOTICES.txt',
+            'third-party/licenses/SteamP2PInfo-LICENSE.txt',
+            'third-party/licenses/Steamworks.NET-LICENSE.txt',
+            'third-party/licenses/TraceEvent-LICENSE.txt',
+            'licenses/AGPL-3.0.txt',
+            'licenses/PyQt6-LICENSE.txt',
+            'licenses/PyQt6-Fluent-Widgets-LICENSE.txt',
+            'licenses/THIRD-PARTY-NOTICES.md',
+            'SOURCE.md',
+            'source/manifest.json',
+            'source/nightreign-overlay-helper-source.zip',
+            'LICENSE',
+            'README.md'
+          )
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path -LiteralPath (Join-Path $bundle $file) -PathType Leaf)) {
+              throw "Missing bundle file: $file"
+            }
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $label = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          } else {
+            $label = 'manual-dev-{0}-{1}' -f $env:GITHUB_SHA.Substring(0, 7), $env:GITHUB_RUN_NUMBER
+          }
+          $name = "nightreign-overlay-helper-$label-windows-x64"
+          $archive = Join-Path $PWD "dist/$name.zip"
+          Compress-Archive -LiteralPath $bundle -DestinationPath $archive -CompressionLevel Optimal
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "path=$archive" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Windows ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified Windows ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-windows.outputs.artifact-name }}
+          path: release
+
+      - name: Publish release with Windows ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.build-windows.outputs.prerelease }}
+        shell: bash
+        run: |
+          args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            args+=(--prerelease --latest=false)
+          else
+            args+=(--latest)
+          fi
+          gh release create "$RELEASE_TAG" release/*.zip "${args[@]}"

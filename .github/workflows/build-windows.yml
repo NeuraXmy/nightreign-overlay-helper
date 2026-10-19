@@ -2,10 +2,6 @@ name: Build Windows ZIP
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v[0-9]*'
-      - '[0-9]*.[0-9]*.[0-9]*'
 
 permissions:
   contents: read
