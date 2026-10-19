@@ -10,6 +10,10 @@ When the main window is open, the overlay shows a translucent background to make
 
 Right-click the overlay or the tray icon and choose "Quit".
 
+## Where are the overlay settings for Circle Timer, Rain Exposure Timer, and Ultimate Art Timer?
+
+These features share the same overlay. Its settings are on the general "Settings" page.
+
 ## Recognition is wrong or inaccurate. What should I check?
 
 Please check the following:
@@ -20,6 +24,7 @@ Please check the following:
 4. Make sure the region to be detected (the map or HP bar) is not covered by this helper's overlay or another application overlay.
 5. If HDR (Display Settings → High Dynamic Range) is enabled in the game, or another setting changes the game's colors, recognition may become inaccurate. Try enabling "HDR image processing" in general "Settings"; it may help, but changing this setting does not guarantee a fix. We recommend disabling HDR when using the helper.
 6. If the number or resolution of your monitors changes, or the game window size changes, calibrate the region again.
+7. Try switching to a different capture method ("Settings" → "Capture settings" → "Capture method").
 
 ## The system or game stutters after enabling the helper. What should I check?
 
