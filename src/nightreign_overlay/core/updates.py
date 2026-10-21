@@ -263,6 +263,10 @@ class DownloadCancellation:
             try:
                 self.check()
                 yield response
+            except Exception:
+                # Windows can report shutdown as a socket error instead of EOF.
+                self.check()
+                raise
             finally:
                 with self._lock:
                     self._response = None

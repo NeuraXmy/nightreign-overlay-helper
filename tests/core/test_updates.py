@@ -358,3 +358,14 @@ def test_cancellation_interrupts_blocked_network_read(monkeypatch):
         assert not worker.is_alive()
     finally:
         writer.close()
+
+
+def test_cancelled_socket_error_is_reported_as_cancellation(monkeypatch):
+    cancellation = updates.DownloadCancellation()
+    monkeypatch.setattr(updates, "urlopen", lambda *a, **k: Response(b""))
+    with (
+        pytest.raises(updates.DownloadCancelledError),
+        cancellation.open(updates.Request("https://example.com/file")),
+    ):
+        cancellation.cancel()
+        raise OSError("socket shutdown")
