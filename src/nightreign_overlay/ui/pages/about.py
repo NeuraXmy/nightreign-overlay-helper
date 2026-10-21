@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import FluentIcon, HyperlinkCard, PushSettingCard, SettingCard
 
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.meta import APP_NAME, APP_VERSION, REPO_URL
-from nightreign_overlay.ui.components import ScrollPage, SettingSection
+from nightreign_overlay.ui.components import ConfigSwitchCard, ScrollPage, SettingSection
 from nightreign_overlay.ui.components.diagnostic_export import DiagnosticExportDialog
 from nightreign_overlay.ui.components.licenses import LicensesDialog
 from nightreign_overlay.ui.pages.home import Banner
@@ -23,8 +25,12 @@ CREDITS = (
 
 
 class AboutPage(ScrollPage):
-    def __init__(self, parent: QWidget | None = None) -> None:
+    checkUpdatesRequested = pyqtSignal()
+    changelogRequested = pyqtSignal()
+
+    def __init__(self, config: AppConfig, parent: QWidget | None = None) -> None:
         super().__init__("aboutPage", parent=parent)
+        self._config = config
         self.addWidget(Banner(self.view))
 
         project = SettingSection(tr("about.project.title"), self.view)
@@ -45,6 +51,7 @@ class AboutPage(ScrollPage):
             ),
         )
         self.addWidget(project)
+        self._init_updates()
 
         credits = SettingSection(tr("about.credits.title"), self.view)
         for key, name, url in CREDITS:
@@ -54,6 +61,31 @@ class AboutPage(ScrollPage):
                 )
             )
         self.addWidget(credits)
+
+    def _init_updates(self) -> None:
+        section = SettingSection(tr("updates.title"), self.view)
+        self.changelogCard = PushSettingCard(
+            tr("settings.open"), FluentIcon.DOCUMENT, tr("updates.changelog"), tr("updates.history_hint")
+        )
+        self.checkUpdatesCard = PushSettingCard(
+            tr("updates.check"), FluentIcon.UPDATE, tr("updates.check"), tr("updates.check_hint")
+        )
+        self.changelogCard.clicked.connect(self.changelogRequested.emit)
+        self.checkUpdatesCard.clicked.connect(self.checkUpdatesRequested.emit)
+        section.addCards(
+            self.changelogCard,
+            self.checkUpdatesCard,
+            ConfigSwitchCard(
+                self._config.auto_check_updates,
+                FluentIcon.UPDATE,
+                tr("updates.auto"),
+                tr("updates.auto_hint"),
+            ),
+        )
+        self.addWidget(section)
+
+    def set_update_busy(self, busy: bool) -> None:
+        self.checkUpdatesCard.button.setText(tr("updates.checking" if busy else "updates.check"))
 
     def _licenses_card(self) -> PushSettingCard:
         card = PushSettingCard(

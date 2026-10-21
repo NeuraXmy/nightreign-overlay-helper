@@ -165,3 +165,12 @@ jobs:
             "release/nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip" \
             "release/${RELEASE_TAG}-sources.zip" \
             --notes-file "$notes" "${args[@]}"
+
+  sync-gitee:
+    name: Mirror release to Gitee
+    needs: publish-release
+    uses: ./.github/workflows/sync-gitee.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}

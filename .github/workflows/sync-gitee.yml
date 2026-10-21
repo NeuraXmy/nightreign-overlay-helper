@@ -1,0 +1,49 @@
+name: Sync Release to Gitee
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+    secrets:
+      GITEE_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to sync (e.g. v1.0.1)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitee-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+      GITEE_REPO: ${{ vars.GITEE_REPO }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check mirror configuration
+        run: |
+          test -n "$GITEE_TOKEN" || { echo 'Missing GITEE_TOKEN secret'; exit 1; }
+          test -n "$GITEE_REPO" || { echo 'Missing GITEE_REPO variable'; exit 1; }
+      - name: Download GitHub runtime ZIP
+        run: |
+          mkdir -p release
+          gh release download "$RELEASE_TAG" --dir release \
+            --pattern "nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip"
+      - name: Mirror release notes and split runtime ZIP
+        run: python scripts/sync_gitee_release.py

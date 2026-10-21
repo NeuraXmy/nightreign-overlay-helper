@@ -57,7 +57,7 @@ def test_packaged_faq_and_shared_compact_banners(qapp: QApplication, store: Conf
     backend = FakeBackend()
     monitor = GameWindowMonitor(backend, events)
     overlays = OverlayManager(backend, config, monitor)
-    pages = (HomePage(config, plugins, overlays, monitor), AboutPage(), faq.FaqPage())
+    pages = (HomePage(config, plugins, overlays, monitor), AboutPage(config), faq.FaqPage())
     try:
         assert "识别错误，识别不准" in pages[2].browser.toPlainText()
         for page in pages[:2]:

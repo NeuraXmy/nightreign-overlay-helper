@@ -269,3 +269,21 @@ def test_project_documents_are_readable_utf8(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     assert "\ufffd" not in text
     assert not re.search(r"\?{4,}", text), f"{path.name} contains lost text"
+
+
+@pytest.mark.parametrize(
+    "key", ["updates.history_hint", "updates.auto_hint", "optional.hint", "optional.content"]
+)
+def test_missing_descriptions_and_hints_are_optional(translations: Path, key: str) -> None:
+    translator = Translator("en_US")
+    translator.load_dir("ns", translations)
+    assert translator.tr("ns", key) == ""
+    assert translator.tr("ns", "missing.title") == "missing.title"
+
+
+def test_optional_hint_still_uses_language_fallback(translations: Path) -> None:
+    path = translations / "zh_CN.yaml"
+    path.write_text(path.read_text(encoding="utf-8") + "optional_hint: 回退提示\n", encoding="utf-8")
+    translator = Translator("en_US")
+    translator.load_dir("ns", translations)
+    assert translator.tr("ns", "optional_hint") == "回退提示"

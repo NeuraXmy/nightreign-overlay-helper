@@ -2,6 +2,8 @@
 
 本页说明当前 Windows x64 构建流程与验收要求。历史审计放在独立文件中，避免将已修复问题当作当前缺陷。
 
+Gitee 国内 Release 镜像的凭据、仓库和历史版本补同步见 [Gitee 镜像配置](gitee-sync.md)。
+
 ## 发布记录
 
 | 日期 | 审计快照 | 后续处理 |
@@ -83,6 +85,15 @@ Actions 通过 `upload-artifact@v7` 的 `archive: false` 直接上传这两个 Z
 分发 EXE 的真实启动、Steam/ETW 与截图设备行为仍需在 Windows 发布验收中确认。
 发布 workflow 文件需存在于所推送的 tag 中；旧 tag 不会因本次配置自动重新发布。
 GitHub 的手动构建入口需要构建 workflow 先进入默认分支。
+
+## Gitee 国内镜像配置
+
+1. 创建公开的 Gitee 仓库，并用 README 初始化默认分支；仓库仅用于 Release，无需推送源码。
+2. 在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 中，添加 Secret `GITEE_TOKEN`（具有目标仓库 Release 和附件上传权限的 Gitee 私人令牌），以及 Variable `GITEE_REPO`（`owner/repo`）。
+3. 核对应用 `src/nightreign_overlay/meta.py` 的 `GITEE_REPO` 与上述变量一致，默认是 `NeuraXmy/nightreign-overlay-helper`。
+4. 新版本发布后自动同步；首次使用可手动运行 **Sync Release to Gitee**，输入 `v1.0.1` 及后续各个已有正式版 tag，补齐历史日志与附件。
+
+同步包含更新日志和程序；超过 90 MiB 的程序 ZIP 自动分卷上传并附 SHA-256 清单。Gitee 不上传源码 ZIP，正文链接至 GitHub 的同版本源码附件，不同步源码提交。凭据权限、配额检查、失败重试和客户端行为详见 [Gitee Release 镜像配置](gitee-sync.md)。
 
 ## 发布前验证
 
