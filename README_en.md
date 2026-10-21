@@ -19,7 +19,8 @@ The current version is developed on [`main`](https://github.com/NeuraXmy/nightre
 - **Ultimate Art Timer**: Shows the remaining active duration when you press the in-game Ultimate Art key and the Art icon lights up. Supports Duchess, Recluse, Executor, Revenant, and Scholar.
 - **Map Information**: Recognizes Shifting Earth terrain, the Nightlord portrait, and point-of-interest types to narrow down the map seed and show detailed location information. Supports all maps, including DLC, and events that hide the Nightlord or map details. Some cases need manual filtering.
 - **HP Threshold Markers**: Periodically detects HP bar length in screenshots and shows reference lines for effects that activate below maximum HP or at low HP.
-- **Co-op Status**: Shows your Steam co-op teammates' nicknames, ping, and connection stability.
+- **Co-op Status**: Shows your Steam teammates' names, ping, connection quality, and optional public playtime without an API key. Click a name to open its profile in Steam.
+- **Post-game Commendations**: A separate settings page and expiring popup, with profile links, explicit comment buttons, and account-scoped seven-day duplicate protection. See [teammate features](docs/features/steam-social.md).
 
 ## Usage
 

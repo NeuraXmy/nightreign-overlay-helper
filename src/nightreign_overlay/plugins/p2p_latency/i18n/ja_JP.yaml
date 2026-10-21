@@ -3,15 +3,20 @@ plugin:
   description: Steamの仲間・遅延・安定性を表示。管理者権限が必要
 settings:
   window: オーバーレイ
-  good_ping: 良好な遅延の上限（未満なら緑）
-  warning_ping: 注意する遅延の上限（未満なら黄、以上は赤）
+  good_ping: 良好な遅延の上限
+  warning_ping: 警告する遅延の上限
   status: 動作状況
   simulation: macOSでは模擬プロセスを使用。待機・不明な指標・遅延変動・仲間の交代を約32秒で再現します。実測値ではありません
+  show_playtime: プレイ時間を表示（API キー不要）
+  playtime_help: 公開 Steam プロフィールから総プレイ時間を取得します。非公開・未掲載の場合は取得不可と表示し、無効にすると取得を停止します。
+  good_ping_help: この値未満の遅延は緑で表示します。
+  warning_ping_help: この値未満は黄色、それ以上は赤で表示します。
 overlay:
   title: マルチプレイ · Ping／安定性
   waiting: 仲間／Steamの同期を待機中
   legacy_no_fields: 旧Steam P2P APIにPing・安定性の項目はありません
   etw_source: 遅延の測定元：ETW STUN往復時間
+  open_profile: クリックして Steam のプロフィールを開く
 status:
   helper_missing: 通信ヘルパーが見つかりません。ソースから実行する場合は scripts/build_p2p_helper.ps1 を実行してください
   helper_started: 通信ヘルパーが起動しました
@@ -48,3 +53,9 @@ status:
     error: 利用不可。ETWのリソースと実行中のトレースセッションを確認してください
     admin_required: ETWには管理者権限が必要です。管理者としてアプリを再起動してください
     simulated: 模擬データ（ETW無効）
+  game_exited: ゲーム終了
+playtime:
+  loading: 取得中
+  unavailable: 取得不可
+  hours: '{hours} 時間'
+  available: '{hours} 時間'

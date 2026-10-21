@@ -3,15 +3,20 @@ plugin:
   description: 顯示 Steam 隊友、延遲與穩定度；需以系統管理員身分執行
 settings:
   window: 懸浮窗
-  good_ping: 良好延遲上限（低於此值顯示綠色）
-  warning_ping: 警告延遲上限（低於此值顯示黃色，否則紅色）
+  good_ping: 良好延遲上限
+  warning_ping: 警告延遲上限
   status: 執行狀態
   simulation: macOS 使用模擬子程序，約 32 秒循環展示等待、未知數值、延遲變化與換隊；並非實際網路測量
+  show_playtime: 顯示遊戲時數（無需 API Key）
+  playtime_help: 從 Steam 公開個人檔案查詢黑夜君臨總時數；隱私設定或頁面未展示時顯示無法取得。關閉後停止查詢。
+  good_ping_help: 低於此值時，延遲顯示為綠色。
+  warning_ping_help: 低於此值時顯示黃色，否則顯示紅色。
 overlay:
   title: 連線狀態 · Ping／穩定度
   waiting: 等待隊友／Steam 同步
   legacy_no_fields: 舊 Steam P2P 介面沒有 Ping／穩定度欄位
   etw_source: 延遲來源：ETW STUN 往返時間
+  open_profile: 點擊名字在 Steam 中開啟個人檔案
 status:
   helper_missing: 找不到連線元件，從原始碼執行請先執行 scripts/build_p2p_helper.ps1
   helper_started: 連線元件已啟動
@@ -48,3 +53,9 @@ status:
     error: 無法使用，請檢查 ETW 資源與系統追蹤工作階段
     admin_required: ETW 需要管理員權限；請關閉後以管理員身分重新啟動程式
     simulated: 模擬資料（未啟用 ETW）
+  game_exited: 遊戲已退出
+playtime:
+  loading: 查詢中
+  unavailable: 時數無法取得
+  hours: '{hours} 小時'
+  available: '{hours} 小時'

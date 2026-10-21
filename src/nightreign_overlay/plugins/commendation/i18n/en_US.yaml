@@ -1,0 +1,41 @@
+plugin:
+  name: Post-game commendations
+  description: 'Separate departure popup: click a name to visit Steam or click Like to post your comment'
+settings:
+  behavior: Commendations
+  close_seconds: Automatically close after
+  close_help: Each player has a separate expiry. Refreshing the popup does not extend it.
+  seconds: '{value} s'
+  comment: Profile comment
+  comment_help: Posted only when you click Like; seven days between comments to the same player.
+  save: Save
+  show_recent: Show teammates
+  manual: Open teammates manually
+  manual_help: Use after a match when teammates stay in the lobby, or DAY1 was not detected.
+  detection_help: Enable network status and circle timer for automatic prompts. DAY1 starts the roster, and confirmed departure
+    opens the popup. Departure approximates the end of a match; a mid-game disconnect can also trigger it. Click a name to
+    view profiles that cannot receive comments.
+  window: Separate commendation window
+  dismiss: Dismiss
+overlay:
+  title: Post-game commendations
+  send: Post your configured comment to this Steam profile
+  open_profile: Click to open the profile in Steam
+state:
+  idle: Waiting for teammates. Comments are never sent automatically.
+  ready: Click Like to post
+  sending: Posting…
+  sent: Posted; no repeat for seven days
+  cooldown: Within the seven-day cooldown
+  unknown: Uncertain result; check the profile before posting again
+  retry_later: Steam did not accept the comment; try later
+  precondition: Comments unavailable or account not ready; check the profile
+  rejected: Steam rejected the comment; try later
+  error: Preparation failed; keep Steam and the game running
+  history_error: Invalid comment history; check the profile first
+  account_missing: Steam login account unavailable
+  account_changed: Steam account changed or unavailable; join the party again
+  helper_missing: Comment helper unavailable
+  invalid_comment: Enter a comment of 1–500 characters
+  saved: Comment saved
+  disabled: Enable post-game commendations first

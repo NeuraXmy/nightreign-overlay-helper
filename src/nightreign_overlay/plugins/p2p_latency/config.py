@@ -1,10 +1,11 @@
 """Legacy latency colours and independent overlay defaults."""
 
-from nightreign_overlay.core.config import ConfigGroup, RangeOption
+from nightreign_overlay.core.config import BoolOption, ConfigGroup, RangeOption
 from nightreign_overlay.ui.overlay import OverlayConfig
 
 
 class P2PConfig(ConfigGroup):
+    show_playtime = BoolOption(True)
     good_ping = RangeOption(80, 1, 999)
     warning_ping = RangeOption(150, 2, 2000)
 

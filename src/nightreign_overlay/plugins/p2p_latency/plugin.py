@@ -9,15 +9,19 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget
 from qfluentwidgets import BodyLabel, FluentIcon
 
+from nightreign_overlay.core.steam import current_steam_account
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
+from nightreign_overlay.plugins.p2p_latency.api import P2PStateChanged, PeerSnapshot
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
 from nightreign_overlay.plugins.p2p_latency.models import P2PStatus
 from nightreign_overlay.plugins.p2p_latency.overlay import P2POverlay
+from nightreign_overlay.plugins.p2p_latency.playtime import PlaytimeService
 from nightreign_overlay.plugins.p2p_latency.presentation import status_message
 from nightreign_overlay.plugins.p2p_latency.service import P2PService
 from nightreign_overlay.ui.components import (
     ConfigRangeCard,
+    ConfigSwitchCard,
     OverlaySettingSection,
     SettingSection,
     SettingsPanel,
@@ -91,6 +95,14 @@ class P2PLatencyPlugin(Plugin):
         service.status_changed.connect(window.set_status)
         service.status_changed.connect(self._set_status)
         service.peers_changed.connect(window.set_peers)
+        service.snapshotReceived.connect(self._publish_snapshot)
+        playtime = PlaytimeService(self)
+        service.peers_changed.connect(playtime.set_peers)
+        playtime.resultsChanged.connect(window.set_playtimes)
+        self.config.show_playtime.valueChanged.connect(playtime.set_enabled)
+        playtime.set_enabled(self.config.show_playtime.value)
+        self.ctx.on_cleanup(playtime.deleteLater)
+        self.ctx.on_cleanup(playtime.stop)
         self.ctx.on_cleanup(lambda: self._stop_service(service))
         service.start()
 
@@ -104,6 +116,10 @@ class P2PLatencyPlugin(Plugin):
     def _set_status(self, status: P2PStatus) -> None:
         self._status = status
         self.statusChanged.emit(status)
+        self.ctx.publish(P2PStateChanged(status))
+
+    def _publish_snapshot(self, peers: tuple) -> None:
+        self.ctx.publish(PeerSnapshot(peers, current_steam_account()))
 
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         tr = self.ctx.tr
@@ -111,12 +127,21 @@ class P2PLatencyPlugin(Plugin):
         window = OverlaySettingSection(
             self.overlay_config, tr("settings.window"), include_horizontal_reset=False
         )
+        window.addCard(
+            ConfigSwitchCard(
+                self.config.show_playtime,
+                FluentIcon.HISTORY,
+                tr("settings.show_playtime"),
+                tr("settings.playtime_help"),
+            )
+        )
         for name in ("good_ping", "warning_ping"):
             window.addCard(
                 _PingThresholdCard(
                     self.config.item(name),
                     FluentIcon.SPEED_HIGH,
                     tr(f"settings.{name}"),
+                    tr(f"settings.{name}_help"),
                     formatter=lambda value: f"{value} ms",
                 )
             )

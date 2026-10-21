@@ -10,7 +10,7 @@
 
 ## 职责
 
-显示 Steam 联机队友、Ping、稳定度。
+显示 Steam 联机队友、Ping、稳定度和可开关的免 API Key 游戏时长。名字可点击打开 Steam 内置主页；独立的赛后点赞页面与窗口见 [队友功能](steam-social.md)。
 
 ## 依赖
 
@@ -22,6 +22,7 @@
 - macOS：启动 `mock_helper.py` 模拟数据。
 - `P2PService` 管理子进程、解析输出、维护状态/玩家列表。
 - `P2POverlay` 显示状态与玩家列表。
+- `PlaytimeService` 异步读取公开主页；`PeerSnapshot` 事件发布每个真实有效快照（包含名单未变化的情况），供赛后离队确认使用。辅助进程清理时产生的空列表不是新快照。
 
 Windows 主程序默认请求管理员权限，详见 [启动流程](../architecture/startup.md)。联机插件激活时再次检查权限；无权限则在创建悬浮窗和辅助进程之前抛出 `PermissionError`，由插件管理器标记启动失败，设置页显示需要管理员权限。
 
