@@ -6,6 +6,7 @@ from nightreign_overlay.ui.overlay import OverlayConfig
 
 class P2PConfig(ConfigGroup):
     show_playtime = BoolOption(True)
+    auto_block = BoolOption(False)
     good_ping = RangeOption(80, 1, 999)
     warning_ping = RangeOption(150, 2, 2000)
 

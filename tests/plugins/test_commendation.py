@@ -239,6 +239,24 @@ def test_expired_target_cannot_post(service, monkeypatch):
     assert not starts
 
 
+def test_pending_restore_disables_comment_until_verified_complete(service, monkeypatch, tmp_path):
+    helper = tmp_path / "helper.exe"
+    helper.touch()
+    monkeypatch.setattr("nightreign_overlay.plugins.commendation.service.helper_path", lambda: helper)
+    starts, pending = [], [True]
+    service.recovery_pending = lambda account, target: account == ACCOUNT and target == TARGET and pending[0]
+    monkeypatch.setattr(service.process, "start", lambda: starts.append(True))
+    open_review(service)
+    assert service.rows[0]["state"] == "restoring"
+    service.send(TARGET)
+    assert starts == []
+    pending[0] = False
+    service.tick()
+    assert service.rows[0]["enabled"]
+    service.send(TARGET)
+    assert starts == [True]
+
+
 def test_separate_plugin_page_window_name_and_like_actions(plugin, store, monkeypatch):
     root = PROJECT_ROOT / "src/nightreign_overlay/plugins/commendation"
     translator = Translator("zh_CN")

@@ -20,6 +20,7 @@ overlay:
   send: 設定したコメントをこの味方の Steam プロフィールに投稿
   open_profile: クリックして Steam のプロフィールを開く
 state:
+  restoring: 一時ブロックの解除を待っています
   idle: 味方を待機中。コメントは自動送信されません。
   ready: 称賛ボタン でコメントを送信
   sending: 送信中…

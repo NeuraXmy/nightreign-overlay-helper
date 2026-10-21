@@ -22,6 +22,7 @@ overlay:
   send: Post your configured comment to this Steam profile
   open_profile: Click to open the profile in Steam
 state:
+  restoring: Waiting for communication restoration
   idle: Waiting for teammates. Comments are never sent automatically.
   ready: Click Like to post
   sending: Posting…

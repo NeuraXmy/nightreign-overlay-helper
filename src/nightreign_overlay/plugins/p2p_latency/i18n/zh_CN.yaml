@@ -59,3 +59,31 @@ playtime:
   unavailable: 时长不可用
   hours: '{hours} 小时'
   available: '{hours} 小时'
+block:
+  title: 自动屏蔽与恢复
+  enable: 自动屏蔽非好友队友
+  help: 读到有效延迟后临时屏蔽，确认离队后恢复；好友和原有屏蔽均跳过，无需等待 DAY1。
+  summary:
+    disabled: 已关闭；没有进行中的临时屏蔽。
+    enabled: 已开启：等待有效延迟与非好友关系确认。
+    preparing: 正在准备并核对通信状态。
+    blocked: 队友已临时屏蔽；离队、关闭功能或退出时自动恢复。
+    restoring: 正在解除临时屏蔽，请保持 Steam 在线。
+    recovery_pending: 恢复尚未确认，已保留记录并自动重试；请保持原 Steam 账号在线。
+    retry_wait: 准备失败，稍后自动重试。
+    error: 未完成屏蔽；原有屏蔽和不符合条件的账号会跳过。
+    account_missing: 等待联机组件确认当前 Steam 账号。
+    unsupported: 自动屏蔽与恢复仅支持 Windows。
+  state:
+    preparing: 准备屏蔽
+    blocked: 已屏蔽
+    restoring: 解除中
+    recovery_pending: 恢复待重试
+    restored: 已解除
+    unconfirmed: 恢复待确认
+    preblocked: 原有屏蔽 · 不解除
+    relationship_skipped: 关系未确认 · 跳过
+    failed: 屏蔽未完成
+    retry_wait: 失败待重试
+    friend_skipped: 好友跳过
+    waiting: 等待条件就绪

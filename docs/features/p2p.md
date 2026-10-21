@@ -12,6 +12,8 @@
 
 显示 Steam 联机队友、Ping、稳定度和可开关的免 API Key 游戏时长。名字可点击打开 Steam 内置主页；独立的赛后点赞页面与窗口见 [队友功能](steam-social.md)。
 
+设置页提供默认关闭的「自动屏蔽非好友队友」开关及逐人处理状态，细节见 [自动屏蔽与恢复](steam-recovery.md)。此功能不依赖 DAY1 或 HUD 识别。
+
 ## 依赖
 
 无截图/HUD 依赖；独立 `P2POverlay`。
@@ -23,6 +25,8 @@
 - `P2PService` 管理子进程、解析输出、维护状态/玩家列表。
 - `P2POverlay` 显示状态与玩家列表。
 - `PlaytimeService` 异步读取公开主页；`PeerSnapshot` 事件发布每个真实有效快照（包含名单未变化的情况），供赛后离队确认使用。辅助进程清理时产生的空列表不是新快照。
+- 新版原生快照携带当前 Steam 账号和逐人好友关系。只有来自原生组件的有效账号才能授权屏蔽；注册表兜底账号、缺失/未知关系或旧辅助程序的名单只能用于显示。
+- 隐藏基础插件 `steam_recovery` 负责持久恢复；停用联机状态会撤销新屏蔽并请求恢复，不停止独立恢复任务。
 
 Windows 主程序默认请求管理员权限，详见 [启动流程](../architecture/startup.md)。联机插件激活时再次检查权限；无权限则在创建悬浮窗和辅助进程之前抛出 `PermissionError`，由插件管理器标记启动失败，设置页显示需要管理员权限。
 
@@ -58,10 +62,29 @@ ETW 不可用时仍会查询 Steam 连接。发布版无需另行安装 .NET。
 单独构建脚本默认使用单文件发布；添加 `-NoSingleFile` 可改为多文件发布，
 完整的 `build.bat` 已使用该选项，并复制整个辅助程序目录。
 
+源码更新涉及 `native/` 后也要重新执行构建脚本。仓库根目录的 `bin/` 优先于
+`build/p2p/bin/`；只打包主程序不会更新源码运行使用的根目录组件。较早的组件可能仍能
+显示 Ping，但缺少新版账号、好友关系和屏蔽命令，不能据此判断屏蔽功能可用。
+
+构建后可运行以下真实进程启动检查：
+
+```powershell
+$env:NROH_TEST_NATIVE_HELPER = (Resolve-Path bin/NightreignP2PHelper.exe).Path
+uv run pytest -q tests/native/test_helper_startup.py
+Remove-Item Env:NROH_TEST_NATIVE_HELPER
+```
+
+检查会在空的隔离目录中以无控制台方式启动旧事务恢复入口及两个队友槽，验证待命状态、
+有限子任务、UTF-8 留言管道及约一分钟后的空闲退出，不连接 Steam 或执行屏蔽/留言。
+不支持隔离目录的旧组件会在启动前拒绝。完整 `build.bat` 在 PyInstaller 前强制执行
+此检查，普通 Python 测试未指定新构建组件时跳过该项。
+
 执行 `dotnet run --project native/NightreignP2PHelper.Tests -c Release` 可运行原生队友发现回归测试。
 测试链接实际的队友读取代码，使用内存中的 Steam／ETW 响应，覆盖受邀好友缺失同服务器记录、
 过期历史记录、无效会话过滤、会话保持与断开、ETW 暂无指标等场景，无需运行 Steam 或游戏。
 构建和发布 workflow 均执行这些检查。
+
+执行 `dotnet run --project native/NightreignP2PHelper.RecoveryTests -c Release` 可运行屏蔽恢复的离线事务、崩溃交接和监督进程测试。测试链接实际恢复代码并用模拟通道代替 Steam，不会操作账户；两个原生测试项目都进入 Windows 构建与发布检查。
 
 macOS 开发运行自动使用独立 Python 模拟子进程，无需 .NET、Steam 或管理员权限。约 32 秒循环演示等待、
 未知指标、延迟分色和队友更换；设置页明确标明模拟数据。此模式用于验证设置、悬浮窗和进程生命周期，

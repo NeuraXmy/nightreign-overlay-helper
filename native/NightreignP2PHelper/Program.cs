@@ -13,6 +13,24 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        // Detached recovery has no console handles. Dispatch before touching
+        // Console encodings: even setting OutputEncoding can throw on Windows.
+        // These file-IPC workers also must not inherit the UI's stdin lifetime.
+        if (args.Length == 1 && args[0] == "--identity-worker")
+            return IdentitySupervisor.Run();
+        if (args.Length == 2 && args[0] == "--match-worker"
+            && int.TryParse(args[1], out var slot))
+            return IdentitySupervisor.Run(slot);
+        if (args.Length == 2 && args[0] == "--identity-task"
+            && int.TryParse(args[1], out var owner))
+            return IdentityWorker.Run(supervisorPid: owner);
+        if (args.Length == 3 && args[0] == "--match-task"
+            && int.TryParse(args[1], out var taskSlot) && int.TryParse(args[2], out var taskOwner))
+            return IdentityWorker.Run(taskSlot, taskOwner);
+        if (args.Any(arg => arg.StartsWith("--identity-", StringComparison.Ordinal)
+            || arg.StartsWith("--match-", StringComparison.Ordinal))) return 2;
+
+        // Only pipe-based P2P/comment modes need UTF-8 standard streams.
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.InputEncoding = System.Text.Encoding.UTF8;
         if (args.Contains("--commend", StringComparer.OrdinalIgnoreCase))
@@ -124,7 +142,7 @@ internal static class Program
         {
             while (!cancellationToken.IsCancellationRequested && !game.HasExited)
             {
-                Protocol.Snapshot(reader.ReadPeers());
+                Protocol.Snapshot(reader.ReadPeers(), SteamUser.GetSteamID().ToString());
                 await Delay(cancellationToken);
             }
         }

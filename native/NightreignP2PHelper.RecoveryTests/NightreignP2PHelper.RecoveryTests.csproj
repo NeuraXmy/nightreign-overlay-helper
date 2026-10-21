@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../NightreignP2PHelper/IdentityState.cs" Link="IdentityState.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentityRecoveryEngine.cs" Link="IdentityRecoveryEngine.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentitySessionCoordinator.cs" Link="IdentitySessionCoordinator.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentityRecoveryHandoff.cs" Link="IdentityRecoveryHandoff.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentitySupervisor.cs" Link="IdentitySupervisor.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentityPreparation.cs" Link="IdentityPreparation.cs" />
+    <Compile Include="../NightreignP2PHelper/IdentityProfileAddress.cs" Link="IdentityProfileAddress.cs" />
+  </ItemGroup>
+</Project>

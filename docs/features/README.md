@@ -13,6 +13,7 @@
 | [血条材质与端点检测](hp/material-detection.md) | 模型特征、分割、连续确认与训练边界 |
 | [联机状态](p2p.md) | Steam／ETW 辅助程序、组件路径与 macOS 模拟 |
 | [队友时长、主页与赛后点赞](steam-social.md) | 免密钥时长、名字跳转、独立点赞页、限时窗口与七天防重复 |
+| [自动屏蔽与恢复](steam-recovery.md) | 非好友开关、两名队友独立处理、离队确认与断网/闪退恢复 |
 
 涉及功能启停或跨插件通信时，同时阅读[插件系统](../architecture/plugin-system.md)。固定样本评估与优化过程见[实验记录](../development/experiments/README.md)，不作为通用使用说明。
 

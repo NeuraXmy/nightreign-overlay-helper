@@ -61,3 +61,32 @@ playtime:
   unavailable: Unavailable
   hours: '{hours} h'
   available: '{hours} h'
+block:
+  title: Automatic block and restore
+  enable: Temporarily block non-friend teammates
+  help: Starts after valid latency; restores on confirmed departure. Friends and existing blocks are skipped. No
+    DAY1 required.
+  summary:
+    disabled: Off; no temporary blocks in progress.
+    enabled: 'On: waiting for valid latency and a confirmed non-friend relationship.'
+    preparing: Preparing and checking communication state.
+    blocked: Temporarily blocked; leaving, disabling or exiting requests restoration.
+    restoring: Restoring communication. Keep Steam online.
+    recovery_pending: Recovery unconfirmed; the journal is retained for retry. Keep the original Steam account online.
+    retry_wait: Preparation failed; retrying after backoff.
+    error: Block not completed. Existing blocks and ineligible accounts are skipped.
+    account_missing: Waiting for the network helper to confirm the Steam account.
+    unsupported: Automatic block and restore is available on Windows only.
+  state:
+    preparing: Preparing
+    blocked: Blocked
+    restoring: Restoring
+    recovery_pending: Recovery retry pending
+    restored: Restored
+    unconfirmed: Recovery unconfirmed
+    preblocked: Existing block · preserved
+    relationship_skipped: Relationship unconfirmed · skipped
+    failed: Block incomplete
+    retry_wait: Retry pending
+    friend_skipped: Friend skipped
+    waiting: Waiting
