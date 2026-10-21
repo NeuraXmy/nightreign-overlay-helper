@@ -97,7 +97,7 @@ GitHub 的手动构建入口需要构建 workflow 先进入默认分支。
 3. 核对应用 `src/nightreign_overlay/meta.py` 的 `GITEE_REPO` 与上述变量一致，默认是 `NeuraXmy/nightreign-overlay-helper`。
 4. 新版本发布后自动同步；首次使用可手动运行 **Sync Release to Gitee**，输入 `v1.0.1` 及后续各个已有正式版 tag，补齐历史日志与附件。
 
-同步包含更新日志和程序；超过 90 MiB 的程序 ZIP 自动分卷上传并附 SHA-256 清单。Gitee 不上传源码 ZIP，正文链接至 GitHub 的同版本源码附件，不同步源码提交。凭据权限、配额检查、失败重试和客户端行为详见 [Gitee Release 镜像配置](gitee-sync.md)。
+同步包含更新日志和程序；超过 50 MiB 的程序 ZIP 自动分卷上传并附 SHA-256 清单。Gitee 不上传源码 ZIP，正文链接至 GitHub 的同版本源码附件，不同步源码提交。凭据权限、配额检查、失败重试和客户端行为详见 [Gitee Release 镜像配置](gitee-sync.md)。
 
 ## 发布前验证
 

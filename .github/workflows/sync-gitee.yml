@@ -10,7 +10,7 @@ on:
         default: false
         type: boolean
       runner:
-        default: ubuntu-latest
+        default: windows-2022
         type: string
     secrets:
       GITEE_TOKEN:
@@ -27,7 +27,7 @@ on:
         type: boolean
       runner:
         description: GitHub-hosted runner for upload route comparison
-        default: ubuntu-latest
+        default: windows-2022
         type: choice
         options:
           - ubuntu-latest
@@ -45,7 +45,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ${{ inputs.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash

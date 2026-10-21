@@ -13,7 +13,7 @@ Gitee 仓库面向国内下载与更新检查，只维护 Release、更新日志
 
 ## 自动发布和补同步
 
-推送版本 tag 后，`Release Windows ZIP` 完成验证、构建和 GitHub Release 发布，再调用 [`Sync Release to Gitee`](../../../.github/workflows/sync-gitee.yml)。同步读取已发布的 GitHub Release 标题、正文、预发布状态，只下载并核对程序 ZIP。程序不超过 90 MiB 时直接上传；超过时按原始字节拆成最多 90 MiB 的 `.zip.001`、`.zip.002` 等分卷，生成 `.zip.manifest.json`（完整文件名、总大小、完整 ZIP 及各分卷 SHA-256），再上传并核对附件大小。清单最后上传，避免客户端提前下载不完整的分卷集合。
+推送版本 tag 后，`Release Windows ZIP` 完成验证、构建和 GitHub Release 发布，再调用 [`Sync Release to Gitee`](../../../.github/workflows/sync-gitee.yml)。同步读取已发布的 GitHub Release 标题、正文、预发布状态，只下载并核对程序 ZIP。程序不超过 50 MiB 时直接上传；超过时按原始字节拆成最多 50 MiB 的 `.zip.001`、`.zip.002` 等分卷，生成 `.zip.manifest.json`（完整文件名、总大小、完整 ZIP 及各分卷 SHA-256），再上传并核对附件大小。清单最后上传，避免客户端提前下载不完整的分卷集合。
 
 GitHub 发布成功但镜像失败时，GitHub Release 保留可用，Actions 会明确显示镜像任务失败。配置好凭据、权限或配额后，手动运行同步 workflow，填写原 tag 即可重试，无需重建程序。相同名称和大小的附件跳过；同名而大小不符的附件会被替换。手动修改 GitHub Release 正文后，也通过此入口重新同步。
 
@@ -27,7 +27,7 @@ GitHub 发布成功但镜像失败时，GitHub Release 保留可用，Actions �
 
 判断方法：连接／TLS 耗时高表示建立连接慢；连接迅速但已发送字节持续不增长，表示上传链路或服务端接收停滞；发送达到 100% 后迟迟没有最终响应，表示请求体已发送、仍在等待服务端处理。HTTP 403／429 与持续低速是不同的问题；HTTP `000` 表示未收到最终 HTTP 状态，需结合 curl 退出码和发送字节判断。诊断不会自动改变分卷大小、网络协议或增加重试，以免干扰首次观测。
 
-手动运行时可通过 `runner` 选择 `ubuntu-latest`、`ubuntu-24.04-arm`、`windows-2022` 或 `macos-15`，配合 `diagnostic` 比较 GitHub 官方托管环境的上传速度。工作流记录系统、架构和 curl 版本；各次运行使用独立临时 Release。正常自动同步仍默认 Ubuntu。GitHub 官方说明 Windows／Ubuntu 托管在 Azure，macOS 使用独立的 macOS 云；选择系统不等于选择地区，也不保证某个标签的网络速度始终更快。
+手动运行时可通过 `runner` 选择 `ubuntu-latest`、`ubuntu-24.04-arm`、`windows-2022` 或 `macos-15`，配合 `diagnostic` 比较 GitHub 官方托管环境的上传速度。工作流记录系统、架构和 curl 版本；各次运行使用独立临时 Release。正常自动同步默认使用 `windows-2022`；单附件超时为 30 分钟，整个任务超时为 120 分钟。50 MiB 按本次 Windows 实测约 45 KiB/s 估算需约 19 分钟，完整程序仍需约 73 分钟；后续速度会随网络变化。GitHub 官方说明 Windows／Ubuntu 托管在 Azure，macOS 使用独立的 macOS 云；选择系统不等于选择地区，也不保证某个标签的网络速度始终更快。
 
 ## 手动下载分卷
 
