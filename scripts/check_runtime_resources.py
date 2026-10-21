@@ -15,11 +15,13 @@ from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.paths import PACKAGE_DIR
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin import PluginManager, PluginState
+from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
 
 EXPECTED_PLUGINS = {
     "art_timer",
     "audio",
     "capture",
+    "commendation",
     "day_timer",
     "hp_marker",
     "hud",
@@ -28,12 +30,16 @@ EXPECTED_PLUGINS = {
     "p2p_latency",
     "rain_timer",
     "region",
+    "steam_recovery",
 }
 
 
 def main() -> None:
     app = QApplication.instance() or QApplication([])
     plugins = PACKAGE_DIR / "plugins"
+    for cue in BUNDLED_CUES.values():
+        if not cue.path.is_file() or cue.path.stat().st_size == 0:
+            raise RuntimeError(f"Missing bundled voice: {cue.filename}")
     for relative in (
         "map_detect/data/poi_cnn/epoch-42.onnx",
         "hp_marker/data/material_v1.onnx",

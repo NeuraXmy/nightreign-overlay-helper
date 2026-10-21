@@ -7,7 +7,7 @@ settings:
   warning_ping: 警告延遲上限
   status: 執行狀態
   simulation: macOS 使用模擬子程序，約 32 秒循環展示等待、未知數值、延遲變化與換隊；並非實際網路測量
-  show_playtime: 顯示遊戲時數（無需 API Key）
+  show_playtime: 顯示遊戲時數
   playtime_help: 從 Steam 公開個人檔案查詢黑夜君臨總時數；隱私設定或頁面未展示時顯示無法取得。關閉後停止查詢。
   good_ping_help: 低於此值時，延遲顯示為綠色。
   warning_ping_help: 低於此值時顯示黃色，否則顯示紅色。
@@ -62,7 +62,7 @@ playtime:
 block:
   title: 自動封鎖與恢復
   enable: 自動封鎖非好友隊友
-  help: 讀到有效延遲後暫時封鎖，確認離隊後恢復；略過好友與原有封鎖，無需等待 DAY1。
+  help: 讀到有效延遲後暫時封鎖，確認離隊後恢復；略過好友與原有封鎖。
   summary:
     disabled: 已關閉；沒有進行中的暫時封鎖。
     enabled: 已開啟：等待有效延遲與非好友關係確認。

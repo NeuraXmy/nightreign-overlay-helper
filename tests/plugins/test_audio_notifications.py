@@ -92,6 +92,7 @@ def test_circle_advance_forward_and_rewind(make_timer, day):
 def test_rain_manual_start_end_and_cancel_pending_delay(make_timer):
     make, clock, audio = make_timer
     plugin = make(RainTimerPlugin)
+    plugin._audio.cues["warning"].enabled.set(False)
     plugin._audio.cues["start"].seconds.set(2.5)
     plugin._audio.cues["end"].seconds.set(5.5)
     plugin._toggle("button")
@@ -109,6 +110,72 @@ def test_rain_manual_start_end_and_cancel_pending_delay(make_timer):
     clock[0] += 20
     plugin._update_timer()
     assert len(audio.calls) == 3
+
+
+def test_rain_default_warning_and_end_are_separate_once_per_run(make_timer):
+    make, clock, audio = make_timer
+    plugin = make(RainTimerPlugin)
+    plugin._start()
+    assert [call[1] for call in audio.calls] == ["start.wav"]
+    clock[0] = 1079.9
+    plugin._update_timer()
+    assert len(audio.calls) == 1
+    clock[0] = 1080
+    plugin._update_timer()
+    assert [call[1] for call in audio.calls] == ["start.wav", "warning.wav"]
+    clock[0] = 1110
+    plugin._update_timer()
+    plugin._update_timer()
+    plugin._stop()
+    assert [call[1] for call in audio.calls] == ["start.wav", "warning.wav", "end.wav"]
+    plugin._start()
+    clock[0] += 10
+    plugin._stop()
+    clock[0] += 100
+    plugin._update_timer()
+    assert [call[1] for call in audio.calls][3:] == ["start.wav", "end.wav"]
+
+
+@pytest.mark.parametrize("disabled", ["warning", "end"])
+def test_rain_individual_switch_does_not_disable_other_cues(make_timer, disabled):
+    make, clock, audio = make_timer
+    plugin = make(RainTimerPlugin)
+    plugin._audio.cues[disabled].enabled.set(False)
+    plugin._start()
+    clock[0] = 1080
+    plugin._update_timer()
+    clock[0] = 1110
+    plugin._update_timer()
+    plugin._stop()
+    assert [call[1] for call in audio.calls] == [
+        f"{key}.wav" for key in ("start", "warning", "end") if key != disabled
+    ]
+
+
+def test_default_circle_warnings_are_thirty_seconds_early(make_timer):
+    make, clock, audio = make_timer
+    plugin = make(DayTimerPlugin)
+    plugin._start_day(1)
+    for elapsed, expected in ((239.9, "day1.wav"), (240, "first_circle.wav"), (630, "second_circle.wav")):
+        clock[0] = 1000 + elapsed
+        plugin._update_timer()
+        assert audio.calls[-1][1] == expected
+    assert len(audio.calls) == 3
+
+
+def test_default_art_warning_is_three_seconds_before_effect_end(make_timer):
+    make, clock, audio = make_timer
+    plugin = make(ArtTimerPlugin)
+    plugin._art_type, plugin._art_started = "scholar", clock[0]
+    clock[0] += 2
+    plugin._update_timer()
+    assert [call[1] for call in audio.calls] == ["start.wav"]
+    clock[0] = 1018.9
+    plugin._update_timer()
+    assert len(audio.calls) == 1
+    clock[0] = 1019
+    plugin._update_timer()
+    assert audio.calls[-1][1] == "end.wav"
 
 
 def test_art_uses_effect_start_and_character_duration(make_timer, monkeypatch):

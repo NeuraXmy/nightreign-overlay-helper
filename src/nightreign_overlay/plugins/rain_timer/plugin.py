@@ -117,7 +117,7 @@ class RainTimerPlugin(Plugin):
 
     def on_load(self) -> None:
         self.config = self.ctx.config(RainTimerConfig)
-        self._audio = AudioNotifications(self.ctx, ("start", "end"))
+        self._audio = AudioNotifications(self.ctx, ("start", "warning", "end"))
         self._started: float | None = None
         self._hud: HudTimerBar | None = None
         self._calibrating = False
@@ -260,6 +260,7 @@ class RainTimerPlugin(Plugin):
                 time.monotonic() - self._started,
                 {
                     "start": self._audio.cues["start"].seconds.value,
+                    "warning": self.config.duration_seconds.value - self._audio.cues["warning"].seconds.value,
                     "end": self.config.duration_seconds.value - self._audio.cues["end"].seconds.value,
                 },
             )
@@ -421,7 +422,7 @@ class RainTimerPlugin(Plugin):
         panel.addSection(basic)
         panel.addSection(color)
         panel.addSection(advanced)
-        panel.addSection(audio_section(self._audio, ("end",)))
+        panel.addSection(audio_section(self._audio, ("warning", "end")))
         return panel
 
     def reset_settings(self) -> None:
