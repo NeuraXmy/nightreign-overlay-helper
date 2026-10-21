@@ -323,7 +323,13 @@ def test_cancellation_interrupts_blocked_network_read(monkeypatch):
     import threading
     from types import SimpleNamespace
 
-    reader, writer = socket.socketpair()
+    # Match urllib's TCP transport. Windows AF_UNIX socketpair shutdown does
+    # not reliably interrupt recv(), unlike the TCP sockets used by downloads.
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        writer = socket.create_connection(listener.getsockname(), timeout=1)
+        reader, _ = listener.accept()
     entered = threading.Event()
     stopped = threading.Event()
     cancellation = updates.DownloadCancellation()
