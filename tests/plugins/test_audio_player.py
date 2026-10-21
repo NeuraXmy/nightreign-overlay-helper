@@ -13,6 +13,7 @@ from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin.context import PluginContext
 from nightreign_overlay.plugins.audio.api import AudioApi
+from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
 from nightreign_overlay.plugins.audio.plugin import AudioPlugin
 
 
@@ -98,3 +99,25 @@ def test_real_decode_corrupt_file_and_recovery(player, tmp_path, qapp):
     assert not errors
     assert player._player.duration() >= 190
     assert player._output.volume() == pytest.approx(0.35)
+
+
+@pytest.mark.parametrize("preset", BUNDLED_CUES.values(), ids=lambda preset: preset.filename)
+def test_bundled_mp3_decodes_and_advances_with_output_muted(player, preset, qapp):
+    player._ensure_player()
+    player._output.setMuted(True)
+    errors = []
+    player._player.errorOccurred.connect(lambda *args: errors.append(args))
+    assert player.play(str(preset.path))
+    loop = QEventLoop()
+    poll = QTimer()
+    poll.timeout.connect(lambda: loop.quit() if errors or player._player.position() > 0 else None)
+    poll.start(10)
+    timeout = QTimer()
+    timeout.setSingleShot(True)
+    timeout.timeout.connect(loop.quit)
+    timeout.start(3000)
+    loop.exec()
+    poll.stop()
+    timeout.stop()
+    assert not errors
+    assert player._player.duration() > 0 and player._player.position() > 0

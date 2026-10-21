@@ -191,6 +191,9 @@ input_dialog:
   confirm: 確認
 audio:
   title: 音訊播報
+  enabled: 啟用此語音
+  builtin: 使用內建預設語音
+  restore_default: 還原預設音訊
   volume: 音量
   unset: 尚未設定音訊
   select: 選擇本機音訊

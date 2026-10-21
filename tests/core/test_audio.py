@@ -9,13 +9,17 @@ from nightreign_overlay.core.config import ConfigStore
 def test_defaults_persistence_and_reset(store):
     cue = store.bind(AudioCueConfig, "audio.example")
     assert (cue.path.value, cue.volume.value, cue.seconds.value) == ("", 100, 0.0)
+    assert cue.enabled.value is True
+    cue.enabled.set(False)
     cue.path.set("提示音.wav")
     cue.volume.set(35)
     cue.seconds.set(1.7)
     store.flush()
     restored = ConfigStore(store.path).bind(AudioCueConfig, "audio.example")
+    assert restored.enabled.value is False
     assert (restored.path.value, restored.volume.value, restored.seconds.value) == ("提示音.wav", 35, 1.7)
     cue.reset_all()
+    assert cue.enabled.value is True
     assert (cue.path.value, cue.volume.value, cue.seconds.value) == ("", 100, 0.0)
 
 

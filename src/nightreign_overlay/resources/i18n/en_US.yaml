@@ -192,6 +192,9 @@ input_dialog:
   confirm: Confirm
 audio:
   title: Audio notifications
+  enabled: Enable this voice cue
+  builtin: Using bundled default voice
+  restore_default: Restore default audio
   volume: Volume
   unset: No audio selected
   select: Choose local audio

@@ -196,6 +196,9 @@ input_dialog:
 
 audio:
   title: 音频播报
+  enabled: 启用此语音
+  builtin: 使用内置默认语音
+  restore_default: 恢复默认音频
   volume: 音量
   unset: 音频未设置
   select: 选择本地音频

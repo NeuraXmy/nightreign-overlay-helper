@@ -186,6 +186,9 @@ input_dialog:
   cancel: キャンセル
   confirm: 確定
 audio:
+  enabled: この音声を有効にする
+  builtin: 内蔵の標準音声を使用
+  restore_default: 標準音声に戻す
   title: 音声通知
   volume: 音量
   unset: 音声未設定

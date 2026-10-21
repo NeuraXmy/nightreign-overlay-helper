@@ -7,7 +7,7 @@ settings:
   warning_ping: 警告延迟上限
   status: 运行状态
   simulation: macOS 使用模拟子进程，约 32 秒循环演示等待、未知指标、延迟变化和换队；这些数值不是实际网络测量
-  show_playtime: 显示游戏时长（无需 API Key）
+  show_playtime: 显示游戏时长
   playtime_help: 从 Steam 公开主页查询黑夜君临总时长；隐私设置或主页未展示时显示不可用。关闭后停止查询。
   good_ping_help: 低于此值时，延迟显示为绿色。
   warning_ping_help: 低于此值时显示黄色，否则显示红色。
@@ -62,7 +62,7 @@ playtime:
 block:
   title: 自动屏蔽与恢复
   enable: 自动屏蔽非好友队友
-  help: 读到有效延迟后临时屏蔽，确认离队后恢复；好友和原有屏蔽均跳过，无需等待 DAY1。
+  help: 读到有效延迟后临时屏蔽，确认离队后恢复；好友和原有屏蔽均跳过。
   summary:
     disabled: 已关闭；没有进行中的临时屏蔽。
     enabled: 已开启：等待有效延迟与非好友关系确认。
