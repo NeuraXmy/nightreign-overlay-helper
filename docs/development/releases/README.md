@@ -4,6 +4,10 @@
 
 Gitee 国内 Release 镜像的凭据、仓库和历史版本补同步见 [Gitee 镜像配置](gitee-sync.md)。
 
+## Release 更新日志
+
+Release 更新日志只记录用户关心的功能变化、使用体验改进和问题修复。测试、benchmark、CI、内部重构等维护变更无需写入，除非它们直接影响用户可感知的行为。例如，本次测试与 benchmark 的拆分不列入 Release 更新日志。发布说明保存在本目录的 `<tag>.md`，不自动罗列全部提交。
+
 ## 发布记录
 
 | 日期 | 审计快照 | 后续处理 |
@@ -71,7 +75,7 @@ Windows EXE 必须在 Windows 上构建；macOS 开发环境不能直接生成�
 
 tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v1.0.0-windows-x64.zip`；
 手动构建以 `manual-dev` 标记，名称包含提交短 SHA 与运行编号。解压后保留完整的 `nightreign-overlay-helper/` 文件夹，
-运行其中的 EXE。CI 在打包前运行完整 pytest、Ruff 检查及格式检查，并通过
+运行其中的 EXE。CI 在打包前运行默认 pytest 回归（四段血条生产录像使用简化版）、Ruff 检查及格式检查，并通过
 `scripts/check_runtime_resources.py` 实际加载和推理 POI、血条材质与端帽模型，检查内置插件发现和加载。
 打包后检查主程序、截图 DLL、三个 ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
 `scripts/prepare_release_licenses.py --check` 还会离线核对完整许可证内容、
@@ -97,7 +101,7 @@ GitHub 的手动构建入口需要构建 workflow 先进入默认分支。
 
 ## 发布前验证
 
-本地 `build.bat` 负责构建，不代替测试；发布 CI 在构建前执行完整 pytest、Ruff、运行资源推理和插件发现检查。开发环境可从仓库根目录运行：
+本地 `build.bat` 负责构建，不代替测试；发布 CI 在构建前执行默认 pytest 回归（四段血条生产录像使用简化版）、Ruff、运行资源推理和插件发现检查。开发环境可从仓库根目录运行：
 
 ```bash
 uv sync --locked --dev --group build
@@ -117,3 +121,5 @@ git diff --check
 许可证文件维护、源码准备和审计范围见[许可证与源码分发](licensing.md)。
 
 [返回开发维护](../README.md)
+
+血条完整录像 benchmark 不在构建／发布流程中执行；只有血条检测部分发生修改时才运行 `uv run pytest benchmark/benchmark_hp_production.py -m benchmark -q`。覆盖范围与简化回归说明见 [测试策略](../testing/README.md)。
