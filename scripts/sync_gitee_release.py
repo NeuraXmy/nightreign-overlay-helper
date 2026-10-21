@@ -28,7 +28,7 @@ def api(method: str, url: str, data: dict | None = None, token: str = ""):
         return json.loads(payload) if payload else None
 
 
-PART_SIZE = 90 * 1024 * 1024
+PART_SIZE = 50 * 1024 * 1024
 
 
 def prepare_runtime(path: Path, part_size: int = PART_SIZE) -> list[Path]:
