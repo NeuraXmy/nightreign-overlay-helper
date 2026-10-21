@@ -45,7 +45,7 @@ var cases = new (string Name, Action Run)[]
 };
 
 var failures = 0;
-foreach (var (name, run) in cases)
+foreach (var (name, run) in cases.Concat(CommendationTests.Cases))
 {
     FakeSteam.Reset();
     try

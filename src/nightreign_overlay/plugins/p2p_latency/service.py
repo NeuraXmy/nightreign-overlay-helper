@@ -71,6 +71,7 @@ def resolve_helper_path() -> Path:
 class P2PService(QObject):
     status_changed = pyqtSignal(object)
     peers_changed = pyqtSignal(object)
+    snapshotReceived = pyqtSignal(object)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -187,6 +188,7 @@ class P2PService(QObject):
                     # polling cycle succeeded, so the previous crash streak is over.
                     self._restart_attempt = 0
                     self._set_peers(value)
+                    self.snapshotReceived.emit(tuple(self.peers))
             except Exception as exc:
                 log.warning(f"Ignored invalid P2P helper message: {exc}; line={line[:500]!r}")
 

@@ -1,0 +1,39 @@
+plugin:
+  name: 赛后点赞
+  description: 对局队友离队后弹出独立窗口，点击名字查看主页，点击 点赞按钮 发送自定义留言
+settings:
+  behavior: 赛后点赞
+  close_seconds: 点赞窗口自动关闭时间
+  close_help: 每位队友出现后分别计时，到时关闭；窗口刷新不会延长时间。
+  seconds: '{value} 秒'
+  comment: 点赞留言
+  comment_help: 仅在点击 点赞按钮 时发送；同一账号七天内不向同一玩家重复留言。
+  save: 保存
+  show_recent: 显示队友
+  manual: 手动打开队友窗口
+  manual_help: 打完后队友仍留在房间，或没有识别到 DAY1 时，可手动打开。
+  detection_help: 自动提示需要启用联机状态及缩圈计时：识别 DAY1 后记录本局队友，确认有人离队后显示。离队是结束提示的近似依据，中途掉线也可能触发。Steam 页面无法留言时可点击名字手动查看。
+  window: 独立点赞窗口
+  dismiss: 关闭本次窗口
+overlay:
+  title: 赛后点赞
+  send: 向该队友的 Steam 主页发送当前设置的留言
+  open_profile: 点击名字在 Steam 内打开主页
+state:
+  idle: 等待本局队友；不会自动发送留言。
+  ready: 点击 点赞按钮 发送留言
+  sending: 正在发送留言…
+  sent: 已留言点赞，七天内不重复发送
+  cooldown: 七天留言间隔内
+  unknown: 结果待核对，请先查看主页；暂停重复留言
+  retry_later: Steam 未接受留言，稍后可重试
+  precondition: 主页未开放留言或账号未就绪，请查看主页后重试
+  rejected: Steam 未接受留言，请稍后重试
+  error: 准备失败，请保持 Steam 和游戏运行后重试
+  history_error: 留言记录异常，请先核对主页
+  account_missing: 未读取到 Steam 登录账号
+  account_changed: Steam 账号已切换或无法确认，请重新组队
+  helper_missing: 未找到或无法启动留言组件
+  invalid_comment: 请填写 1–500 字的留言
+  saved: 留言已保存
+  disabled: 请先开启赛后点赞功能

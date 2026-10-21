@@ -15,6 +15,8 @@ internal static class Program
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.InputEncoding = System.Text.Encoding.UTF8;
+        if (args.Contains("--commend", StringComparer.OrdinalIgnoreCase))
+            return CommendationWorker.Run();
 
         using var cancellation = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) =>
@@ -143,6 +145,8 @@ internal static class Program
             ReleaseSteamApiLibrary();
         }
 
+        if (game.HasExited)
+            Protocol.Status("game_exited", "游戏已退出", force: true);
         return 0;
     }
 
