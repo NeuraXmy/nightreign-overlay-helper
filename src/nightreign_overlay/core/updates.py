@@ -243,12 +243,18 @@ class DownloadCancellation:
     def cancel(self) -> None:
         self._cancelled.set()
         with self._lock:
-            # Closing a buffered response can block behind read(); shutdown wakes
-            # the reader instead, and the worker owns closing the response.
-            connection = getattr(getattr(getattr(self._response, "fp", None), "raw", None), "_sock", None)
+            # Never close the buffered response here: it can wait behind read().
+            # Close only the unbuffered transport to interrupt Windows recv too.
+            raw = getattr(getattr(self._response, "fp", None), "raw", None)
+            connection = getattr(raw, "_sock", None)
             if connection is not None:
                 with suppress(OSError):
                     connection.shutdown(socket.SHUT_RDWR)
+                with suppress(OSError):
+                    connection.close()
+                if isinstance(raw, socket.SocketIO):
+                    with suppress(OSError):
+                        raw.close()
 
     def check(self) -> None:
         if self._cancelled.is_set():
