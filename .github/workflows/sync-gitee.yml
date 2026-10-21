@@ -6,6 +6,9 @@ on:
       tag:
         required: true
         type: string
+      diagnostic:
+        default: false
+        type: boolean
     secrets:
       GITEE_TOKEN:
         required: true
@@ -15,6 +18,10 @@ on:
         description: Existing GitHub release tag to sync (e.g. v1.0.1)
         required: true
         type: string
+      diagnostic:
+        description: Re-upload into a temporary prerelease (300s per file), then clean it up
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -34,6 +41,7 @@ jobs:
       GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
       GITEE_REPO: ${{ vars.GITEE_REPO }}
       RELEASE_TAG: ${{ inputs.tag }}
+      DIAGNOSTIC_UPLOAD: ${{ inputs.diagnostic }}
     steps:
       - uses: actions/checkout@v4
       - name: Check mirror configuration
@@ -47,3 +55,6 @@ jobs:
             --pattern "nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip"
       - name: Mirror release notes and split runtime ZIP
         run: python scripts/sync_gitee_release.py
+      - name: Remove temporary diagnostic release
+        if: always() && inputs.diagnostic
+        run: python scripts/sync_gitee_release.py --cleanup-diagnostic
