@@ -321,26 +321,27 @@ def test_cancel_download_cleans_partial_and_stops_next_request(monkeypatch, tmp_
 def test_cancellation_interrupts_blocked_network_read(monkeypatch):
     import socket
     import threading
-    from types import SimpleNamespace
 
-    # Match urllib's TCP transport. Windows AF_UNIX socketpair shutdown does
-    # not reliably interrupt recv(), unlike the TCP sockets used by downloads.
+    # Match urllib's TCP transport and buffered makefile ownership.
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
         listener.bind(("127.0.0.1", 0))
         listener.listen(1)
         writer = socket.create_connection(listener.getsockname(), timeout=1)
         reader, _ = listener.accept()
+    reader.settimeout(10)
+    stream = reader.makefile("rb")
     entered = threading.Event()
     stopped = threading.Event()
     cancellation = updates.DownloadCancellation()
 
     class BlockedResponse:
-        fp = SimpleNamespace(raw=SimpleNamespace(_sock=reader))
+        fp = stream
 
         def __enter__(self):
             return self
 
         def __exit__(self, *args):
+            stream.close()
             reader.close()
 
     monkeypatch.setattr(updates, "urlopen", lambda *a, **k: BlockedResponse())
@@ -349,7 +350,7 @@ def test_cancellation_interrupts_blocked_network_read(monkeypatch):
         try:
             with cancellation.open(updates.Request("https://example.com/file")):
                 entered.set()
-                reader.recv(1024)
+                stream.read(1024)
                 cancellation.check()
         except updates.DownloadCancelledError:
             stopped.set()
