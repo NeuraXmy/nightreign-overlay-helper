@@ -53,7 +53,7 @@ class MainWindow(FluentWindow):
 
         self.faqPage = FaqPage(self)
         self.settingsPage = SettingsPage(config, plugins, self)
-        self.aboutPage = AboutPage(self)
+        self.aboutPage = AboutPage(config, self)
         self.addSubInterface(self.faqPage, FluentIcon.HELP, tr("nav.faq"), NavigationItemPosition.BOTTOM)
         self.addSubInterface(
             self.settingsPage, FluentIcon.SETTING, tr("nav.settings"), NavigationItemPosition.BOTTOM

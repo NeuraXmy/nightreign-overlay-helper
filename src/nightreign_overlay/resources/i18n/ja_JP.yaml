@@ -210,3 +210,24 @@ overlay_settings:
     title: 位置をリセット
     reset: リセット
     horizontal: 左右位置のみ
+
+updates:
+  title: 更新の確認
+  changelog: リリースノート
+  check: 今すぐ確認
+  check_hint: GitHub / Gitee で新しいバージョンを確認
+  auto: 起動時に更新を確認
+  available: 新しいバージョンがあります
+  install_hint: 新バージョンをすべて展開し、旧アプリを終了してから旧版のフォルダーを削除してください。設定はユーザーデータフォルダーに保存され、引き継がれます。
+  manual_hint: ダウンロードできない場合は、下の GitHub / Gitee リンクから手動でダウンロードしてください。
+  download: ダウンロード（{source}）
+  close: 閉じる
+  failed: GitHub と Gitee から有効なバージョンを取得できませんでした。後でもう一度お試しください。
+  latest: 最新の正式版を使用しています。
+  save: 更新 ZIP を保存
+  downloading: バックグラウンドでダウンロード中です。
+  progress: "ダウンロード中：{downloaded} / {total} MiB"
+  download_failed: ダウンロードに失敗しました。GitHub / Gitee リンクから手動でダウンロードしてください。
+  saved: '保存先: {path}'
+  checking: 確認中…
+  history_limited: GitHub API が利用できないため、公開フィードの最近のリリースを表示しています。全履歴は GitHub / Gitee リンクで確認できます。
