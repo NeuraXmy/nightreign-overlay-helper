@@ -9,6 +9,9 @@ on:
       diagnostic:
         default: false
         type: boolean
+      runner:
+        default: ubuntu-latest
+        type: string
     secrets:
       GITEE_TOKEN:
         required: true
@@ -22,6 +25,15 @@ on:
         description: Re-upload into a temporary prerelease (300s per file), then clean it up
         default: false
         type: boolean
+      runner:
+        description: GitHub-hosted runner for upload route comparison
+        default: ubuntu-latest
+        type: choice
+        options:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - windows-2022
+          - macos-15
 
 permissions:
   contents: read
@@ -32,8 +44,11 @@ concurrency:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -44,6 +59,13 @@ jobs:
       DIAGNOSTIC_UPLOAD: ${{ inputs.diagnostic }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Record upload environment
+        run: |
+          echo "Runner: $RUNNER_OS / $RUNNER_ARCH"
+          curl --version
       - name: Check mirror configuration
         run: |
           test -n "$GITEE_TOKEN" || { echo 'Missing GITEE_TOKEN secret'; exit 1; }
