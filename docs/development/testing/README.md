@@ -24,6 +24,18 @@ tests/
 
 血条检测的拒识率验收统一为：不超过 20% 正常通过，超过 20% 且不超过 50% 时通过并在 pytest 警告摘要中报告，超过 50% 时失败。连续回放按每种采样间隔统计；生产录像冷启动按所有窗口的拒识次数／检测次数汇总，灰血独立冷启动兼容测试仍按每个窗口统计。最长连续拒识不超过 2 秒正常通过，超过 2 秒且不超过 5 秒时警告通过，超过 5 秒时失败；适用于连续回放和已有的冷启动连续拒识检查。零错误与首次输出时间仍分别检查。阈值由 `tests/support/hp_assertions.py` 统一实现。
 
+四段生产血条录像的日常回归使用 [`test_hp_production_videos.py`](../../../tests/plugins/test_hp_production_videos.py) 的简化版：每个 GT 段起点及最后一段尾部抽取 3 秒窗口，每窗口只读取 12 个真实录像帧（0.25 秒采样），各窗口使用独立生产检测器。覆盖两段灰血录像的容量变化、复杂粉色／黄色背景、零错误、至少 50% 有效输出和首次输出小于 2.5 秒；四段合计目标低于 10 秒。它不代替整段录像的连续拒识和多采样率验收。耗时用 `--durations=10` 查看，不使用依赖机器负载的硬时间断言。
+
+原有三种采样率的全录像回放、每个可用整秒起点的独立五秒冷启动及原验收阈值，完整保留在 [`benchmark/benchmark_hp_production.py`](../../../benchmark/benchmark_hp_production.py)。**只有血条检测部分发生修改时才运行该 benchmark**（包括检测算法、材质模型／权重、检测参数、标定／裁剪几何以及相关样本或标注）；更新检查、翻译等无关修改不运行。普通 `pytest` 只发现 `tests/`；构建和发布 CI 显式运行 `tests -m "not benchmark"`，不执行此 benchmark。命令如下：
+
+```bash
+# 日常四段录像简化回归；查看合计耗时
+QT_QPA_PLATFORM=offscreen uv run pytest tests/plugins/test_hp_production_videos.py -q --durations=10
+
+# 仅血条检测相关修改：原完整验收（保留拒识率、连续拒识、冷启动断言）
+QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m benchmark -q --durations=10
+```
+
 国际化测试保留核心 UI 的全语言完整性检查。插件 UI 只要求 `zh_CN.yaml` 完整且非空，检查插件名称、描述与源码字面量／条件分支引用；动态词条由插件 UI 测试覆盖。其他语言可缺少 UI 词条，已有词条仍检查中文基准、字符串类型和格式占位符。地图名称表单独检查：每个正式语言的 `<语言>-names.csv` 必须覆盖 `zh_CN-names.csv` 的全部 ID，且名称非空、ID 不重复；直接读取 CSV，不能让运行时中文回退掩盖缺项。
 
 | 目录 | 测试模块 | 覆盖内容 |

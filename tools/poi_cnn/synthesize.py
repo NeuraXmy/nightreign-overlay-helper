@@ -12,12 +12,11 @@ import argparse
 import json
 import random
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
-
 
 MAP_SIZE = (750, 750)
 OUTPUT_SIZE = (64, 64)
@@ -77,7 +76,7 @@ GAME_ALPHA_RANGE = (0.5, 0.75)
 OTHER_COUNT_PROBABILITIES = (0.4, 0.4, 0.2)
 OTHER_SELECTION_PROBABILITIES = {0: 0.3, 1: 0.4, 2: 0.05, 3: 0.05, 4: 0.05, 5: 0.05, 6: 0.00, 7: 0.05}
 OTHER_BASE_SCALE = {0: 0.15, 1: 0.15, 2: 0.15, 3: 0.15, 4: 0.15, 5: 0.15, 6: 0.5, 7: 0.2}
-OTHER_BEFORE_BASE = { 0: False, 1: True, 2: True, 3: True, 4: True, 5: False, 6: False, 7: False}
+OTHER_BEFORE_BASE = {0: False, 1: True, 2: True, 3: True, 4: True, 5: False, 6: False, 7: False}
 PLAYER_PROBABILITY = 0.1
 PLAYER_BASE_SCALE = 0.8  # player longest side as a fraction of OUTPUT_SIZE
 PLAYER_COLORS = ("blue", "green", "red")
@@ -137,7 +136,7 @@ def _degraded_variants(image: Image.Image) -> dict[tuple[float, int], Image.Imag
         return cached[1]
     variants: dict[tuple[float, int], Image.Image] = {}
     for level in RESOLUTION_DEGRADE_LEVELS:
-        small = (max(1, int(round(image.width * level))), max(1, int(round(image.height * level))))
+        small = (max(1, round(image.width * level)), max(1, round(image.height * level)))
         for resample in RESOLUTION_DEGRADE_RESAMPLING:
             variants[(level, resample)] = image.resize(small, resample).resize(image.size, resample)
     _DEGRADED_VARIANT_CACHE[id(image)] = (image, variants)
@@ -160,13 +159,13 @@ def _sample_size_scale(rng: random.Random) -> float:
 
 
 def _sample_offset(rng: random.Random) -> int:
-    return int(round(max(-POSITION_OFFSET_MAX, min(POSITION_OFFSET_MAX, rng.gauss(0.0, 3.0)))))
+    return round(max(-POSITION_OFFSET_MAX, min(POSITION_OFFSET_MAX, rng.gauss(0.0, 3.0))))
 
 
 def _sample_center(rng: random.Random) -> tuple[int, int]:
     return (
-        int(round(max(0, min(OUTPUT_SIZE[0] - 1, rng.gauss(OUTPUT_SIZE[0] / 2, CENTER_SIGMA))))),
-        int(round(max(0, min(OUTPUT_SIZE[1] - 1, rng.gauss(OUTPUT_SIZE[1] / 2, CENTER_SIGMA))))),
+        round(max(0, min(OUTPUT_SIZE[0] - 1, rng.gauss(OUTPUT_SIZE[0] / 2, CENTER_SIGMA)))),
+        round(max(0, min(OUTPUT_SIZE[1] - 1, rng.gauss(OUTPUT_SIZE[1] / 2, CENTER_SIGMA)))),
     )
 
 
@@ -181,8 +180,8 @@ def _sample_map_crop_origin(rng: random.Random, background: Image.Image) -> tupl
     crop_center_x = max(OUTPUT_SIZE[0] / 2, min(max_left + OUTPUT_SIZE[0] / 2, rng.gauss(center_x, sigma_x)))
     crop_center_y = max(OUTPUT_SIZE[1] / 2, min(max_top + OUTPUT_SIZE[1] / 2, rng.gauss(center_y, sigma_y)))
     return (
-        int(round(crop_center_x - OUTPUT_SIZE[0] / 2)),
-        int(round(crop_center_y - OUTPUT_SIZE[1] / 2)),
+        round(crop_center_x - OUTPUT_SIZE[0] / 2),
+        round(crop_center_y - OUTPUT_SIZE[1] / 2),
     )
 
 
@@ -191,10 +190,10 @@ def _add_blue_overlay(image: Image.Image, rng: random.Random) -> dict[str, objec
     if rng.random() >= BLUE_OVERLAY_PROBABILITY:
         return None
     color = tuple(
-        max(0, min(255, int(round(rng.gauss(channel, BLUE_OVERLAY_COLOR_SIGMA)))))
+        max(0, min(255, round(rng.gauss(channel, BLUE_OVERLAY_COLOR_SIGMA))))
         for channel in BLUE_OVERLAY_COLOR
     )
-    alpha = max(0, min(255, int(round(rng.gauss(BLUE_OVERLAY_ALPHA, BLUE_OVERLAY_ALPHA_SIGMA)))))
+    alpha = max(0, min(255, round(rng.gauss(BLUE_OVERLAY_ALPHA, BLUE_OVERLAY_ALPHA_SIGMA))))
     overlay = Image.new("RGBA", image.size, (*color, alpha))
     tinted = Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
     image.paste(tinted)
@@ -235,9 +234,9 @@ def _adjust_detail(image: Image.Image, rng: random.Random) -> tuple[dict[str, ob
     direction = rng.choice(("horizontal", "vertical"))
     factor = max(STRETCH_RANGE[0], min(STRETCH_RANGE[1], rng.gauss(1.05, STRETCH_SIGMA)))
     if direction == "horizontal":
-        resized = image.resize((max(1, int(round(image.width * factor))), image.height), Image.Resampling.BICUBIC)
+        resized = image.resize((max(1, round(image.width * factor)), image.height), Image.Resampling.BICUBIC)
     else:
-        resized = image.resize((image.width, max(1, int(round(image.height * factor)))), Image.Resampling.BICUBIC)
+        resized = image.resize((image.width, max(1, round(image.height * factor))), Image.Resampling.BICUBIC)
     if direction == "horizontal":
         left = (resized.width - image.width) // 2
         image = resized.crop((left, 0, left + image.width, image.height))
@@ -271,7 +270,9 @@ def _blend_onto_game(
     key = rng.choice(sorted(games))
     background, left, top = _sample_game_crop(rng, games[key])
     alpha = rng.uniform(*GAME_ALPHA_RANGE)
-    return {"game": key, "alpha": round(alpha, 4), "origin": [left, top]}, Image.blend(background, image.convert("RGB"), alpha)
+    return {"game": key, "alpha": round(alpha, 4), "origin": [left, top]}, Image.blend(
+        background, image.convert("RGB"), alpha
+    )
 
 
 def _choose_variant(rng: random.Random, variant_paths: dict[int, Path], has_base: bool) -> int | None:
@@ -362,11 +363,14 @@ def _recolor_player(image: Image.Image, hue: float) -> Image.Image:
     q = high * (1.0 - f * sat)
     t = high * (1.0 - (1.0 - f) * sat)
     masks = [i == k for k in range(6)]
-    recoloured = np.stack([
-        np.select(masks, [high, q, p, p, t, high]),
-        np.select(masks, [t, high, high, q, p, p]),
-        np.select(masks, [p, p, t, high, high, q]),
-    ], axis=-1)
+    recoloured = np.stack(
+        [
+            np.select(masks, [high, q, p, p, t, high]),
+            np.select(masks, [t, high, high, q, p, p]),
+            np.select(masks, [p, p, t, high, high, q]),
+        ],
+        axis=-1,
+    )
     keep = (sat < PLAYER_SATURATION_THRESHOLD)[..., None]
     rgb = np.where(keep, rgb, recoloured)
     out = np.concatenate([rgb, array[..., 3:]], axis=-1)
@@ -428,8 +432,8 @@ def _add_player(
         dy = center_y - target_y
         if dx * dx + dy * dy >= clearance * clearance:
             break
-    left = int(round(center_x - marker.width / 2))
-    top = int(round(center_y - marker.height / 2))
+    left = round(center_x - marker.width / 2)
+    top = round(center_y - marker.height / 2)
     image.paste(marker, (left, top), marker)
     return {
         "color": color_name,
@@ -551,15 +555,31 @@ def generate(
             has_corner = rng.random() >= NO_CORNER_RATE and has_base
             selected_corner = rng.choice([*sorted(corner_paths)]) if has_corner else None
             selected_variant = _choose_variant(rng, variant_paths, has_base)
-            base_image = Image.open(base_paths[base_key]).convert("RGBA") if selected_base is not None else None
-            corner_image = Image.open(corner_paths[selected_corner]).convert("RGBA") if selected_corner is not None else None
-            variant_image = Image.open(variant_paths[selected_variant]).convert("RGBA") if selected_variant is not None else None
+            base_image = (
+                Image.open(base_paths[base_key]).convert("RGBA") if selected_base is not None else None
+            )
+            corner_image = (
+                Image.open(corner_paths[selected_corner]).convert("RGBA")
+                if selected_corner is not None
+                else None
+            )
+            variant_image = (
+                Image.open(variant_paths[selected_variant]).convert("RGBA")
+                if selected_variant is not None
+                else None
+            )
             icon_key = meta[selected_base] if selected_base is not None else None
             if icon_key is not None and icon_key not in POI_ICON_SCALE:
                 raise ValueError(f"No POI_ICON_SCALE entry for metadata key {icon_key}")
             image, (x, y), other_objects = _compose(
-                backgrounds[bg_key], base_image, icon_key, corner_image,
-                variant_image, selected_variant, rng, others,
+                backgrounds[bg_key],
+                base_image,
+                icon_key,
+                corner_image,
+                variant_image,
+                selected_variant,
+                rng,
+                others,
             )
             blue_overlay = _add_blue_overlay(image, rng)
             player_info = _add_player(image, players.get(0), rng)
@@ -570,22 +590,28 @@ def generate(
             image.save(output_dir / filename)
             if count >= 100 and index < 100:
                 preview_images.append(image.copy())
-            labels.write(json.dumps({
-                "image": filename,
-                "base": selected_base,
-                "icon_key": icon_key,
-                "construct_type": icon_key or 0,
-                "corner": selected_corner,
-                "variant": selected_variant,
-                "background": bg_key,
-                "crop_xy": [x, y],
-                "others": other_objects,
-                "player": player_info,
-                "blue_overlay": blue_overlay,
-                "color_adjustment": color_adjustment,
-                "detail_adjustment": detail_adjustment,
-                "game_blend": game_blend,
-            }, ensure_ascii=False) + "\n")
+            labels.write(
+                json.dumps(
+                    {
+                        "image": filename,
+                        "base": selected_base,
+                        "icon_key": icon_key,
+                        "construct_type": icon_key or 0,
+                        "corner": selected_corner,
+                        "variant": selected_variant,
+                        "background": bg_key,
+                        "crop_xy": [x, y],
+                        "others": other_objects,
+                        "player": player_info,
+                        "blue_overlay": blue_overlay,
+                        "color_adjustment": color_adjustment,
+                        "detail_adjustment": detail_adjustment,
+                        "game_blend": game_blend,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
     if count >= 100:
         preview = Image.new("RGB", (OUTPUT_SIZE[0] * 10, OUTPUT_SIZE[1] * 10))

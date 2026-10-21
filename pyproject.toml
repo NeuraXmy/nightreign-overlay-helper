@@ -72,3 +72,4 @@ quote-style = "double"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = ["benchmark: expensive detector evaluation, run explicitly after relevant detection changes"]
