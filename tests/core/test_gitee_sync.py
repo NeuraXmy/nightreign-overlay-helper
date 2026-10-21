@@ -6,7 +6,7 @@ import pytest
 from scripts import sync_gitee_release as sync
 
 
-@pytest.mark.parametrize("exists", [False, True])
+@pytest.mark.parametrize("exists", [False, True, None])
 def test_mirror_creates_or_updates_release_and_preserves_matching_attachments(tmp_path, monkeypatch, exists):
     monkeypatch.chdir(tmp_path)
     for key, value in {
@@ -29,8 +29,12 @@ def test_mirror_creates_or_updates_release_and_preserves_matching_attachments(tm
         calls.append((method, url, data))
         if "api.github.com" in url:
             return {"name": "Release", "body": "Notes", "prerelease": False, "assets": attachments}
+        if method == "GET":
+            assert token == "secret"
         if "/releases/tags/" in url:
-            if not exists:
+            if exists is None:
+                return None
+            if exists is False:
                 raise HTTPError(url, 404, "not found", {}, None)
             return {"id": 12}
         if url.endswith("attach_files?per_page=100"):

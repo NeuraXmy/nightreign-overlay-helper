@@ -106,18 +106,21 @@ def sync() -> None:
         "prerelease": github["prerelease"],
     }
     try:
-        release = api("GET", f"{base}/releases/tags/{quote(tag, safe='')}")
+        release = api("GET", f"{base}/releases/tags/{quote(tag, safe='')}", token=token)
     except HTTPError as error:
         if error.code != 404:
             raise
-        repository = api("GET", base)
+        release = None
+    # Gitee also returns HTTP 200 with a null body for a missing release.
+    if release is None:
+        repository = api("GET", base, token=token)
         # Gitee requires a commit for tags: use the mirror's own initial README commit.
         metadata["target_commitish"] = repository["default_branch"]
         release = api("POST", f"{base}/releases", metadata)
     else:
         release = api("PATCH", f"{base}/releases/{release['id']}", metadata)
     endpoint = f"{base}/releases/{release['id']}/attach_files"
-    attached = {a["name"]: a for a in api("GET", endpoint + "?per_page=100")}
+    attached = {a["name"]: a for a in api("GET", endpoint + "?per_page=100", token=token)}
     for path in files:
         previous = attached.get(path.name)
         if previous and previous["size"] == path.stat().st_size:
@@ -148,7 +151,7 @@ def sync() -> None:
         if result.returncode:
             # Do not print request arguments, credentials, or arbitrary server responses.
             raise RuntimeError(f"Gitee upload failed for {path.name} (curl {result.returncode})")
-    final = {a["name"]: a for a in api("GET", endpoint + "?per_page=100")}
+    final = {a["name"]: a for a in api("GET", endpoint + "?per_page=100", token=token)}
     if any(final.get(path.name, {}).get("size") != path.stat().st_size for path in files):
         raise RuntimeError("Gitee release attachment verification failed")
 
