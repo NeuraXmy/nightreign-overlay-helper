@@ -25,7 +25,7 @@ The current version is developed on [`main`](https://github.com/NeuraXmy/nightre
 
 1. Download and fully extract the [Windows release ZIP](https://github.com/NeuraXmy/nightreign-overlay-helper/releases). Keep `_internal/`, `bin/`, `third-party/`, and all other bundled files alongside the EXE. Do not move the EXE on its own. Python and .NET runtimes are included; no separate installation is needed.
 2. Run `nightreign-overlay-helper.exe` and approve the administrator prompt. Sign in to Steam before using Co-op Status.
-3. Set the game to windowed or borderless windowed mode, then follow the **Guide** tab on each feature page to calibrate regions, select the game language, and configure shortcuts.
+3. Set the game to windowed or borderless windowed mode. On Windows, regions without manual calibration use automatic defaults for a 16:9 game window; saved manual regions take priority. Follow each feature's **Guide** tab to select the game language, configure shortcuts, and adjust regions when needed.
 4. Right-click an overlay or the system tray icon to open the main window. Closing it hides the app to the tray; choose **Quit** from the context menu to exit completely.
 
 Move the overlays while the main window is open. Display mode, opacity, and other options are available in General Settings.
@@ -33,7 +33,7 @@ Move the overlays while the main window is open. Display mode, opacity, and othe
 ### Recognition and Issue Reports
 
 - If recognition fails, check that the calibrated region is accurate and no other window covers it.
-- Recalibrate after changing monitors, resolution, display scaling, or the game window size.
+- Automatic regions follow the position and size of a 16:9 game window. Check and recalibrate manual regions after changing monitors, resolution, display scaling, or window position.
 - To report an issue, export a diagnostic ZIP with the **Report** button on the **About** page.
 
 ## Running from Source

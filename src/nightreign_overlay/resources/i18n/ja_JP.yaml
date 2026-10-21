@@ -59,6 +59,10 @@ settings_reset:
   cancel: キャンセル
   done: 初期設定に戻しました
 region_preview:
+  automatic: 自動（16:9）
+  waiting: 自動範囲を待機中
+  automatic_help: 手動指定がない場合、Windows の 16:9 ゲームウィンドウの既定範囲を使用します。いつでも手動で指定できます。
+  clear_manual: 手動指定を解除して自動範囲を使用
   calibrated: 指定済み
   uncalibrated: 未指定
   current: 現在の範囲：({x}, {y})、{width} × {height} px
