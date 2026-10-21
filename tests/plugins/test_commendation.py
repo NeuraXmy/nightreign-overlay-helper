@@ -7,6 +7,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QWidget
+from qfluentwidgets import BodyLabel
 
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.plugin.context import PluginContext
@@ -266,10 +267,15 @@ def test_separate_plugin_page_window_name_and_like_actions(plugin, store, monkey
     instance.on_load()
     parent = QWidget()
     panel = instance.create_settings_widget(parent)
+    status_section = panel.sectionLayout.itemAt(panel.sectionLayout.count() - 1).widget()
+    assert status_section.titleLabel.text() == ctx.tr("settings.status")
+    status_label = status_section.findChild(BodyLabel)
+    assert status_label.text() == ctx.tr("state.idle")
     card = panel.findChild(_CommentCard)
     card.editor.setText("+rep 配合愉快")
     card.button.click()
     assert instance.config.comment.value == "+rep 配合愉快"
+    assert status_label.text() == ctx.tr("state.saved")
     instance.on_activate()
     try:
         window = instance._window

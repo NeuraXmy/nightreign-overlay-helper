@@ -222,3 +222,25 @@ overlay_settings:
     title: Reset position
     reset: Reset
     horizontal: Center horizontally
+
+updates:
+  title: Check for updates
+  changelog: Release notes
+  check: Check now
+  check_hint: Check GitHub / Gitee for a new version
+  auto: Automatically check for updates
+  available: New version available
+  install_hint: Extract the entire new version, exit the old application, then delete its old program folder. Settings
+    are stored in your user data directory and will be preserved.
+  manual_hint: If the download fails, use the GitHub / Gitee links below to download manually.
+  download: Download ({source})
+  close: Close
+  failed: Could not obtain valid releases from GitHub or Gitee. Please try again later.
+  latest: You have the latest stable version.
+  save: Save update ZIP
+  downloading: Downloading in the background. Please wait.
+  progress: "Downloading: {downloaded} / {total} MiB"
+  download_failed: Download failed. Please use the GitHub / Gitee links to download manually.
+  saved: Saved to {path}
+  checking: Checking…
+  history_limited: The GitHub API is unavailable. Recent releases from the public feed are shown; use the GitHub / Gitee links for the full history.

@@ -122,15 +122,14 @@ class CommendationPlugin(Plugin):
                 tr("settings.manual_help"),
             )
         )
-        hint = BodyLabel(tr("settings.detection_help"), settings)
-        hint.setWordWrap(True)
-        settings.addCard(hint)
-        status = BodyLabel(tr("state." + self._status), settings)
-        status.setWordWrap(True)
-        self.statusChanged.connect(status.setText)
-        settings.addCard(status)
         panel.addSection(settings)
         panel.addSection(
             OverlaySettingSection(self.overlay_config, tr("settings.window"), include_horizontal_reset=False)
         )
+        status = SettingSection(tr("settings.status"))
+        label = BodyLabel(tr("state." + self._status), status)
+        label.setWordWrap(True)
+        self.statusChanged.connect(label.setText)
+        status.addCard(label)
+        panel.addSection(status)
         return panel

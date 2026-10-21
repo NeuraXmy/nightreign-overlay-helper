@@ -1,19 +1,19 @@
 plugin:
   name: 賽後按讚
-  description: 對局隊友離隊後彈出獨立視窗，點擊名字查看個人檔案，點擊 按讚按鈕 傳送自訂留言
+  description: 隊友離隊後顯示按讚視窗，可查看 Steam 個人檔案或傳送留言
 settings:
   behavior: 賽後按讚
   close_seconds: 按讚視窗自動關閉時間
-  close_help: 每位隊友出現後分別計時，到時關閉；重新整理不會延長時間。
+  close_help: 自動彈出需啟用連線狀態和縮圈計時，每位隊友分別計時。
   seconds: '{value} 秒'
   comment: 按讚留言
-  comment_help: 僅在點擊 按讚按鈕 時傳送；同一帳號七天內不向同一玩家重複留言。
+  comment_help: 點擊按讚按鈕向 Steam 個人檔案留言，同一玩家間隔七天。
   save: 儲存
   show_recent: 顯示隊友
   manual: 手動開啟隊友視窗
-  manual_help: 打完後隊友仍留在房間，或沒有辨識到 DAY1 時，可手動開啟。
-  detection_help: 自動提示需要啟用連線狀態及縮圈計時：辨識 DAY1 後記錄本局隊友，確認有人離隊後顯示。離隊是結束提示的近似依據，中途斷線也可能觸發。Steam 頁面無法留言時可點擊名字手動查看。
+  manual_help: 隊友仍在房間或未辨識到 DAY1 時使用。
   window: 獨立按讚視窗
+  status: 執行狀態
   dismiss: 關閉本次視窗
 overlay:
   title: 賽後按讚
@@ -21,8 +21,8 @@ overlay:
   open_profile: 點擊名字在 Steam 內開啟個人檔案
 state:
   restoring: 等待解除暫時封鎖
-  idle: 等待本局隊友；不會自動傳送留言。
-  ready: 點擊 按讚按鈕 傳送留言
+  idle: 等待本局隊友
+  ready: 點擊按讚按鈕傳送留言
   sending: 正在傳送留言…
   sent: 已留言按讚，七天內不重複傳送
   cooldown: 七天留言間隔內

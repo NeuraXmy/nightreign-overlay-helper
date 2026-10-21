@@ -45,6 +45,7 @@ def make_timer(store, tmp_path, monkeypatch):
         instance = cls(ctx)
         instance.on_load()
         for key, cue in instance._audio.cues.items():
+            cue.enabled.set(True)
             cue.path.set(f"{key}.wav")
         return instance
 

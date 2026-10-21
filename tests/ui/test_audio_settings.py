@@ -54,9 +54,11 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
     card = section.findChildren(AudioSettingCard)[0]
     cue = card.cue
     assert card.slider.value() == 100 and card.spinBox.value() == 0.0
-    assert not card.clearButton.isEnabled() and card.testButton.isEnabled()
-    assert card.switchButton.isChecked()
+    assert not card.clearButton.isEnabled() and not card.testButton.isEnabled()
+    assert not card.switchButton.isChecked()
     assert card.clearButton.text() == i18n.tr("audio.restore_default")
+    card.switchButton.setChecked(True)
+    assert cue.enabled.value and card.testButton.isEnabled()
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_: ("提示音.wav", ""))
     card.selectButton.click()
     assert cue.path.value == "提示音.wav"
@@ -83,7 +85,7 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
     assert not preview.playing
     ctx.reset_configs()
     assert card.slider.value() == 100 and card.spinBox.value() == 0.0
-    assert card.switchButton.isChecked() and card.testButton.isEnabled()
+    assert not card.switchButton.isChecked() and not card.testButton.isEnabled()
     delete_qobjects(section)
 
 
@@ -107,6 +109,6 @@ def test_audio_is_last_section_with_localized_titles(store, qapp, monkeypatch, c
         assert card.titleLabel.text() and not card.titleLabel.text().startswith("audio.")
         assert card.selectButton.text() == i18n.tr("audio.select")
         assert card.contentLabel.text() == i18n.tr("audio.builtin")
-        assert card.switchButton.isChecked() and card.testButton.isEnabled()
+        assert not card.switchButton.isChecked() and not card.testButton.isEnabled()
         assert card.spinBox.value() == card.cue.seconds.default
     delete_qobjects(parent)

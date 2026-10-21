@@ -2,9 +2,11 @@
 
 When enabled, this feature displays the names, ping, and stability of Steam teammates.
 
-## Automatic blocking and restoration
+## Show players' Steam names
 
-The settings switch is off by default. When enabled, a connected nonfriend with a valid ping can be temporarily blocked without waiting for DAY1. Friends, unknown relationships, and existing blocks are skipped. Two teammates are handled independently; preparation failures are retried. Confirmed departure, disabling the feature, or exiting requests restoration.
+Enable **Show players' Steam names** to temporarily block non-friend teammates' Steam communication and display their Steam names during matches. Communication is restored when they leave.
+
+The switch is off by default. A connected non-friend with a valid ping can be processed. Friends, unknown relationships, and existing blocks are skipped. Two teammates are handled independently; preparation failures are retried. Disabling the feature or exiting also requests restoration. Recovery status appears at the bottom of the settings page.
 
 Brief roster gaps do not immediately restore communication. A separate recovery process retains a journal across crashes and network failures. Startup resumes recovery even with the switch off. Keep the original Steam account online and retain pending journals; offline recovery cannot be immediate. Commendations wait for confirmed restoration, while profile links remain available. Do not run old and new helpers simultaneously.
 

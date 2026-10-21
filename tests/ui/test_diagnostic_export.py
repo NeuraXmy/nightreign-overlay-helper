@@ -133,6 +133,6 @@ def test_only_about_button_opens_export_dialog(store, qapp, monkeypatch):
         store.bind(AppConfig, "app"), SimpleNamespace(records=lambda: [], config_store=store)
     )
     assert not hasattr(settings_page, "diagnosticExportCard")
-    page = about.AboutPage()
+    page = about.AboutPage(store.bind(AppConfig, "app"))
     page.findChild(PushSettingCard).clicked.emit()
     assert opened == [page.window(), "exec", "delete"]

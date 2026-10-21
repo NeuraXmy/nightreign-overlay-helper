@@ -22,6 +22,8 @@
 
 偶数宽存储的额外第一列在评估前去掉。制作时核对所有源裁剪像素，fixture 文件、完整解码像素流、源 MP4 及参考帧均有哈希／逐像素回归。粉血、黄血复用上面的完整场景 fixture。四段源 MP4 与 fixture 的全部预测和拒识统计一致。
 
+日常构建对这四段录像仅运行短窗口简化回归；原全录像与全部独立启动验收已移至 `benchmark/benchmark_hp_production.py`，只有血条检测部分修改时才运行，见 [测试策略](../../../../docs/development/testing/README.md)。
+
 `production_report.json` 为当前打包模型的三种频率连续播放和 136 组独立启动的完整记录。`heldout_block_report.json` 与 `heldout_training.json` 保存另一个模型对未参与训练的交替五秒时间块的结果及训练索引，**不是打包模型的同集结果**；其中仍有罕见特效误报。当前模型的来源、训练索引及文件哈希在 `src/nightreign_overlay/plugins/hp_marker/data/training.json`。
 
 旧 `hp_footage_*.mkv` 缺少部分生产上下文，继续用于静态和连续裁剪兼容回归；冷启动主验收采用实际生产范围。直接输入旧窄裁剪时第一段仍有最坏窗口 52.63% 拒识、2.40 秒首次输出的限制，不能用生产 fixture 的成绩替换该结论。

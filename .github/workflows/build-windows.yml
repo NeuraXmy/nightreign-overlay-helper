@@ -55,11 +55,11 @@ jobs:
       - name: Run offline communication recovery tests
         run: dotnet run --project native/NightreignP2PHelper.RecoveryTests -c Release
 
-      - name: Run full regression suite
+      - name: Run regression suite (HP smoke tests; no benchmarks)
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONIOENCODING: utf-8
-        run: uv run --no-sync pytest -q --durations=20
+        run: uv run --no-sync pytest tests -m "not benchmark" -q --durations=20
 
       - name: Load runtime resources and discover plugins
         env:

@@ -165,7 +165,7 @@ capture = ctx.services.require(CaptureApi)  # 缺失抛 LookupError
 - `discover_languages()` / `available_languages()`：从 `resources/i18n/*.yaml` 动态发现语言。
 - `match_language(locale)`：系统 locale 到支持语言的映射。
 - `Translator`：加载命名空间词条。
-- `tr(key, **kwargs)`：核心词条翻译。
+- `tr(key, **kwargs)`：核心词条翻译。设置描述（`.content`）和提示（`.hint`、`_hint`）为可选字段；语言回退后仍不存在时返回空字符串，由设置卡片隐藏，不显示字段键名。
 
 ### 回退链
 

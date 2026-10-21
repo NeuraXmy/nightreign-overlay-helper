@@ -1,21 +1,19 @@
 plugin:
   name: Post-game commendations
-  description: 'Separate departure popup: click a name to visit Steam or click Like to post your comment'
+  description: View Steam profiles or post a comment when teammates leave
 settings:
   behavior: Commendations
   close_seconds: Automatically close after
-  close_help: Each player has a separate expiry. Refreshing the popup does not extend it.
+  close_help: Automatic popups need Network Status and the Circle Timer. Each player has a separate timer.
   seconds: '{value} s'
   comment: Profile comment
-  comment_help: Posted only when you click Like; seven days between comments to the same player.
+  comment_help: Click Like to post on Steam, with seven days between comments to the same player.
   save: Save
   show_recent: Show teammates
   manual: Open teammates manually
-  manual_help: Use after a match when teammates stay in the lobby, or DAY1 was not detected.
-  detection_help: Enable network status and circle timer for automatic prompts. DAY1 starts the roster, and confirmed departure
-    opens the popup. Departure approximates the end of a match; a mid-game disconnect can also trigger it. Click a name to
-    view profiles that cannot receive comments.
+  manual_help: Use when teammates stay in the lobby or DAY1 was not detected.
   window: Separate commendation window
+  status: Status
   dismiss: Dismiss
 overlay:
   title: Post-game commendations
@@ -23,7 +21,7 @@ overlay:
   open_profile: Click to open the profile in Steam
 state:
   restoring: Waiting for communication restoration
-  idle: Waiting for teammates. Comments are never sent automatically.
+  idle: Waiting for teammates
   ready: Click Like to post
   sending: Posting…
   sent: Posted; no repeat for seven days

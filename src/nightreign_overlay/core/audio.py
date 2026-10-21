@@ -19,7 +19,7 @@ class _SecondsOption(RangeOption[float]):
 class AudioCueConfig(ConfigGroup):
     """One audio cue; an empty custom path lets the producer use its bundled default."""
 
-    enabled = BoolOption(True)
+    enabled = BoolOption(False)
     path = Option("", validator=lambda value: isinstance(value, str))
     volume = RangeOption(100, 0, 100)
     seconds = _SecondsOption(0.0, 0.0, 3600.0)

@@ -26,6 +26,7 @@ from nightreign_overlay.meta import APP_AUTHOR, APP_ID, APP_NAME, APP_VERSION
 from nightreign_overlay.platforms import PlatformBackend, create_backend
 from nightreign_overlay.platforms.shell import configure_taskbar_identity
 from nightreign_overlay.plugin import PluginManager
+from nightreign_overlay.ui.components.updates import UpdateController
 from nightreign_overlay.ui.main_window import MainWindow
 from nightreign_overlay.ui.overlay import OverlayManager
 from nightreign_overlay.ui.theme import app_icon, apply_theme
@@ -85,6 +86,10 @@ class Application(QObject):
         self.plugins.load_all()
 
         self.window = MainWindow(self.config, self.plugins, self.overlays, self.game_monitor)
+        self.updates = UpdateController(self.window, self)
+        self.updates.busyChanged.connect(self.window.aboutPage.set_update_busy)
+        self.window.aboutPage.checkUpdatesRequested.connect(self.updates.check)
+        self.window.aboutPage.changelogRequested.connect(lambda: self.updates.check(history=True))
         self.tray = TrayIcon(self.window) if QSystemTrayIcon.isSystemTrayAvailable() else None
         self._connect_signals()
 
@@ -142,6 +147,7 @@ class Application(QObject):
         minimized = self._args.minimized or self.config.start_minimized.value
         if not minimized or self.tray is None:
             self.window.show()
+        self.updates.start(self.config.auto_check_updates.value)
 
     def quit(self) -> None:
         self.window.prepare_quit()
@@ -166,6 +172,7 @@ class Application(QObject):
         if self._shut_down:
             return
         self._shut_down = True
+        self.updates.shutdown()
         self.plugins.shutdown()
         self.debug_images.close()
         self.game_monitor.stop()

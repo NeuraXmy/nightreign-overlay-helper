@@ -145,9 +145,6 @@ class P2PLatencyPlugin(Plugin):
         recovery.addCard(
             ConfigSwitchCard(self.config.auto_block, FluentIcon.SYNC, tr("block.enable"), tr("block.help"))
         )
-        recovery_label = _RecoveryLabel(tr, recovery, self.ctx.services)
-        self.recoveryChanged.connect(recovery_label.refresh)
-        recovery.addCard(recovery_label)
         panel.addSection(recovery)
         window = OverlaySettingSection(
             self.overlay_config, tr("settings.window"), include_horizontal_reset=False
@@ -175,6 +172,9 @@ class P2PLatencyPlugin(Plugin):
         label.set_status(self._status)
         self.statusChanged.connect(label.set_status)
         status.addCard(label)
+        recovery_label = _RecoveryLabel(tr, status, self.ctx.services)
+        self.recoveryChanged.connect(recovery_label.refresh)
+        status.addCard(recovery_label)
         if sys.platform == "darwin":
             hint = BodyLabel(tr("settings.simulation"), status)
             hint.setWordWrap(True)

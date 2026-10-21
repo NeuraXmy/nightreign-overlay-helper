@@ -60,9 +60,9 @@ playtime:
   hours: '{hours} 小时'
   available: '{hours} 小时'
 block:
-  title: 自动屏蔽与恢复
-  enable: 自动屏蔽非好友队友
-  help: 读到有效延迟后临时屏蔽，确认离队后恢复；好友和原有屏蔽均跳过。
+  title: Steam 名字
+  enable: 显示玩家真实Steam名
+  help: 通过临时屏蔽非好友队友 Steam，在游戏中显示玩家真实 Steam 名字，离队后自动恢复。
   summary:
     disabled: 已关闭；没有进行中的临时屏蔽。
     enabled: 已开启：等待有效延迟与非好友关系确认。

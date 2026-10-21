@@ -62,9 +62,9 @@ playtime:
   hours: '{hours} h'
   available: '{hours} h'
 block:
-  title: Automatic block and restore
-  enable: Temporarily block non-friend teammates
-  help: Starts after valid latency; restores on confirmed departure. Friends and existing blocks are skipped.
+  title: Steam names
+  enable: Show players' Steam names
+  help: Temporarily block non-friend teammates on Steam to show their Steam names in-game. Restore communication when they leave.
   summary:
     disabled: Off; no temporary blocks in progress.
     enabled: 'On: waiting for valid latency and a confirmed non-friend relationship.'
