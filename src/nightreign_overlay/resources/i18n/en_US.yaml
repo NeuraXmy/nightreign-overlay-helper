@@ -60,6 +60,10 @@ settings_reset:
   cancel: Cancel
   done: Defaults restored
 region_preview:
+  automatic: Automatic (16:9)
+  waiting: Waiting for automatic area
+  automatic_help: Without manual calibration, use the default areas of a 16:9 Windows game window. You can select an area manually at any time.
+  clear_manual: Clear manual calibration and use automatic area
   calibrated: Calibrated
   uncalibrated: Not calibrated
   current: 'Current area: ({x}, {y}), {width} × {height} px'

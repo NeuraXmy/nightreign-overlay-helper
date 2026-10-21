@@ -66,6 +66,10 @@ settings_reset:
   done: 已恢复默认设置
 
 region_preview:
+  automatic: 自动（16:9）
+  waiting: 等待自动区域
+  automatic_help: 未手动标定时，使用 Windows 游戏窗口的 16:9 默认区域；也可随时手动框选。
+  clear_manual: 清除手动标定，恢复自动区域
   calibrated: 已标定
   uncalibrated: 未标定
   current: "显示当前区域：({x}, {y})，{width} × {height} 像素"

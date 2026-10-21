@@ -66,6 +66,9 @@ class _CaptureService(CaptureApi):
     def hdr_enabled(self) -> bool:
         return self._plugin.config.hdr_processing.value
 
+    def game_client_rect(self) -> QRect | None:
+        return self._plugin.game_client_rect()
+
 
 class CapturePlugin(Plugin):
     manifest = PluginManifest(
@@ -100,6 +103,7 @@ class CapturePlugin(Plugin):
         # The stream keeps at most one grab in flight; ticks arriving meanwhile are dropped.
         self._stream_request: int | None = None
         self._callbacks: dict[int, FrameCallback] = {}
+        self._game_window = None
 
     @property
     def latest_frame(self) -> FrameCaptured | None:
@@ -112,6 +116,17 @@ class CapturePlugin(Plugin):
     def on_deactivate(self) -> None:
         self._stop_stream()
         self._stop_worker()
+        self._game_window = None
+
+    def game_client_rect(self) -> QRect | None:
+        if sys.platform != "win32":
+            return None
+        if self._game_window is None:
+            from nightreign_overlay.plugins.capture.win32 import GameClientLocator
+
+            self._game_window = GameClientLocator()
+        geometry = self._game_window.geometry()
+        return QRect(*geometry) if geometry is not None else None
 
     def _on_mode_changed(self, mode: str) -> None:
         self._invalidate()

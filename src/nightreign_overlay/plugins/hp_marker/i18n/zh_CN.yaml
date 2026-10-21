@@ -6,7 +6,7 @@ settings:
   advanced: 高级选项
   region:
     title: 血条区域
-    content: 框选左边缘紧贴血条左侧，宽度和血条一致的区域，可点击「标定」或设置快捷键
+    content: 未标定时自动适配 16:9 游戏窗口；手动标定时左边缘紧贴血条左侧，宽度与血条一致
     annotate: 点我并框出 “血条左侧” 的区域
     button: 标定
   hpbar_low_hp_marker:
