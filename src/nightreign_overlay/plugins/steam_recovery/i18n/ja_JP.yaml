@@ -1,0 +1,3 @@
+plugin:
+  name: 通信の復元
+  description: 一時ブロックと異常終了後の復元を独立して監視

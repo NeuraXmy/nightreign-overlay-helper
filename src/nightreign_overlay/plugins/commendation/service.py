@@ -11,6 +11,7 @@ from PyQt6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, pyqtSig
 
 from nightreign_overlay.core.steam import current_steam_account, valid_steam_id
 from nightreign_overlay.plugins.p2p_latency.api import P2PStateChanged, PeerSnapshot, helper_path
+from nightreign_overlay.plugins.steam_recovery.api import recovery_directory
 
 from .config import CommendationConfig
 from .history import cooldown_state, history_directory
@@ -29,12 +30,14 @@ class CommendationService(QObject):
         clock=time.monotonic,
         account_reader: Callable[[], str] = current_steam_account,
         history: Path | None = None,
+        recovery_pending: Callable[[str, str], bool] | None = None,
     ) -> None:
         super().__init__(parent)
         self.config = config
         self.clock = clock
         self.account_reader = account_reader
         self.history = history or history_directory()
+        self.recovery_pending = recovery_pending or (lambda _account, _target: False)
         self.roster = ExpeditionRoster()
         self.recent: list[Player] = []
         self.reviews: dict[str, tuple[Player, float]] = {}
@@ -109,6 +112,8 @@ class CommendationService(QObject):
                 state = "account_changed"
             elif self.busy == target:
                 state = "sending"
+            elif self.recovery_pending(account, target):
+                state = "restoring"
             elif state == "ready":
                 state = self.feedback.get(target, "ready")
             rows.append(
@@ -145,6 +150,7 @@ class CommendationService(QObject):
         self._response.clear()
         environment = QProcessEnvironment.systemEnvironment()
         environment.insert("NROH_COMMENDATION_DIR", str(self.history.resolve()))
+        environment.insert("NROH_IDENTITY_DIR", str(recovery_directory().resolve()))
         self.process.setProcessEnvironment(environment)
         self.process.setProgram(str(helper))
         self.process.setArguments(["--commend"])

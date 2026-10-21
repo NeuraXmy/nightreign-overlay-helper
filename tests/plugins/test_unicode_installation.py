@@ -49,7 +49,7 @@ manager = PluginManager(store, translator, ServiceRegistry(), EventBus())
 manager.discover()
 expected = {
     "art_timer", "audio", "capture", "day_timer", "hp_marker", "hud",
-    "input", "map_detect", "p2p_latency", "rain_timer", "region", "commendation",
+    "input", "map_detect", "p2p_latency", "rain_timer", "region", "commendation", "steam_recovery",
 }
 manager.load_all()
 assert {record.id for record in manager.records()} == expected

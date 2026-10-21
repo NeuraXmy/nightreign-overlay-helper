@@ -20,6 +20,7 @@ overlay:
   send: 向该队友的 Steam 主页发送当前设置的留言
   open_profile: 点击名字在 Steam 内打开主页
 state:
+  restoring: 等待解除临时屏蔽
   idle: 等待本局队友；不会自动发送留言。
   ready: 点击 点赞按钮 发送留言
   sending: 正在发送留言…

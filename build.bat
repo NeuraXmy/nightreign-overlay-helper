@@ -26,6 +26,10 @@ if errorlevel 1 goto build_failed
 :: Keep the helper and its .NET/native dependencies unpacked too.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_p2p_helper.ps1 -OutputDirectory "%cd%\build\p2p\bin" -NoSingleFile
 if errorlevel 1 goto build_failed
+set "NROH_TEST_NATIVE_HELPER=%cd%\build\p2p\bin\NightreignP2PHelper.exe"
+uv run --no-sync pytest -q tests\native\test_helper_startup.py
+if errorlevel 1 goto build_failed
+set "NROH_TEST_NATIVE_HELPER="
 
 uv run --no-sync pyinstaller --noconfirm --clean --distpath dist --workpath build\pyinstaller nightreign-overlay-helper.spec
 if errorlevel 1 goto build_failed

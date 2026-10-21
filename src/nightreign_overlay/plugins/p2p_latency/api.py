@@ -10,6 +10,7 @@ from .models import P2PPeer, P2PStatus
 class PeerSnapshot:
     peers: tuple[P2PPeer, ...]
     account: str
+    verified_account: bool = False
 
 
 @dataclass(frozen=True)

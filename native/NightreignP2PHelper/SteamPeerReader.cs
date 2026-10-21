@@ -71,7 +71,8 @@ internal sealed class SteamPeerReader(EtwPingMonitor? etw = null)
                 metrics?.PingMs,
                 metrics?.Quality,
                 "legacy",
-                candidate.Connected ? "connected" : "connecting"));
+                candidate.Connected ? "connected" : "connecting",
+                (int)SteamFriends.GetFriendRelationship(candidate.SteamId)));
         }
 
         _lastPublishedPeers.Clear();
@@ -133,7 +134,8 @@ internal sealed class SteamPeerReader(EtwPingMonitor? etw = null)
             ping,
             quality,
             "messages",
-            state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected ? "connected" : "connecting");
+            state == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected ? "connected" : "connecting",
+            (int)SteamFriends.GetFriendRelationship(steamId));
     }
 
     private static LegacyCandidate? ReadLegacyApiPeer(CSteamID steamId)

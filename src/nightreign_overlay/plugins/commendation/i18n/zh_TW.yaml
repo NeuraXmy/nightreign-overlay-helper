@@ -20,6 +20,7 @@ overlay:
   send: 向該隊友的 Steam 個人檔案傳送目前設定的留言
   open_profile: 點擊名字在 Steam 內開啟個人檔案
 state:
+  restoring: 等待解除暫時封鎖
   idle: 等待本局隊友；不會自動傳送留言。
   ready: 點擊 按讚按鈕 傳送留言
   sending: 正在傳送留言…

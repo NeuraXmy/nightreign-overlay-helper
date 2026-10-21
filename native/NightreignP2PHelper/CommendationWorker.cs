@@ -19,6 +19,12 @@ internal static class CommendationWorker
             var request = line is { Length: <= 8192 }
                 ? JsonSerializer.Deserialize<CommendationRequest>(line, CommendationHistory.Json) : null;
             if (!CommendationEngine.ValidRequest(request)) return Reply(result);
+            Directory.CreateDirectory(IdentityFiles.Root);
+            // A hold/recovery task owns this same lock throughout its transaction.
+            // Never post concurrently with communication restoration for that player.
+            using var communicationLock = new FileStream(Path.Combine(IdentityFiles.Root,
+                "target-" + request!.ExpectedAccount + "-" + request.Target + ".lock"),
+                FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             foreach (var candidate in Process.GetProcessesByName("nightreign"))
             {
                 if (game is null && !candidate.HasExited) game = candidate;

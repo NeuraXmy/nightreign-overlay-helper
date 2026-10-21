@@ -9,7 +9,8 @@ internal sealed record PeerSnapshot(
     [property: JsonPropertyName("ping_ms")] int? PingMs,
     [property: JsonPropertyName("quality")] double? Quality,
     [property: JsonPropertyName("api")] string Api,
-    [property: JsonPropertyName("state")] string State);
+    [property: JsonPropertyName("state")] string State,
+    [property: JsonPropertyName("relationship")] int? Relationship = null);
 
 internal static class Protocol
 {
@@ -40,9 +41,9 @@ internal static class Protocol
         Write(new { type = "status", state, message, etw_state = _etwState });
     }
 
-    public static void Snapshot(IReadOnlyCollection<PeerSnapshot> peers)
+    public static void Snapshot(IReadOnlyCollection<PeerSnapshot> peers, string account)
     {
-        Write(new { type = "snapshot", peers });
+        Write(new { type = "snapshot", peers, account });
     }
 
     internal static string Serialize<T>(T payload) => JsonSerializer.Serialize(payload, Options);

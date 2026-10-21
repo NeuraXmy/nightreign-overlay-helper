@@ -5,6 +5,7 @@ from qfluentwidgets import BodyLabel, FluentIcon, LineEdit, PushButton, SettingC
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.day_timer.api import DayStarted
 from nightreign_overlay.plugins.p2p_latency.api import P2PStateChanged, PeerSnapshot
+from nightreign_overlay.plugins.steam_recovery.api import RecoveryApi
 from nightreign_overlay.ui.components import (
     ConfigRangeCard,
     MultiButtonSettingCard,
@@ -66,7 +67,12 @@ class CommendationPlugin(Plugin):
         )
         self._window = window
         self.ctx.on_cleanup(window.dispose)
-        service = CommendationService(self.config, self)
+
+        def pending(account, target):
+            recovery = self.ctx.services.get(RecoveryApi)
+            return bool(recovery and recovery.pending(account, target))
+
+        service = CommendationService(self.config, self, recovery_pending=pending)
         self._service = service
         service.rowsChanged.connect(window.set_rows)
         service.statusChanged.connect(self._set_status)

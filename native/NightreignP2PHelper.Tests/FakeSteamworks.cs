@@ -61,6 +61,7 @@ internal static class SteamFriends
     public static int GetFriendCoplayTime(CSteamID id) => 1;
     public static AppId_t GetFriendCoplayGame(CSteamID id) => new(123);
     public static string GetFriendPersonaName(CSteamID id) => $"Player {id.m_SteamID}";
+    public static int GetFriendRelationship(CSteamID id) => FakeSteam.Friends.Contains(id.m_SteamID) ? 3 : 0;
 }
 internal static class SteamUser
 {

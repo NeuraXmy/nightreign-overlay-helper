@@ -19,6 +19,7 @@ from nightreign_overlay.plugins.p2p_latency.overlay import P2POverlay
 from nightreign_overlay.plugins.p2p_latency.playtime import PlaytimeService
 from nightreign_overlay.plugins.p2p_latency.presentation import status_message
 from nightreign_overlay.plugins.p2p_latency.service import P2PService
+from nightreign_overlay.plugins.steam_recovery.api import RecoveryApi, RecoveryChanged, RecoveryStatus
 from nightreign_overlay.ui.components import (
     ConfigRangeCard,
     ConfigSwitchCard,
@@ -67,8 +68,11 @@ class _StatusLabel(BodyLabel):
 
 
 class P2PLatencyPlugin(Plugin):
-    manifest = PluginManifest(id="p2p_latency", kind=PluginKind.FEATURE, icon="WIFI", order=50)
+    manifest = PluginManifest(
+        id="p2p_latency", kind=PluginKind.FEATURE, icon="WIFI", order=50, requires=("steam_recovery",)
+    )
     statusChanged = pyqtSignal(object)
+    recoveryChanged = pyqtSignal(object)
 
     def on_load(self) -> None:
         self.config = self.ctx.config(P2PConfig)
@@ -76,6 +80,7 @@ class P2PLatencyPlugin(Plugin):
         self.config.enforce_thresholds()
         self.config.good_ping.valueChanged.connect(self.config.enforce_thresholds)
         self.config.warning_ping.valueChanged.connect(self.config.enforce_thresholds)
+        self.config.auto_block.valueChanged.connect(self._set_auto_block)
         self._service: P2PService | None = None
         self._window: P2POverlay | None = None
         self._status = P2PStatus("disabled", self.ctx.tr("status.disabled"))
@@ -104,9 +109,13 @@ class P2PLatencyPlugin(Plugin):
         self.ctx.on_cleanup(playtime.deleteLater)
         self.ctx.on_cleanup(playtime.stop)
         self.ctx.on_cleanup(lambda: self._stop_service(service))
+        self.ctx.subscribe(RecoveryChanged, self._on_recovery)
+        self._set_auto_block(self.config.auto_block.value)
         service.start()
 
     def _stop_service(self, service: P2PService) -> None:
+        if recovery := self.ctx.services.get(RecoveryApi):
+            recovery.set_enabled(False)
         service.stop()
         service.deleteLater()
         self._service = None
@@ -119,11 +128,27 @@ class P2PLatencyPlugin(Plugin):
         self.ctx.publish(P2PStateChanged(status))
 
     def _publish_snapshot(self, peers: tuple) -> None:
-        self.ctx.publish(PeerSnapshot(peers, current_steam_account()))
+        native_account = self._service.account if self._service else ""
+        self.ctx.publish(PeerSnapshot(peers, native_account or current_steam_account(), bool(native_account)))
+
+    def _set_auto_block(self, enabled: bool) -> None:
+        if recovery := self.ctx.services.get(RecoveryApi):
+            recovery.set_enabled(bool(enabled) and self._service is not None)
+
+    def _on_recovery(self, event: RecoveryChanged) -> None:
+        self.recoveryChanged.emit(event.status)
 
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         tr = self.ctx.tr
         panel = SettingsPanel(parent)
+        recovery = SettingSection(tr("block.title"))
+        recovery.addCard(
+            ConfigSwitchCard(self.config.auto_block, FluentIcon.SYNC, tr("block.enable"), tr("block.help"))
+        )
+        recovery_label = _RecoveryLabel(tr, recovery, self.ctx.services)
+        self.recoveryChanged.connect(recovery_label.refresh)
+        recovery.addCard(recovery_label)
+        panel.addSection(recovery)
         window = OverlaySettingSection(
             self.overlay_config, tr("settings.window"), include_horizontal_reset=False
         )
@@ -162,3 +187,29 @@ class P2PLatencyPlugin(Plugin):
         super().reset_settings()
         # A high pre-reset green threshold can temporarily raise the warning threshold.
         self.config.warning_ping.reset()
+
+
+class _RecoveryLabel(BodyLabel):
+    """Also refresh when the latency plugin is disabled but recovery is still running."""
+
+    def __init__(self, tr, parent, services):
+        super().__init__(parent)
+        from PyQt6.QtCore import QTimer
+
+        self._tr, self._services = tr, services
+        self.setWordWrap(True)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self._timer = QTimer(self)
+        self._timer.setInterval(1000)
+        self._timer.timeout.connect(self.refresh)
+        self._timer.start()
+        self.refresh()
+
+    def refresh(self, _value=None):
+        recovery = self._services.get(RecoveryApi)
+        status = recovery.status if recovery else RecoveryStatus()
+        lines = [self._tr("block.summary." + status.state)]
+        for peer in status.peers:
+            lines.append(f"{peer.name} · {self._tr('block.state.' + peer.state)}")
+        self.setText("\n".join(lines))
+        self.setToolTip("\n".join(p.detail for p in status.peers if p.detail))

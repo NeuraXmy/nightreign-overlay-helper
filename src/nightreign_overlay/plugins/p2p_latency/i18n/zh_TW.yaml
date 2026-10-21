@@ -59,3 +59,31 @@ playtime:
   unavailable: 時數無法取得
   hours: '{hours} 小時'
   available: '{hours} 小時'
+block:
+  title: 自動封鎖與恢復
+  enable: 自動封鎖非好友隊友
+  help: 讀到有效延遲後暫時封鎖，確認離隊後恢復；略過好友與原有封鎖，無需等待 DAY1。
+  summary:
+    disabled: 已關閉；沒有進行中的暫時封鎖。
+    enabled: 已開啟：等待有效延遲與非好友關係確認。
+    preparing: 正在準備並核對通訊狀態。
+    blocked: 隊友已暫時封鎖；離隊、關閉功能或退出時自動恢復。
+    restoring: 正在解除暫時封鎖，請保持 Steam 上線。
+    recovery_pending: 尚未確認恢復，已保留記錄並自動重試；請保持原 Steam 帳號上線。
+    retry_wait: 準備失敗，稍後自動重試。
+    error: 未完成封鎖；原有封鎖和不符合條件的帳號會略過。
+    account_missing: 等待連線元件確認目前 Steam 帳號。
+    unsupported: 自動封鎖與恢復僅支援 Windows。
+  state:
+    preparing: 準備封鎖
+    blocked: 已封鎖
+    restoring: 解除中
+    recovery_pending: 恢復待重試
+    restored: 已解除
+    unconfirmed: 恢復待確認
+    preblocked: 原有封鎖 · 不解除
+    relationship_skipped: 關係未確認 · 略過
+    failed: 封鎖未完成
+    retry_wait: 失敗待重試
+    friend_skipped: 好友略過
+    waiting: 等待條件就緒

@@ -59,3 +59,31 @@ playtime:
   unavailable: 取得不可
   hours: '{hours} 時間'
   available: '{hours} 時間'
+block:
+  title: 自動ブロックと復元
+  enable: フレンド以外の仲間を一時ブロック
+  help: 有効な遅延を取得後に開始し、離脱確認後に復元。フレンドと既存のブロックは対象外。DAY1 の検出は不要です。
+  summary:
+    disabled: オフ。一時ブロックは進行していません。
+    enabled: オン。有効な遅延とフレンド関係の確認を待っています。
+    preparing: 通信状態を確認しています。
+    blocked: 一時ブロック中。離脱、機能の無効化、終了時に復元します。
+    restoring: ブロックを解除中。Steam をオンラインにしてください。
+    recovery_pending: 復元は未確認です。記録を保持して再試行します。元の Steam アカウントで接続してください。
+    retry_wait: 準備に失敗しました。しばらくして再試行します。
+    error: ブロック未完了。既存のブロックと対象外アカウントはスキップします。
+    account_missing: Steam アカウントの確認を待っています。
+    unsupported: 自動ブロックと復元は Windows のみ対応しています。
+  state:
+    preparing: 準備中
+    blocked: ブロック済み
+    restoring: 解除中
+    recovery_pending: 復元の再試行待ち
+    restored: 解除済み
+    unconfirmed: 復元未確認
+    preblocked: 既存のブロックを保持
+    relationship_skipped: 関係未確認・スキップ
+    failed: ブロック未完了
+    retry_wait: 再試行待ち
+    friend_skipped: フレンド対象外
+    waiting: 待機中

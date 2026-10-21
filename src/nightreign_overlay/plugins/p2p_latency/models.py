@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from nightreign_overlay.core.steam import valid_steam_id
+
 
 @dataclass(frozen=True)
 class P2PPeer:
@@ -15,6 +17,7 @@ class P2PPeer:
     quality: float | None
     api: str
     state: str
+    relationship: int | None = None
 
 
 @dataclass(frozen=True)
@@ -84,6 +87,9 @@ def parse_helper_message(line: str) -> tuple[str, Any]:
 
             ping = raw_peer.get("ping_ms")
             quality = raw_peer.get("quality")
+            relationship = raw_peer.get("relationship")
+            if relationship is not None and (type(relationship) is not int or not 0 <= relationship <= 8):
+                raise ValueError("invalid peer relationship")
             if ping is not None and not isinstance(ping, int):
                 raise ValueError("invalid peer ping")
             if quality is not None and not isinstance(quality, (int, float)):
@@ -97,8 +103,17 @@ def parse_helper_message(line: str) -> tuple[str, Any]:
                     quality=float(quality) if quality is not None else None,
                     api=api,
                     state=state,
+                    relationship=relationship,
                 )
             )
         return "snapshot", peers
 
     raise ValueError(f"unknown helper message type: {message_type!r}")
+
+
+def snapshot_account(line: str) -> str:
+    """Only native snapshot accounts may authorize a communication mutation."""
+    value = json.loads(line).get("account", "")
+    if value and not valid_steam_id(value):
+        raise ValueError("invalid snapshot account")
+    return value if isinstance(value, str) else ""
