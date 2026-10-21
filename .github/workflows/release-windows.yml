@@ -78,11 +78,11 @@ jobs:
       - name: Run offline communication recovery tests
         run: dotnet run --project native/NightreignP2PHelper.RecoveryTests -c Release
 
-      - name: Run full regression suite
+      - name: Run regression suite (HP smoke tests; no benchmarks)
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONIOENCODING: utf-8
-        run: uv run --no-sync pytest -q --durations=20
+        run: uv run --no-sync pytest tests -m "not benchmark" -q --durations=20
 
       - name: Load runtime resources and discover plugins
         env:
@@ -168,3 +168,12 @@ jobs:
             "release/nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip" \
             "release/${RELEASE_TAG}-sources.zip" \
             --notes-file "$notes" "${args[@]}"
+
+  sync-gitee:
+    name: Mirror release to Gitee
+    needs: publish-release
+    uses: ./.github/workflows/sync-gitee.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}

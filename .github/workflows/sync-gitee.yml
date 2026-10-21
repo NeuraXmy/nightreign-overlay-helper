@@ -1,0 +1,82 @@
+name: Sync Release to Gitee
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      diagnostic:
+        default: false
+        type: boolean
+      runner:
+        default: windows-2022
+        type: string
+    secrets:
+      GITEE_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to sync (e.g. v1.0.1)
+        required: true
+        type: string
+      diagnostic:
+        description: Re-upload into a temporary prerelease (300s per file), then clean it up
+        default: false
+        type: boolean
+      runner:
+        description: GitHub-hosted runner for upload route comparison
+        default: windows-2022
+        type: choice
+        options:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - windows-2022
+          - macos-15
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitee-release-${{ inputs.tag }}-${{ inputs.diagnostic && inputs.runner || 'release' }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+      GITEE_REPO: ${{ vars.GITEE_REPO }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      DIAGNOSTIC_UPLOAD: ${{ inputs.diagnostic }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Record upload environment
+        run: |
+          echo "Runner: $RUNNER_OS / $RUNNER_ARCH"
+          curl --version
+      - name: Check mirror configuration
+        run: |
+          test -n "$GITEE_TOKEN" || { echo 'Missing GITEE_TOKEN secret'; exit 1; }
+          test -n "$GITEE_REPO" || { echo 'Missing GITEE_REPO variable'; exit 1; }
+      - name: Download GitHub runtime ZIP
+        run: |
+          mkdir -p release
+          gh release download "$RELEASE_TAG" --dir release \
+            --pattern "nightreign-overlay-helper-${RELEASE_TAG}-windows-x64.zip"
+      - name: Mirror release notes and split runtime ZIP
+        run: python scripts/sync_gitee_release.py
+      - name: Remove temporary diagnostic release
+        if: always() && inputs.diagnostic
+        run: python scripts/sync_gitee_release.py --cleanup-diagnostic

@@ -60,9 +60,9 @@ playtime:
   hours: '{hours} 小時'
   available: '{hours} 小時'
 block:
-  title: 自動封鎖與恢復
-  enable: 自動封鎖非好友隊友
-  help: 讀到有效延遲後暫時封鎖，確認離隊後恢復；略過好友與原有封鎖。
+  title: Steam 名字
+  enable: 顯示玩家真實Steam名
+  help: 透過暫時封鎖非好友隊友 Steam，在遊戲中顯示玩家真實 Steam 名字，離隊後自動恢復。
   summary:
     disabled: 已關閉；沒有進行中的暫時封鎖。
     enabled: 已開啟：等待有效延遲與非好友關係確認。

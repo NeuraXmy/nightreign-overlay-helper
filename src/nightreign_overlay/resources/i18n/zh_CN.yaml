@@ -226,3 +226,24 @@ overlay_settings:
     title: 重置位置
     reset: 重置
     horizontal: 仅水平重置
+
+updates:
+  title: 检查更新
+  changelog: 更新日志
+  check: 立刻检查更新
+  check_hint: 从 GitHub / Gitee 检查是否有版本更新
+  auto: 启用自动检查更新
+  available: 发现新版本
+  install_hint: 下载后请完整解压新版本，退出旧程序，再删除旧版程序文件夹即可。设置保存在用户数据目录，将会保留。
+  manual_hint: 如果程序无法下载，请通过下面的 GitHub / Gitee 链接自行下载。
+  download: 下载（{source}）
+  close: 关闭
+  failed: 检查失败：GitHub 和 Gitee 均未返回有效版本，请稍后重试。
+  latest: 当前已是最新正式版。
+  save: 保存新版本 ZIP
+  downloading: 正在后台下载，请稍候。
+  progress: "正在下载：{downloaded} / {total} MiB"
+  download_failed: 下载失败，请使用 GitHub / Gitee 链接手动下载。
+  saved: 已保存到 {path}
+  checking: 正在检查…
+  history_limited: GitHub API 暂不可用，当前显示订阅源中的近期版本。完整历史请通过 GitHub / Gitee 链接查看。

@@ -144,7 +144,7 @@ class Translator:
             log.debug("Missing translation %s:%s", namespace, key)
             # Setting-card descriptions are optional. Returning an empty string lets
             # the widget hide the description instead of exposing the raw key.
-            if key.endswith(".content"):
+            if key.endswith((".content", ".hint", "_hint")):
                 return ""
             return key
         if not kwargs:

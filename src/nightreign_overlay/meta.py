@@ -17,4 +17,6 @@ APP_DATA_DIR_NAME = "NightreignOverlayHelper"
 GAME_WINDOW_TITLE = "ELDEN RING NIGHTREIGN"
 
 REPO_URL = "https://github.com/NeuraXmy/nightreign-overlay-helper"
+GITHUB_REPO = "NeuraXmy/nightreign-overlay-helper"
+GITEE_REPO = "NeuraXmy/nightreign-overlay-helper"
 ISSUES_URL = f"{REPO_URL}/issues"

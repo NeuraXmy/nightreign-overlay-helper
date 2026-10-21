@@ -1,13 +1,13 @@
 # Post-game commendations
 
-Enable this page's switch to use the separate popup. Automatic prompts also need Network Status and the Circle Timer enabled.
+Enable this page's switch, Network Status, and the Circle Timer to show the popup automatically when teammates leave.
 
-DAY1 starts the expedition roster. A confirmed teammate departure opens that player's row without waiting for teammates who stay in the lobby. A mid-game disconnect can also trigger it; missing helper updates are not departure evidence.
+DAY1 starts the expedition roster. Each teammate appears when they leave, including mid-game disconnections. Teammates staying in the lobby do not delay other players' prompts.
 
-Click a name to open its Steam profile. Only the 👍 button posts the comment saved on this page. Each row closes after 120 seconds by default, adjustable to 10–600 seconds; refreshes do not extend its lifetime. Use × to dismiss it immediately.
+Click a name to open its Steam profile, or 👍 to post the comment saved on this page. Each row closes after 120 seconds by default, adjustable to 10–600 seconds; refreshes do not extend its lifetime. Use × to dismiss it immediately.
 
-If teammates remain together or DAY1 was missed, use **Show teammates** after the match. An empty roster does not display an empty popup.
+If teammates remain together or DAY1 was missed, use **Show teammates** after the match.
 
-Comments have a seven-day, account-and-target-specific cooldown. A crash or uncertain network result retains this protection and never triggers automatic reposting. Keep Steam and the game running when posting; private comments or account changes can prevent posting. No API key or cookie export is needed.
+Allow seven days between comments to the same player. Keep Steam and the game running when posting. If the result is uncertain or comments are unavailable, click the name to check the profile.
 
-Resetting settings does not erase comment history. Network status and commendation windows have separate display settings.
+Status appears at the bottom of the settings page. The commendation window has its own position, opacity, and size settings.

@@ -38,4 +38,13 @@ $env:QT_QPA_PLATFORM='offscreen'
 python -m pytest tests/plugins/test_hp_material.py tests/plugins/test_hp_complex_scenes.py tests/plugins/test_hp_production_videos.py tests/plugins/test_hp_marker.py -q
 ```
 
+
+上述默认回归对四段生产录像使用短窗口简化版，目标合计低于 10 秒。原全录像、多采样率及全部冷启动验收已移为 benchmark，**只有血条检测部分发生修改时才运行**：
+
+```bash
+QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m benchmark -q --durations=10
+```
+
+具体范围与覆盖差异见 [测试策略](../../development/testing/README.md)。
+
 [返回功能索引](../README.md)

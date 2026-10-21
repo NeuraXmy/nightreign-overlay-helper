@@ -230,6 +230,64 @@ def evaluate_production(
     }
 
 
+def evaluate_production_smoke(label: dict) -> list[dict]:
+    """Sample three-second windows at segment starts and the final segment's tail.
+
+    Decode only 12 real frames per window, using independent production detectors.
+    Full playback, all sampling rates and exhaustive cold starts remain a benchmark.
+    """
+    path = VIDEO_ROOT / label["video"]
+    if hashlib.sha256(path.read_bytes()).hexdigest() != label["video_sha256"]:
+        raise ValueError("Video hash differs from the independently labelled source")
+    _, view, scanline_y = scene_geometry(label)
+    segments = label["gt_segments"]
+    starts = sorted(
+        {part["source_start_seconds"] for part in segments} | {segments[-1]["source_end_seconds"] - 3}
+    )
+    model = MaterialModel()
+    settings = HpDetectionSettings()
+    capture = cv2.VideoCapture(str(path))
+    try:
+        if not capture.isOpened() or capture.get(cv2.CAP_PROP_FPS) != label["fps"]:
+            raise ValueError("Cannot open annotated video at expected FPS")
+        reports = []
+        for start in starts:
+            run = _Run(0.25, start, start + 3, detector=HpDetector(material_model=model))
+            for index in range(12):
+                frame_index = round((start + index * 0.25) * label["fps"])
+                timestamp = frame_index / label["fps"]
+                capture.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+                ok, bgr = capture.read()
+                if not ok:
+                    raise ValueError(f"Cannot decode frame {frame_index}")
+                rgb = cv2.cvtColor(
+                    bgr[view.y() : view.y() + view.height(), view.x() : view.x() + view.width()],
+                    cv2.COLOR_BGR2RGB,
+                )
+                segment = next(
+                    part
+                    for part in segments
+                    if part["source_start_seconds"] <= timestamp < part["source_end_seconds"]
+                )
+                # Seeking rounds sampling timestamps to real frames; avoid using
+                # _Run's interval gate, which could skip alternating 7/8-frame steps.
+                run.next_sample = timestamp
+                run.consume(
+                    rgb,
+                    frame_index,
+                    timestamp,
+                    scanline_y,
+                    label["calibration_xywh"][3],
+                    settings,
+                    segment,
+                    label["tolerance_px"],
+                )
+            reports.append(run.report())
+        return reports
+    finally:
+        capture.release()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)

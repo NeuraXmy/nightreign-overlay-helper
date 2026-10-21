@@ -23,6 +23,7 @@ class AppConfig(ConfigGroup):
     # Retained for existing config files; closing hides the window and explicit quit exits the app.
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
+    auto_check_updates = BoolOption(True)
     debug_images_enabled = BoolOption(True)
     log_level = ChoiceOption("INFO", LOG_LEVELS)
     #: Internal: the "still running in the tray" hint is shown only once.

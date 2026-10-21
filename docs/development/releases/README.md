@@ -2,6 +2,12 @@
 
 本页说明当前 Windows x64 构建流程与验收要求。历史审计放在独立文件中，避免将已修复问题当作当前缺陷。
 
+Gitee 国内 Release 镜像的凭据、仓库和历史版本补同步见 [Gitee 镜像配置](gitee-sync.md)。
+
+## Release 更新日志
+
+Release 更新日志只记录用户关心的功能变化、使用体验改进和问题修复。测试、benchmark、CI、内部重构等维护变更无需写入，除非它们直接影响用户可感知的行为。例如，本次测试与 benchmark 的拆分不列入 Release 更新日志。发布说明保存在本目录的 `<tag>.md`，不自动罗列全部提交。
+
 ## 发布记录
 
 | 日期 | 审计快照 | 后续处理 |
@@ -69,7 +75,7 @@ Windows EXE 必须在 Windows 上构建；macOS 开发环境不能直接生成�
 
 tag 构建的 ZIP 名称例如 `nightreign-overlay-helper-v1.0.0-windows-x64.zip`；
 手动构建以 `manual-dev` 标记，名称包含提交短 SHA 与运行编号。解压后保留完整的 `nightreign-overlay-helper/` 文件夹，
-运行其中的 EXE。CI 在打包前运行完整 pytest、Ruff 检查及格式检查，并通过
+运行其中的 EXE。CI 在打包前运行默认 pytest 回归（四段血条生产录像使用简化版）、Ruff 检查及格式检查，并通过
 `scripts/check_runtime_resources.py` 实际加载和推理 POI、血条材质与端帽模型，检查内置插件发现和加载。
 打包后检查主程序、截图 DLL、三个 ONNX 模型、联机辅助程序、ETW DLL 和许可证是否齐全。
 `scripts/prepare_release_licenses.py --check` 还会离线核对完整许可证内容、
@@ -84,9 +90,18 @@ Actions 通过 `upload-artifact@v7` 的 `archive: false` 直接上传这两个 Z
 发布 workflow 文件需存在于所推送的 tag 中；旧 tag 不会因本次配置自动重新发布。
 GitHub 的手动构建入口需要构建 workflow 先进入默认分支。
 
+## Gitee 国内镜像配置
+
+1. 创建公开的 Gitee 仓库，并用 README 初始化默认分支；仓库仅用于 Release，无需推送源码。
+2. 在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 中，添加 Secret `GITEE_TOKEN`（具有目标仓库 Release 和附件上传权限的 Gitee 私人令牌），以及 Variable `GITEE_REPO`（`owner/repo`）。
+3. 核对应用 `src/nightreign_overlay/meta.py` 的 `GITEE_REPO` 与上述变量一致，默认是 `NeuraXmy/nightreign-overlay-helper`。
+4. 新版本发布后自动同步；首次使用可手动运行 **Sync Release to Gitee**，输入 `v1.0.1` 及后续各个已有正式版 tag，补齐历史日志与附件。
+
+同步包含更新日志和程序；超过 50 MiB 的程序 ZIP 自动分卷上传并附 SHA-256 清单。Gitee 不上传源码 ZIP，正文链接至 GitHub 的同版本源码附件，不同步源码提交。凭据权限、配额检查、失败重试和客户端行为详见 [Gitee Release 镜像配置](gitee-sync.md)。
+
 ## 发布前验证
 
-本地 `build.bat` 负责构建，不代替测试；发布 CI 在构建前执行完整 pytest、Ruff、运行资源推理和插件发现检查。开发环境可从仓库根目录运行：
+本地 `build.bat` 负责构建，不代替测试；发布 CI 在构建前执行默认 pytest 回归（四段血条生产录像使用简化版）、Ruff、运行资源推理和插件发现检查。开发环境可从仓库根目录运行：
 
 ```bash
 uv sync --locked --dev --group build
@@ -106,3 +121,5 @@ git diff --check
 许可证文件维护、源码准备和审计范围见[许可证与源码分发](licensing.md)。
 
 [返回开发维护](../README.md)
+
+血条完整录像 benchmark 不在构建／发布流程中执行；只有血条检测部分发生修改时才运行 `uv run pytest benchmark/benchmark_hp_production.py -m benchmark -q`。覆盖范围与简化回归说明见 [测试策略](../testing/README.md)。

@@ -392,7 +392,7 @@ def main():
         model.train()
         total = 0.0
         epoch_start = time.perf_counter()
-        for x, yb, yc in train:
+        for _step, (x, yb, yc) in enumerate(train, 1):
             x = x.to(device, non_blocking=True)
             yb = yb.to(device, non_blocking=True)
             yc = yc.to(device, non_blocking=True)
@@ -402,18 +402,23 @@ def main():
             loss.backward()
             opt.step()
             total += loss.item()
+            # print(
+            #     f"epoch {epoch + 1:02d} step {step:04d}/{args.steps}: "
+            #     f"loss={loss.item():.4f} time={(time.perf_counter() - step_start) * 1000:.2f} ms",
+            #     flush=True,
+            # )
         lr = opt.param_groups[0]["lr"]
         scheduler.step()
         validation_start = time.perf_counter()
         ab, ac, vl = evaluate(model, val, device)
-        history["train_loss"].append(total / len(train))
+        history["train_loss"].append(total / _step)
         history["val_loss"].append(vl)
         history["val_base"].append(ab)
         history["val_corner"].append(ac)
         history["lr"].append(lr)
         print(
             f"epoch {epoch + 1:02d}/{args.epochs}: "
-            f"train_loss={total / len(train):.4f} val_loss={vl:.4f} "
+            f"train_loss={total / _step:.4f} val_loss={vl:.4f} "
             f"val_base={ab:.3f} val_corner={ac:.3f} lr={lr:.2e} "
             f"train_time={time.perf_counter() - epoch_start:.2f}s "
             f"val_time={time.perf_counter() - validation_start:.3f}s",

@@ -31,32 +31,33 @@ def test_fresh_cues_have_bundled_resources_and_independent_reset_defaults(store,
     plugin_id, key = identity
     alerts = notifications(plugin_id, store, (key,))
     cue = alerts.cues[key]
-    assert cue.enabled.value is True and cue.path.value == ""
+    assert cue.enabled.value is False and cue.path.value == ""
     assert cue.seconds.value == preset.seconds and cue.volume.value == 100
     assert alerts.path_for(cue) == str(preset.path)
     assert preset.path.is_file() and preset.path.stat().st_size > 0
-    cue.enabled.set(False)
+    cue.enabled.set(True)
     cue.path.set("custom.wav")
     cue.volume.set(42)
     cue.seconds.set(9.5)
     alerts.ctx.reset_configs()
-    assert cue.enabled.value is True and cue.path.value == ""
+    assert cue.enabled.value is False and cue.path.value == ""
     assert cue.seconds.value == preset.seconds and cue.volume.value == 100
 
 
-def test_saved_custom_file_offset_and_explicit_opt_out_survive_upgrade(store):
+@pytest.mark.parametrize("enabled", [True, False])
+def test_saved_custom_file_offset_and_enabled_preference_survive_upgrade(store, enabled):
     alerts = notifications("rain_timer", store, ("warning",))
     cue = alerts.cues["warning"]
     cue.path.set("custom.mp3")
     cue.volume.set(24)
     cue.seconds.set(0.0)
-    cue.enabled.set(False)
+    cue.enabled.set(enabled)
     store.flush()
     restored = notifications("rain_timer", ConfigStore(store.path), ("warning",)).cues["warning"]
-    assert not restored.enabled.value
+    assert restored.enabled.value is enabled
     assert (restored.path.value, restored.volume.value, restored.seconds.value) == ("custom.mp3", 24, 0.0)
     restored.reset_all()
-    assert restored.enabled.value and restored.seconds.value == 30.0
+    assert not restored.enabled.value and restored.seconds.value == 30.0
 
 
 def test_existing_custom_end_cue_preserved_when_rain_warning_is_added(store):
@@ -114,6 +115,8 @@ def test_disabling_one_cue_only_stops_its_own_current_playback(store):
     services.register(AudioApi, player)
     alerts = notifications("rain_timer", store, ("start", "warning", "end"), services)
     start, warning, end = (alerts.cues[key] for key in ("start", "warning", "end"))
+    for cue in (start, warning, end):
+        cue.enabled.set(True)
     alerts.play(start)
     warning.enabled.set(False)
     assert player.owner == "rain_timer"

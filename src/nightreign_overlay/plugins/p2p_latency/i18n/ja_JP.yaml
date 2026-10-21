@@ -60,9 +60,9 @@ playtime:
   hours: '{hours} 時間'
   available: '{hours} 時間'
 block:
-  title: 自動ブロックと復元
-  enable: フレンド以外の仲間を一時ブロック
-  help: 有効な遅延を取得後に開始し、離脱確認後に復元。フレンドと既存のブロックは対象外。
+  title: Steam 名
+  enable: プレイヤーの Steam 名を表示
+  help: フレンド以外の味方を Steam で一時ブロックし、ゲーム内に Steam 名を表示します。退出後に自動で解除します。
   summary:
     disabled: オフ。一時ブロックは進行していません。
     enabled: オン。有効な遅延とフレンド関係の確認を待っています。
