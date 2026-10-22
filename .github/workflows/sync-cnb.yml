@@ -1,0 +1,41 @@
+name: Sync Release through CNB Cloud Build
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+    secrets:
+      CNB_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable GitHub release tag (e.g. v1.0.2)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cnb-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      CNB_REPO: NeuraXmy/nightreign-overlay-helper
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Trigger and await CNB-native runtime synchronization
+        run: python -m scripts.trigger_cnb_sync

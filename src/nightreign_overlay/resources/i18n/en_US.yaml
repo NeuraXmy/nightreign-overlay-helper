@@ -220,21 +220,21 @@ updates:
   title: Check for updates
   changelog: Release notes
   check: Check now
-  check_hint: Check GitHub / Gitee for a new version
+  check_hint: Check GitHub / Gitee / CNB for a new version
   auto: Automatically check for updates
   available: New version available
   install_hint: Extract the entire new version, exit the old application, then delete its old program folder. Settings
     are stored in your user data directory and will be preserved.
-  manual_hint: If the download fails, use the GitHub / Gitee links below to download manually.
+  manual_hint: If the download fails, use the GitHub / Gitee / CNB links below to download manually.
   download: Download ({source})
   skip: Skip this version
   close: Close
-  failed: Could not obtain valid releases from GitHub or Gitee. Please try again later.
+  failed: Could not obtain valid releases from GitHub, Gitee or CNB. Please try again later.
   latest: You have the latest stable version.
   save: Save update ZIP
   downloading: Downloading in the background. Please wait.
   progress: "Downloading: {downloaded} / {total} MiB"
-  download_failed: Download failed. Please use the GitHub / Gitee links to download manually.
+  download_failed: Download failed. Please use the GitHub / Gitee / CNB links to download manually.
   saved: Saved to {path}
   checking: Checking…
-  history_limited: The GitHub API is unavailable. Recent releases from the public feed are shown; use the GitHub / Gitee links for the full history.
+  history_limited: Only recent releases are available from this source; use the GitHub / Gitee / CNB links for the full history.

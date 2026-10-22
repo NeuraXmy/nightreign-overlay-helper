@@ -1,0 +1,8 @@
+main:
+  api_trigger:
+    - name: sync-github-release
+      docker:
+        image: python:3.13
+      stages:
+        - name: Pull verified GitHub runtime and publish CNB release
+          script: python sync_cnb_release.py

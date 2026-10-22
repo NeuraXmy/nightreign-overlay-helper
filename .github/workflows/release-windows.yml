@@ -174,3 +174,13 @@ jobs:
       tag: ${{ github.ref_name }}
     secrets:
       GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+
+  sync-cnb:
+    name: Mirror release through CNB cloud build
+    needs: [build-windows, publish-release]
+    if: needs.build-windows.outputs.prerelease == 'false'
+    uses: ./.github/workflows/sync-cnb.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      CNB_TOKEN: ${{ secrets.CNB_TOKEN }}

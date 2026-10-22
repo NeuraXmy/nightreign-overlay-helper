@@ -12,6 +12,7 @@ import zipfile
 from collections.abc import Callable
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
+from html.parser import HTMLParser
 from pathlib import Path
 from queue import Empty, Queue
 from urllib.error import HTTPError
@@ -19,10 +20,11 @@ from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 from nightreign_overlay.core.log import get_logger
-from nightreign_overlay.meta import GITEE_REPO, GITHUB_REPO
+from nightreign_overlay.meta import CNB_REPO, GITEE_REPO, GITHUB_REPO
 
 CHECK_TIMEOUT = 10.0
-REPOSITORIES = {"github": GITHUB_REPO, "gitee": GITEE_REPO}
+REPOSITORIES = {"github": GITHUB_REPO, "gitee": GITEE_REPO, "cnb": CNB_REPO}
+SOURCE_NAMES = {"github": "GitHub", "gitee": "Gitee", "cnb": "CNB"}
 log = get_logger(__name__)
 
 
@@ -55,7 +57,72 @@ class Release:
 
     @property
     def page_url(self) -> str:
+        if self.source == "cnb":
+            return f"https://cnb.cool/{CNB_REPO}/-/releases"
         return f"https://{self.source}.com/{REPOSITORIES[self.source]}/releases"
+
+
+class _NextDataParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.active = False
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag, attrs) -> None:
+        if tag == "script" and dict(attrs).get("id") == "__NEXT_DATA__":
+            self.active = True
+
+    def handle_endtag(self, tag) -> None:
+        if tag == "script":
+            self.active = False
+
+    def handle_data(self, data) -> None:
+        if self.active:
+            self.parts.append(data)
+
+
+def fetch_cnb_releases(deadline: float) -> list[Release]:
+    """CNB's API requires authentication; its public page embeds release metadata."""
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("Release check timed out")
+    request = Request(
+        f"https://cnb.cool/{CNB_REPO}/-/releases",
+        headers={"User-Agent": "NightreignOverlayHelper", "Accept": "text/html"},
+    )
+    with urlopen(request, timeout=remaining) as response:
+        payload = response.read(8 * 1024 * 1024 + 1)
+    if len(payload) > 8 * 1024 * 1024:
+        raise ValueError("Release metadata too large")
+    parser = _NextDataParser()
+    parser.feed(payload.decode("utf-8"))
+    data = json.loads("".join(parser.parts))
+    info = data["props"]["pageProps"]["initialState"]["slug"]["repo"]["index"]["releasesInfo"]
+    items = info["releases"]
+    if not isinstance(items, list):
+        raise ValueError("Invalid CNB release response")
+    releases = []
+    for item in items:
+        tag = item.get("tag_ref", "").removeprefix("refs/tags/")
+        version = stable_version(tag)
+        if item.get("is_draft") or item.get("is_prerelease") or version is None or version < (1, 0, 1):
+            continue
+        filename = f"nightreign-overlay-helper-{tag}-windows-x64.zip"
+        asset = next((a for a in (item.get("assets") or []) if a.get("name") == filename), {})
+        path = asset.get("path", "")
+        expected = f"/{CNB_REPO}/-/releases/download/{tag}/{filename}"
+        url = "https://cnb.cool" + path if path == expected else ""
+        releases.append(
+            Release(
+                tag,
+                item.get("body") or "",
+                "cnb",
+                url,
+                filename,
+                limited_history=info.get("release_count", len(items)) > len(items),
+            )
+        )
+    return sorted(releases, key=lambda r: stable_version(r.tag), reverse=True)
 
 
 def fetch_github_feed(deadline: float) -> list[Release]:
@@ -101,6 +168,8 @@ def fetch_github_feed(deadline: float) -> list[Release]:
 
 
 def fetch_releases(source: str, deadline: float) -> list[Release]:
+    if source == "cnb":
+        return fetch_cnb_releases(deadline)
     try:
         return _fetch_api_releases(source, deadline)
     except HTTPError as error:
@@ -189,7 +258,7 @@ def _fetch_api_releases(source: str, deadline: float) -> list[Release]:
 
 
 def check_releases(timeout: float = CHECK_TIMEOUT) -> list[Release]:
-    """Probe both mirrors concurrently; choose the newest, preferring GitHub on ties.
+    """Probe all sources concurrently; choose newest, then GitHub/Gitee/CNB on ties.
 
     Daemon network threads cannot delay process exit if an OS DNS call stalls.
     The coordinator never waits for them beyond the shared deadline.
@@ -201,9 +270,7 @@ def check_releases(timeout: float = CHECK_TIMEOUT) -> list[Release]:
         try:
             releases = fetch_releases(source, deadline)
             if releases:
-                log.info(
-                    "%s latest release: %s", "GitHub" if source == "github" else "Gitee", releases[0].tag
-                )
+                log.info("%s latest release: %s", SOURCE_NAMES[source], releases[0].tag)
             results.put((source, releases, "No stable releases since v1.0.1" if not releases else ""))
         except Exception as error:
             log.warning("%s release check failed: %s", source.title(), error)
@@ -213,7 +280,7 @@ def check_releases(timeout: float = CHECK_TIMEOUT) -> list[Release]:
         threading.Thread(target=probe, args=(source,), daemon=True).start()
     received = {}
     errors = dict.fromkeys(REPOSITORIES, "Timed out")
-    while len(received) < 2:
+    while len(received) < len(REPOSITORIES):
         try:
             source, releases, error = results.get(timeout=max(0, deadline - time.monotonic()))
         except Empty:
