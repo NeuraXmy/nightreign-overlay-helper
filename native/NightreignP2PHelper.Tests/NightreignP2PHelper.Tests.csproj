@@ -11,5 +11,7 @@
     <Compile Include="../NightreignP2PHelper/PeerPresencePolicy.cs" Link="PeerPresencePolicy.cs" />
     <Compile Include="../NightreignP2PHelper/PingAccumulator.cs" Link="PingAccumulator.cs" />
     <Compile Include="../NightreignP2PHelper/Protocol.cs" Link="Protocol.cs" />
+    <Compile Include="../NightreignP2PHelper/CommendationHistory.cs" Link="CommendationHistory.cs" />
+    <Compile Include="../NightreignP2PHelper/CommendationEngine.cs" Link="CommendationEngine.cs" />
   </ItemGroup>
 </Project>

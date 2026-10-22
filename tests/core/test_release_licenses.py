@@ -191,11 +191,17 @@ def test_release_archives_separate_runtime_and_matching_sources(release_checkout
         notice = archive.read("app/SOURCE.md").decode()
         assert "releases/download/v1.0.0-dev.2/v1.0.0-dev.2-sources.zip" in notice
         manifest = archive.read("app/licenses/source-manifest.json")
+        for cue in package_release.BUNDLED_CUES.values():
+            assert archive.read(f"app/_internal/nightreign_overlay/plugins/audio/sounds/{cue.filename}")
     with zipfile.ZipFile(sources) as archive:
         assert archive.read("manifest.json") == manifest
         assert "nightreign-overlay-helper-source.zip" in archive.namelist()
         assert "pyqt6.tar.gz" in archive.namelist()
         assert archive.read("SOURCE.md").decode() == notice
+    missing_voice = bundle / "_internal/nightreign_overlay/plugins/audio/sounds/rain_warning.mp3"
+    missing_voice.unlink()
+    with pytest.raises(FileNotFoundError, match=r"rain_warning\.mp3"):
+        package_release.package(root, bundle)
 
 
 def test_runtime_manifest_cannot_point_at_unrelated_sources(release_checkout):

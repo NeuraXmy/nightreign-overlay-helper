@@ -11,7 +11,7 @@ settings:
     content: 根据标定区域内的血条颜色，自动开始或停止雨中冒险倒计时
   region:
     title: 血条检测区域
-    content: 框选血条最左边一小段的纯色内部，可点击「标定」或设置快捷键
+    content: 未标定时自动适配 16:9 游戏窗口；手动框选血条左侧纯色内部后优先使用所选区域
     button: 标定
     annotate: 点我并框出 “血条纯色内部” 的区域
   toggle:
@@ -56,4 +56,5 @@ settings:
 
 audio:
   start: 雨中冒险开始
+  warning: 雨中冒险即将结束
   end: 雨中冒险结束

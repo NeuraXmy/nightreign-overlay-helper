@@ -42,10 +42,21 @@ var cases = new (string Name, Action Run)[]
         FakeSteam.Connect(2);
         ExpectPeers(new SteamPeerReader(new EtwPingMonitor()), 2);
     }),
+    ("Snapshots expose actual friend relationships for both connected peers", () =>
+    {
+        FakeSteam.Friends.Add(2);
+        FakeSteam.CoplayPlayers.Add(3);
+        FakeSteam.Connect(2);
+        FakeSteam.Connect(3);
+        var peers = new SteamPeerReader().ReadPeers();
+        if (peers.Single(p => p.SteamId == "2").Relationship != 3
+            || peers.Single(p => p.SteamId == "3").Relationship != 0)
+            throw new Exception("Friend relationship was lost.");
+    }),
 };
 
 var failures = 0;
-foreach (var (name, run) in cases)
+foreach (var (name, run) in cases.Concat(CommendationTests.Cases))
 {
     FakeSteam.Reset();
     try

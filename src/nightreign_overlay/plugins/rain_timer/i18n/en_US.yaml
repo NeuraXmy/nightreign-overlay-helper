@@ -56,4 +56,5 @@ settings:
 
 audio:
   start: Nightrain begins
+  warning: Nightrain ending soon
   end: Nightrain ends

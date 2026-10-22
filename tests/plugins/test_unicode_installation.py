@@ -33,6 +33,7 @@ from nightreign_overlay.core.paths import PACKAGE_DIR, resource_path
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
+from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
 from nightreign_overlay.plugins.day_timer.detector import LANGUAGES, DayDetector
 from nightreign_overlay.plugins.hp_marker.material import MaterialModel
 from nightreign_overlay.plugins.map_detect.image_utils import get_font
@@ -40,6 +41,8 @@ from nightreign_overlay.plugins.map_detect.poi_cnn import PoiCnn
 from nightreign_overlay.ui.theme import app_icon
 
 assert PACKAGE_DIR.is_relative_to(root)
+assert len(BUNDLED_CUES) == 10
+assert all(cue.path.is_relative_to(root) and cue.path.is_file() for cue in BUNDLED_CUES.values())
 app = QApplication([])
 translator = Translator("zh_CN")
 translator.load_dir("core", resource_path("i18n"))
@@ -49,7 +52,7 @@ manager = PluginManager(store, translator, ServiceRegistry(), EventBus())
 manager.discover()
 expected = {
     "art_timer", "audio", "capture", "day_timer", "hp_marker", "hud",
-    "input", "map_detect", "p2p_latency", "rain_timer", "region",
+    "input", "map_detect", "p2p_latency", "rain_timer", "region", "commendation", "steam_recovery",
 }
 manager.load_all()
 assert {record.id for record in manager.records()} == expected

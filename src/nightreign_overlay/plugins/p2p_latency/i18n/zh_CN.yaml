@@ -3,15 +3,20 @@ plugin:
   description: 显示 Steam 联机队友、延迟和稳定度，需要以管理员身份运行
 settings:
   window: 悬浮窗
-  good_ping: 良好延迟上限（小于此值，延迟文本显示为绿色）
-  warning_ping: 警告延迟上限（小于此值，延迟文本显示为黄色，否则红色）
+  good_ping: 良好延迟上限
+  warning_ping: 警告延迟上限
   status: 运行状态
   simulation: macOS 使用模拟子进程，约 32 秒循环演示等待、未知指标、延迟变化和换队；这些数值不是实际网络测量
+  show_playtime: 显示游戏时长
+  playtime_help: 从 Steam 公开主页查询黑夜君临总时长；隐私设置或主页未展示时显示不可用。关闭后停止查询。
+  good_ping_help: 低于此值时，延迟显示为绿色。
+  warning_ping_help: 低于此值时显示黄色，否则显示红色。
 overlay:
   title: 联机状态 · Ping / 稳定度
   waiting: 等待队友 / 等待 Steam 同步
   legacy_no_fields: 旧 Steam P2P 接口没有 Ping/稳定度字段
   etw_source: 延迟来源：ETW STUN 往返时间
+  open_profile: 点击名字在 Steam 中打开主页
 status:
   helper_missing: 未找到联机组件，源码运行请先执行 scripts/build_p2p_helper.ps1
   helper_started: 联机组件已启动
@@ -29,7 +34,17 @@ status:
   waiting: 等待
   connected: 已连接
   failed: 失败
-  detail: "状态：{message}\n黑夜君临：{game}\n联机组件：{helper}\nSteamAPI：{steam}\nETW 延迟：{etw}\n当前队友：{count}"
+  detail: '状态：{message}
+
+    黑夜君临：{game}
+
+    联机组件：{helper}
+
+    SteamAPI：{steam}
+
+    ETW 延迟：{etw}
+
+    当前队友：{count}'
   etw:
     disabled: 已关闭
     waiting: 等待游戏
@@ -38,3 +53,37 @@ status:
     error: 不可用，请检查 ETW 资源和系统跟踪会话
     admin_required: ETW 需要管理员权限；请退出后以管理员身份重新启动程序
     simulated: 模拟数据（未启用 ETW）
+  game_exited: 游戏已退出
+playtime:
+  loading: 查询中
+  unavailable: 时长不可用
+  hours: '{hours} 小时'
+  available: '{hours} 小时'
+block:
+  title: Steam 名字
+  enable: 显示玩家真实Steam名
+  help: 通过临时屏蔽非好友队友 Steam，在游戏中显示玩家真实 Steam 名字，离队后自动恢复。
+  summary:
+    disabled: 已关闭；没有进行中的临时屏蔽。
+    enabled: 已开启：等待有效延迟与非好友关系确认。
+    preparing: 正在准备并核对通信状态。
+    blocked: 队友已临时屏蔽；离队、关闭功能或退出时自动恢复。
+    restoring: 正在解除临时屏蔽，请保持 Steam 在线。
+    recovery_pending: 恢复尚未确认，已保留记录并自动重试；请保持原 Steam 账号在线。
+    retry_wait: 准备失败，稍后自动重试。
+    error: 未完成屏蔽；原有屏蔽和不符合条件的账号会跳过。
+    account_missing: 等待联机组件确认当前 Steam 账号。
+    unsupported: 自动屏蔽与恢复仅支持 Windows。
+  state:
+    preparing: 准备屏蔽
+    blocked: 已屏蔽
+    restoring: 解除中
+    recovery_pending: 恢复待重试
+    restored: 已解除
+    unconfirmed: 恢复待确认
+    preblocked: 原有屏蔽 · 不解除
+    relationship_skipped: 关系未确认 · 跳过
+    failed: 屏蔽未完成
+    retry_wait: 失败待重试
+    friend_skipped: 好友跳过
+    waiting: 等待条件就绪

@@ -14,6 +14,7 @@ from nightreign_overlay.plugins.p2p_latency.models import (
     P2PPeer,
     P2PStatus,
     parse_helper_message,
+    snapshot_account,
 )
 
 log = get_logger(__name__)
@@ -71,12 +72,14 @@ def resolve_helper_path() -> Path:
 class P2PService(QObject):
     status_changed = pyqtSignal(object)
     peers_changed = pyqtSignal(object)
+    snapshotReceived = pyqtSignal(object)
 
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self.enabled = True
         self.status = P2PStatus("disabled", "联机信息已关闭")
         self.peers: list[P2PPeer] = []
+        self.account = ""
         self._line_buffer = JsonLineBuffer()
         self._stopping = False
         self._restart_attempt = 0
@@ -183,10 +186,12 @@ class P2PService(QObject):
                     incoming: P2PStatus = value
                     self._set_status(incoming.state, incoming.message, incoming.etw_state)
                 else:
+                    self.account = snapshot_account(line)
                     # A snapshot proves that SteamAPI initialization and one complete
                     # polling cycle succeeded, so the previous crash streak is over.
                     self._restart_attempt = 0
                     self._set_peers(value)
+                    self.snapshotReceived.emit(tuple(self.peers))
             except Exception as exc:
                 log.warning(f"Ignored invalid P2P helper message: {exc}; line={line[:500]!r}")
 
@@ -217,6 +222,7 @@ class P2PService(QObject):
         self._set_status(self.status.state, self.status.message)
 
     def _clear_peers(self) -> None:
+        self.account = ""
         if self.peers:
             self.peers = []
             self.peers_changed.emit([])

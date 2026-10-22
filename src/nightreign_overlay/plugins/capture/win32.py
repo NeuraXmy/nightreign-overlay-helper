@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import time
+from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
@@ -82,7 +84,7 @@ class Manager:
             self._handle = None
 
 
-def find_window_by_title(title: str) -> int | None:
+def find_window_by_title(title: str, accept: Callable[[int], bool] | None = None) -> int | None:
     """Find the first top-level window whose title contains ``title``."""
     user32 = ctypes.WinDLL("user32", use_last_error=True)
     user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
@@ -97,7 +99,7 @@ def find_window_by_title(title: str) -> int | None:
         if length:
             buffer = ctypes.create_unicode_buffer(length + 1)
             user32.GetWindowTextW(hwnd, buffer, length + 1)
-            if title.casefold() in buffer.value.casefold():
+            if title.casefold() in buffer.value.casefold() and (accept is None or accept(int(hwnd))):
                 matches.append(int(hwnd))
         return True
 
@@ -105,6 +107,78 @@ def find_window_by_title(title: str) -> int | None:
     user32.EnumWindows.restype = wintypes.BOOL
     user32.EnumWindows(callback, 0)
     return matches[0] if matches else None
+
+
+def _is_game_window(hwnd: int) -> bool:
+    """Only accept a visible, non-minimized window owned by nightreign.exe.
+
+    Querying the executable path uses limited process information, never game memory or Steam APIs.
+    A browser/Steam page with the game title must not be used as a HUD reference.
+    """
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    for name in ("IsWindowVisible", "IsIconic"):
+        function = getattr(user32, name)
+        function.argtypes = [wintypes.HWND]
+        function.restype = wintypes.BOOL
+    if not user32.IsWindowVisible(hwnd) or user32.IsIconic(hwnd):
+        return False
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+    pid = wintypes.DWORD()
+    if not user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid)) or not pid.value:
+        return False
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.LPWSTR,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    process = kernel32.OpenProcess(0x1000, False, pid.value)  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not process:
+        return False
+    try:
+        size = wintypes.DWORD(32768)
+        path = ctypes.create_unicode_buffer(size.value)
+        return bool(kernel32.QueryFullProcessImageNameW(process, 0, path, ctypes.byref(size))) and (
+            path.value.replace("\\", "/").rsplit("/", 1)[-1].casefold() == "nightreign.exe"
+        )
+    finally:
+        kernel32.CloseHandle(process)
+
+
+class GameClientLocator:
+    """Reuse a validated window handle, but read its current physical geometry on every query."""
+
+    def __init__(self) -> None:
+        self._hwnd: int | None = None
+        self._next_search = 0.0
+
+    def geometry(self) -> tuple[int, int, int, int] | None:
+        try:
+            if self._hwnd is not None and not _is_game_window(self._hwnd):
+                self._hwnd = None
+            if self._hwnd is None:
+                now = time.monotonic()
+                if now < self._next_search:
+                    return None
+                self._next_search = now + 1.0
+                self._hwnd = find_window_by_title("ELDEN RING NIGHTREIGN", accept=_is_game_window)
+                if self._hwnd is None:
+                    return None
+            rect = client_geometry(self._hwnd)
+            # The window may disappear or minimize during the geometry query.
+            if rect[2] > 0 and rect[3] > 0 and _is_game_window(self._hwnd):
+                return rect
+        except (OSError, RuntimeError):
+            pass
+        self._hwnd = None
+        return None
 
 
 def client_geometry(hwnd: int | None) -> tuple[int, int, int, int]:

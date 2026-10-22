@@ -56,4 +56,5 @@ settings:
 
 audio:
   start: 夜の雨開始
+  warning: 夜の雨まもなく終了
   end: 夜の雨終了

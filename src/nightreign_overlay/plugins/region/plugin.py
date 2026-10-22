@@ -25,7 +25,9 @@ from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.core.screens import mapping_for_rect, screen_mappings
 from nightreign_overlay.platforms import PlatformBackend
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
+from nightreign_overlay.plugins.capture.api import CaptureApi
 from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
+from nightreign_overlay.plugins.region.automatic import automatic_region, supports_automatic_region
 from nightreign_overlay.plugins.region.config import RegionConfig
 from nightreign_overlay.ui.overlay import OverlayManager
 
@@ -152,7 +154,20 @@ class _RegionService(RegionApi):
 
     def region(self, key: str) -> QRect | None:
         value = self._plugin.config.regions.value.get(key)
-        return QRect(*value) if value is not None else None
+        if value is not None:
+            return QRect(*value)
+        capture = self._plugin.ctx.services.get(CaptureApi)
+        if capture is None or not supports_automatic_region(key):
+            return None
+        return automatic_region(key, capture.game_client_rect())
+
+    def region_source(self, key: str) -> str | None:
+        if key in self._plugin.config.regions.value:
+            return "manual"
+        return "automatic" if self.region(key) is not None else None
+
+    def supports_automatic(self, key: str) -> bool:
+        return supports_automatic_region(key)
 
     def clear_region(self, key: str) -> None:
         regions = self._plugin.config.regions.value
