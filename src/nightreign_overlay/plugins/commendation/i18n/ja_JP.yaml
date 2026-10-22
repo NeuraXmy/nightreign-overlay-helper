@@ -2,17 +2,16 @@ plugin:
   name: 試合後の称賛
   description: 味方の退出後に称賛ウィンドウを表示し、Steam プロフィールの確認やコメントの投稿ができます
 settings:
-  behavior: 試合後の称賛
+  behavior: 動作
   close_seconds: ウィンドウを自動的に閉じるまでの時間
-  close_help: 自動表示には接続状態と収縮タイマーの有効化が必要です。各プレイヤーごとに計時します。
+  close_help: 自動表示にはマルチプレイ状況と収縮タイマーの有効化が必要です。味方ごとに表示時間を計測します
   seconds: '{value} 秒'
-  comment: 称賛コメント
-  comment_help: 称賛ボタンで Steam にコメントを投稿します。同じ相手への投稿間隔は7日間です。
+  comment: 既定の称賛コメント
   save: 保存
   show_recent: 味方を表示
   manual: 味方ウィンドウを手動で開く
-  manual_help: 味方がロビーに残る場合や DAY1 を検出できなかった場合に使用します。
-  window: 独立した称賛ウィンドウ
+  manual_help: 味方がパーティーに残っている場合や DAY1 を検出できなかった場合に使用します
+  window: オーバーレイ
   status: 動作状態
   dismiss: 閉じる
 overlay:

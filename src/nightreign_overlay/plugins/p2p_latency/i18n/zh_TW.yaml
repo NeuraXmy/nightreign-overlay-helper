@@ -8,9 +8,9 @@ settings:
   status: 執行狀態
   simulation: macOS 使用模擬子程序，約 32 秒循環展示等待、未知數值、延遲變化與換隊；並非實際網路測量
   show_playtime: 顯示遊戲時數
-  playtime_help: 從 Steam 公開個人檔案查詢黑夜君臨總時數；隱私設定或頁面未展示時顯示無法取得。關閉後停止查詢。
-  good_ping_help: 低於此值時，延遲顯示為綠色。
-  warning_ping_help: 低於此值時顯示黃色，否則顯示紅色。
+  playtime_help: 從隊友的 Steam 公開個人檔案查詢遊戲總時數
+  good_ping_help: 低於此值時，延遲顯示為綠色
+  warning_ping_help: 低於此值時顯示黃色，否則顯示紅色
 overlay:
   title: 連線狀態 · Ping／穩定度
   waiting: 等待隊友／Steam 同步
@@ -60,9 +60,9 @@ playtime:
   hours: '{hours} 小時'
   available: '{hours} 小時'
 block:
-  title: Steam 名字
-  enable: 顯示玩家真實Steam名
-  help: 透過暫時封鎖非好友隊友 Steam，在遊戲中顯示玩家真實 Steam 名字，離隊後自動恢復。
+  title: Steam 相關
+  enable: 顯示玩家真實 Steam 名字
+  help: 透過暫時封鎖非好友隊友 Steam，在遊戲中顯示玩家真實 Steam 名字，離隊後自動恢復
   summary:
     disabled: 已關閉；沒有進行中的暫時封鎖。
     enabled: 已開啟：等待有效延遲與非好友關係確認。

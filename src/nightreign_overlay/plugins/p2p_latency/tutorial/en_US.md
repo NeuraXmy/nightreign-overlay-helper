@@ -1,21 +1,33 @@
-# Online status
+# Overview
 
-When enabled, this feature displays the names, ping, and stability of Steam teammates.
-
-## Show players' Steam names
-
-Enable **Show players' Steam names** to temporarily block non-friend teammates' Steam communication and display their Steam names during matches. Communication is restored when they leave.
-
-The switch is off by default. A connected non-friend with a valid ping can be processed. Friends, unknown relationships, and existing blocks are skipped. Two teammates are handled independently; preparation failures are retried. Disabling the feature or exiting also requests restoration. Recovery status appears at the bottom of the settings page.
-
-Brief roster gaps do not immediately restore communication. A separate recovery process retains a journal across crashes and network failures. Startup resumes recovery even with the switch off. Keep the original Steam account online and retain pending journals; offline recovery cannot be immediate. Commendations wait for confirmed restoration, while profile links remain available. Do not run old and new helpers simultaneously.
+When enabled, this feature displays Steam teammates’ nicknames, ping, and stability. It can also show their Steam names and total playtime, and lets you click through to their profiles.
 
 ## Initial setup
 
-Launch the overlay helper as administrator, then launch the game. The feature will work automatically.
+Launch the overlay helper as administrator, then launch the game to use this feature.
 
-The overlay appearance can be adjusted separately in Settings.
+You can adjust the overlay’s appearance separately in this feature’s settings.
+
+## Steam features
+
+### 1. Show players’ actual Steam names
+
+Enable **Show players' actual Steam names** to temporarily block non-friend teammates on Steam so that their Steam names appear during matches. Communication is automatically restored when they leave.
+
+With this option enabled, post-game commendations must wait until the teammate’s temporary block has been removed before posting a comment.
+
+### 2. Show teammates’ Steam playtime
+
+By default, teammates’ total NIGHTREIGN playtime is shown using data from their public Steam profiles.
+
+Disable **Show playtime** to stop requests and hide the column.
+
+### 3. Open teammates’ profiles
+
+Click a teammate’s name to open their profile in Steam’s built-in browser.
+
+This is unavailable when the overlay is set to **Click-through**. Select another input mode to use it.
 
 ## Notes
 
-The feature's runtime status is shown at the bottom of its settings page.
+The feature’s runtime status is shown at the bottom of its settings page.

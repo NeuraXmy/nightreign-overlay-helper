@@ -65,7 +65,7 @@ settings_reset:
 region_preview:
   automatic: 自動（16:9）
   waiting: 等待自動區域
-  automatic_help: 未手動標定時，使用 Windows 遊戲視窗的 16:9 預設區域；也可隨時手動框選。
+  automatic_help: 未手動標定時，使用 16:9 遊戲視窗下的預設區域
   clear_manual: 清除手動標定，恢復自動區域
   calibrated: 已標定
   uncalibrated: 未標定

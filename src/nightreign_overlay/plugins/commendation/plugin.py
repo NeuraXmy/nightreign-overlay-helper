@@ -22,7 +22,7 @@ from .service import CommendationService
 
 class _CommentCard(SettingCard):
     def __init__(self, item, tr, on_error):
-        super().__init__(FluentIcon.EDIT, tr("settings.comment"), tr("settings.comment_help"))
+        super().__init__(FluentIcon.EDIT, tr("settings.comment"))
         self.editor = LineEdit(self)
         self.editor.setMaxLength(500)
         self.editor.setMinimumWidth(280)
@@ -47,7 +47,7 @@ class CommendationPlugin(Plugin):
     manifest = PluginManifest(
         id="commendation",
         kind=PluginKind.FEATURE,
-        icon="HEART",
+        icon="CERTIFICATE",
         order=60,
         requires=("p2p_latency",),
         optional=("day_timer",),

@@ -76,7 +76,7 @@ settings:
   calibrate_region:
     action: 标定
     title: 地图区域
-    content: 未标定时自动适配 16:9 游戏窗口；手动框选完整地图后优先使用所选区域
+    content: 手动框选完整地图后优先使用所选区域
     annotate: 点我并框出 “地图” 的区域
   recognize:
     title: 识别地图

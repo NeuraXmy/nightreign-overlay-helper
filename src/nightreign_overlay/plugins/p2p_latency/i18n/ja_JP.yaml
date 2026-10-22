@@ -8,9 +8,9 @@ settings:
   status: 動作状況
   simulation: macOSでは模擬プロセスを使用。待機・不明な指標・遅延変動・仲間の交代を約32秒で再現します。実測値ではありません
   show_playtime: プレイ時間を表示
-  playtime_help: 公開 Steam プロフィールから総プレイ時間を取得します。非公開・未掲載の場合は取得不可と表示し、無効にすると取得を停止します。
-  good_ping_help: この値未満の遅延は緑で表示します。
-  warning_ping_help: この値未満は黄色、それ以上は赤で表示します。
+  playtime_help: 味方の公開 Steam プロフィールからゲームの総プレイ時間を取得します
+  good_ping_help: この値未満の遅延は緑で表示します
+  warning_ping_help: この値未満は黄色、それ以上は赤で表示します
 overlay:
   title: マルチプレイ · Ping／安定性
   waiting: 仲間／Steamの同期を待機中
@@ -60,9 +60,9 @@ playtime:
   hours: '{hours} 時間'
   available: '{hours} 時間'
 block:
-  title: Steam 名
-  enable: プレイヤーの Steam 名を表示
-  help: フレンド以外の味方を Steam で一時ブロックし、ゲーム内に Steam 名を表示します。退出後に自動で解除します。
+  title: Steam 関連
+  enable: プレイヤーの実際の Steam 名を表示
+  help: フレンド以外の味方を Steam で一時ブロックし、ゲーム内に実際の Steam 名を表示します。退出後に自動で解除します
   summary:
     disabled: オフ。一時ブロックは進行していません。
     enabled: オン。有効な遅延とフレンド関係の確認を待っています。
