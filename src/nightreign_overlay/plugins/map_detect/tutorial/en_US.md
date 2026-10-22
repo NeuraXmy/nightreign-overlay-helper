@@ -10,6 +10,8 @@ This feature can **significantly affect normal gameplay**. It is not recommended
 
 ### 1. Calibrate the map region.
 
+Regions that have not been manually calibrated automatically adapt to a 16:9 game window. Try using the feature first; if it does not work, follow the region selection steps below.
+
 It is recommended to set a controller or keyboard shortcut. Then enter the Roundtable Hold or any scene where the map can be opened, and press the shortcut to open the calibration screen.
 
 ![Set calibration shortcut](1.jpg)

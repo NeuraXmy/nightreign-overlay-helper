@@ -27,7 +27,7 @@ settings:
     jp: 日本語
   calibrate:
     title: DAY I 图标区域
-    content: 未标定时自动适配 16:9 游戏窗口；手动框选 DAY I 图标后优先使用所选区域
+    content: 手动框选 DAY I 图标后优先使用所选区域
     button: 标定
     annotate: 点我并框出 “DAY I 图标” 的区域
   manual:

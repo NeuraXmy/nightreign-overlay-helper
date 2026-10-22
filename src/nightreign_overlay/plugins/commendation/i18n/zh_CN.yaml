@@ -2,17 +2,16 @@ plugin:
   name: 赛后点赞
   description: 队友离队后显示点赞窗口，可查看 Steam 主页或发送留言
 settings:
-  behavior: 赛后点赞
+  behavior: 行为
   close_seconds: 点赞窗口自动关闭时间
-  close_help: 自动弹出需启用联机状态和缩圈计时，每位队友分别计时。
+  close_help: 自动弹出需启用联机状态和缩圈计时，每位队友分别计时
   seconds: '{value} 秒'
-  comment: 点赞留言
-  comment_help: 点击点赞按钮向 Steam 主页留言，同一玩家间隔七天。
+  comment: 默认点赞留言
   save: 保存
   show_recent: 显示队友
   manual: 手动打开队友窗口
-  manual_help: 队友仍在房间或未识别到 DAY1 时使用。
-  window: 独立点赞窗口
+  manual_help: 队友仍在房间或未识别到 DAY1 时使用
+  window: 悬浮窗
   status: 运行状态
   dismiss: 关闭本次窗口
 overlay:

@@ -145,17 +145,17 @@ class P2PLatencyPlugin(Plugin):
         recovery.addCard(
             ConfigSwitchCard(self.config.auto_block, FluentIcon.SYNC, tr("block.enable"), tr("block.help"))
         )
-        panel.addSection(recovery)
-        window = OverlaySettingSection(
-            self.overlay_config, tr("settings.window"), include_horizontal_reset=False
-        )
-        window.addCard(
+        recovery.addCard(
             ConfigSwitchCard(
                 self.config.show_playtime,
                 FluentIcon.HISTORY,
                 tr("settings.show_playtime"),
                 tr("settings.playtime_help"),
             )
+        )
+        panel.addSection(recovery)
+        window = OverlaySettingSection(
+            self.overlay_config, tr("settings.window"), include_horizontal_reset=False
         )
         for name in ("good_ping", "warning_ping"):
             window.addCard(

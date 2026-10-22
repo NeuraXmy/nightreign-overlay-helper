@@ -6,6 +6,8 @@ The feature periodically captures screenshots and detects the HP bar length, dis
 
 ### 1. Calibrate the HP bar region.
 
+Regions that have not been manually calibrated automatically adapt to a 16:9 game window. Try using the feature first; if it does not work, follow the region selection steps below.
+
 It is recommended to set a controller or keyboard shortcut. Then enter the training area or any scene with an HP bar, and press the shortcut to open the calibration screen.
 
 ![Set calibration shortcut](1.jpg)

@@ -2,17 +2,16 @@ plugin:
   name: Post-game commendations
   description: View Steam profiles or post a comment when teammates leave
 settings:
-  behavior: Commendations
+  behavior: Behavior
   close_seconds: Automatically close after
-  close_help: Automatic popups need Network Status and the Circle Timer. Each player has a separate timer.
+  close_help: Automatic popups require Co-op Status and the Circle Timer; each teammate has a separate timer
   seconds: '{value} s'
-  comment: Profile comment
-  comment_help: Click Like to post on Steam, with seven days between comments to the same player.
+  comment: Default commendation comment
   save: Save
   show_recent: Show teammates
   manual: Open teammates manually
-  manual_help: Use when teammates stay in the lobby or DAY1 was not detected.
-  window: Separate commendation window
+  manual_help: Use when teammates remain in the party or DAY1 was not detected
+  window: Overlay
   status: Status
   dismiss: Dismiss
 overlay:
