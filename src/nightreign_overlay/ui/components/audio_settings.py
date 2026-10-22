@@ -243,9 +243,7 @@ class LoopAudioSettingCard(SettingCard):
             self.audio.stop_loop(self.owner, self.config.fade_out.value)
         elif self.config.enabled.value and (self.config.path.value or self.default_path):
             path = self.config.path.value or self.default_path
-            self.audio.play_loop(
-                path, self.config.volume.value, self.config.fade_in.value, owner=self.owner
-            )
+            self.audio.play_loop(path, self.config.volume.value, self.config.fade_in.value, owner=self.owner)
 
     def _enabled_changed(self, enabled: bool) -> None:
         if not enabled:
@@ -288,9 +286,7 @@ def audio_section(
     if loop_cues:
         container = SelectableSettingContainer(tr("audio.select_option_group"))
         for config, audio, owner, option, title, default_path in loop_cues:
-            container.addOption(
-                option, LoopAudioSettingCard(config, audio, owner, title, default_path)
-            )
+            container.addOption(option, LoopAudioSettingCard(config, audio, owner, title, default_path))
         section.addCard(container)
     for key in notifications.cues:
         section.addCard(
