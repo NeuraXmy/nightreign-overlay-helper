@@ -21,18 +21,21 @@ from pathlib import Path
 
 from PyQt6.QtCore import QObject, QPoint, QRect, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QImage, QPainter
-from PyQt6.QtWidgets import QWidget
-from qfluentwidgets import FluentIcon
+from PyQt6.QtWidgets import QApplication, QWidget
+from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition
 
 from nightreign_overlay.core.game_window import ForegroundPolicy
 from nightreign_overlay.core.screens import capture_origin
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
+from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
+from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigRangeCard,
     ConfigSwitchCard,
+    HotkeySettingCard,
     SettingSection,
     SettingsPanel,
 )
@@ -41,10 +44,29 @@ FrameCallback = Callable[[FrameCaptured | None], None]
 
 #: Backend key used off Windows, where the capture mode setting does not apply.
 _SCREEN = "screen"
+_GAME_WINDOW_REGION = "capture.game_window"
+_CALIBRATE_GAME_WINDOW = "capture.calibrate_game_window"
+_GAME_WINDOW_COLOR = "#686435"
+_GAME_WINDOW_ASPECT = 16 / 9
+_GAME_WINDOW_ASPECT_TOLERANCE = 0.05
 #: How long deactivation waits for an in-flight grab before abandoning the capture thread.
 _STOP_TIMEOUT_MS = 3000
 #: Threads that did not stop in time; kept referenced so Qt never destroys a running QThread.
 _abandoned: list[tuple[QThread, QObject]] = []
+
+
+def _crop_game_window_16_9(rect: QRect) -> QRect | None:
+    """Accept a near-16:9 selection and center-crop it to an exact 16:9 game area."""
+    if rect.isEmpty():
+        return None
+    ratio = rect.width() / rect.height()
+    if abs(ratio / _GAME_WINDOW_ASPECT - 1) > _GAME_WINDOW_ASPECT_TOLERANCE:
+        return None
+    if ratio > _GAME_WINDOW_ASPECT:
+        width = round(rect.height() * _GAME_WINDOW_ASPECT)
+        return QRect(rect.x() + (rect.width() - width) // 2, rect.y(), width, rect.height())
+    height = round(rect.width() / _GAME_WINDOW_ASPECT)
+    return QRect(rect.x(), rect.y() + (rect.height() - height) // 2, rect.width(), height)
 
 
 class _CaptureService(CaptureApi):
@@ -77,6 +99,7 @@ class CapturePlugin(Plugin):
         icon="CAMERA",
         settings_scope=SettingsScope.GENERAL,
         order=0,
+        requires=("input", "region"),
     )
 
     # GUI thread -> capture thread: (request id, generation, mode, hdr).
@@ -112,6 +135,10 @@ class CapturePlugin(Plugin):
     def on_activate(self) -> None:
         self.ctx.provide(CaptureApi, _CaptureService(self))
         self.ctx.on_cleanup(self._stop_stream)
+        hotkeys = self.ctx.services.get(HotkeyApi)
+        if hotkeys is not None:
+            hotkeys.register(_CALIBRATE_GAME_WINDOW, HotkeyBinding(None), self._calibrate_game_window)
+            self.ctx.on_cleanup(lambda: hotkeys.unregister(_CALIBRATE_GAME_WINDOW))
 
     def on_deactivate(self) -> None:
         self._stop_stream()
@@ -119,6 +146,10 @@ class CapturePlugin(Plugin):
         self._game_window = None
 
     def game_client_rect(self) -> QRect | None:
+        regions = self.ctx.services.get(RegionApi)
+        manual = regions.manual_region(_GAME_WINDOW_REGION) if regions is not None else None
+        if manual is not None:
+            return manual
         if sys.platform != "win32":
             return None
         if self._game_window is None:
@@ -127,6 +158,27 @@ class CapturePlugin(Plugin):
             self._game_window = GameClientLocator()
         geometry = self._game_window.geometry()
         return QRect(*geometry) if geometry is not None else None
+
+    def _calibrate_game_window(self) -> None:
+        regions = self.ctx.services.require(RegionApi)
+        selected = regions.request_region(
+            _GAME_WINDOW_REGION,
+            self.ctx.tr("settings.game_window.annotate"),
+            _GAME_WINDOW_COLOR,
+        )
+        if selected is None:
+            return
+        normalized = _crop_game_window_16_9(selected)
+        if normalized is None:
+            regions.clear_region(_GAME_WINDOW_REGION)
+            InfoBar.error(
+                self.ctx.tr("settings.game_window.failed_title"),
+                self.ctx.tr("settings.game_window.failed_content"),
+                position=InfoBarPosition.TOP,
+                parent=QApplication.activeWindow(),
+            )
+            return
+        regions.save_region(_GAME_WINDOW_REGION, normalized)
 
     def _on_mode_changed(self, mode: str) -> None:
         self._invalidate()
@@ -271,6 +323,16 @@ class CapturePlugin(Plugin):
                 FluentIcon.BRIGHTNESS,
                 self.ctx.tr("settings.hdr.title"),
                 self.ctx.tr("settings.hdr.content"),
+            ),
+            HotkeySettingCard(
+                self.ctx.services.require(HotkeyApi),
+                _CALIBRATE_GAME_WINDOW,
+                HotkeyBinding(None),
+                FluentIcon.CAMERA,
+                self.ctx.tr("settings.game_window.title"),
+                self.ctx.tr("settings.game_window.content"),
+                actions=[(self.ctx.tr("settings.game_window.button"), self._calibrate_game_window)],
+                accessories=[RegionStatus(self.ctx.services, _GAME_WINDOW_REGION, _GAME_WINDOW_COLOR)],
             ),
         )
         panel.addSection(section)

@@ -17,3 +17,10 @@ settings:
   hdr:
     title: HDR image processing
     content: May improve detection when HDR is enabled in the game
+  game_window:
+    title: Game area
+    content: Calibrate the actual game area for calculating automatic regions used by other features. If unset, it is detected automatically after entering the game.
+    button: Calibrate
+    annotate: Select the actual game area
+    failed_title: Game area calibration failed
+    failed_content: The selected area must be close to 16:9. Automatic regions support only 16:9 game areas; the calibration has been cleared.

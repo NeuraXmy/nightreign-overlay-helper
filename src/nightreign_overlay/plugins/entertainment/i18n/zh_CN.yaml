@@ -19,5 +19,10 @@ settings:
   all_three: 队友全三倒
   all_up: 队友全复活
   any_up: 任意队友复活
+  advanced:
+    title: 高级选项
+    stable_detections:
+      title: 状态确认次数
+      content: 状态变化连续检测到相同结果达到指定次数后才会确认，默认 3 次
 audio:
   loop_title: 循环播放音频

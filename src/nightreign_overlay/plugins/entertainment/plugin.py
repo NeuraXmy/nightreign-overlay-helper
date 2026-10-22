@@ -19,6 +19,7 @@ from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
+    ConfigRangeCard,
     ConfigSwitchCard,
     HotkeySettingCard,
     SettingSection,
@@ -50,6 +51,10 @@ class EntertainmentPlugin(Plugin):
         self._calibrating = False
         self._pending = False
         self._playing = False
+        self._last_states: tuple[str, str] | None = None
+        self._candidate_states: tuple[str, str] | None = None
+        self._candidate_count = 0
+        self._confirmed_result: tuple[Teammate, Teammate] | None = None
         self._stream_acquired = False
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
         self.config.detect_enabled.valueChanged.connect(self._set_enabled)
@@ -58,8 +63,9 @@ class EntertainmentPlugin(Plugin):
 
     def on_activate(self) -> None:
         regions = self.ctx.services.require(RegionApi)
-        if regions.region(_REGION_KEY) is None:
-            regions.save_region(_REGION_KEY, QRect(0, 0, 320, 160))
+        # Older builds persisted this placeholder as if it were a manual calibration.
+        if regions.region(_REGION_KEY) == QRect(0, 0, 320, 160):
+            regions.clear_region(_REGION_KEY)
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="down-detect")
         self.ctx.on_cleanup(self._stop_worker)
         self.ctx.subscribe(FrameCaptured, self._on_frame)
@@ -73,6 +79,10 @@ class EntertainmentPlugin(Plugin):
             return
         if enabled and not self._active:
             self._active = True
+            self._last_states = None
+            self._candidate_states = None
+            self._candidate_count = 0
+            self._confirmed_result = None
             self._generation += 1
             capture = self.ctx.services.get(CaptureApi)
             if capture is not None:
@@ -136,12 +146,53 @@ class EntertainmentPlugin(Plugin):
         if result is None:
             self._stop_loop(immediate=True)
             return
+        state_signature = tuple(self._state_key(teammate) for teammate in result)
+        if state_signature == self._candidate_states:
+            self._candidate_count += 1
+        else:
+            self._candidate_states = state_signature
+            self._candidate_count = 1
+        if self._candidate_count < self.config.stable_detections.value:
+            return
+
+        self._confirmed_result = result
+        if state_signature != self._last_states:
+            self._last_states = state_signature
+            states = (
+                ", ".join(
+                    f"teammate {index}: {self._describe_state(teammate)}"
+                    for index, teammate in enumerate(result, start=1)
+                    if teammate.present
+                )
+                or "no teammates"
+            )
+            self.ctx.log.info("Teammate status changed: %s", states)
         if not self._playing:
-            if should_start(result, self.config.start_condition.value):
+            if should_start(self._confirmed_result, self.config.start_condition.value):
                 self._start_loop()
         else:
-            if should_stop(result, self.config.stop_condition.value):
+            if should_stop(self._confirmed_result, self.config.stop_condition.value):
                 self._stop_loop()
+
+    @staticmethod
+    def _state_key(teammate: Teammate) -> str:
+        if not teammate.present:
+            return "absent"
+        if not teammate.down:
+            return "upright"
+        if teammate.stages >= 3:
+            return "three-down"
+        return "down"
+
+    @staticmethod
+    def _describe_state(teammate: Teammate) -> str:
+        state = EntertainmentPlugin._state_key(teammate)
+        return {
+            "absent": "absent",
+            "upright": "upright",
+            "down": "down (one or two stages)",
+            "three-down": "three-down",
+        }[state]
 
     def _start_loop(self) -> None:
         if not self.loop_audio.enabled.value or not self.loop_audio.path.value:
@@ -233,6 +284,16 @@ class EntertainmentPlugin(Plugin):
             )
         )
         panel.addSection(section)
+        advanced = SettingSection(tr("settings.advanced.title"))
+        advanced.addCard(
+            ConfigRangeCard(
+                self.config.stable_detections,
+                FluentIcon.SYNC,
+                tr("settings.advanced.stable_detections.title"),
+                tr("settings.advanced.stable_detections.content"),
+            )
+        )
+        panel.addSection(advanced)
         return panel
 
     def on_deactivate(self) -> None:

@@ -55,6 +55,10 @@ class RegionApi:
         """Return the manual rectangle, or an automatic default when no manual value is stored."""
         raise NotImplementedError
 
+    def manual_region(self, key: str) -> QRect | None:
+        """Return only a stored manual rectangle, without calculating an automatic fallback."""
+        return None
+
     def region_source(self, key: str) -> str | None:
         """Return ``manual``, ``automatic`` or ``None`` for the effective rectangle."""
         return "manual" if self.region(key) is not None else None

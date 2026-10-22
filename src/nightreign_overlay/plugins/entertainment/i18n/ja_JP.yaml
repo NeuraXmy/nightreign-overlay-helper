@@ -19,5 +19,10 @@ settings:
   all_three: 味方全員が3回ダウン
   all_up: 味方全員が復活
   any_up: 味方の誰かが復活
+  advanced:
+    title: 詳細設定
+    stable_detections:
+      title: 状態の確認回数
+      content: 同じ結果が連続して指定回数検出された後に状態変化を確定します。初期値は3回です
 audio:
   loop_title: ループ再生音声

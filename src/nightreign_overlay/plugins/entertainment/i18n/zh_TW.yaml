@@ -19,5 +19,10 @@ settings:
   all_three: 隊友全三倒
   all_up: 隊友全復活
   any_up: 任一隊友復活
+  advanced:
+    title: 進階選項
+    stable_detections:
+      title: 狀態確認次數
+      content: 連續偵測到相同結果達指定次數後才確認狀態變化，預設為 3 次
 audio:
   loop_title: 循環播放音訊

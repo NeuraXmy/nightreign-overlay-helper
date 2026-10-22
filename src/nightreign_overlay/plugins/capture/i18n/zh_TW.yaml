@@ -16,3 +16,10 @@ settings:
   hdr:
     title: 啟用 HDR 影像處理
     content: 遊戲啟用 HDR 時，此選項可能提升辨識準確度
+  game_window:
+    title: 遊戲畫面區域
+    content: 標定實際遊戲畫面區域，用於計算其他功能的自動標定區域；未設定時會在進入遊戲後自動判斷。
+    button: 標定
+    annotate: 框選實際遊戲畫面區域
+    failed_title: 遊戲畫面標定失敗
+    failed_content: 標定區域需接近 16:9。自動標定區域僅支援 16:9 遊戲畫面，已清除本次標定。

@@ -36,6 +36,7 @@ _REGIONS = {
     "map_detect.map_region": (1454, 228, 990, 990),
     "hp_marker.hpbar_region": (223, 56, 112, 12),
     "art_timer.art_region": (1206, 1260, 143, 140),
+    "entertainment.teammates": (65, 216, 457, 249),
 }
 _HD_REGIONS = {
     "day_timer.detect_region": (834, 550, 256, 71),
@@ -43,6 +44,7 @@ _HD_REGIONS = {
     "map_detect.map_region": (1090, 171, 742, 742),
     "hp_marker.hpbar_region": (167, 42, 84, 9),
     "art_timer.art_region": (904, 945, 107, 105),
+    "entertainment.teammates": (49, 162, 343, 187),
 }
 
 
@@ -54,6 +56,10 @@ def test_default_regions_scale_once_in_physical_client_pixels(origin, size, expe
         actual = automatic_region(key, client)
         assert actual == QRect(*rect).translated(*origin)
         assert client.contains(actual)
+
+
+def test_entertainment_default_matches_the_1960x1100_reference():
+    assert automatic_region("entertainment.teammates", QRect(0, 0, 1960, 1100)) == QRect(50, 165, 350, 190)
 
 
 @pytest.mark.parametrize("size", [(640, 360), (1280, 720), (3840, 2160), (1921, 1080)])
