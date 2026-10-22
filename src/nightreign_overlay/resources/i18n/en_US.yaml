@@ -227,6 +227,7 @@ updates:
     are stored in your user data directory and will be preserved.
   manual_hint: If the download fails, use the GitHub / Gitee links below to download manually.
   download: Download ({source})
+  skip: Skip this version
   close: Close
   failed: Could not obtain valid releases from GitHub or Gitee. Please try again later.
   latest: You have the latest stable version.

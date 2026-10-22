@@ -225,6 +225,7 @@ updates:
   install_hint: 下載後請完整解壓縮新版本，結束舊程式，再刪除舊版程式資料夾即可。設定儲存在使用者資料目錄，將會保留。
   manual_hint: 如果程式無法下載，請透過下方的 GitHub / Gitee 連結自行下載。
   download: 下載（{source}）
+  skip: 略過此版本
   close: 關閉
   failed: 檢查失敗：GitHub 和 Gitee 均未傳回有效版本，請稍後再試。
   latest: 目前已是最新正式版。
