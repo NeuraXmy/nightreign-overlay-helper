@@ -18,18 +18,39 @@ def supports_automatic_region(key: str) -> bool:
     return key in _REFERENCE_REGIONS or key in _MANUAL_ONLY_REGIONS
 
 
-def automatic_region(key: str, client: QRect | None) -> QRect | None:
-    """Scale the default HUD within the actual game client, never the virtual desktop.
+def _centered_16_9_client(client: QRect) -> QRect:
+    """Return the largest 16:9 rectangle centered inside the game client."""
+    client_width, client_height = client.width(), client.height()
+    if client_width * 9 >= client_height * 16:
+        # Ultrawide: remove the side margins.
+        width = client_height * 16 // 9
+        height = client_height
+    else:
+        # Taller/narrower client: remove the top and bottom margins.
+        width = client_width
+        height = client_width * 9 // 16
+    return QRect(
+        client.x() + (client_width - width) // 2,
+        client.y() + (client_height - height) // 2,
+        width,
+        height,
+    )
 
-    Non-16:9 clients and small/transient windows require manual calibration. A small ratio tolerance
-    permits integer rounding for windowed clients. No calculated rectangle is written to settings.
+
+def automatic_region(key: str, client: QRect | None) -> QRect | None:
+    """Scale the default HUD within a centered 16:9 area of the game client.
+
+    Non-16:9 clients are cropped around their center before the 16:9 reference layout is
+    scaled. No calculated rectangle is written to settings.
     """
     reference = _REFERENCE_REGIONS.get(key)
     if key in _MANUAL_ONLY_REGIONS:
         return QRect(client) if client is not None and not client.isEmpty() else None
-    if reference is None or client is None or client.width() < 640 or client.height() < 360:
+    if reference is None or client is None or client.isEmpty():
         return None
     if abs(client.width() / client.height() - 16 / 9) > 0.01:
+        client = _centered_16_9_client(client)
+    if client.width() < 640 or client.height() < 360:
         return None
     sx, sy = client.width() / _REFERENCE_SIZE[0], client.height() / _REFERENCE_SIZE[1]
     x, y, width, height = reference
