@@ -1,0 +1,23 @@
+plugin:
+  name: Entertainment
+  description: Detect teammate down states and play looping audio
+settings:
+  group: Teammate down auto playback
+  enabled:
+    title: Detect downed teammates
+    content: Play looping audio automatically when teammate states meet the selected condition
+  region:
+    title: Teammate area
+    content: Select the area containing teammate portraits, names, and health bars
+    annotate: Select the teammate status area
+    button: Calibrate
+  start:
+    title: Start playback when
+  stop:
+    title: Stop playback when
+  all_down: All teammates are downed
+  all_three: All teammates are at three downs
+  all_up: All teammates are revived
+  any_up: Any teammate is revived
+audio:
+  loop_title: Looping audio

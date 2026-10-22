@@ -1,0 +1,23 @@
+plugin:
+  name: エンタメ
+  description: 味方のダウン状態を検出して音声をループ再生
+settings:
+  group: 味方ダウン時に自動再生
+  enabled:
+    title: 味方のダウンを検出
+    content: 味方の状態が条件を満たすとループ音声を自動再生
+  region:
+    title: 味方エリア
+    content: 味方の顔アイコン、名前、HPバーを含む範囲を選択
+    annotate: 味方の状態表示範囲を選択
+    button: 範囲指定
+  start:
+    title: 再生開始条件
+  stop:
+    title: 再生停止条件
+  all_down: 味方全員がダウン
+  all_three: 味方全員が3回ダウン
+  all_up: 味方全員が復活
+  any_up: 味方の誰かが復活
+audio:
+  loop_title: ループ再生音声

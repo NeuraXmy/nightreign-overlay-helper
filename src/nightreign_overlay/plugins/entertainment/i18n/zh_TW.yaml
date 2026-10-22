@@ -1,0 +1,23 @@
+plugin:
+  name: 娛樂
+  description: 隊友倒地狀態辨識與循環音訊播放
+settings:
+  group: 隊友倒地自動播放
+  enabled:
+    title: 偵測隊友倒地
+    content: 偵測到隊友狀態符合條件時自動播放循環音訊
+  region:
+    title: 隊友區域
+    content: 框選包含隊友頭像、名稱和血條的區域
+    annotate: 框選隊友狀態區域
+    button: 標定
+  start:
+    title: 播放開始條件
+  stop:
+    title: 播放結束條件
+  all_down: 隊友全倒地
+  all_three: 隊友全三倒
+  all_up: 隊友全復活
+  any_up: 任一隊友復活
+audio:
+  loop_title: 循環播放音訊
