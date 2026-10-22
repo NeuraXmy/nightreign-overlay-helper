@@ -23,6 +23,7 @@ EXPECTED_PLUGINS = {
     "capture",
     "commendation",
     "day_timer",
+    "entertainment",
     "hp_marker",
     "hud",
     "input",
