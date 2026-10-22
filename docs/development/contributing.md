@@ -22,6 +22,16 @@
 
 ## 插件生命周期约束
 
+### 新增插件同步清单
+
+新增内置插件时，除了创建 `src/nightreign_overlay/plugins/<plugin_id>/` 及其 `PLUGIN` 导出，还必须同步更新发布资源检查清单：
+
+- 在 [`scripts/check_runtime_resources.py`](../../scripts/check_runtime_resources.py) 的 `EXPECTED_PLUGINS` 中加入插件 ID；这是 Windows 发布构建的运行时插件发现门禁。
+- 在 [`tests/plugins/test_unicode_installation.py`](../../tests/plugins/test_unicode_installation.py) 的期望集合中加入插件 ID；这是复制安装目录后验证插件发现和资源加载的测试。
+- 在 [`docs/overview.md`](../overview.md) 的插件功能表、对应测试和必要的 i18n／资源清单中补齐记录。
+
+提交前至少运行 `uv run python scripts/check_runtime_resources.py` 和相关插件测试。漏更新上述任一清单会导致发布 CI 的 `Release plugin discovery is incomplete` 失败。
+
 - [ ] **`on_load()` 即使插件禁用也要能安全调用**，只绑定轻量状态。
   - *违反后果*：禁用插件的设置页崩溃。
 - [ ] **运行时资源必须走 `ctx.provide / subscribe / on_cleanup`**。
