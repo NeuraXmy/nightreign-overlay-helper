@@ -87,6 +87,28 @@ def _wait_until(predicate, timeout: float = 5) -> None:
     assert predicate()
 
 
+def test_fresh_unchanged_snapshots_are_distinct_from_status_and_synthetic_clears(qapp, monkeypatch):
+    service = P2PService()
+    fresh, changes = [], []
+    service.snapshotReceived.connect(fresh.append)
+    service.peers_changed.connect(changes.append)
+    payload = json.dumps({"type": "snapshot", "peers": snapshot(6)}) + "\n"
+    chunks = [
+        payload,
+        payload,
+        '{"type":"status","state":"helper_restarting","message":"retry"}\n',
+        "not JSON\n",
+    ]
+    monkeypatch.setattr(service.process, "readAllStandardOutput", lambda: chunks.pop(0).encode("utf-8"))
+    for _ in range(4):
+        service._read_stdout()
+    assert len(fresh) == 2 and len(changes) == 1
+    service._clear_peers()
+    assert len(fresh) == 2 and len(changes) == 2
+    service.stop()
+    service.deleteLater()
+
+
 @pytest.mark.parametrize("language", ["zh_CN", "zh_TW", "en_US", "ja_JP"])
 @pytest.mark.parametrize(
     "state",
@@ -190,7 +212,11 @@ def test_overlay_rows_missing_metrics_and_colour_boundaries(plugin):
     ("etw_state", "expected_key"),
     [("admin_required", "status.etw.admin_required"), ("error", "status.etw.error")],
 )
-def test_etw_failure_remains_visible_in_overlay_with_connected_peers(plugin, etw_state, expected_key):
+@pytest.mark.parametrize("show_playtime", [False, True])
+def test_etw_failure_remains_visible_in_overlay_with_connected_peers(
+    plugin, etw_state, expected_key, show_playtime
+):
+    plugin.config.show_playtime.set(show_playtime)
     window = _window(plugin)
     window.set_status(P2PStatus("steam_ready", "ETW 网络跟踪启动失败", etw_state=etw_state))
     window.set_peers(_peers())
@@ -199,7 +225,7 @@ def test_etw_failure_remains_visible_in_overlay_with_connected_peers(plugin, etw
     assert window.status_label.isVisible()
     assert window.status_label.text() == plugin.ctx.tr(expected_key)
     assert window.status_label.toolTip() == "ETW 网络跟踪启动失败"
-    assert window.peer_grid.count() == 9
+    assert window.peer_grid.count() == (12 if show_playtime else 9)
 
 
 def test_etw_resource_error_does_not_claim_admin(plugin):
@@ -212,14 +238,16 @@ def test_etw_resource_error_does_not_claim_admin(plugin):
     assert "ETW" in window.status_label.text()
 
 
-def test_scaling_layout_position_opacity_and_modes(plugin):
+@pytest.mark.parametrize("show_playtime", [False, True])
+def test_scaling_layout_position_opacity_and_modes(plugin, show_playtime):
+    plugin.config.show_playtime.set(show_playtime)
     window = _window(plugin)
     window.set_status(P2PStatus("steam_ready", "模拟"))
     window.set_peers(_peers())
     for scale in (50, 100, 200, 125, 57):
         plugin.overlay_config.scale.set(scale)
         process_events()
-        assert window.width() == int(240 * scale / 100)
+        assert window.width() == int((350 if show_playtime else 240) * scale / 100)
         assert window.height() > 30 * scale / 100
         last_row = _row(window, 2, 2)
         assert last_row.mapTo(window, QPoint(0, last_row.height())).y() <= window.height()
@@ -262,7 +290,9 @@ def test_foreground_gate_also_controls_waiting_status(plugin):
     assert window.status_label.text() == plugin.ctx.tr("status.waiting_for_game")
 
 
-def test_transparent_text_status_and_standard_window_settings(plugin):
+@pytest.mark.parametrize("show_playtime", [False, True])
+def test_transparent_text_status_and_standard_window_settings(plugin, show_playtime):
+    plugin.config.show_playtime.set(show_playtime)
     window = _window(plugin)
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)
@@ -273,7 +303,9 @@ def test_transparent_text_status_and_standard_window_settings(plugin):
     window.set_peers(_peers())
     process_events()
     assert not window.status_label.isVisible()
-    assert len([label for label in window.panel.findChildren(QLabel) if label.isVisible()]) == 9
+    assert len([label for label in window.panel.findChildren(QLabel) if label.isVisible()]) == (
+        12 if show_playtime else 9
+    )
     assert isinstance(_row(window, 0, 0).graphicsEffect(), QGraphicsDropShadowEffect)
     for state in ("waiting_for_game", "steam_api_error", "helper_missing", "runtime_error"):
         window.set_status(P2PStatus(state, "状态详情"))
@@ -282,7 +314,7 @@ def test_transparent_text_status_and_standard_window_settings(plugin):
         assert window.status_label.toolTip() == "状态详情"
         assert window.peer_grid.count() == 0
     window.set_status(P2PStatus("steam_ready", "模拟"))
-    assert window.peer_grid.count() == 9
+    assert window.peer_grid.count() == (12 if show_playtime else 9)
     plugin.overlay_config.input_mode.set("passthrough")
     assert window.windowFlags() & Qt.WindowType.WindowTransparentForInput
     plugin.overlay_config.input_mode.set("locked")

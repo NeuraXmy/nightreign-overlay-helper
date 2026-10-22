@@ -51,11 +51,11 @@ internal static class SteamPathResolver
         return Directory.Exists(defaultPath) ? defaultPath : null;
     }
 
-    public static string? FindNightreignSteamApi(Process game)
+    public static string? FindNightreignSteamApi(Process? game = null)
     {
         try
         {
-            var processDirectory = Path.GetDirectoryName(game.MainModule?.FileName);
+            var processDirectory = Path.GetDirectoryName(game?.MainModule?.FileName);
             var processDll = processDirectory is null
                 ? null
                 : Path.Combine(processDirectory, "steam_api64.dll");

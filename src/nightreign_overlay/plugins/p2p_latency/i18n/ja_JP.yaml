@@ -3,15 +3,20 @@ plugin:
   description: Steamの仲間・遅延・安定性を表示。管理者権限が必要
 settings:
   window: オーバーレイ
-  good_ping: 良好な遅延の上限（未満なら緑）
-  warning_ping: 注意する遅延の上限（未満なら黄、以上は赤）
+  good_ping: 良好な遅延の上限
+  warning_ping: 警告する遅延の上限
   status: 動作状況
   simulation: macOSでは模擬プロセスを使用。待機・不明な指標・遅延変動・仲間の交代を約32秒で再現します。実測値ではありません
+  show_playtime: プレイ時間を表示
+  playtime_help: 公開 Steam プロフィールから総プレイ時間を取得します。非公開・未掲載の場合は取得不可と表示し、無効にすると取得を停止します。
+  good_ping_help: この値未満の遅延は緑で表示します。
+  warning_ping_help: この値未満は黄色、それ以上は赤で表示します。
 overlay:
   title: マルチプレイ · Ping／安定性
   waiting: 仲間／Steamの同期を待機中
   legacy_no_fields: 旧Steam P2P APIにPing・安定性の項目はありません
   etw_source: 遅延の測定元：ETW STUN往復時間
+  open_profile: クリックして Steam のプロフィールを開く
 status:
   helper_missing: 通信ヘルパーが見つかりません。ソースから実行する場合は scripts/build_p2p_helper.ps1 を実行してください
   helper_started: 通信ヘルパーが起動しました
@@ -48,3 +53,37 @@ status:
     error: 利用不可。ETWのリソースと実行中のトレースセッションを確認してください
     admin_required: ETWには管理者権限が必要です。管理者としてアプリを再起動してください
     simulated: 模擬データ（ETW無効）
+  game_exited: ゲーム終了
+playtime:
+  loading: 取得中
+  unavailable: 取得不可
+  hours: '{hours} 時間'
+  available: '{hours} 時間'
+block:
+  title: Steam 名
+  enable: プレイヤーの Steam 名を表示
+  help: フレンド以外の味方を Steam で一時ブロックし、ゲーム内に Steam 名を表示します。退出後に自動で解除します。
+  summary:
+    disabled: オフ。一時ブロックは進行していません。
+    enabled: オン。有効な遅延とフレンド関係の確認を待っています。
+    preparing: 通信状態を確認しています。
+    blocked: 一時ブロック中。離脱、機能の無効化、終了時に復元します。
+    restoring: ブロックを解除中。Steam をオンラインにしてください。
+    recovery_pending: 復元は未確認です。記録を保持して再試行します。元の Steam アカウントで接続してください。
+    retry_wait: 準備に失敗しました。しばらくして再試行します。
+    error: ブロック未完了。既存のブロックと対象外アカウントはスキップします。
+    account_missing: Steam アカウントの確認を待っています。
+    unsupported: 自動ブロックと復元は Windows のみ対応しています。
+  state:
+    preparing: 準備中
+    blocked: ブロック済み
+    restoring: 解除中
+    recovery_pending: 復元の再試行待ち
+    restored: 解除済み
+    unconfirmed: 復元未確認
+    preblocked: 既存のブロックを保持
+    relationship_skipped: 関係未確認・スキップ
+    failed: ブロック未完了
+    retry_wait: 再試行待ち
+    friend_skipped: フレンド対象外
+    waiting: 待機中

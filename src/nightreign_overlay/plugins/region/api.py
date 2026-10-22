@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from PyQt6.QtCore import QEvent, QRect
+from PyQt6.QtCore import QEvent, QRect, QTimer
 from PyQt6.QtGui import QColor, QEnterEvent, QHideEvent, QImage, QShowEvent
 from PyQt6.QtWidgets import QHBoxLayout, QWidget
-from qfluentwidgets import CaptionLabel, FluentIcon, IconWidget, ToolTipFilter
+from qfluentwidgets import CaptionLabel, FluentIcon, IconWidget, ToolButton, ToolTipFilter
 
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.services import ServiceRegistry
@@ -52,17 +52,25 @@ class RegionApi:
         raise NotImplementedError
 
     def region(self, key: str) -> QRect | None:
+        """Return the manual rectangle, or an automatic default when no manual value is stored."""
         raise NotImplementedError
 
+    def region_source(self, key: str) -> str | None:
+        """Return ``manual``, ``automatic`` or ``None`` for the effective rectangle."""
+        return "manual" if self.region(key) is not None else None
+
+    def supports_automatic(self, key: str) -> bool:
+        return False
+
     def clear_region(self, key: str) -> None:
-        """Forget the rectangle stored under ``key`` so it has to be calibrated again."""
+        """Forget only the manual rectangle, allowing the automatic fallback to take effect."""
         raise NotImplementedError
 
     def show_preview(self, key: str, color: str | None = None) -> bool:
-        """Outline the rectangle stored under ``key`` on screen in the shared click-through preview window.
+        """Outline the effective rectangle on screen in the shared click-through preview window.
 
         ``color`` is the outline colour (the selector's default when ``None``). Returns ``False`` and
-        hides the preview when ``key`` has not been calibrated.
+        hides the preview when no manual or automatic rectangle is available.
         """
         raise NotImplementedError
 
@@ -104,6 +112,14 @@ class RegionStatus(QWidget):
         layout.setSpacing(4)
         layout.addWidget(self.icon)
         layout.addWidget(self.label)
+        self.clearButton = ToolButton(FluentIcon.SYNC, self)
+        self.clearButton.setToolTip(tr("region_preview.clear_manual"))
+        self.clearButton.setAccessibleName(tr("region_preview.clear_manual"))
+        self.clearButton.clicked.connect(self._clear_manual)
+        layout.addWidget(self.clearButton)
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setInterval(1000)
+        self._refresh_timer.timeout.connect(self.refresh)
         self.installEventFilter(ToolTipFilter(self, showDelay=300))
         self.refresh()
 
@@ -116,14 +132,20 @@ class RegionStatus(QWidget):
         return regions.region(self._key) if regions is not None else None
 
     def refresh(self) -> None:
-        """Re-read the stored region, e.g. after calibrating or resetting the page."""
+        """Re-read the effective region, including game startup, movement and disappearance."""
+        regions = self._services.get(RegionApi)
         rect = self._rect()
+        source = regions.region_source(self._key) if regions is not None else None
+        automatic = regions is not None and regions.supports_automatic(self._key)
+        self.clearButton.setVisible(automatic and source == "manual")
         if rect is None:
-            self.label.setText(tr("region_preview.uncalibrated"))
+            self.label.setText(tr("region_preview.waiting" if automatic else "region_preview.uncalibrated"))
             self.label.setTextColor(*self._UNCALIBRATED_COLORS)
-            self.setToolTip(tr("region_preview.unset"))
+            self.setToolTip(tr("region_preview.automatic_help" if automatic else "region_preview.unset"))
         else:
-            self.label.setText(tr("region_preview.calibrated"))
+            self.label.setText(
+                tr("region_preview.automatic" if source == "automatic" else "region_preview.calibrated")
+            )
             self.label.setTextColor(*self._CALIBRATED_COLORS)
             self.setToolTip(
                 tr("region_preview.current", x=rect.x(), y=rect.y(), width=rect.width(), height=rect.height())
@@ -133,6 +155,7 @@ class RegionStatus(QWidget):
         # Calibration hides and re-shows the main window, and hotkey calibration may run while it is hidden.
         super().showEvent(event)
         self.refresh()
+        self._refresh_timer.start()
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
         super().enterEvent(event)
@@ -148,7 +171,14 @@ class RegionStatus(QWidget):
     def hideEvent(self, event: QHideEvent | None) -> None:
         # Switching pages hides the icon without a leave event; the preview must not stay behind.
         super().hideEvent(event)
+        self._refresh_timer.stop()
         self._hide_preview()
+
+    def _clear_manual(self) -> None:
+        if (regions := self._services.get(RegionApi)) is not None:
+            regions.clear_region(self._key)
+            regions.hide_preview()
+        self.refresh()
 
     def _hide_preview(self) -> None:
         if (regions := self._services.get(RegionApi)) is not None:

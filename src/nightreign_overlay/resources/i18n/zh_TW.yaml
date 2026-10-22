@@ -63,6 +63,10 @@ settings_reset:
   cancel: 取消
   done: 已恢復預設設定
 region_preview:
+  automatic: 自動（16:9）
+  waiting: 等待自動區域
+  automatic_help: 未手動標定時，使用 Windows 遊戲視窗的 16:9 預設區域；也可隨時手動框選。
+  clear_manual: 清除手動標定，恢復自動區域
   calibrated: 已標定
   uncalibrated: 未標定
   current: 目前區域：({x}, {y})，{width} × {height} 像素
@@ -187,6 +191,9 @@ input_dialog:
   confirm: 確認
 audio:
   title: 音訊播報
+  enabled: 啟用此語音
+  builtin: 使用內建預設語音
+  restore_default: 還原預設音訊
   volume: 音量
   unset: 尚未設定音訊
   select: 選擇本機音訊

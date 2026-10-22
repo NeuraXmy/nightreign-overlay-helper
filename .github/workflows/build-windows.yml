@@ -52,6 +52,9 @@ jobs:
       - name: Run P2P helper regression tests
         run: dotnet run --project native/NightreignP2PHelper.Tests -c Release
 
+      - name: Run offline communication recovery tests
+        run: dotnet run --project native/NightreignP2PHelper.RecoveryTests -c Release
+
       - name: Run regression suite (HP smoke tests; no benchmarks)
         env:
           QT_QPA_PLATFORM: offscreen

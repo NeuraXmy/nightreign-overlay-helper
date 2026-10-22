@@ -10,7 +10,9 @@ from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QGridLayout, QLab
 
 from nightreign_overlay.plugins.p2p_latency.config import P2PConfig, P2POverlayConfig
 from nightreign_overlay.plugins.p2p_latency.models import P2PPeer, P2PStatus
+from nightreign_overlay.plugins.p2p_latency.playtime import PlaytimeResult
 from nightreign_overlay.plugins.p2p_latency.presentation import status_message
+from nightreign_overlay.ui.components.steam_profile import SteamProfileLabel, open_steam_profile
 from nightreign_overlay.ui.overlay import OverlayManager, OverlayWindow
 
 
@@ -41,6 +43,8 @@ class P2POverlay(OverlayWindow):
     ) -> None:
         self.status = P2PStatus("waiting_for_game", "等待 nightreign.exe")
         self.peers: list[P2PPeer] = []
+        self._rows: dict[str, tuple[QLabel, ...]] = {}
+        self._playtimes: dict[str, PlaytimeResult] = {}
         self._metrics_config = metrics_config
         self._tr = tr
         super().__init__(manager, config, tr("overlay.title"), QSize(self._BASE_WIDTH, 80))
@@ -62,6 +66,7 @@ class P2POverlay(OverlayWindow):
         self.panel_layout.addLayout(self.peer_grid)
         metrics_config.good_ping.valueChanged.connect(self._refresh_rows)
         metrics_config.warning_ping.valueChanged.connect(self._refresh_rows)
+        metrics_config.show_playtime.valueChanged.connect(self._refresh_rows)
         self.on_scale_changed(self.scale_factor)
         self.show_overlay()
 
@@ -87,6 +92,18 @@ class P2POverlay(OverlayWindow):
         self.peers = list(peers)
         self._refresh_rows()
 
+    def set_playtimes(self, results: dict[str, PlaytimeResult]) -> None:
+        self._playtimes = dict(results)
+        self._refresh_rows()
+
+    def _open_profile(self, steam_id: str) -> None:
+        if (
+            not self._disposing
+            and self.status.state == "steam_ready"
+            and any(p.steam_id == steam_id for p in self.peers)
+        ):
+            open_steam_profile(steam_id)
+
     def on_scale_changed(self, scale: float) -> None:
         self.peer_grid.setHorizontalSpacing(max(1, int(12 * scale)))
         self.status_label.setStyleSheet(f"color: white; font-size: {int(13 * scale)}px; font-weight: bold;")
@@ -106,7 +123,8 @@ class P2POverlay(OverlayWindow):
 
     def _fit_content(self) -> None:
         self.panel_layout.invalidate()
-        width = int(self._BASE_WIDTH * self.scale_factor)
+        base_width = self._BASE_WIDTH + (110 if self._metrics_config.show_playtime.value else 0)
+        width = int(base_width * self.scale_factor)
         # The panel's stylesheet border sits outside its layout's margins.
         margins = self.panel.contentsMargins()
         if self.panel_layout.hasHeightForWidth():
@@ -114,7 +132,7 @@ class P2POverlay(OverlayWindow):
         else:
             height = self.panel_layout.sizeHint().height()
         height += margins.top() + margins.bottom()
-        self.set_base_size(QSize(self._BASE_WIDTH, max(1, round(height / self.scale_factor))))
+        self.set_base_size(QSize(base_width, max(1, round(height / self.scale_factor))))
         # The legacy widget height comes from its layout, not a rounded base-size scale.
         self.setFixedHeight(max(1, height))
         self.layout().activate()
@@ -138,22 +156,35 @@ class P2POverlay(OverlayWindow):
 
     def _clear_grid(self) -> None:
         while self.peer_grid.count():
-            item = self.peer_grid.takeAt(0)
-            if item.widget() is not None:
-                item.widget().hide()
-                item.widget().deleteLater()
+            self.peer_grid.takeAt(0)
 
     def _refresh_rows(self, _value: object = None) -> None:
         self._clear_grid()
         show_peers = self.status.state == "steam_ready"
+        active = {peer.steam_id for peer in self.peers} if show_peers else set()
+        for target in set(self._rows) - active:
+            for label in self._rows.pop(target):
+                label.hide()
+                label.deleteLater()
         etw_warning = self.status.etw_state in {"admin_required", "error"}
         self.status_label.setVisible(not show_peers or not self.peers or etw_warning)
         font_size = int(13 * self.scale_factor)
         for row, peer in enumerate(self.peers if show_peers else []):
-            name_label = QLabel(peer.name)
+            if peer.steam_id not in self._rows:
+                labels = (
+                    SteamProfileLabel(peer.steam_id, self, self._open_profile),
+                    QLabel(self.panel),
+                    QLabel(self.panel),
+                    QLabel(self.panel),
+                )
+                for label in labels:
+                    self._add_shadow(label)
+                self._rows[peer.steam_id] = labels
+            name_label, ping_label, quality_label, playtime_label = self._rows[peer.steam_id]
             name_width = max(1, int(self._NAME_COLUMN_WIDTH * self.scale_factor))
             name_label.setFixedWidth(name_width)
             tooltip = f"{peer.name}\nSteamID: {peer.steam_id}\nAPI: {peer.api}"
+            tooltip += "\n" + self._tr("overlay.open_profile")
             if peer.api == "legacy" and peer.ping_ms is None:
                 tooltip += "\n" + self._tr("overlay.legacy_no_fields")
             elif peer.api == "legacy":
@@ -169,22 +200,34 @@ class P2POverlay(OverlayWindow):
             ping_color = get_ping_color(
                 peer.ping_ms, self._metrics_config.good_ping.value, self._metrics_config.warning_ping.value
             )
-            ping_label = QLabel(ping_text)
+            ping_label.setText(ping_text)
             ping_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             ping_label.setStyleSheet(f"color: {ping_color}; font-size: {font_size}px; font-weight: 600;")
 
             quality_text = "--" if peer.quality is None else f"{round(peer.quality * 100)}%"
-            quality_label = QLabel(quality_text)
+            quality_label.setText(quality_text)
             quality_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             quality_label.setStyleSheet(f"color: #d8d8d8; font-size: {font_size}px;")
 
             self.peer_grid.addWidget(name_label, row, 0)
             self.peer_grid.addWidget(ping_label, row, 1)
             self.peer_grid.addWidget(quality_label, row, 2)
+            if self._metrics_config.show_playtime.value:
+                result = self._playtimes.get(peer.steam_id, PlaytimeResult("loading"))
+                text = self._tr(f"playtime.{result.state}")
+                if result.state == "available" and result.minutes is not None:
+                    text = self._tr("playtime.hours", hours=f"{result.minutes / 60:.1f}")
+                playtime_label.setText(text)
+                playtime_label.setStyleSheet(f"color: #d8d8d8; font-size: {font_size}px;")
+                playtime_label.setToolTip(self._tr("settings.playtime_help"))
+                playtime_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                self.peer_grid.addWidget(playtime_label, row, 3)
+                playtime_label.show()
+            else:
+                playtime_label.hide()
             # Newly reparented widgets stay hidden until Qt processes its queued
             # show event. Include them before measuring this fixed-size overlay.
             for label in (name_label, ping_label, quality_label):
-                self._add_shadow(label)
                 label.ensurePolished()
                 label.show()
 

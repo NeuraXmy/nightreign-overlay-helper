@@ -56,4 +56,5 @@ settings:
 
 audio:
   start: 雨中冒險開始
+  warning: 雨中冒險即將結束
   end: 雨中冒險結束

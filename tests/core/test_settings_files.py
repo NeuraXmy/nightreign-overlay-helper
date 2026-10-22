@@ -23,6 +23,7 @@ def test_export_includes_defaults_unsaved_changes_and_all_namespaces(store, tmp_
     exported = yaml.safe_load(path.read_text(encoding="utf-8"))
     assert exported["app"] == {"enabled": True, "level": 8}
     assert exported["plugins"]["day_timer"]["audio"]["day1"] == {
+        "enabled": False,
         "path": "提示音.wav",
         "volume": 100,
         "seconds": 0.0,

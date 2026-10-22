@@ -1,0 +1,3 @@
+plugin:
+  name: 通信恢复
+  description: 独立监督临时屏蔽和异常恢复

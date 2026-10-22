@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-from nightreign_overlay.core.config import ConfigGroup, Option, RangeOption
+from nightreign_overlay.core.config import BoolOption, ConfigGroup, Option, RangeOption
 
 
 class _SecondsOption(RangeOption[float]):
@@ -17,11 +17,21 @@ class _SecondsOption(RangeOption[float]):
 
 
 class AudioCueConfig(ConfigGroup):
-    """One optional local audio cue; an empty path disables it."""
+    """One audio cue; an empty custom path lets the producer use its bundled default."""
 
+    enabled = BoolOption(False)
     path = Option("", validator=lambda value: isinstance(value, str))
     volume = RangeOption(100, 0, 100)
     seconds = _SecondsOption(0.0, 0.0, 3600.0)
+
+    @classmethod
+    def with_default_seconds(cls, default: float) -> type[AudioCueConfig]:
+        """Give each cue its own reset default without modifying other config groups."""
+
+        class CueDefaults(cls):
+            seconds = _SecondsOption(default, 0.0, 3600.0)
+
+        return CueDefaults
 
 
 class AudioTimeline:

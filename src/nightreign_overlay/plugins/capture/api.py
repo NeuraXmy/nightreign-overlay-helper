@@ -54,6 +54,14 @@ class CaptureApi:
         """Current shared "HDR image processing" setting, for features that keep separate HDR settings."""
         raise NotImplementedError
 
+    def game_client_rect(self) -> QRect | None:
+        """Current visible game client in global physical pixels, independent of capture mode.
+
+        Unavailable games, minimized windows and unsupported platforms return ``None``. This query
+        does not acquire a stream or capture the screen; it is also usable before the first frame.
+        """
+        return None
+
 
 def make_frame(image: QImage, *, hdr: bool = False) -> FrameCaptured:
     """Detach the image from any native capture buffer before sharing it."""

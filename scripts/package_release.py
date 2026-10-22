@@ -8,6 +8,8 @@ from pathlib import Path
 
 from scripts.prepare_release_licenses import ROOT, check_bundle, release_label, source_directory
 
+from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
+
 REQUIRED_RUNTIME_FILES = (
     "nightreign-overlay-helper.exe",
     "_internal/nightreign_overlay/plugins/capture/native/MaaWin32Screencap.dll",
@@ -18,6 +20,7 @@ REQUIRED_RUNTIME_FILES = (
     "bin/amd64/KernelTraceControl.dll",
     "bin/amd64/msdia140.dll",
     "README.md",
+    *(f"_internal/nightreign_overlay/plugins/audio/sounds/{cue.filename}" for cue in BUNDLED_CUES.values()),
 )
 
 

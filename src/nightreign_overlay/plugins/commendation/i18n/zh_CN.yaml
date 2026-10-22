@@ -1,0 +1,40 @@
+plugin:
+  name: 赛后点赞
+  description: 队友离队后显示点赞窗口，可查看 Steam 主页或发送留言
+settings:
+  behavior: 赛后点赞
+  close_seconds: 点赞窗口自动关闭时间
+  close_help: 自动弹出需启用联机状态和缩圈计时，每位队友分别计时。
+  seconds: '{value} 秒'
+  comment: 点赞留言
+  comment_help: 点击点赞按钮向 Steam 主页留言，同一玩家间隔七天。
+  save: 保存
+  show_recent: 显示队友
+  manual: 手动打开队友窗口
+  manual_help: 队友仍在房间或未识别到 DAY1 时使用。
+  window: 独立点赞窗口
+  status: 运行状态
+  dismiss: 关闭本次窗口
+overlay:
+  title: 赛后点赞
+  send: 向该队友的 Steam 主页发送当前设置的留言
+  open_profile: 点击名字在 Steam 内打开主页
+state:
+  restoring: 等待解除临时屏蔽
+  idle: 等待本局队友
+  ready: 点击点赞按钮发送留言
+  sending: 正在发送留言…
+  sent: 已留言点赞，七天内不重复发送
+  cooldown: 七天留言间隔内
+  unknown: 结果待核对，请先查看主页；暂停重复留言
+  retry_later: Steam 未接受留言，稍后可重试
+  precondition: 主页未开放留言或账号未就绪，请查看主页后重试
+  rejected: Steam 未接受留言，请稍后重试
+  error: 准备失败，请保持 Steam 和游戏运行后重试
+  history_error: 留言记录异常，请先核对主页
+  account_missing: 未读取到 Steam 登录账号
+  account_changed: Steam 账号已切换或无法确认，请重新组队
+  helper_missing: 未找到或无法启动留言组件
+  invalid_comment: 请填写 1–500 字的留言
+  saved: 留言已保存
+  disabled: 请先开启赛后点赞功能

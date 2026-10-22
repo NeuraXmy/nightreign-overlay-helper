@@ -1,0 +1,3 @@
+plugin:
+  name: Communication recovery
+  description: Independent temporary-block and recovery supervision

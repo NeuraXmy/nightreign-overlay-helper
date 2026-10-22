@@ -1,0 +1,40 @@
+plugin:
+  name: 賽後按讚
+  description: 隊友離隊後顯示按讚視窗，可查看 Steam 個人檔案或傳送留言
+settings:
+  behavior: 賽後按讚
+  close_seconds: 按讚視窗自動關閉時間
+  close_help: 自動彈出需啟用連線狀態和縮圈計時，每位隊友分別計時。
+  seconds: '{value} 秒'
+  comment: 按讚留言
+  comment_help: 點擊按讚按鈕向 Steam 個人檔案留言，同一玩家間隔七天。
+  save: 儲存
+  show_recent: 顯示隊友
+  manual: 手動開啟隊友視窗
+  manual_help: 隊友仍在房間或未辨識到 DAY1 時使用。
+  window: 獨立按讚視窗
+  status: 執行狀態
+  dismiss: 關閉本次視窗
+overlay:
+  title: 賽後按讚
+  send: 向該隊友的 Steam 個人檔案傳送目前設定的留言
+  open_profile: 點擊名字在 Steam 內開啟個人檔案
+state:
+  restoring: 等待解除暫時封鎖
+  idle: 等待本局隊友
+  ready: 點擊按讚按鈕傳送留言
+  sending: 正在傳送留言…
+  sent: 已留言按讚，七天內不重複傳送
+  cooldown: 七天留言間隔內
+  unknown: 結果待核對，請先查看個人檔案；暫停重複留言
+  retry_later: Steam 未接受留言，稍後可重試
+  precondition: 個人檔案未開放留言或帳號未就緒，請查看後重試
+  rejected: Steam 未接受留言，請稍後重試
+  error: 準備失敗，請保持 Steam 和遊戲執行後重試
+  history_error: 留言記錄異常，請先核對個人檔案
+  account_missing: 未讀取到 Steam 登入帳號
+  account_changed: Steam 帳號已切換或無法確認，請重新組隊
+  helper_missing: 找不到或無法啟動留言元件
+  invalid_comment: 請填寫 1–500 字的留言
+  saved: 留言已儲存
+  disabled: 請先開啟賽後按讚功能
