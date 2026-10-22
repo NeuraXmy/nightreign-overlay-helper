@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QWidget
 from qfluentwidgets import (
@@ -142,8 +144,23 @@ class AudioSettingCard(SettingCard):
 class LoopAudioSettingCard(SettingCard):
     """Owner-controlled looping cue with independent fade-in/fade-out times."""
 
-    def __init__(self, config, audio, owner: str, title: str, parent: QWidget | None = None) -> None:
-        super().__init__(FluentIcon.MUSIC, title, config.path.value or tr("audio.unset"), parent)
+    def __init__(
+        self,
+        config,
+        audio,
+        owner: str,
+        title: str,
+        default_path: str = "",
+        parent: QWidget | None = None,
+    ) -> None:
+        self.default_path = default_path
+        self.default_filename = Path(default_path).name if default_path else ""
+        initial = config.path.value or (
+            tr("audio.builtin_loop", filename=self.default_filename)
+            if self.default_filename
+            else tr("audio.unset")
+        )
+        super().__init__(FluentIcon.MUSIC, title, initial, parent)
         self.config, self.audio, self.owner = config, audio, f"{owner}:test"
         self.enabledSwitch = localize_switch(SwitchButton(self, IndicatorPosition.RIGHT))
         self.slider = Slider(Qt.Orientation.Horizontal, self)
@@ -224,9 +241,10 @@ class LoopAudioSettingCard(SettingCard):
     def _toggle_test(self) -> None:
         if self.audio.is_loop_playing(self.owner):
             self.audio.stop_loop(self.owner, self.config.fade_out.value)
-        elif self.config.enabled.value and self.config.path.value:
+        elif self.config.enabled.value and (self.config.path.value or self.default_path):
+            path = self.config.path.value or self.default_path
             self.audio.play_loop(
-                self.config.path.value, self.config.volume.value, self.config.fade_in.value, owner=self.owner
+                path, self.config.volume.value, self.config.fade_in.value, owner=self.owner
             )
 
     def _enabled_changed(self, enabled: bool) -> None:
@@ -245,23 +263,34 @@ class LoopAudioSettingCard(SettingCard):
             self.fadeOut.setValue(self.config.fade_out.value)
             self.enabledSwitch.setChecked(self.config.enabled.value)
         self.volumeLabel.setText(f"{self.config.volume.value}%")
-        self.setContent(self.config.path.value or tr("audio.unset"))
+        self.setContent(
+            self.config.path.value
+            or (
+                tr("audio.builtin_loop", filename=self.default_filename)
+                if self.default_filename
+                else tr("audio.unset")
+            )
+        )
         self.selectButton.setText(tr("audio.change" if self.config.path.value else "audio.select"))
         self.clearButton.setEnabled(bool(self.config.path.value))
-        self.testButton.setEnabled(self.config.enabled.value and bool(self.config.path.value))
+        self.testButton.setEnabled(
+            self.config.enabled.value and bool(self.config.path.value or self.default_path)
+        )
 
 
 def audio_section(
     notifications: AudioNotifications,
     advance: tuple[str, ...],
-    loop_cues: tuple[tuple[LoopAudioConfig, AudioApi, str, str, str], ...] = (),
+    loop_cues: tuple[tuple[LoopAudioConfig, AudioApi, str, str, str, str], ...] = (),
 ) -> SettingSection:
     """Build the final feature settings group with localized titles."""
     section = SettingSection(tr("audio.title"))
     if loop_cues:
         container = SelectableSettingContainer(tr("audio.select_option_group"))
-        for config, audio, owner, option, title in loop_cues:
-            container.addOption(option, LoopAudioSettingCard(config, audio, owner, title))
+        for config, audio, owner, option, title, default_path in loop_cues:
+            container.addOption(
+                option, LoopAudioSettingCard(config, audio, owner, title, default_path)
+            )
         section.addCard(container)
     for key in notifications.cues:
         section.addCard(

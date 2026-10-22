@@ -28,3 +28,14 @@ BUNDLED_CUES = {
     ("art_timer", "start"): BundledCue("art_start.mp3"),
     ("art_timer", "end"): BundledCue("art_end.mp3", 3.0),
 }
+
+# Looping cues use an empty persisted path so installations remain portable. Feature
+# plugins resolve these filenames relative to the installed audio plugin at runtime.
+BUNDLED_LOOP_AUDIO = {
+    ("art_timer", "executor"): "animals.mp3",
+    ("entertainment", "down"): "rainlove.wav",
+}
+
+
+def bundled_loop_path(plugin_id: str, key: str) -> Path:
+    return SOUNDS_DIR / BUNDLED_LOOP_AUDIO[(plugin_id, key)]

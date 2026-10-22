@@ -22,7 +22,7 @@ settings:
   advanced:
     title: Advanced options
     stable_detections:
-      title: Confirm state after detections
-      content: Confirm a state change after the same result is detected consecutively; defaults to 3
+      title: Confirm teammate state after detections
+      content: Confirm a teammate state change after the same result is detected consecutively; defaults to 3
 audio:
   loop_title: Looping audio
