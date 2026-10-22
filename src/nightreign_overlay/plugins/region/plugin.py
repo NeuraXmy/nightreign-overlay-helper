@@ -153,13 +153,20 @@ class _RegionService(RegionApi):
         return selections, window
 
     def region(self, key: str) -> QRect | None:
-        value = self._plugin.config.regions.value.get(key)
-        if value is not None:
-            return QRect(*value)
+        manual = self.manual_region(key)
+        if manual is not None:
+            return manual
         capture = self._plugin.ctx.services.get(CaptureApi)
         if capture is None or not supports_automatic_region(key):
             return None
-        return automatic_region(key, capture.game_client_rect())
+        client = capture.game_client_rect()
+        if key == "capture.game_window":
+            return client
+        return automatic_region(key, client)
+
+    def manual_region(self, key: str) -> QRect | None:
+        value = self._plugin.config.regions.value.get(key)
+        return QRect(*value) if value is not None else None
 
     def region_source(self, key: str) -> str | None:
         if key in self._plugin.config.regions.value:

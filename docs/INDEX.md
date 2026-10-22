@@ -41,6 +41,7 @@ docs/
 - Windows 与 macOS 差异：[平台抽象](architecture/platform.md)。
 - 插件依赖、启停与资源清理：[插件系统](architecture/plugin-system.md)。
 - 截图、热键、共享 HUD、区域标定：[基础能力](features/infrastructure.md)。
+- 功能区域与游戏画面区域的标定优先级：[自动识别区域](features/automatic-regions.md)。
 - 地图识别、数据与 CNN：[地图信息](features/map/README.md)。
 - 血条输入、拒识行为与模型：[血量阈值标记](features/hp/README.md)。
 - 页面、设置卡片与悬浮窗：[UI 层](architecture/ui.md)。

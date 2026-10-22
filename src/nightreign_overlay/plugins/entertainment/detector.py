@@ -48,6 +48,8 @@ def _detect_row(rgb: np.ndarray, evidence: np.ndarray, row_index: int) -> Teamma
     # segments), and three-down. The first and third wedges are sufficient to
     # locate a ring and identify three-down; the middle wedge is irrelevant.
     best_score, best_stages, best_center = 0.0, 0, (0.0, 0.0)
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    groove_evidence = np.clip((112.0 - gray.astype(np.float32)) / 70.0, 0.0, 1.0)
     xa, xb = round(w * 0.12), round(w * 0.19)
     ya, yb = max(0, round(nominal_y - w * 0.035)), min(h, round(nominal_y + w * 0.035))
     for radius in range(max(8, round(w * 0.045)), round(w * 0.088) + 1):
@@ -64,11 +66,21 @@ def _detect_row(rgb: np.ndarray, evidence: np.ndarray, row_index: int) -> Teamma
             cv2.filter2D(source, -1, sectors[index])[sy : sy + shape[0], sx : sx + shape[1]]
             for index in (0, 2)
         ]
+        groove_source = groove_evidence[y0:y1, x0:x1]
+        groove_maps = [
+            cv2.filter2D(groove_source, -1, sectors[index])[sy : sy + shape[0], sx : sx + shape[1]]
+            for index in range(3)
+        ]
         penalty = cv2.filter2D(source, -1, outside)[sy : sy + shape[0], sx : sx + shape[1]]
         # Any down state has the first wedge; three-down additionally has the
         # third. The shared centre/outside penalty rejects isolated violet
         # pixels and makes the decision tolerant to partial segment fill.
-        score = sum(maps) - 0.32 * penalty
+        # When the violet fill is almost depleted, the dark three-part groove
+        # remains visible. Treat its repeated annular structure as supporting
+        # evidence so the last moments of a down state are not mistaken for a
+        # revival. The red card and empty HP bar checks below remain required.
+        groove_score = sum(groove_maps) / 3.0
+        score = sum(maps) + 0.24 * groove_score - 0.32 * penalty
         # The portrait card is left of the name strip. Keeping this search
         # close to its expected centre prevents violet scenery from becoming
         # a counterfeit ring and keeps all stages on one physical centre.
@@ -84,7 +96,13 @@ def _detect_row(rgb: np.ndarray, evidence: np.ndarray, row_index: int) -> Teamma
             bar_y = int(cy - radius * 0.48)
             bar = rgb[max(0, bar_y - 2) : min(h, bar_y + 3), round(w * 0.32) : round(w * 0.90)]
             red_fill = (
-                float(np.mean((bar[..., 0] > bar[..., 1] * 1.16) & (bar[..., 0] > bar[..., 2] * 1.12)))
+                float(
+                    np.mean(
+                        (bar[..., 0] > 90)
+                        & (bar[..., 0] > bar[..., 1] * 1.35)
+                        & (bar[..., 0] > bar[..., 2] * 1.30)
+                    )
+                )
                 if bar.size
                 else 0.0
             )
@@ -107,7 +125,10 @@ def _detect_row(rgb: np.ndarray, evidence: np.ndarray, row_index: int) -> Teamma
         if card.size
         else 0.0
     )
-    down = best_score >= 0.16 and best_stages >= 1 and red_support >= 0.08
+    # Requiring stronger combined ring evidence rejects ordinary portrait art
+    # and HUD item icons that can weakly match the dark-groove template.
+    # Low-fill true rings in the supplied examples retain scores above 0.5.
+    down = best_score >= 0.40 and best_stages >= 1 and red_support >= 0.08
     return Teammate(True, down, best_stages if down else 0, best_score, best_center)
 
 

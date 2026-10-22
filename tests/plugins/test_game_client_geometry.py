@@ -117,3 +117,38 @@ def test_capture_service_exposes_geometry_without_starting_capture(store, tmp_pa
         plugin.on_deactivate()
         plugin.ctx.release()
         fakes.input.ctx.release()
+
+
+def test_manual_game_window_region_overrides_detection_and_can_be_any_aspect_ratio(
+    store, tmp_path, monkeypatch
+):
+    from PyQt6.QtCore import QRect
+
+    fakes = FeatureServices(store, tmp_path)
+    fakes.services.unregister(CaptureApi)
+    plugin = capture.CapturePlugin(fakes.context("capture", tmp_path))
+    plugin.on_load()
+    plugin.on_activate()
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(win32, "GameClientLocator", lambda: (_ for _ in ()).throw(AssertionError()))
+    fakes.region.save_region("capture.game_window", QRect(40, 50, 1200, 700))
+    try:
+        assert fakes.services.require(CaptureApi).game_client_rect() == QRect(40, 50, 1200, 700)
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        fakes.input.ctx.release()
+
+
+@pytest.mark.parametrize(
+    "rect,expected",
+    [
+        ((50, 165, 350, 190), (56, 165, 338, 190)),
+        ((0, 0, 1920, 1200), None),
+        ((0, 0, 1920, 1080), (0, 0, 1920, 1080)),
+    ],
+)
+def test_game_window_selection_is_cropped_or_rejected(rect, expected):
+    from PyQt6.QtCore import QRect
+
+    assert capture._crop_game_window_16_9(QRect(*rect)) == (QRect(*expected) if expected else None)

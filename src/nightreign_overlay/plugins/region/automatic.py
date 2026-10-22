@@ -9,11 +9,13 @@ _REFERENCE_REGIONS = {
     "map_detect.map_region": (1454, 228, 990, 990),
     "hp_marker.hpbar_region": (223, 56, 112, 12),
     "art_timer.art_region": (1206, 1260, 143, 140),
+    "entertainment.teammates": (65, 216, 457, 249),
 }
+_MANUAL_ONLY_REGIONS = {"capture.game_window"}
 
 
 def supports_automatic_region(key: str) -> bool:
-    return key in _REFERENCE_REGIONS
+    return key in _REFERENCE_REGIONS or key in _MANUAL_ONLY_REGIONS
 
 
 def automatic_region(key: str, client: QRect | None) -> QRect | None:
@@ -23,6 +25,8 @@ def automatic_region(key: str, client: QRect | None) -> QRect | None:
     permits integer rounding for windowed clients. No calculated rectangle is written to settings.
     """
     reference = _REFERENCE_REGIONS.get(key)
+    if key in _MANUAL_ONLY_REGIONS:
+        return QRect(client) if client is not None and not client.isEmpty() else None
     if reference is None or client is None or client.width() < 640 or client.height() < 360:
         return None
     if abs(client.width() / client.height() - 16 / 9) > 0.01:
