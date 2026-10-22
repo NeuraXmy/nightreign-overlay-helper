@@ -230,6 +230,7 @@ updates:
   install_hint: 下载后请完整解压新版本，退出旧程序，再删除旧版程序文件夹即可。设置保存在用户数据目录，将会保留。
   manual_hint: 如果程序无法下载，请通过下面的 GitHub / Gitee 链接自行下载。
   download: 下载（{source}）
+  skip: 跳过该版本
   close: 关闭
   failed: 检查失败：GitHub 和 Gitee 均未返回有效版本，请稍后重试。
   latest: 当前已是最新正式版。

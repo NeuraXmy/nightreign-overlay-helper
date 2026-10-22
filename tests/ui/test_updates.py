@@ -228,3 +228,65 @@ def test_closing_dialog_cancels_download_without_feedback(qapp, monkeypatch, esc
     assert not messages
     controller.shutdown()
     delete_qobjects(controller, window)
+
+
+def test_skip_version_persists_and_only_suppresses_automatic_checks(qapp, store, monkeypatch):
+    from nightreign_overlay.core.app_config import AppConfig
+    from nightreign_overlay.core.config import ConfigStore
+
+    monkeypatch.setattr(updates, "APP_VERSION", "1.0.1")
+    config = store.bind(AppConfig, "app")
+    window = Window()
+    controller = updates.UpdateController(window, config=config)
+    release = updates.Release("v1.0.2", "notes", "github", "https://example.com/a.zip", "a.zip")
+    controller._checked([release], "")
+    dialog = controller._dialog
+    dialog.skipButton.click()
+    assert config.skipped_update_version.value == "v1.0.2"
+    assert not dialog.isVisible()
+    store.flush()
+    reloaded = ConfigStore(store.path)
+    assert reloaded.bind(AppConfig, "app").skipped_update_version.value == "v1.0.2"
+    controller._checked([release], "")
+    assert not dialog.isVisible()
+    # A different source or a temporary older result cannot bypass the skip.
+    controller._checked([updates.Release("1.0.2", "mirror", "gitee", "", "")], "")
+    assert not dialog.isVisible()
+    controller._manual = True
+    controller._checked([release], "")
+    assert controller._dialog.isVisible()
+    controller._dialog.close()
+    controller._history = True
+    controller._checked([release], "")
+    assert controller._dialog.isVisible()
+    assert not hasattr(controller._dialog, "skipButton")
+    controller._dialog.close()
+    newer = updates.Release("v1.0.3", "new notes", "gitee", "", "a.zip")
+    controller._checked([newer, release], "")
+    assert controller._dialog.isVisible()
+    assert "v1.0.3" in controller._dialog.browser.toPlainText()
+    controller.shutdown()
+    delete_qobjects(reloaded, controller, window)
+
+
+def test_release_dialog_background_follows_fluent_theme(qapp):
+    from qfluentwidgets import Theme, qconfig, setTheme
+
+    original = qconfig.themeMode.value
+    window = Window()
+    dialog = None
+    try:
+        setTheme(Theme.DARK)
+        dialog = updates.ReleaseDialog([updates.Release("v1.0.2", "notes", "github", "", "")], True, window)
+        dialog.show()
+        qapp.processEvents()
+        assert dialog.palette().window().color().lightness() < 80
+        setTheme(Theme.LIGHT)
+        qapp.processEvents()
+        assert dialog.palette().window().color().lightness() > 220
+        setTheme(Theme.DARK)
+        qapp.processEvents()
+        assert dialog.palette().window().color().lightness() < 80
+    finally:
+        delete_qobjects(dialog, window)
+        setTheme(original)

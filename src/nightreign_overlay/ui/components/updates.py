@@ -11,8 +11,9 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, QTimer, QUrl, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QDesktopServices, QTextDocument
 from PyQt6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QProgressBar, QVBoxLayout, QWidget
-from qfluentwidgets import BodyLabel, InfoBar, PushButton, SubtitleLabel
+from qfluentwidgets import BodyLabel, InfoBar, PushButton, SubtitleLabel, isDarkTheme, qconfig
 
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.core.updates import (
@@ -31,6 +32,7 @@ log = get_logger(__name__)
 
 class ReleaseDialog(QDialog):
     downloadRequested = pyqtSignal(object)
+    skipRequested = pyqtSignal(object)
     closed = pyqtSignal()
 
     def closeEvent(self, event) -> None:
@@ -43,6 +45,9 @@ class ReleaseDialog(QDialog):
 
     def __init__(self, releases: list[Release], update: bool, parent: QWidget) -> None:
         super().__init__(parent)
+        self.setObjectName("releaseDialog")
+        self._apply_theme()
+        qconfig.themeChangedFinished.connect(self._apply_theme)
         self.setWindowTitle(tr("updates.available" if update else "updates.changelog"))
         self.resize(700, 560)
         layout = QVBoxLayout(self)
@@ -96,11 +101,18 @@ class ReleaseDialog(QDialog):
             self.downloadButton.setEnabled(bool(release.download_url))
             self.downloadButton.clicked.connect(lambda: self.downloadRequested.emit(release))
             buttons.addWidget(self.downloadButton)
+            self.skipButton = PushButton(tr("updates.skip"), self)
+            self.skipButton.clicked.connect(lambda: self.skipRequested.emit(release))
+            buttons.addWidget(self.skipButton)
         buttons.addStretch()
         close = PushButton(tr("updates.close"), self)
         close.clicked.connect(self.close)
         buttons.addWidget(close)
         layout.addLayout(buttons)
+
+    def _apply_theme(self) -> None:
+        background = "#202020" if isDarkTheme() else "#f9f9f9"
+        self.setStyleSheet(f"QDialog#releaseDialog {{ background-color: {background}; }}")
 
 
 class UpdateController(QObject):
@@ -111,8 +123,11 @@ class UpdateController(QObject):
     downloadProgress = pyqtSignal(object, object)
     busyChanged = pyqtSignal(bool)
 
-    def __init__(self, window: QWidget, parent: QObject | None = None) -> None:
+    def __init__(
+        self, window: QWidget, parent: QObject | None = None, *, config: AppConfig | None = None
+    ) -> None:
         super().__init__(parent)
+        self._config = config
         self._window = window
         self._busy = False
         self._downloading = False
@@ -180,6 +195,10 @@ class UpdateController(QObject):
                 )
             return
         newer = is_newer(releases[0].tag, APP_VERSION)
+        skipped = self._config.skipped_update_version.value if self._config else ""
+        if not manual and not history and skipped and not is_newer(releases[0].tag, skipped):
+            log.info("Automatic update notification skipped: version=%s skipped=%s", releases[0].tag, skipped)
+            return
         if history or newer:
             if self._downloading and self._dialog:
                 self._window.bring_to_front()
@@ -191,10 +210,19 @@ class UpdateController(QObject):
             self._window.bring_to_front()
             self._dialog = ReleaseDialog(releases if history else releases[:1], not history, self._window)
             self._dialog.downloadRequested.connect(self._download)
+            self._dialog.skipRequested.connect(self._skip_version)
             self._dialog.closed.connect(self._cancel_download)
             self._dialog.show()
         elif manual:
             InfoBar.success(tr("updates.title"), tr("updates.latest"), parent=self._window)
+
+    @pyqtSlot(object)
+    def _skip_version(self, release: Release) -> None:
+        if self._config:
+            self._config.skipped_update_version.set(release.tag)
+            log.info("Update version skipped for automatic checks: version=%s", release.tag)
+        if self._dialog:
+            self._dialog.close()
 
     @pyqtSlot(object)
     def _download(self, release: Release) -> None:

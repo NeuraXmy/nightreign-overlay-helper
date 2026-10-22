@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nightreign_overlay.core.config import BoolOption, ChoiceOption, ColorOption, ConfigGroup
+from nightreign_overlay.core.config import BoolOption, ChoiceOption, ColorOption, ConfigGroup, Option
 from nightreign_overlay.core.i18n import available_languages
 from nightreign_overlay.core.log import LOG_LEVELS
 
@@ -24,6 +24,7 @@ class AppConfig(ConfigGroup):
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
     auto_check_updates = BoolOption(True)
+    skipped_update_version = Option("", validator=lambda value: isinstance(value, str))
     debug_images_enabled = BoolOption(True)
     log_level = ChoiceOption("INFO", LOG_LEVELS)
     #: Internal: the "still running in the tray" hint is shown only once.
