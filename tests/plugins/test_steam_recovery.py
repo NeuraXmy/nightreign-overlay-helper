@@ -33,6 +33,11 @@ TARGET = peer().steam_id
 
 @pytest.fixture
 def recovery(plugin, store, monkeypatch, tmp_path):
+    # Exercise Windows recovery wiring on every host without changing the
+    # interpreter's global sys.platform or launching a real Steam worker.
+    monkeypatch.setattr(
+        "nightreign_overlay.plugins.steam_recovery.plugin.sys", SimpleNamespace(platform="win32")
+    )
     helper = tmp_path / "helper.exe"
     helper.touch()
     launch = Mock(return_value=Mock(poll=Mock(return_value=None)))
