@@ -93,6 +93,9 @@ git diff --check
 ```
 
 `-p no:capture` 禁用 pytest 输出捕获插件，测试本身不依赖此参数。
+macOS 上应保留此参数：部分基于 Conda Python 的环境在导入原生 `readline` 扩展时会段错误，
+而 pytest 的默认捕获插件会在测试收集前导入 `readline`。禁用捕获插件可绕过这条环境问题；
+标准命令已包含该参数。Windows CI 使用其原有 pytest 命令，不需要此 macOS 专用规避。
 排查耗时可追加 `--durations=20`，查看最慢的测试调用、fixture setup 与 teardown；
 两个 Windows workflow 默认输出该排名，避免将 fixture 中的视频评估耗时误认为断言本身耗时。
 
