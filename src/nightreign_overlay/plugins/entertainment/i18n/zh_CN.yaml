@@ -1,0 +1,23 @@
+plugin:
+  name: 娱乐
+  description: 队友倒地状态识别与循环音频播放
+settings:
+  group: 队友倒地自动播放
+  enabled:
+    title: 检测队友倒地
+    content: 检测到队友状态满足条件时自动播放循环音频
+  region:
+    title: 队友区域
+    content: 框选包含队友头像、名称和血条的区域
+    annotate: 框选队友状态区域
+    button: 标定
+  start:
+    title: 播放开始条件
+  stop:
+    title: 播放结束条件
+  all_down: 队友全倒
+  all_three: 队友全三倒
+  all_up: 队友全复活
+  any_up: 任意队友复活
+audio:
+  loop_title: 循环播放音频

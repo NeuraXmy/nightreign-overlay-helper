@@ -202,6 +202,8 @@ audio:
   clear: Clear audio
   delay: Delay
   advance: Advance
+  fade_in: Fade-in seconds
+  fade_out: Fade-out seconds
   test: Test playback
   stop_test: Stop test
   filter: Audio files (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;All files (*)

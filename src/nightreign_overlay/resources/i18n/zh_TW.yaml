@@ -201,6 +201,8 @@ audio:
   clear: 清除音訊
   delay: 延遲時間
   advance: 提前時間
+  fade_in: 淡入秒數
+  fade_out: 淡出秒數
   test: 測試播放
   stop_test: 停止測試
   filter: 音訊檔案 (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;所有檔案 (*)
