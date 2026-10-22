@@ -36,6 +36,8 @@ docs/
 
 先阅读项目概览，再选择与任务相关的文档即可；无需一次加载全部资料。修改代码前阅读[开发约定](development/contributing.md)，再核对目标模块、实际配置与对应测试。
 
+> **新增插件提醒**：新增内置插件后，必须同步更新 `scripts/check_runtime_resources.py` 和 `tests/plugins/test_unicode_installation.py` 中的插件期望集合，并补齐插件文档与测试记录；否则发布 CI 会因插件发现清单不完整而失败。完整清单见[开发约定](development/contributing.md#新增插件同步清单)。
+
 - 启动、退出、单实例、重启：[启动与生命周期](architecture/startup.md)。
 - 配置、事件、服务、国际化、前台策略：[核心底座](architecture/core.md)。
 - Windows 与 macOS 差异：[平台抽象](architecture/platform.md)。
