@@ -49,8 +49,8 @@ def _label(nightlord: int | None) -> str:
 
 
 @pytest.fixture(scope="module")
-def nightlord_results(pytestconfig: pytest.Config) -> dict[Path, NightlordSampleResult]:
-    """Evaluate every capture before reporting, so failures cannot truncate the accuracy report."""
+def nightlord_results() -> dict[Path, NightlordSampleResult]:
+    """Evaluate every capture before assertions so each sample remains independently reportable."""
     assert _CAPTURES, f"No nightlord captures found in {_CAPTURE_DIR}"
     detector = MapDetector()
     patterns = {pattern.id: pattern for pattern in detector.info.patterns}
@@ -64,23 +64,6 @@ def nightlord_results(pytestconfig: pytest.Config) -> dict[Path, NightlordSample
         actual, score = detector._match_nightlord(rgb)
         results[path] = NightlordSampleResult(path, expected, actual, score)
 
-    reporter = pytestconfig.pluginmanager.getplugin("terminalreporter")
-    if reporter is not None:
-        reporter.write_sep("=", "Nightlord template matching accuracy")
-        for title, samples in (
-            ("overall", list(results.values())),
-            ("visible", [result for result in results.values() if not result.hidden]),
-            ("hidden (unk.png)", [result for result in results.values() if result.hidden]),
-        ):
-            correct = sum(result.correct for result in samples)
-            accuracy = f"{correct / len(samples):.2%}" if samples else "N/A"
-            reporter.write_line(f"{title}: {correct}/{len(samples)} = {accuracy}")
-        for result in results.values():
-            expected_labels = " | ".join(sorted(_label(value) for value in result.expected))
-            reporter.write_line(
-                f"{'PASS' if result.correct else 'FAIL'} {result.path.name}: "
-                f"expected={expected_labels}; actual={_label(result.actual)}; score={result.score:.6f}"
-            )
     return results
 
 

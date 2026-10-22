@@ -13,7 +13,6 @@ from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.plugins.art_timer import plugin as art_plugin
 from nightreign_overlay.plugins.art_timer.detector import ART_TYPES, ArtDetectResult
 from nightreign_overlay.plugins.art_timer.plugin import ArtTimerPlugin
-from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -23,17 +22,6 @@ from tests.support.feature_fakes import FeatureServices, solid_image
 
 _ROOT = Path(art_plugin.__file__).parent
 _REGION = "art_timer.art_region"
-
-
-class _NoopAudio(AudioApi):
-    def stop(self, owner=None):
-        pass
-
-    def stop_loop(self, owner, fade_out=0):
-        pass
-
-    def is_loop_playing(self, owner):
-        return False
 
 
 def _plugin(
@@ -205,8 +193,7 @@ def test_calibrate_region_suspends_detection(
 def test_settings_page_builds_before_activation_with_advanced_options(
     store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
-    fakes.services.register(AudioApi, _NoopAudio(), owner="audio")
+    plugin, _, _ = _plugin(store, tmp_path, monkeypatch)
     parent = QWidget()
     parent.setLayout(QVBoxLayout())
     panel = plugin.create_settings_widget(parent)
