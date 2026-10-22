@@ -303,7 +303,7 @@ def test_release_dialog_background_follows_fluent_theme():
         delete_qobjects(dialog, window)
     """)
     result = subprocess.run(
-        [sys.executable, "-c", code],
+        [sys.executable, "-X", "faulthandler", "-c", code],
         env={**os.environ, "QT_QPA_PLATFORM": "offscreen"},
         capture_output=True,
         text=True,

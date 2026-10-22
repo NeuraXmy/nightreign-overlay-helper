@@ -80,7 +80,7 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 ## 运行测试
 
 ```bash
-QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture -q
+QT_QPA_PLATFORM=offscreen .venv/bin/python -X faulthandler -m pytest tests -m "not benchmark" -p no:capture -q
 
 # 按类别运行
 QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture tests/core -q
@@ -105,7 +105,39 @@ Windows 文件路径兼容性回归可将 `--basetemp` 指向仓库内含中文�
 
 测试没有运行应用主事件循环，单独调用 `deleteLater()` 后立即结束测试，不能保证 Qt 在 Python 回收页面与子控件包装对象之前完成删除。Windows / Qt 6.11 下，FAQ 页面的待处理 `PolishRequest` 事件可能在后续测试的嵌套事件循环中触发文本控件访问冲突；因此不能仅按堆栈顶部将其归因于后续悬浮窗测试。
 
-FAQ 测试通过 `delete_qobjects(*objects)` 清理页面及相关服务：保留 Python 强引用，逐个调用 `deleteLater()`，再立即处理指定根对象的 `DeferredDelete`，确保其对象树在返回之前销毁。该辅助函数不处理其它排队回调，不能在对象自己的事件回调中使用，也不要同时传入一个父对象和它的子对象。`test_faq_teardown_survives_collection_before_next_event_loop` 主动触发垃圾回收与后续事件循环，验证页面与浏览器均已销毁。无需通过拆分测试进程或屏蔽系统崩溃弹窗来运行完整测试。
+FAQ 测试通过 `delete_qobjects(*objects)` 清理页面及相关服务：保留 Python 强引用，逐个调用 `deleteLater()`，再立即处理指定根对象的 `DeferredDelete`，确保其对象树在返回之前销毁。该辅助函数不处理其它排队回调，不能在对象自己的事件回调中使用，也不要同时传入一个父对象和它的子对象。`test_faq_teardown_survives_collection_before_next_event_loop` 主动触发垃圾回收与后续事件循环，验证页面与浏览器均已销毁。普通 UI 测试优先正确释放资源；修改全局主题的测试另见下节的进程隔离要求。
+
+### Python 原生崩溃与全局主题测试
+
+`Fatal Python error: Segmentation fault`、`Bus error`、`Abort trap` 或 Windows 访问冲突表示原生进程退出，不能按普通 Python 断言失败处理，也不能通过 `try/except` 捕获。Qt/PyQt、图形后端及其他原生依赖都可能触发这种退出，需要先看堆栈再定位；不能仅因进程名是 Python 就归因于 Python 版本。
+
+2026-10-22 核对本地 macOS 的四份崩溃报告时，发现两种不同路径：
+
+| 观察到的路径 | 诊断与处理 |
+| --- | --- |
+| 三份报告进入 `QMenu::event`、`QWidget::event`、`QWidget::ensurePolished`；最近一次全套回归在全局主题切换后的更新弹窗构造阶段退出，单独执行该测试可通过 | 提示测试顺序、控件生命周期或全局样式状态存在相互影响；这些堆栈尚不能确定具体哪个旧控件已失效。先核对对象清理，再隔离会修改全局样式的测试。 |
+| 一份报告进入 `libqcocoa`、`NSApplication`、`_RegisterApplication` 并 `SIGABRT` | 该次进程使用了 macOS Cocoa 图形后端。无界面自动测试应在 Python 启动前显式设置 `QT_QPA_PLATFORM=offscreen`，避免依赖桌面会话。 |
+
+Fluent Widgets 的 `setTheme()` 会遍历进程级样式注册表，刷新此前注册的控件，而全套测试共享一个 `QApplication`。只恢复浅色／深色设置不能隔离这些控件及其待处理事件。已有 [`test_release_dialog_background_follows_fluent_theme`](../../../tests/ui/test_updates.py) 因此在独立 Python 子进程中执行真实的深色→浅色→深色切换与弹窗背景断言：子进程显式使用 `offscreen`，检查退出码、保留标准输出和错误输出，并设置 30 秒超时。改为隔离后，当次默认全套回归 1139 项通过；这验证了处理方式，但不代表所有原生崩溃均已解决。
+
+新增测试遵循以下规则：
+
+- 在主线程创建和操作 Qt 对象；工作线程通过信号传递结果。结束测试前停止定时器，取消并等待工作线程退出，再销毁依赖对象。
+- 普通 UI 测试使用共享 `qapp`，对自行创建的页面、窗口和服务使用 `try/finally` 与 `delete_qobjects()` 完成清理；`close()` 只关闭窗口，不保证销毁对象。不要盲目清空全局样式注册表或强制删除其他测试的控件。
+- 新增调用 `setTheme()` 等会重设进程级 UI 状态的测试时，沿用更新弹窗测试的独立进程方式；不要只改变收集顺序或反复重跑到通过。子进程使用 `sys.executable`，避免意外切换虚拟环境，并传入 `-X faulthandler` 以便诊断。
+- 在 Python 启动前显式设置 `QT_QPA_PLATFORM=offscreen`；`conftest.py` 的 `setdefault` 不会覆盖外部已有的 `cocoa` 等设置，子进程也应显式指定。需要真实桌面的平台验收应单独安排。
+
+再次出现崩溃时，先保存完整日志，使用原环境按以下顺序缩小范围：
+
+```bash
+# 保留原生崩溃时所有 Python 线程的堆栈和最后执行的测试名
+QT_QPA_PLATFORM=offscreen .venv/bin/python -X faulthandler -m pytest tests -m "not benchmark" -vv --tb=long > .tmp/pytest-native-crash.log 2>&1
+
+# 单独执行最近出错项，并与日志中此前的 UI 测试按相同顺序组合执行
+QT_QPA_PLATFORM=offscreen .venv/bin/python -X faulthandler -m pytest tests/ui/test_updates.py::test_release_dialog_background_follows_fluent_theme -vv
+```
+
+运行日志命令前创建 `.tmp/`。macOS 同时查看 `~/Library/Logs/DiagnosticReports/` 中对应时间的崩溃报告，区分 Qt 事件、Cocoa 初始化和其他原生库；分享报告前清理个人路径。记录 Python、PyQt6、Qt、Fluent Widgets 版本和实际解释器路径，使用 `uv sync --locked` 恢复匹配的依赖环境。单测通过而组合失败时继续检查前序资源释放；修复后仍需跑默认全套回归。`offscreen`、禁用 pytest 输出捕获和更换 Python 版本都不能替代 Qt 对象生命周期修复。
 
 多屏测试是合成数据回归，不能替代操作系统和显卡后端实测。实机诊断使用 `tools/diagnose_capture.py`，步骤与边界见 [多屏截图与 DPI](../../guides/multiscreen-capture.md)。
 
