@@ -14,6 +14,7 @@ from nightreign_overlay.plugins.art_timer.plugin import ArtTimerPlugin
 from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.day_timer import plugin as day_module
 from nightreign_overlay.plugins.day_timer.plugin import DayTimerPlugin
+from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.rain_timer.plugin import RainTimerPlugin
 from nightreign_overlay.plugins.region.api import RegionApi
 
@@ -22,6 +23,9 @@ class RecordingAudio(AudioApi):
     def __init__(self):
         self.calls = []
         self.stops = []
+        self.loop_calls = []
+        self.loop_stops = []
+        self.loop_owners = set()
 
     def play(self, path, volume=100, *, owner=""):
         if path:
@@ -30,6 +34,21 @@ class RecordingAudio(AudioApi):
 
     def stop(self, owner=None):
         self.stops.append(owner)
+
+    def play_loop(self, path, volume=100, fade_in=0, *, owner=""):
+        self.loop_calls.append((owner, path, volume, fade_in))
+        self.loop_owners.add(owner)
+        return bool(path)
+
+    def stop_loop(self, owner, fade_out=0):
+        self.loop_stops.append((owner, fade_out))
+        self.loop_owners.discard(owner)
+
+    def set_loop_fade_out(self, owner, seconds):
+        pass
+
+    def is_loop_playing(self, owner):
+        return owner in self.loop_owners
 
 
 @pytest.fixture
@@ -177,6 +196,33 @@ def test_default_art_warning_is_three_seconds_before_effect_end(make_timer):
     clock[0] = 1019
     plugin._update_timer()
     assert audio.calls[-1][1] == "end.wav"
+
+
+def test_art_loop_uses_recognized_role_config_and_effect_window(make_timer):
+    make, clock, audio = make_timer
+    plugin = make(ArtTimerPlugin)
+    plugin._hud = HudTimerBar("#000000")
+    plugin._audio.cues["start"].enabled.set(False)
+    plugin._audio.cues["end"].enabled.set(False)
+    config = plugin._loop_audio["scholar"]
+    config.enabled.set(True)
+    config.path.set("scholar-loop.wav")
+    config.volume.set(65)
+    config.fade_in.set(1.2)
+    config.fade_out.set(2.3)
+    plugin._art_type, plugin._art_started = "scholar", clock[0]
+
+    clock[0] += 1.9
+    plugin._update_timer()
+    assert audio.loop_calls == []
+    clock[0] += 0.1
+    plugin._update_timer()
+    assert audio.loop_calls == [("art_timer:art:scholar", "scholar-loop.wav", 65, 1.2)]
+
+    clock[0] += 20.1
+    plugin._update_timer()
+    assert audio.loop_stops == [("art_timer:art:scholar", 2.3)]
+    assert plugin._art_type is None
 
 
 def test_art_uses_effect_start_and_character_duration(make_timer, monkeypatch):

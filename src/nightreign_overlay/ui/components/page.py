@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
-from qfluentwidgets import ScrollArea, SettingCard, StrongBodyLabel, TitleLabel
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from qfluentwidgets import ComboBox, ScrollArea, SettingCard, StrongBodyLabel, TitleLabel
 
 
 class ScrollPage(ScrollArea):
@@ -76,6 +76,89 @@ class SettingSection(QWidget):
     def addCards(self, *cards: QWidget) -> None:
         for card in cards:
             self.addCard(card)
+
+
+class SelectableSettingContainer(QFrame):
+    """Show one named collection of ordinary setting widgets at a time."""
+
+    def __init__(self, title: str, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("selectableSettingContainer")
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setStyleSheet(
+            "QFrame#selectableSettingContainer {"
+            "border: 1px solid rgba(128, 128, 128, 110);"
+            "border-radius: 8px;"
+            "background-color: rgba(128, 128, 128, 16);"
+            "}"
+        )
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.titleLabel = StrongBodyLabel(title, self)
+        self.selector = ComboBox(self)
+        self.selector.setMinimumWidth(180)
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
+        header.addWidget(self.titleLabel)
+        header.addStretch(1)
+        header.addWidget(self.selector)
+        self.stack = QStackedWidget(self)
+        self.stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 10, 12, 12)
+        layout.setSpacing(10)
+        layout.addLayout(header)
+        layout.addWidget(self.stack)
+        self.selector.currentIndexChanged.connect(self._select_option)
+
+    def addOption(self, label: str, *widgets: QWidget) -> QWidget:
+        """Add a collection of existing widgets without changing their own config bindings."""
+        page = QWidget(self.stack)
+        page.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        content = QVBoxLayout(page)
+        content.setContentsMargins(0, 0, 0, 0)
+        content.setSpacing(4)
+        for widget in widgets:
+            widget.setParent(page)
+            if isinstance(widget, SettingCard):
+                widget.contentLabel.setWordWrap(True)
+                policy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+                policy.setHeightForWidth(True)
+                widget.contentLabel.setSizePolicy(policy)
+                widget.vBoxLayout.setAlignment(widget.contentLabel, Qt.AlignmentFlag(0))
+                widget.vBoxLayout.setAlignment(Qt.AlignmentFlag(0))
+                widget.hBoxLayout.setAlignment(Qt.AlignmentFlag(0))
+                widget.hBoxLayout.setStretch(2, 1)
+                widget.hBoxLayout.setStretch(4, 0)
+                widget.hBoxLayout.setContentsMargins(16, 12, 0, 12)
+                widget.setMinimumHeight(70 if widget.contentLabel.text() else 50)
+                widget.setMaximumHeight(16777215)
+                widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            content.addWidget(widget)
+        self.stack.addWidget(page)
+        self.selector.addItem(label)
+        if self.stack.count() == 1:
+            self.stack.setCurrentIndex(0)
+        self._adjust_height()
+        return page
+
+    def _select_option(self, index: int) -> None:
+        self.stack.setCurrentIndex(index)
+        self._adjust_height()
+
+    def _adjust_height(self) -> None:
+        page = self.stack.currentWidget()
+        if page is not None:
+            page.adjustSize()
+            self.stack.setMinimumHeight(page.sizeHint().height())
+            page.updateGeometry()
+        self.stack.updateGeometry()
+        self.updateGeometry()
+        ancestor = self
+        while ancestor is not None:
+            if layout := ancestor.layout():
+                layout.activate()
+            ancestor.updateGeometry()
+            ancestor = ancestor.parentWidget()
 
 
 class SettingsPanel(QWidget):

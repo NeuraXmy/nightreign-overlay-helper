@@ -8,6 +8,12 @@ hud:
   revenant: Immortal March invincibility
   scholar: Communion links
   executor: Aspects of the Crucible form
+roles:
+  duchess: Duchess
+  recluse: Recluse
+  revenant: Revenant
+  scholar: Scholar
+  executor: Executor
 settings:
   basic:
     title: Basic
@@ -28,5 +34,6 @@ settings:
     content: Accept icon matches below this error; lower is stricter
 
 audio:
+  loop_title: Loop playback
   start: Art countdown begins
   end: Art countdown ends

@@ -195,6 +195,7 @@ input_dialog:
   confirm: 确认
 
 audio:
+  select_option_group: 角色循环音频
   title: 音频播报
   enabled: 启用此语音
   builtin: 使用内置默认语音

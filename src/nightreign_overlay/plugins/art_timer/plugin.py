@@ -13,7 +13,8 @@ from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
-from nightreign_overlay.plugins.audio.api import AudioNotifications
+from nightreign_overlay.plugins.audio.api import AudioApi, AudioNotifications
+from nightreign_overlay.plugins.audio.config import LoopAudioConfig
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -46,6 +47,7 @@ _ART_INFO = {
     "scholar": _ArtInfo(2, 20, "#cecece"),
     "executor": _ArtInfo(2, 15, "#c98941"),
 }
+_ART_ROLES = tuple(_ART_INFO)
 
 
 def _format_period(seconds: int) -> str:
@@ -64,6 +66,10 @@ class ArtTimerPlugin(Plugin):
     def on_load(self) -> None:
         self.config = self.ctx.config(ArtTimerConfig)
         self._audio = AudioNotifications(self.ctx, ("start", "end"))
+        self._loop_audio = {
+            role: self.ctx.config(LoopAudioConfig, f"audio.{role}_loop") for role in _ART_ROLES
+        }
+        self._loop_owner: str | None = None
         self._art_type: str | None = None
         self._art_started: float | None = None
         self._detector: ArtDetector | None = None
@@ -77,6 +83,13 @@ class ArtTimerPlugin(Plugin):
         self._detect_timer = QTimer(self)
         self._detect_timer.setSingleShot(True)
         self._detect_timer.timeout.connect(self._detect_art)
+        for role, config in self._loop_audio.items():
+            config.enabled.valueChanged.connect(
+                lambda enabled, role=role: self._stop_role_loop(role, immediate=True) if not enabled else None
+            )
+            config.fade_out.valueChanged.connect(
+                lambda seconds, role=role: self._update_loop_fade(role, seconds)
+            )
 
     def on_activate(self) -> None:
         self._detector = ArtDetector(self.ctx.resource("icons"))
@@ -91,6 +104,7 @@ class ArtTimerPlugin(Plugin):
         self.ctx.on_cleanup(self._detect_timer.stop)
 
     def on_deactivate(self) -> None:
+        self._stop_loop(immediate=True)
         self._audio.reset()
         self._art_type = self._art_started = None
         self._detect_generation += 1
@@ -168,6 +182,7 @@ class ArtTimerPlugin(Plugin):
             self.ctx.log.info("No art detected.")
             return
         self.ctx.log.info("detected art: %s", result.art_type)
+        self._stop_loop(immediate=True)
         self._audio.reset()
         self._art_type = result.art_type
         self._art_started = time.monotonic()
@@ -178,13 +193,16 @@ class ArtTimerPlugin(Plugin):
     def _update_timer(self) -> None:
         if self._art_type is not None and self._art_started is not None:
             info = _ART_INFO[self._art_type]
+            elapsed = time.monotonic() - self._art_started
             self._audio.update(
-                time.monotonic() - self._art_started,
+                elapsed,
                 {
                     "start": info.delay + self._audio.cues["start"].seconds.value,
                     "end": info.delay + info.duration - self._audio.cues["end"].seconds.value,
                 },
             )
+            if info.delay <= elapsed <= info.delay + info.duration:
+                self._start_role_loop(self._art_type)
         if self._hud is None:
             return
         if self._art_type is None or self._art_started is None:
@@ -193,6 +211,7 @@ class ArtTimerPlugin(Plugin):
         info = _ART_INFO[self._art_type]
         elapsed = max(0.0, time.monotonic() - self._art_started - info.delay)
         if elapsed > info.duration:
+            self._stop_loop()
             self._art_type = self._art_started = None
             self._hud.set_progress(0.0, "")
             return
@@ -202,6 +221,48 @@ class ArtTimerPlugin(Plugin):
             remaining=_format_period(int(max(info.duration - elapsed, 0))),
         )
         self._hud.set_progress(1.0 - elapsed / info.duration, text, info.color)
+
+    def _loop_owner_for(self, role: str) -> str:
+        return f"{self.id}:art:{role}"
+
+    def _start_role_loop(self, role: str) -> None:
+        config = self._loop_audio[role]
+        if self._loop_owner is not None or not config.enabled.value or not config.path.value:
+            return
+        audio = self.ctx.services.get(AudioApi)
+        owner = self._loop_owner_for(role)
+        if audio is not None and audio.play_loop(
+            config.path.value, config.volume.value, config.fade_in.value, owner=owner
+        ):
+            self._loop_owner = owner
+            audio.set_loop_fade_out(owner, config.fade_out.value)
+            self.ctx.log.info("Started %s art loop audio", role)
+
+    def _stop_role_loop(self, role: str, *, immediate: bool = False) -> None:
+        if self._loop_owner == self._loop_owner_for(role):
+            self._stop_loop(immediate=immediate)
+
+    def _stop_loop(self, *, immediate: bool = False) -> None:
+        if self._loop_owner is None:
+            return
+        owner = self._loop_owner
+        config = next(
+            (item for role, item in self._loop_audio.items() if self._loop_owner_for(role) == owner), None
+        )
+        audio = self.ctx.services.get(AudioApi)
+        if audio is not None:
+            audio.stop_loop(owner, 0 if immediate or config is None else config.fade_out.value)
+        self.ctx.log.info("Stopped art loop audio%s", " immediately" if immediate else " with fade-out")
+        # Keep the owner while its fade-out is in progress so shutdown or a new
+        # recognition can still cancel/remove that stack entry immediately.
+        if immediate:
+            self._loop_owner = None
+
+    def _update_loop_fade(self, role: str, seconds: float) -> None:
+        if self._loop_owner == self._loop_owner_for(role):
+            audio = self.ctx.services.get(AudioApi)
+            if audio is not None:
+                audio.set_loop_fade_out(self._loop_owner, seconds)
 
     # -- calibration --------------------------------------------------------------------------
 
@@ -263,13 +324,25 @@ class ArtTimerPlugin(Plugin):
         )
         panel.addSection(basic)
         panel.addSection(advanced)
-        panel.addSection(audio_section(self._audio, ("end",)))
+        audio = self.ctx.services.require(AudioApi)
+        loop_cues = tuple(
+            (
+                self._loop_audio[role],
+                audio,
+                self._loop_owner_for(role),
+                tr(f"roles.{role}"),
+                tr(f"roles.{role}"),
+            )
+            for role in _ART_ROLES
+        )
+        panel.addSection(audio_section(self._audio, ("end",), loop_cues))
         return panel
 
     def reset_settings(self) -> None:
         self._detect_timer.stop()
         self._detect_generation += 1
         self._art_type = self._art_started = None
+        self._stop_loop(immediate=True)
         self._audio.reset()
         self._update_timer()
         super().reset_settings()
