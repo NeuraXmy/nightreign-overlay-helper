@@ -186,6 +186,10 @@ class ArtTimerPlugin(Plugin):
         self._audio.reset()
         self._art_type = result.art_type
         self._art_started = time.monotonic()
+        # Start the role loop as soon as the detected art countdown appears.
+        # The HUD countdown includes the activation delay, so audio should cover
+        # that full visible countdown instead of waiting for effect time to begin.
+        self._start_role_loop(self._art_type)
         self._update_timer()
 
     # -- countdown ----------------------------------------------------------------------------
@@ -201,7 +205,7 @@ class ArtTimerPlugin(Plugin):
                     "end": info.delay + info.duration - self._audio.cues["end"].seconds.value,
                 },
             )
-            if info.delay <= elapsed <= info.delay + info.duration:
+            if elapsed <= info.delay + info.duration:
                 self._start_role_loop(self._art_type)
         if self._hud is None:
             return
