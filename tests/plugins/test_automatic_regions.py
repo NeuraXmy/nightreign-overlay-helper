@@ -72,20 +72,24 @@ def test_supported_sizes_keep_map_square(size):
     assert rect.width() == rect.height()
 
 
-@pytest.mark.parametrize(
-    "client",
-    [
-        None,
-        QRect(),
-        QRect(0, 0, 320, 180),
-        QRect(0, 0, 1920, 1200),
-        QRect(0, 0, 3440, 1440),
-        QRect(0, 0, 1080, 1920),
-    ],
-)
-def test_unknown_layout_never_guesses_a_region(client):
+def test_non_16_9_client_uses_centered_16_9_area():
+    client = QRect(100, 200, 3440, 1440)
+    cropped = QRect(540, 200, 2560, 1440)
+    assert automatic_region("day_timer.detect_region", client) == QRect(1652, 933, 342, 95)
+    assert cropped.contains(automatic_region("day_timer.detect_region", client))
+
+
+@pytest.mark.parametrize("client", [None, QRect(), QRect(0, 0, 320, 180)])
+def test_small_or_invalid_layout_never_guesses_a_region(client):
     assert all(automatic_region(key, client) is None for key in _REGIONS)
     assert automatic_region("custom.region", QRect(0, 0, 2560, 1440)) is None
+
+
+def test_tall_non_16_9_client_uses_centered_16_9_area():
+    client = QRect(0, 0, 1920, 1200)
+    rect = automatic_region("day_timer.detect_region", client)
+    assert rect == QRect(834, 610, 256, 71)
+    assert rect in QRect(0, 60, 1920, 1080)
 
 
 @pytest.fixture

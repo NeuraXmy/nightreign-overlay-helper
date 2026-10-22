@@ -19,7 +19,7 @@ settings:
     content: May improve detection when HDR is enabled in the game
   game_window:
     title: Game area
-    content: Calibrate the actual game area for calculating automatic regions used by other features. If unset, it is detected automatically after entering the game.
+    content: Automatically determine the game image size using a 16:9 reference and calculate each feature region; you can also calibrate the game image manually (excluding top and bottom black bars)
     button: Calibrate
     annotate: Select the actual game area
     failed_title: Game area calibration failed

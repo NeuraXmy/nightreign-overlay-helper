@@ -10,7 +10,7 @@ By recognizing the DAY I / DAY II / DAY III icons that appear at the start of ea
 
 ### 2. Calibrate the DAY I icon region.
 
-Regions that have not been manually calibrated automatically adapt to a 16:9 game window. Try using the feature first; if it does not work, follow the region selection steps below.
+This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it only if the game is not full screen or the automatic region is incorrect.
 
 It is recommended to set a controller or keyboard shortcut. Start a single-player game and press the shortcut when the DAY I icon is fully visible to open the calibration screen.
 
