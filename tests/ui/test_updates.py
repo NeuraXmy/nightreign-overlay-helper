@@ -30,18 +30,22 @@ def test_automatic_failure_and_latest_are_silent(qapp, monkeypatch):
     delete_qobjects(controller, window)
 
 
-def test_new_version_shows_notes_and_download_source(qapp, monkeypatch):
+@pytest.mark.parametrize("source,label", [("gitee", "Gitee"), ("cnb", "CNB")])
+def test_new_version_shows_notes_and_download_source(qapp, monkeypatch, source, label):
     translator = i18n.Translator("en_US")
     translator.load_dir(i18n.CORE_NAMESPACE, resource_path("i18n"))
     monkeypatch.setattr(i18n, "_translator", translator)
     monkeypatch.setattr(updates, "APP_VERSION", "1.0.1")
     window = Window()
     controller = updates.UpdateController(window)
-    release = updates.Release("v1.0.2", "Release details", "gitee", "https://gitee.com/a.zip", "a.zip")
+    release = updates.Release("v1.0.2", "Release details", source, "https://example.com/a.zip", "a.zip")
     controller._checked([release], "")
     assert controller._dialog.isVisible()
     assert controller._dialog.downloadButton.isEnabled()
-    assert "Gitee" in controller._dialog.downloadButton.text()
+    assert label in controller._dialog.downloadButton.text()
+    assert "cnb.cool" in " ".join(
+        label.text() for label in controller._dialog.findChildren(updates.BodyLabel)
+    )
     controller.shutdown()
     controller._checked([release], "")
     assert not controller._dialog.isVisible()
@@ -269,24 +273,40 @@ def test_skip_version_persists_and_only_suppresses_automatic_checks(qapp, store,
     delete_qobjects(reloaded, controller, window)
 
 
-def test_release_dialog_background_follows_fluent_theme(qapp):
-    from qfluentwidgets import Theme, qconfig, setTheme
+def test_release_dialog_background_follows_fluent_theme():
+    # Fluent's global stylesheet registry spans this test session. Switch real
+    # themes in a clean process so other tests' native widgets cannot interfere.
+    import os
+    import subprocess
+    import sys
+    import textwrap
 
-    original = qconfig.themeMode.value
-    window = Window()
-    dialog = None
-    try:
+    code = textwrap.dedent("""\
+        from PyQt6.QtWidgets import QApplication, QWidget
+        from qfluentwidgets import Theme, setTheme
+        from nightreign_overlay.ui.components.updates import ReleaseDialog, Release
+        from tests.support.qt import delete_qobjects
+
+        app = QApplication([])
+        window = QWidget()
         setTheme(Theme.DARK)
-        dialog = updates.ReleaseDialog([updates.Release("v1.0.2", "notes", "github", "", "")], True, window)
+        dialog = ReleaseDialog([Release("v1.0.2", "notes", "cnb", "", "")], True, window)
         dialog.show()
-        qapp.processEvents()
+        app.processEvents()
         assert dialog.palette().window().color().lightness() < 80
         setTheme(Theme.LIGHT)
-        qapp.processEvents()
+        app.processEvents()
         assert dialog.palette().window().color().lightness() > 220
         setTheme(Theme.DARK)
-        qapp.processEvents()
+        app.processEvents()
         assert dialog.palette().window().color().lightness() < 80
-    finally:
         delete_qobjects(dialog, window)
-        setTheme(original)
+    """)
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        env={**os.environ, "QT_QPA_PLATFORM": "offscreen"},
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

@@ -123,3 +123,5 @@ git diff --check
 [返回开发维护](../README.md)
 
 血条完整录像 benchmark 不在构建／发布流程中执行；只有血条检测部分发生修改时才运行 `uv run pytest benchmark/benchmark_hp_production.py -m benchmark -q`。覆盖范围与简化回归说明见 [测试策略](../testing/README.md)。
+
+CNB 第三更新源通过云原生构建拉取并发布同一份 GitHub 程序包，配置和验证见 [CNB 更新源与云原生同步](cnb-sync.md)。

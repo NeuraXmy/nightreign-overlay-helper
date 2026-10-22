@@ -17,6 +17,7 @@ from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.core.updates import (
+    SOURCE_NAMES,
     DownloadCancellation,
     DownloadCancelledError,
     Release,
@@ -24,7 +25,7 @@ from nightreign_overlay.core.updates import (
     download_release,
     is_newer,
 )
-from nightreign_overlay.meta import APP_VERSION, GITEE_REPO, REPO_URL
+from nightreign_overlay.meta import APP_VERSION, CNB_REPO, GITEE_REPO, REPO_URL
 from nightreign_overlay.ui.markdown import MarkdownTextBrowser, configure_markdown_browser
 
 log = get_logger(__name__)
@@ -78,7 +79,8 @@ class ReleaseDialog(QDialog):
         layout.addWidget(hint)
         links = BodyLabel(
             f'<a href="{REPO_URL}/releases">GitHub</a> · '
-            f'<a href="https://gitee.com/{GITEE_REPO}/releases">Gitee</a>',
+            f'<a href="https://gitee.com/{GITEE_REPO}/releases">Gitee</a> · '
+            f'<a href="https://cnb.cool/{CNB_REPO}/-/releases">CNB</a>',
             self,
         )
         links.setOpenExternalLinks(True)
@@ -97,7 +99,9 @@ class ReleaseDialog(QDialog):
         buttons = QHBoxLayout()
         if update:
             release = releases[0]
-            self.downloadButton = PushButton(tr("updates.download", source=release.source.title()), self)
+            self.downloadButton = PushButton(
+                tr("updates.download", source=SOURCE_NAMES[release.source]), self
+            )
             self.downloadButton.setEnabled(bool(release.download_url))
             self.downloadButton.clicked.connect(lambda: self.downloadRequested.emit(release))
             buttons.addWidget(self.downloadButton)

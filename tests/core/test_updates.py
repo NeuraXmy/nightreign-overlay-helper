@@ -1,4 +1,4 @@
-"""Release filtering, dual-mirror deadlines and atomic download failures."""
+"""Release filtering, multi-source deadlines and atomic download failures."""
 
 import io
 import json
@@ -30,8 +30,8 @@ def test_version_comparison(tag, current, expected):
     assert updates.is_newer(tag, current) is expected
 
 
-@pytest.mark.parametrize("failed", ["github", "gitee", None])
-def test_both_mirrors_are_probed_and_github_is_preferred(monkeypatch, failed):
+@pytest.mark.parametrize("failed", ["github", "gitee", "cnb", None])
+def test_all_sources_are_probed_and_github_is_preferred(monkeypatch, failed):
     seen = set()
 
     def fetch(source, deadline):
@@ -42,7 +42,7 @@ def test_both_mirrors_are_probed_and_github_is_preferred(monkeypatch, failed):
 
     monkeypatch.setattr(updates, "fetch_releases", fetch)
     result = updates.check_releases()
-    assert seen == {"github", "gitee"}
+    assert seen == {"github", "gitee", "cnb"}
     assert result[0].source == ("gitee" if failed == "github" else "github")
 
 
@@ -59,6 +59,7 @@ def test_newest_mirror_is_selected(monkeypatch, github_tag, gitee_tag, expected)
     histories = {
         "github": [release(github_tag, "github"), release("v1.0.1", "github")],
         "gitee": [release(gitee_tag, "gitee"), release("v1.0.1", "gitee")],
+        "cnb": [release("v1.0.1", "cnb")],
     }
     monkeypatch.setattr(updates, "fetch_releases", lambda source, deadline: histories[source])
     assert updates.check_releases() == histories[expected]
@@ -376,3 +377,56 @@ def test_cancelled_socket_error_is_reported_as_cancellation(monkeypatch):
     ):
         cancellation.cancel()
         raise OSError("socket shutdown")
+
+
+def cnb_page(items, total=None):
+    info = {"releases": items, "release_count": len(items) if total is None else total}
+    data = {"props": {"pageProps": {"initialState": {"slug": {"repo": {"index": {"releasesInfo": info}}}}}}}
+    return (
+        '<html><script id="__NEXT_DATA__" type="application/json">' + json.dumps(data) + "</script></html>"
+    ).encode()
+
+
+def test_cnb_public_metadata_filters_versions_and_download_paths(monkeypatch):
+    filename = "nightreign-overlay-helper-v1.0.3-windows-x64.zip"
+    path = f"/{updates.CNB_REPO}/-/releases/download/v1.0.3/{filename}"
+    items = [
+        {"tag_ref": "refs/tags/v1.0.2", "body": "older", "assets": []},
+        {"tag_ref": "refs/tags/v1.0.3", "body": "CNB notes", "assets": [{"name": filename, "path": path}]},
+        {"tag_ref": "refs/tags/v1.0.4", "is_prerelease": True},
+        {"tag_ref": "refs/tags/v1.0.5", "is_draft": True},
+        {"tag_ref": "refs/tags/v0.9.0"},
+    ]
+    requests = []
+
+    def get(request, **kwargs):
+        requests.append(request)
+        assert 0 < kwargs["timeout"] <= 10
+        return Response(cnb_page(items, total=30))
+
+    monkeypatch.setattr(updates, "urlopen", get)
+    releases = updates.fetch_releases("cnb", time.monotonic() + 10)
+    assert [r.tag for r in releases] == ["v1.0.3", "v1.0.2"]
+    assert releases[0].download_url == "https://cnb.cool" + path
+    assert releases[0].body == "CNB notes"
+    assert releases[0].limited_history
+    assert releases[0].page_url == f"https://cnb.cool/{updates.CNB_REPO}/-/releases"
+    assert "Authorization" not in requests[0].headers
+
+
+@pytest.mark.parametrize("body", [b"<html>Login required</html>", cnb_page(None, total=1)])
+def test_invalid_cnb_metadata_does_not_look_like_success(monkeypatch, body):
+    monkeypatch.setattr(updates, "urlopen", lambda *a, **k: Response(body))
+    with pytest.raises((ValueError, KeyError, TypeError)):
+        updates.fetch_releases("cnb", time.monotonic() + 10)
+
+
+@pytest.mark.parametrize("other_failed", [False, True])
+def test_cnb_newest_selected_even_when_other_sources_fail(monkeypatch, other_failed):
+    def fetch(source, deadline):
+        if other_failed and source != "cnb":
+            raise OSError("offline")
+        return [release("v1.0.3" if source == "cnb" else "v1.0.2", source)]
+
+    monkeypatch.setattr(updates, "fetch_releases", fetch)
+    assert updates.check_releases()[0].source == "cnb"
