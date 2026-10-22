@@ -172,6 +172,7 @@ jobs:
   sync-gitee:
     name: Mirror release to Gitee
     needs: publish-release
+    if: needs.build-windows.outputs.prerelease == 'false'
     uses: ./.github/workflows/sync-gitee.yml
     with:
       tag: ${{ github.ref_name }}
