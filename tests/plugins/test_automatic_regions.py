@@ -34,7 +34,7 @@ _REGIONS = {
     "day_timer.detect_region": (1112, 733, 342, 95),
     "rain_timer.hp_region": (240, 58, 20, 8),
     "map_detect.map_region": (1454, 228, 990, 990),
-    "hp_marker.hpbar_region": (223, 56, 112, 12),
+    "hp_marker.hpbar_region": (224, 56, 134, 15),
     "art_timer.art_region": (1206, 1260, 143, 140),
     "entertainment.teammates": (65, 216, 457, 249),
 }
