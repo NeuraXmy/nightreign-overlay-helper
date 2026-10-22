@@ -93,6 +93,7 @@
 
 - [ ] **核心逻辑变更必须补充单元测试**。
 - [ ] **Qt 测试在 `QT_QPA_PLATFORM=offscreen` 下通过**。
+- [ ] **Qt 页面与线程在测试结束前明确清理；修改全局主题的测试使用独立子进程**。遇到 Python 原生崩溃时保留 `faulthandler` 堆栈并检查前序资源释放，不能以单次重跑通过代替修复，详见 [原生崩溃与全局主题测试](testing/README.md#python-原生崩溃与全局主题测试)。
 - [ ] **代码提交前运行 `pytest`、`ruff check`、`ruff format --check`、`git diff --check`；仅文档变更检查 UTF-8、相对链接、索引及 `git diff --check`**。发布前仍执行默认回归门禁；四段血条生产录像默认只跑简化版，只有血条检测部分（算法、模型、参数、标定几何及相关样本）修改时才额外运行 `pytest benchmark/benchmark_hp_production.py -m benchmark -q`，详见 [测试策略](testing/README.md)。
 
 ## i18n 约束
