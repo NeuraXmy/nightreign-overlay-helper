@@ -25,6 +25,18 @@ class AudioApi:
         """Whether the shared player is currently playing audio, optionally for one owner."""
         return False
 
+    def play_loop(self, path: str, volume: int = 100, fade_in: float = 0, *, owner: str = "") -> bool:
+        raise NotImplementedError
+
+    def stop_loop(self, owner: str, fade_out: float = 0) -> None:
+        raise NotImplementedError
+
+    def set_loop_fade_out(self, owner: str, seconds: float) -> None:
+        raise NotImplementedError
+
+    def is_loop_playing(self, owner: str) -> bool:
+        raise NotImplementedError
+
 
 class AudioNotifications:
     """Feature-owned cue settings and history; playback always uses the shared service."""

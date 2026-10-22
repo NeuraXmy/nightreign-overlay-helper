@@ -206,6 +206,8 @@ audio:
   clear: 清空音频
   delay: 延迟时间
   advance: 提前时间
+  fade_in: 淡入秒数
+  fade_out: 淡出秒数
   test: 播放测试
   stop_test: 停止测试
   filter: 音频文件 (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;所有文件 (*)

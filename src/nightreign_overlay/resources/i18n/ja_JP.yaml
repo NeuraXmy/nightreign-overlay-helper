@@ -197,6 +197,8 @@ audio:
   clear: 音声をクリア
   delay: 遅延時間
   advance: 先行時間
+  fade_in: フェードイン秒数
+  fade_out: フェードアウト秒数
   test: テスト再生
   stop_test: テスト停止
   filter: 音声ファイル (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;すべてのファイル (*)
