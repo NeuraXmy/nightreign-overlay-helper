@@ -15,6 +15,7 @@ from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
 from nightreign_overlay.plugins.audio.api import AudioApi, AudioNotifications
 from nightreign_overlay.plugins.audio.config import LoopAudioConfig
+from nightreign_overlay.plugins.audio.defaults import bundled_loop_path
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -69,6 +70,15 @@ class ArtTimerPlugin(Plugin):
         self._loop_audio = {
             role: self.ctx.config(LoopAudioConfig, f"audio.{role}_loop") for role in _ART_ROLES
         }
+        executor_loop = self._loop_audio["executor"]
+        if (
+            not executor_loop.path.value
+            and executor_loop.volume.value == 100
+            and executor_loop.fade_in.value == 0
+            and executor_loop.fade_out.value == 0
+        ):
+            executor_loop.volume.set(10)
+            executor_loop.fade_out.set(1.0)
         self._loop_owner: str | None = None
         self._art_type: str | None = None
         self._art_started: float | None = None
@@ -231,12 +241,13 @@ class ArtTimerPlugin(Plugin):
 
     def _start_role_loop(self, role: str) -> None:
         config = self._loop_audio[role]
-        if self._loop_owner is not None or not config.enabled.value or not config.path.value:
+        path = config.path.value or (str(bundled_loop_path(self.id, role)) if role == "executor" else "")
+        if self._loop_owner is not None or not config.enabled.value or not path:
             return
         audio = self.ctx.services.get(AudioApi)
         owner = self._loop_owner_for(role)
         if audio is not None and audio.play_loop(
-            config.path.value, config.volume.value, config.fade_in.value, owner=owner
+            path, config.volume.value, config.fade_in.value, owner=owner
         ):
             self._loop_owner = owner
             audio.set_loop_fade_out(owner, config.fade_out.value)
@@ -336,6 +347,7 @@ class ArtTimerPlugin(Plugin):
                 self._loop_owner_for(role),
                 tr(f"roles.{role}"),
                 tr(f"roles.{role}"),
+                str(bundled_loop_path(self.id, role)) if role == "executor" else "",
             )
             for role in _ART_ROLES
         )
@@ -350,6 +362,10 @@ class ArtTimerPlugin(Plugin):
         self._audio.reset()
         self._update_timer()
         super().reset_settings()
+        executor_loop = self._loop_audio["executor"]
+        executor_loop.volume.set(10)
+        executor_loop.fade_in.set(0.0)
+        executor_loop.fade_out.set(1.0)
         hotkeys = self.ctx.services.require(HotkeyApi)
         for action in _HOTKEYS:
             hotkeys.set_binding(action, HotkeyBinding(None))

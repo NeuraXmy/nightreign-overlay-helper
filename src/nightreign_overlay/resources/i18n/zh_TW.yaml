@@ -194,6 +194,7 @@ audio:
   title: 音訊播報
   enabled: 啟用此語音
   builtin: 使用內建預設語音
+  builtin_loop: 使用預設音訊（{filename}）
   restore_default: 還原預設音訊
   volume: 音量
   unset: 尚未設定音訊

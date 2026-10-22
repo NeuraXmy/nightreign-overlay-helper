@@ -22,7 +22,7 @@ settings:
   advanced:
     title: 詳細設定
     stable_detections:
-      title: 状態の確認回数
-      content: 同じ結果が連続して指定回数検出された後に状態変化を確定します。初期値は3回です
+      title: 味方の状態の確認回数
+      content: 同じ結果が連続して指定回数検出された後に味方の状態変化を確定します。初期値は3回です
 audio:
   loop_title: ループ再生音声

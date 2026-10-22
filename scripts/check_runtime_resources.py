@@ -15,7 +15,7 @@ from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.paths import PACKAGE_DIR
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin import PluginManager, PluginState
-from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
+from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES, BUNDLED_LOOP_AUDIO, SOUNDS_DIR
 
 EXPECTED_PLUGINS = {
     "art_timer",
@@ -41,6 +41,10 @@ def main() -> None:
     for cue in BUNDLED_CUES.values():
         if not cue.path.is_file() or cue.path.stat().st_size == 0:
             raise RuntimeError(f"Missing bundled voice: {cue.filename}")
+    for filename in BUNDLED_LOOP_AUDIO.values():
+        path = SOUNDS_DIR / filename
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError(f"Missing bundled loop audio: {filename}")
     for relative in (
         "map_detect/data/poi_cnn/epoch-42.onnx",
         "hp_marker/data/material_v1.onnx",

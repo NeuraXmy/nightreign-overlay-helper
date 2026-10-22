@@ -11,6 +11,7 @@ from qfluentwidgets import FluentIcon
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.audio.config import LoopAudioConfig
+from nightreign_overlay.plugins.audio.defaults import bundled_loop_path
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
 from nightreign_overlay.plugins.entertainment.config import EntertainmentConfig
 from nightreign_overlay.plugins.entertainment.detector import Teammate, detect_rgb
@@ -45,6 +46,15 @@ class EntertainmentPlugin(Plugin):
     def on_load(self) -> None:
         self.config = self.ctx.config(EntertainmentConfig)
         self.loop_audio = self.ctx.config(LoopAudioConfig, "audio.down_loop")
+        if (
+            not self.loop_audio.path.value
+            and self.loop_audio.volume.value == 100
+            and self.loop_audio.fade_in.value == 0
+            and self.loop_audio.fade_out.value == 0
+        ):
+            self.loop_audio.volume.set(10)
+            self.loop_audio.fade_in.set(2.0)
+            self.loop_audio.fade_out.set(2.0)
         self._executor: ThreadPoolExecutor | None = None
         self._generation = 0
         self._active = False
@@ -195,11 +205,12 @@ class EntertainmentPlugin(Plugin):
         }[state]
 
     def _start_loop(self) -> None:
-        if not self.loop_audio.enabled.value or not self.loop_audio.path.value:
+        path = self.loop_audio.path.value or str(bundled_loop_path(self.id, "down"))
+        if not self.loop_audio.enabled.value:
             return
         audio = self.ctx.services.get(AudioApi)
         if audio is not None and audio.play_loop(
-            self.loop_audio.path.value,
+            path,
             self.loop_audio.volume.value,
             self.loop_audio.fade_in.value,
             owner=self.id,
@@ -281,6 +292,7 @@ class EntertainmentPlugin(Plugin):
                 self.ctx.services.require(AudioApi),
                 self.id,
                 tr("audio.loop_title"),
+                str(bundled_loop_path(self.id, "down")),
             )
         )
         panel.addSection(section)
@@ -301,5 +313,8 @@ class EntertainmentPlugin(Plugin):
 
     def reset_settings(self) -> None:
         super().reset_settings()
+        self.loop_audio.volume.set(10)
+        self.loop_audio.fade_in.set(2.0)
+        self.loop_audio.fade_out.set(2.0)
         if (regions := self.ctx.services.get(RegionApi)) is not None:
             regions.clear_region(_REGION_KEY)
