@@ -42,7 +42,7 @@ _HD_REGIONS = {
     "day_timer.detect_region": (834, 550, 256, 71),
     "rain_timer.hp_region": (180, 44, 15, 6),
     "map_detect.map_region": (1090, 171, 742, 742),
-    "hp_marker.hpbar_region": (167, 42, 84, 9),
+    "hp_marker.hpbar_region": (168, 42, 100, 11),
     "art_timer.art_region": (904, 945, 107, 105),
     "entertainment.teammates": (49, 162, 343, 187),
 }
