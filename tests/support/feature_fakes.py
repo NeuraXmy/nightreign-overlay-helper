@@ -14,6 +14,7 @@ from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin.context import PluginContext
+from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudApi
 from nightreign_overlay.plugins.input.plugin import InputPlugin
@@ -105,6 +106,31 @@ class FakeHud(HudApi):
             self.remove_widget(token)
 
 
+class FakeAudio(AudioApi):
+    """No-op audio service for settings and reset tests."""
+
+    def play(self, path: str, volume: int = 100, *, owner: str = "") -> bool:
+        return True
+
+    def stop(self, owner: str | None = None) -> None:
+        pass
+
+    def is_playing(self, owner: str | None = None) -> bool:
+        return False
+
+    def play_loop(self, path: str, volume: int = 100, fade_in: float = 0, *, owner: str = "") -> bool:
+        return True
+
+    def stop_loop(self, owner: str, fade_out: float = 0) -> None:
+        pass
+
+    def set_loop_fade_out(self, owner: str, seconds: float) -> None:
+        pass
+
+    def is_loop_playing(self, owner: str) -> bool:
+        return False
+
+
 class FeatureServices:
     """Input (real), capture, region and HUD services for one feature plugin under test."""
 
@@ -115,7 +141,13 @@ class FeatureServices:
         self.capture = FakeCapture()
         self.region = FakeRegion()
         self.hud = FakeHud()
-        for api, impl in ((CaptureApi, self.capture), (RegionApi, self.region), (HudApi, self.hud)):
+        self.audio = FakeAudio()
+        for api, impl in (
+            (CaptureApi, self.capture),
+            (RegionApi, self.region),
+            (HudApi, self.hud),
+            (AudioApi, self.audio),
+        ):
             self.services.register(api, impl)
         self.input = InputPlugin(self.context("input", tmp_path))
         self.input.on_load()
