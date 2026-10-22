@@ -198,7 +198,7 @@ def test_default_art_warning_is_three_seconds_before_effect_end(make_timer):
     assert audio.calls[-1][1] == "end.wav"
 
 
-def test_art_loop_uses_recognized_role_config_and_effect_window(make_timer):
+def test_art_loop_uses_recognized_role_config_and_countdown_window(make_timer):
     make, clock, audio = make_timer
     plugin = make(ArtTimerPlugin)
     plugin._hud = HudTimerBar("#000000")
@@ -214,12 +214,11 @@ def test_art_loop_uses_recognized_role_config_and_effect_window(make_timer):
 
     clock[0] += 1.9
     plugin._update_timer()
-    assert audio.loop_calls == []
-    clock[0] += 0.1
-    plugin._update_timer()
+    # The loop starts when the detected countdown is shown, including the
+    # activation-delay portion before the effect takes effect.
     assert audio.loop_calls == [("art_timer:art:scholar", "scholar-loop.wav", 65, 1.2)]
 
-    clock[0] += 20.1
+    clock[0] += 20.2
     plugin._update_timer()
     assert audio.loop_stops == [("art_timer:art:scholar", 2.3)]
     assert plugin._art_type is None
