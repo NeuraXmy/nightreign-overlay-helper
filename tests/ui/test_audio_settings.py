@@ -14,6 +14,7 @@ from nightreign_overlay.plugins.day_timer.plugin import DayTimerPlugin
 from nightreign_overlay.plugins.input.plugin import InputPlugin
 from nightreign_overlay.plugins.rain_timer.plugin import RainTimerPlugin
 from nightreign_overlay.ui.components.audio_settings import AudioSettingCard, audio_section
+from tests.support.feature_fakes import FakeAudio
 from tests.support.paths import PROJECT_ROOT
 from tests.support.qt import delete_qobjects
 
@@ -93,6 +94,7 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
 @pytest.mark.parametrize("cls,count", [(DayTimerPlugin, 5), (RainTimerPlugin, 3), (ArtTimerPlugin, 2)])
 def test_audio_is_last_section_with_localized_titles(store, qapp, monkeypatch, cls, count, language):
     services = ServiceRegistry()
+    services.register(AudioApi, FakeAudio(), owner="audio")
     input_plugin = InputPlugin(context("input", store, services, language))
     input_plugin.on_load()
     plugin = cls(context(cls.manifest.id, store, services, language))
