@@ -191,6 +191,7 @@ input_dialog:
   cancel: Cancel
   confirm: Confirm
 audio:
+  select_option_group: Character loop audio
   title: Audio notifications
   enabled: Enable this voice cue
   builtin: Using bundled default voice

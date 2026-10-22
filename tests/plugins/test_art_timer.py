@@ -7,20 +7,33 @@ from pathlib import Path
 
 import pytest
 from PyQt6.QtCore import QRect
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.plugins.art_timer import plugin as art_plugin
 from nightreign_overlay.plugins.art_timer.detector import ART_TYPES, ArtDetectResult
 from nightreign_overlay.plugins.art_timer.plugin import ArtTimerPlugin
+from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
-from nightreign_overlay.ui.components import ConfigRangeCard
+from nightreign_overlay.ui.components import ConfigRangeCard, SelectableSettingContainer, SettingSection
+from nightreign_overlay.ui.components.audio_settings import AudioSettingCard, LoopAudioSettingCard
 from tests.support.feature_fakes import FeatureServices, solid_image
 
 _ROOT = Path(art_plugin.__file__).parent
 _REGION = "art_timer.art_region"
+
+
+class _NoopAudio(AudioApi):
+    def stop(self, owner=None):
+        pass
+
+    def stop_loop(self, owner, fade_out=0):
+        pass
+
+    def is_loop_playing(self, owner):
+        return False
 
 
 def _plugin(
@@ -192,11 +205,44 @@ def test_calibrate_region_suspends_detection(
 def test_settings_page_builds_before_activation_with_advanced_options(
     store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    plugin, _, _ = _plugin(store, tmp_path, monkeypatch)
+    plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
+    fakes.services.register(AudioApi, _NoopAudio(), owner="audio")
     parent = QWidget()
+    parent.setLayout(QVBoxLayout())
     panel = plugin.create_settings_widget(parent)
+    parent.layout().addWidget(panel)
     labels = [card.valueLabel.text() for card in panel.findChildren(ConfigRangeCard)]
     assert labels == ["500 ms", "0.020"]
+    loop_cards = panel.findChildren(LoopAudioSettingCard)
+    finite_cards = panel.findChildren(AudioSettingCard)
+    assert len(loop_cards) == 5
+    assert len(finite_cards) == 2
+    audio_section = panel.findChildren(SettingSection)[-1]
+    container = audio_section.findChild(SelectableSettingContainer)
+    assert container is not None and container.selector.count() == 5
+    assert container.stack.count() == 5
+    initial_card = container.stack.currentWidget().findChild(LoopAudioSettingCard)
+    assert initial_card.config is plugin._loop_audio["duchess"]
+    container.selector.setCurrentIndex(3)
+    selected_card = container.stack.currentWidget().findChild(LoopAudioSettingCard)
+    assert selected_card.config is plugin._loop_audio["scholar"]
+    assert container.stack.minimumHeight() >= selected_card.minimumSizeHint().height()
+    assert container.frameShape().name == "StyledPanel"
+    assert plugin._loop_audio["scholar"].enabled.value is False
+
+    parent.resize(1400, 1000)
+    parent.show()
+    qapp.processEvents()
+    expected_width = container.width()
+    selected_card.slider.setValue(75)
+    qapp.processEvents()
+    container.selector.setCurrentIndex(1)
+    qapp.processEvents()
+    assert container.width() == expected_width
+    container.selector.setCurrentIndex(4)
+    qapp.processEvents()
+    assert container.width() == expected_width
+    parent.close()
 
 
 @pytest.mark.parametrize("change", ["reset", "region"])

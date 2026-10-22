@@ -186,6 +186,7 @@ input_dialog:
   cancel: キャンセル
   confirm: 確定
 audio:
+  select_option_group: キャラクター別ループ音声
   enabled: この音声を有効にする
   builtin: 内蔵の標準音声を使用
   restore_default: 標準音声に戻す

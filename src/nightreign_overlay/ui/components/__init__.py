@@ -1,7 +1,12 @@
 """Reusable widgets shared by the main window and plugin settings pages."""
 
 from nightreign_overlay.ui.components.overlay_settings import OverlaySettingSection
-from nightreign_overlay.ui.components.page import ScrollPage, SettingSection, SettingsPanel
+from nightreign_overlay.ui.components.page import (
+    ScrollPage,
+    SelectableSettingContainer,
+    SettingSection,
+    SettingsPanel,
+)
 from nightreign_overlay.ui.components.reset_button import create_reset_button
 from nightreign_overlay.ui.components.setting_cards import (
     ConfigChoiceCard,
@@ -23,6 +28,7 @@ __all__ = [
     "MultiButtonSettingCard",
     "OverlaySettingSection",
     "ScrollPage",
+    "SelectableSettingContainer",
     "SettingSection",
     "SettingsPanel",
     "create_reset_button",

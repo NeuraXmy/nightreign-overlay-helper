@@ -17,8 +17,9 @@ from qfluentwidgets import (
 
 from nightreign_overlay.core.audio import AudioCueConfig
 from nightreign_overlay.core.i18n import tr
-from nightreign_overlay.plugins.audio.api import AudioNotifications
-from nightreign_overlay.ui.components.page import SettingSection
+from nightreign_overlay.plugins.audio.api import AudioApi, AudioNotifications
+from nightreign_overlay.plugins.audio.config import LoopAudioConfig
+from nightreign_overlay.ui.components.page import SelectableSettingContainer, SettingSection
 from nightreign_overlay.ui.components.setting_cards import localize_switch
 
 
@@ -250,9 +251,18 @@ class LoopAudioSettingCard(SettingCard):
         self.testButton.setEnabled(self.config.enabled.value and bool(self.config.path.value))
 
 
-def audio_section(notifications: AudioNotifications, advance: tuple[str, ...]) -> SettingSection:
+def audio_section(
+    notifications: AudioNotifications,
+    advance: tuple[str, ...],
+    loop_cues: tuple[tuple[LoopAudioConfig, AudioApi, str, str, str], ...] = (),
+) -> SettingSection:
     """Build the final feature settings group with localized titles."""
     section = SettingSection(tr("audio.title"))
+    if loop_cues:
+        container = SelectableSettingContainer(tr("audio.select_option_group"))
+        for config, audio, owner, option, title in loop_cues:
+            container.addOption(option, LoopAudioSettingCard(config, audio, owner, title))
+        section.addCard(container)
     for key in notifications.cues:
         section.addCard(
             AudioSettingCard(

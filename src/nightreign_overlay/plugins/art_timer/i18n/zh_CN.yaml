@@ -8,6 +8,12 @@ hud:
   revenant: 不死行军无敌时间
   scholar: 共感术标记时间
   executor: 熔炉百相变身时间
+roles:
+  duchess: 女爵
+  recluse: 隐士
+  revenant: 复仇者
+  scholar: 学者
+  executor: 执行者
 settings:
   basic:
     title: 基本设置
@@ -28,5 +34,6 @@ settings:
     content: 图标匹配差异低于此值才认为识别成功，数值越小越严格
 
 audio:
+  loop_title: 循环播放
   start: 绝招倒计时开始
   end: 绝招倒计时结束

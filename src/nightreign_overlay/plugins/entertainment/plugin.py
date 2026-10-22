@@ -10,8 +10,9 @@ from qfluentwidgets import FluentIcon
 
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.audio.api import AudioApi
+from nightreign_overlay.plugins.audio.config import LoopAudioConfig
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
-from nightreign_overlay.plugins.entertainment.config import EntertainmentConfig, LoopAudioConfig
+from nightreign_overlay.plugins.entertainment.config import EntertainmentConfig
 from nightreign_overlay.plugins.entertainment.detector import Teammate, detect_rgb
 from nightreign_overlay.plugins.entertainment.state import should_start, should_stop
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding

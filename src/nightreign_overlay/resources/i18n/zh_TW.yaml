@@ -190,6 +190,7 @@ input_dialog:
   cancel: 取消
   confirm: 確認
 audio:
+  select_option_group: 角色循環音訊
   title: 音訊播報
   enabled: 啟用此語音
   builtin: 使用內建預設語音

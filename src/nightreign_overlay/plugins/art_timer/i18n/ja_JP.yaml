@@ -8,6 +8,12 @@ hud:
   revenant: 不死の行進 無敵
   scholar: 共感術 リンク
   executor: 坩堝の諸相・獣 変身
+roles:
+  duchess: 公爵夫人
+  recluse: 隠者
+  revenant: 追跡者
+  scholar: 学者
+  executor: 執行者
 settings:
   basic:
     title: 基本設定
@@ -28,5 +34,6 @@ settings:
     content: アイコンの誤差がこの値未満なら認識成功。小さいほど厳密
 
 audio:
+  loop_title: ループ再生
   start: アーツカウントダウン開始
   end: アーツカウントダウン終了
