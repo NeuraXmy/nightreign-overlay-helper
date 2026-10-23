@@ -29,6 +29,9 @@ settings:
     title: Only trigger in a three-player party
   advanced:
     title: Advanced options
+    self_recovery_delay:
+      title: Playback delay after reviving
+      content: Wait after your revival is confirmed before allowing playback; defaults to 7 seconds. Another down resets the wait. Set to 0 to allow playback immediately.
     stable_detections:
       title: State confirmation count
       content: Confirm your own and teammate state changes after consecutive matching detections; defaults to 3

@@ -29,6 +29,9 @@ settings:
     title: 僅三人遊戲時觸發
   advanced:
     title: 進階選項
+    self_recovery_delay:
+      title: 自身倒地起身後恢復播放時間
+      content: 確認自身復活後等待指定秒數才允許播放，預設 7 秒；再次倒地後重新等待，設為 0 秒立即允許播放
     stable_detections:
       title: 狀態確認次數
       content: 自身與隊友狀態變化均需連續偵測到相同結果達指定次數後才確認，預設為 3 次

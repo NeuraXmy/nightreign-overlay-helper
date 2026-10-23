@@ -8,6 +8,7 @@ from nightreign_overlay.core.config import BoolOption, ChoiceOption, ConfigGroup
 class EntertainmentConfig(ConfigGroup):
     detect_enabled = BoolOption(False)
     self_down_stop = BoolOption(True)
+    self_recovery_delay = RangeOption(7, 0, 60)
     three_player_only = BoolOption(False)
     start_condition = ChoiceOption("all_down", ("all_down", "all_three"))
     stop_condition = ChoiceOption("all_up", ("all_up", "any_up"))
