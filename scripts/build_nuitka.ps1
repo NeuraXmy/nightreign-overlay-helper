@@ -13,7 +13,12 @@ function Invoke-Checked {
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     Invoke-Checked uv @('sync', '--locked', '--python', '3.13', '--group', 'build', '--group', 'nuitka')
-    Invoke-Checked uv @('run', '--no-sync', 'python', '-c', 'import struct, sys; sys.exit(0 if sys.platform == "win32" and struct.calcsize("P") == 8 else "Windows x64 Python is required")')
+    # Pass code through stdin so Windows PowerShell 5.1 preserves Python quotes.
+    @'
+import struct, sys
+sys.exit(0 if sys.platform == "win32" and struct.calcsize("P") == 8 else "Windows x64 Python is required")
+'@ | & uv run --no-sync python -
+    if ($LASTEXITCODE -ne 0) { throw "Python platform check failed with exit code $LASTEXITCODE" }
     Invoke-Checked uv @('run', '--no-sync', 'python', 'scripts/prepare_release_licenses.py', '--check-tree')
 
     & "$PSScriptRoot/build_p2p_helper.ps1" -OutputDirectory "$PWD/build/p2p/bin" -NoSingleFile
