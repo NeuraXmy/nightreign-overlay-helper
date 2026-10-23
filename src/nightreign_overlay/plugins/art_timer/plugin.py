@@ -22,6 +22,7 @@ from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
 from nightreign_overlay.ui.components import (
+    ConfigDoubleSpinCard,
     ConfigRangeCard,
     ConfigSwitchCard,
     HotkeySettingCard,
@@ -411,7 +412,7 @@ class ArtTimerPlugin(Plugin):
                 tr("settings.undertaker_threshold.title"),
                 formatter=lambda value: f"{value}%",
             ),
-            ConfigRangeCard(
+            ConfigDoubleSpinCard(
                 self.config.undertaker_duration,
                 FluentIcon.HISTORY,
                 tr("settings.undertaker_duration.title"),

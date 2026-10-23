@@ -17,7 +17,12 @@ from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
-from nightreign_overlay.ui.components import ConfigRangeCard, SelectableSettingContainer, SettingSection
+from nightreign_overlay.ui.components import (
+    ConfigDoubleSpinCard,
+    ConfigRangeCard,
+    SelectableSettingContainer,
+    SettingSection,
+)
 from nightreign_overlay.ui.components.audio_settings import AudioSettingCard, LoopAudioSettingCard
 from tests.support.feature_fakes import FeatureServices, solid_image
 
@@ -200,7 +205,11 @@ def test_settings_page_builds_before_activation_with_advanced_options(
     panel = plugin.create_settings_widget(parent)
     parent.layout().addWidget(panel)
     labels = [card.valueLabel.text() for card in panel.findChildren(ConfigRangeCard)]
-    assert labels == ["80%", "5 s", "500 ms", "0.020"]
+    assert labels == ["80%", "500 ms", "0.020"]
+    duration_card = panel.findChild(ConfigDoubleSpinCard)
+    assert duration_card.spinBox.value() == plugin.config.undertaker_duration.value == 3.8
+    duration_card.spinBox.setValue(4.25)
+    assert plugin.config.undertaker_duration.value == 4.25
     loop_cards = panel.findChildren(LoopAudioSettingCard)
     finite_cards = panel.findChildren(AudioSettingCard)
     assert len(loop_cards) == 5
@@ -292,11 +301,11 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
         assert hud.bar.value() == 10000
         assert "送葬者额外绝招时间" in hud.label.text()
         assert hud._color == "#c28aba"
-        clock[0] += 2
+        clock[0] += 1.9
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
-        assert hud.bar.value() == 6000
+        assert hud.bar.value() == pytest.approx(5000, abs=1)
         assert len(playback) == 1
-        clock[0] += 3
+        clock[0] += 2.0
         plugin._update_timer()
         assert hud.isHidden() and plugin._undertaker_started is None
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
@@ -307,9 +316,9 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
         assert len(playback) == 2
         fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
         assert not hud.isHidden() and plugin._undertaker_started == clock[0]
-        clock[0] += 1
+        clock[0] += 0.76
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
-        assert hud.bar.value() == 8000  # A new active edge cannot reset a running timer.
+        assert hud.bar.value() == pytest.approx(8000, abs=1)  # A new edge cannot reset the timer.
         assert len(playback) == 2
         fakes.region.regions.pop(_REGION)
         fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
@@ -427,7 +436,7 @@ def test_normal_art_audio_expires_while_undertaker_uses_shared_bar(store, qapp, 
         plugin._update_timer()
         assert plugin._art_type is None and plugin._art_started is None
         assert stopped == [{}]
-        assert hud._color == "#c28aba" and hud.bar.value() == 6000
+        assert hud._color == "#c28aba" and hud.bar.value() == 4736
         plugin.config.undertaker_enabled.set(False)
         assert hud.isHidden()
     finally:
