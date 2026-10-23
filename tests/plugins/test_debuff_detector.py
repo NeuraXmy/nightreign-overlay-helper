@@ -8,7 +8,7 @@ import pytest
 
 from nightreign_overlay.plugins.debuff_timer.detector import DebuffDetector
 
-_ROOT = Path(__file__).parents[1] / "fixtures/debuff"
+_ROOT = Path(__file__).parents[1] / "data/debuff"
 
 
 @pytest.fixture(scope="module")
