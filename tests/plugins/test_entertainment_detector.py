@@ -1,10 +1,41 @@
 from pathlib import Path
 
 import cv2
+import numpy as np
+import pytest
 
 from nightreign_overlay.plugins.entertainment.detector import detect_rgb
+from tests.support.teammate_images import expected_states, sample_paths, states, variants
 
 _SAMPLES = Path(__file__).parents[1] / "data" / "entertainment"
+
+
+@pytest.mark.parametrize("path", sample_paths(), ids=lambda p: f"{p.parent.name}/{p.name}")
+def test_teammate_states_and_enhancements(path):
+    image = cv2.imdecode(np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR)
+    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    expected = expected_states(path)
+    for parameters, enhanced in variants(rgb):
+        assert states(detect_rgb(enhanced)) == expected, parameters
+
+
+@pytest.mark.parametrize("count", (0, 3))
+def test_invalid_teammate_count(count):
+    with pytest.raises(ValueError, match="teammate_count"):
+        detect_rgb(np.zeros((120, 240, 3), np.uint8), teammate_count=count)
+
+
+@pytest.mark.parametrize(
+    "image", (np.zeros((7, 8, 3), np.uint8), np.zeros((120, 240), np.uint8), np.zeros((120, 240, 3)))
+)
+def test_invalid_hud_input(image):
+    with pytest.raises(ValueError, match="uint8 RGB"):
+        detect_rgb(image)
+
+
+def test_blank_hud_is_absent():
+    for value in (0, 80, 255):
+        assert states(detect_rgb(np.full((120, 240, 3), value, np.uint8))) == ("n", "n")
 
 
 def test_low_fill_down_ring_remains_detected() -> None:
@@ -56,14 +87,16 @@ def test_single_teammate_skips_lower_row_entirely(monkeypatch):
     rows = []
     expected = detector.Teammate(True, True, 3, 1.0, (10, 10))
 
-    def detect_row(rgb, evidence, index):
+    def detect_row(rgb, index):
         rows.append(index)
         return expected
 
     monkeypatch.setattr(detector, "_detect_row", detect_row)
-    upper, lower = detector.detect_rgb(np.zeros((120, 240, 3), np.uint8), teammate_count=1)
+    upper, lower = detector.detect_rgb(
+        np.tile(np.arange(240, dtype=np.uint8)[None, :, None], (120, 1, 3)), teammate_count=1
+    )
     assert rows == [0]
     assert upper == expected and not lower.present and not lower.down
     rows.clear()
-    detector.detect_rgb(np.zeros((120, 240, 3), np.uint8))
+    detector.detect_rgb(np.tile(np.arange(240, dtype=np.uint8)[None, :, None], (120, 1, 3)))
     assert rows == [0, 1]
