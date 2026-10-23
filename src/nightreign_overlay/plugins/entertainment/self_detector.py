@@ -22,6 +22,35 @@ _PROGRESS_TEMPLATES = tuple(
 )
 
 
+def _rim_geometry() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Radial unit vectors for the icon boundary and a small center search."""
+    y, x = np.mgrid[:_SIZE, :_SIZE].astype(np.float32)
+    centers = np.array(
+        [(cx, cy) for cy in (14.5, 15.5, 16.5, 17.5) for cx in (14.5, 15.5, 16.5, 17.5)], np.float32
+    )
+    dx, dy = x - centers[:, 0, None, None], y - centers[:, 1, None, None]
+    radius = np.hypot(dx, dy)
+    boundary = (radius > 11) & (radius < 16)
+    return dx / np.maximum(radius, 1) * boundary, dy / np.maximum(radius, 1) * boundary, boundary
+
+
+_RADIAL_X, _RADIAL_Y, _BOUNDARY = _rim_geometry()
+
+
+def _rim_coherence(gray: np.ndarray) -> float:
+    """Measure whether boundary gradients point toward a common ring center.
+
+    Squared projections accept both bright and dark rims. Dividing by local
+    gradient energy cancels linear brightness/contrast changes. A small blue
+    streak can match a filled wedge but lacks this circular boundary.
+    """
+    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    radial = ((gx * _RADIAL_X + gy * _RADIAL_Y) ** 2).sum(axis=(1, 2))
+    energy = ((gx * gx + gy * gy) * _BOUNDARY).sum(axis=(1, 2))
+    return float((radial / np.maximum(energy, 1)).max())
+
+
 def score_gray(gray: np.ndarray) -> float:
     """Score a nonempty grayscale crop; shared by offline sample evaluation.
 
@@ -41,9 +70,16 @@ def score_rgb(rgb: np.ndarray) -> float:
         raise ValueError("Expected an icon at least 8×8 pixels")
     small = cv2.resize(rgb, (_SIZE, _SIZE), interpolation=cv2.INTER_LINEAR)
     gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY).astype(np.float32)
+    rim = _rim_coherence(gray)
+    if rim < 0.60:
+        return 0.0
     dark_score = float(cv2.minMaxLoc(cv2.matchTemplate(gray, _TEMPLATE, cv2.TM_CCOEFF_NORMED))[1])
     if dark_score >= THRESHOLD:
         return dark_score
+    # Gold rescue progress can flatten/recolor the grooves. Relax their
+    # correlation only when a strongly circular boundary confirms the ring.
+    if rim >= 0.85 and dark_score >= 0.38:
+        return THRESHOLD
     # Filled rings reverse the luminance contrast. Instead of accepting any
     # reversed gray pattern, require purple chroma in the annular sectors.
     channels = small.astype(np.float32)

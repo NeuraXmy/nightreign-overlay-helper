@@ -67,6 +67,8 @@ QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m 
 
 队友存在性、倒地与三倒的人工标注录像帧、组合增强及单次检测耗时见 [2026-10-23 验证记录](teammate-detection-2026-10-23.md)。
 
+自身倒地的蓝白特效误检、金色救援环漏检、连续进度及单次检测耗时见 [2026-10-23 验证记录](self-down-detection-2026-10-23.md)。
+
 地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [地图识别测试](map-detection.md)，CNN 部署与验收见 [POI CNN](../../features/map/poi-cnn.md)。
 
 测试不依赖相邻旧项目或其配置文件。血条结构检测、已有截图准确率、历史状态重置和插件行为由 `plugins/test_hp_detection_accuracy.py` 与 `plugins/test_hp_marker.py` 覆盖。
@@ -86,6 +88,8 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 | [`tests/support/debuff_images.py`](../../../tests/support/debuff_images.py) | 异常量表的单项与组合图像增强，供回归测试和性能测量共用 |
 | [`tests/support/undertaker_images.py`](../../../tests/support/undertaker_images.py) | 送葬者图标的原有及组合增强，供回归测试和性能测量共用 |
 | [`tests/support/teammate_images.py`](../../../tests/support/teammate_images.py) | 队友上下槽位 GT 解析、状态检查和组合增强，供回归测试和性能测量共用 |
+| [`tests/support/hud_images.py`](../../../tests/support/hud_images.py) | 自身与队友 HUD 共用的确定性颜色、清晰度和分辨率增强 |
+| [`tests/support/self_down_samples.py`](../../../tests/support/self_down_samples.py) | 自身倒地 GT、固定背景、原有增强和连续填充合成验证 |
 
 ## 运行测试
 
