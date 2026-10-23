@@ -316,3 +316,40 @@ def test_failed_checkpoint_does_not_repeat_audio_and_reset_restores_defaults(fea
     assert len(played) == 1
     plugin.reset_settings()
     assert not cue.enabled.value and cue.path.value == "" and cue.seconds.value == 0
+
+
+@pytest.mark.parametrize(
+    "selected,expected",
+    [
+        (QRect(100, 200, 450, 320), QRect(100, 200, 450, 320)),
+        (QRect(100, 200, 600, 320), QRect(100, 200, 450, 320)),
+        (QRect(100, 200, 450, 500), QRect(100, 290, 450, 320)),
+        (QRect(-600, -400, 900, 1000), QRect(-600, -220, 900, 640)),
+        (QRect(0, 0, 451, 501), QRect(0, 90, 451, 321)),
+    ],
+)
+def test_calibration_fits_left_center_and_persists_adjusted_region(feature, monkeypatch, selected, expected):
+    plugin, fakes, _, _, _ = feature
+    monkeypatch.setattr(fakes.region, "request_region", lambda *args: selected)
+    saved = []
+
+    def save(key, rect):
+        saved.append((key, rect))
+        fakes.region.regions[key] = rect
+
+    monkeypatch.setattr(fakes.region, "save_region", save)
+    plugin._calibrate_region()
+    assert saved == [(module._REGION_KEY, expected)]
+    assert fakes.region.region(module._REGION_KEY) == expected
+    assert selected.contains(expected)
+    assert not plugin._calibrating
+
+
+def test_canceling_calibration_preserves_previous_region(feature, monkeypatch):
+    plugin, fakes, _, _, _ = feature
+    previous = QRect(fakes.region.region(module._REGION_KEY))
+    monkeypatch.setattr(fakes.region, "request_region", lambda *args: None)
+    monkeypatch.setattr(fakes.region, "save_region", lambda *args: pytest.fail("canceled selection saved"))
+    plugin._calibrate_region()
+    assert fakes.region.region(module._REGION_KEY) == previous
+    assert not plugin._calibrating

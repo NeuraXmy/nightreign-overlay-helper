@@ -27,6 +27,16 @@ _PERIOD = 20.0
 _MAX_LEVEL = 10
 
 
+def _fit_meter_region(rect: QRect) -> QRect:
+    """Fit the reference aspect inside the selection, anchored at left-center."""
+    width, height = rect.width(), rect.height()
+    if width * 32 > height * 45:
+        width = max(1, round(height * 45 / 32))
+    else:
+        height = max(1, round(width * 32 / 45))
+    return QRect(rect.x(), rect.y() + (rect.height() - height) // 2, width, height)
+
+
 class DebuffTimerPlugin(Plugin):
     manifest = PluginManifest(
         id="debuff_timer",
@@ -219,9 +229,16 @@ class DebuffTimerPlugin(Plugin):
         self._generation += 1
         self._pending = False
         try:
-            self.ctx.services.require(RegionApi).request_region(
-                _REGION_KEY, self.ctx.tr("settings.region.annotate"), _COLOR
-            )
+            regions = self.ctx.services.require(RegionApi)
+            selected = regions.request_region(_REGION_KEY, self.ctx.tr("settings.region.annotate"), _COLOR)
+            if selected is not None and selected.isValid():
+                adjusted = _fit_meter_region(selected)
+                regions.save_region(_REGION_KEY, adjusted)
+                self.ctx.log.info(
+                    "Status meter region fitted to 45:32 at left-center: %s -> %s",
+                    selected.getRect(),
+                    adjusted.getRect(),
+                )
         finally:
             self._calibrating = False
 

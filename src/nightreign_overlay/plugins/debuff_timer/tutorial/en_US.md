@@ -14,6 +14,8 @@ Uncalibrated areas automatically adapt to a 16:9 game window. Try the feature fi
 
 Make a meter appear in the game, then select Calibrate or use your assigned calibration shortcut. Select the full area where all status icons and their meters can appear, including vertically stacked meters.
 
+After confirmation, the selection is cropped to the largest 45:32 region that fits inside it, aligned to the left and centered vertically. Excess width is removed from the right; excess height is removed from the top and bottom. Leave enough room to keep all icons and meters inside the adjusted region.
+
 ### 2. Enable the plugin
 
 Enable Status Buildup Timer on its feature page. Waiting for the first meter uses the general detection interval. Once running, detection occurs only at each 20-second check.
