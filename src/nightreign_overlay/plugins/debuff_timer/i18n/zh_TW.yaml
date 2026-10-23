@@ -1,0 +1,16 @@
+plugin:
+  name: 異常量表計時
+  description: 偵測異常量表，顯示提升攻擊力詞條的層數與下次偵測倒數
+hud:
+  text: 異常量表提升攻擊力 Lv.{level} 下次偵測 {remaining}s
+settings:
+  basic: 基本設定
+  start: 手動開啟倒數計時
+  end: 手動關閉倒數計時
+  region:
+    title: 異常量表區域
+    content: 框選所有異常狀態圖示及其右側量表可能出現的完整區域
+    button: 標定
+    annotate: 點擊此處，框選異常圖示及量表可能出現的區域
+audio:
+  check: 每輪倒數計時結束提醒

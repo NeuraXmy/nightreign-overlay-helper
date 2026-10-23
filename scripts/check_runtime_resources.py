@@ -16,6 +16,7 @@ from nightreign_overlay.core.paths import PACKAGE_DIR
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES, BUNDLED_LOOP_AUDIO, SOUNDS_DIR
+from nightreign_overlay.plugins.debuff_timer.detector import DebuffDetector
 
 EXPECTED_PLUGINS = {
     "art_timer",
@@ -24,6 +25,7 @@ EXPECTED_PLUGINS = {
     "commendation",
     "day_timer",
     "entertainment",
+    "debuff_timer",
     "hp_marker",
     "hud",
     "input",
@@ -38,6 +40,8 @@ EXPECTED_PLUGINS = {
 def main() -> None:
     app = QApplication.instance() or QApplication([])
     plugins = PACKAGE_DIR / "plugins"
+    if len(DebuffDetector(plugins / "debuff_timer/icons").templates) != 40:
+        raise RuntimeError("Status meter icon templates are incomplete")
     for cue in BUNDLED_CUES.values():
         if not cue.path.is_file() or cue.path.stat().st_size == 0:
             raise RuntimeError(f"Missing bundled voice: {cue.filename}")

@@ -1,0 +1,17 @@
+plugin:
+  name: Status Buildup Timer
+  description: Detect status buildup meters and track attack buff stacks and the next
+    check
+hud:
+  text: Status buildup attack boost Lv.{level} Next check {remaining}s
+settings:
+  basic: Basic
+  start: Manually start countdown
+  end: Manually stop countdown
+  region:
+    title: Status buildup meter area
+    content: Select the full area where status icons and their meters can appear
+    button: Calibrate
+    annotate: Click here, then select the area containing status icons and meters
+audio:
+  check: Countdown checkpoint reminder
