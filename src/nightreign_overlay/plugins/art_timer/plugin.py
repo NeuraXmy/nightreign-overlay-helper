@@ -73,7 +73,7 @@ class ArtTimerPlugin(Plugin):
 
     def on_load(self) -> None:
         self.config = self.ctx.config(ArtTimerConfig)
-        self._audio = AudioNotifications(self.ctx, ("start", "end"))
+        self._audio = AudioNotifications(self.ctx, ("start", "end", "undertaker"))
         self._loop_audio = {
             role: self.ctx.config(LoopAudioConfig, f"audio.{role}_loop") for role in _ART_ROLES
         }
@@ -92,6 +92,7 @@ class ArtTimerPlugin(Plugin):
         self._detector: ArtDetector | None = None
         self._hud: HudTimerBar | None = None
         self._undertaker_started: float | None = None
+        self._undertaker_audio_started: float | None = None
         self._undertaker_active = False
         self._undertaker_stream = False
         self.config.undertaker_enabled.valueChanged.connect(self._set_undertaker_enabled)
@@ -165,6 +166,7 @@ class ArtTimerPlugin(Plugin):
     def _cancel_undertaker(self) -> None:
         self._undertaker_active = False
         self._undertaker_started = None
+        self._undertaker_audio_started = None
         self._update_timer()
 
     def _on_undertaker_frame(self, frame: FrameCaptured) -> None:
@@ -179,6 +181,7 @@ class ArtTimerPlugin(Plugin):
         active = pink_ratio(image) >= self.config.undertaker_pink_percent.value / 100
         if active and not self._undertaker_active and self._undertaker_started is None:
             self._undertaker_started = time.monotonic()
+            self._undertaker_audio_started = self._undertaker_started
             self.ctx.log.info("Undertaker extra art activated")
         # Inactive rearms edge detection but never cancels a running countdown.
         self._undertaker_active = active
@@ -270,6 +273,11 @@ class ArtTimerPlugin(Plugin):
     # -- countdown ----------------------------------------------------------------------------
 
     def _update_timer(self) -> None:
+        if self._undertaker_audio_started is not None:
+            cue = self._audio.cues["undertaker"]
+            if time.monotonic() - self._undertaker_audio_started >= cue.seconds.value:
+                self._undertaker_audio_started = None
+                self._audio.play(cue)
         if self._art_type is not None and self._art_started is not None:
             info = _ART_INFO[self._art_type]
             elapsed = time.monotonic() - self._art_started

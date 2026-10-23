@@ -91,7 +91,7 @@ def test_selection_change_clear_preview_and_reset(store, qapp, monkeypatch):
 
 
 @pytest.mark.parametrize("language", ["zh_CN", "zh_TW", "en_US", "ja_JP"])
-@pytest.mark.parametrize("cls,count", [(DayTimerPlugin, 5), (RainTimerPlugin, 3), (ArtTimerPlugin, 2)])
+@pytest.mark.parametrize("cls,count", [(DayTimerPlugin, 5), (RainTimerPlugin, 3), (ArtTimerPlugin, 3)])
 def test_audio_is_last_section_with_localized_titles(store, qapp, monkeypatch, cls, count, language):
     services = ServiceRegistry()
     services.register(AudioApi, FakeAudio(), owner="audio")
@@ -110,7 +110,8 @@ def test_audio_is_last_section_with_localized_titles(store, qapp, monkeypatch, c
     for card in cards:
         assert card.titleLabel.text() and not card.titleLabel.text().startswith("audio.")
         assert card.selectButton.text() == i18n.tr("audio.select")
-        assert card.contentLabel.text() == i18n.tr("audio.builtin")
+        expected_content = "audio.builtin" if card._notifications.default_path(card.cue) else "audio.unset"
+        assert card.contentLabel.text() == i18n.tr(expected_content)
         assert not card.switchButton.isChecked() and not card.testButton.isEnabled()
         assert card.spinBox.value() == card.cue.seconds.default
     delete_qobjects(parent)

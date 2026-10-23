@@ -13,6 +13,7 @@ from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.plugins.art_timer import plugin as art_plugin
 from nightreign_overlay.plugins.art_timer.detector import ART_TYPES, ArtDetectResult
 from nightreign_overlay.plugins.art_timer.plugin import ArtTimerPlugin
+from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.capture.api import FrameCaptured
 from nightreign_overlay.plugins.hud.api import HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
@@ -203,7 +204,11 @@ def test_settings_page_builds_before_activation_with_advanced_options(
     loop_cards = panel.findChildren(LoopAudioSettingCard)
     finite_cards = panel.findChildren(AudioSettingCard)
     assert len(loop_cards) == 5
-    assert len(finite_cards) == 2
+    assert len(finite_cards) == 3
+    undertaker_card = next(card for card in finite_cards if card.cue is plugin._audio.cues["undertaker"])
+    assert not undertaker_card.spinBox.isHidden()
+    undertaker_card.spinBox.setValue(2.5)
+    assert plugin._audio.cues["undertaker"].seconds.value == 2.5
     audio_section = panel.findChildren(SettingSection)[-1]
     container = audio_section.findChild(SelectableSettingContainer)
     assert container is not None and container.selector.count() == 5
@@ -269,8 +274,19 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
     active = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/0.png"))
     inactive = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/1.png"))
     fakes.region.regions[_REGION] = active.rect()
+    cue = plugin._audio.cues["undertaker"]
+    cue.enabled.set(True)
+    cue.path.set("undertaker-test.wav")
+    cue.volume.set(42)
+    playback = []
+    monkeypatch.setattr(
+        fakes.services.require(AudioApi),
+        "play",
+        lambda path, volume, *, owner: playback.append((path, volume, owner)) or True,
+    )
     try:
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert playback == [("undertaker-test.wav", 42, "art_timer")]
         assert not plugin._detect_timer.isActive()
         assert plugin._undertaker_started == clock[0]
         assert hud.bar.value() == 10000
@@ -279,6 +295,7 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
         clock[0] += 2
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
         assert hud.bar.value() == 6000
+        assert len(playback) == 1
         clock[0] += 3
         plugin._update_timer()
         assert hud.isHidden() and plugin._undertaker_started is None
@@ -287,11 +304,13 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
         fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
         assert hud.bar.value() == 10000
+        assert len(playback) == 2
         fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
         assert not hud.isHidden() and plugin._undertaker_started == clock[0]
         clock[0] += 1
         fakes.events.publish(FrameCaptured(active, clock[0], hdr))
         assert hud.bar.value() == 8000  # A new active edge cannot reset a running timer.
+        assert len(playback) == 2
         fakes.region.regions.pop(_REGION)
         fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
         assert not hud.isHidden()  # Missing crops also leave the countdown running.
@@ -318,6 +337,55 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
         plugin.ctx.release()
         delete_qobjects(hud)
     assert fakes.capture.streams == set()
+
+
+@pytest.mark.parametrize("delay", [2.0, 7.0])
+def test_undertaker_audio_delay_and_cancellation(store, qapp, tmp_path, monkeypatch, delay):
+    from PyQt6.QtGui import QImage
+
+    from tests.support.paths import PROJECT_ROOT
+    from tests.support.qt import delete_qobjects
+
+    plugin, fakes, clock = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    hud = plugin._hud
+    active = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/0.png"))
+    inactive = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/1.png"))
+    fakes.region.regions[_REGION] = active.rect()
+    cue = plugin._audio.cues["undertaker"]
+    cue.enabled.set(True)
+    cue.path.set("undertaker.wav")
+    cue.seconds.set(delay)
+    playback = []
+    monkeypatch.setattr(
+        fakes.services.require(AudioApi),
+        "play",
+        lambda path, volume, *, owner: playback.append(path) or True,
+    )
+    try:
+        fakes.events.publish(FrameCaptured(active, clock[0]))
+        assert playback == []
+        clock[0] += delay - 0.1
+        fakes.events.publish(FrameCaptured(inactive, clock[0]))
+        assert playback == []
+        clock[0] += 0.2
+        plugin._update_timer()
+        assert playback == ["undertaker.wav"]
+        plugin._update_timer()
+        assert playback == ["undertaker.wav"]
+        # A new run schedules its own cue; disabling detection cancels it.
+        clock[0] += 6
+        plugin._update_timer()
+        fakes.events.publish(FrameCaptured(active, clock[0]))
+        assert plugin._undertaker_audio_started == clock[0]
+        plugin.config.undertaker_enabled.set(False)
+        clock[0] += delay + 1
+        plugin._update_timer()
+        assert playback == ["undertaker.wav"]
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        delete_qobjects(hud)
 
 
 def test_undertaker_cancel_restores_existing_art_countdown(store, qapp, tmp_path, monkeypatch):
