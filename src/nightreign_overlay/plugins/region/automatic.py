@@ -9,6 +9,7 @@ _REFERENCE_REGIONS = {
     "map_detect.map_region": (1454, 228, 990, 990),
     "hp_marker.hpbar_region": (224, 56, 134, 15),
     "art_timer.art_region": (1206, 1260, 143, 140),
+    "entertainment.self_down": (1208, 321, 150, 151),
     "entertainment.teammates": (65, 216, 457, 249),
 }
 _MANUAL_ONLY_REGIONS = {"capture.game_window"}

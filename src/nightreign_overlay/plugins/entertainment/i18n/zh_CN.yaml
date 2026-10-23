@@ -19,10 +19,18 @@ settings:
   all_three: 队友全三倒
   all_up: 队友全复活
   any_up: 任意队友复活
+  self_stop:
+    title: 自身倒地停止播放
+  self_region:
+    title: 自身倒地区域
+    content: 框选自身倒地时显示的三段环图标
+    annotate: 框选自身倒地图标区域
+  three_player_only:
+    title: 仅三人游戏时触发
   advanced:
     title: 高级选项
     stable_detections:
-      title: 队友状态确认次数
-      content: 队友状态变化连续检测到相同结果达到指定次数后才会确认，默认 3 次
+      title: 状态确认次数
+      content: 自身和队友状态变化均需连续检测到相同结果达到指定次数后才会确认，默认 3 次
 audio:
   loop_title: 循环播放音频

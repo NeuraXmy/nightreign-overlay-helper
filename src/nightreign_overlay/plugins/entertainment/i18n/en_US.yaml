@@ -19,10 +19,18 @@ settings:
   all_three: All teammates are at three downs
   all_up: All teammates are revived
   any_up: Any teammate is revived
+  self_stop:
+    title: Stop playback when you are downed
+  self_region:
+    title: Your downed icon area
+    content: Select the three-segment ring icon shown when you are downed
+    annotate: Select your downed ring icon area
+  three_player_only:
+    title: Only trigger in a three-player party
   advanced:
     title: Advanced options
     stable_detections:
-      title: Confirm teammate state after detections
-      content: Confirm a teammate state change after the same result is detected consecutively; defaults to 3
+      title: State confirmation count
+      content: Confirm your own and teammate state changes after consecutive matching detections; defaults to 3
 audio:
   loop_title: Looping audio
