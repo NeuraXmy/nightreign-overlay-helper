@@ -1,0 +1,16 @@
+plugin:
+  name: 状態異常ゲージタイマー
+  description: 状態異常ゲージを検出し、攻撃力上昇効果の段階と次回判定までの時間を表示
+hud:
+  text: 状態異常ゲージで攻撃力上昇 Lv.{level} 次回判定 {remaining}s
+settings:
+  basic: 基本設定
+  start: 手動でカウントダウン開始
+  end: 手動でカウントダウン停止
+  region:
+    title: 状態異常ゲージの範囲
+    content: 状態異常アイコンと右側のゲージが表示される範囲全体を選択
+    button: 範囲指定
+    annotate: ここをクリックし、状態異常アイコンとゲージの表示範囲を選択
+audio:
+  check: 各カウントダウン終了時の通知

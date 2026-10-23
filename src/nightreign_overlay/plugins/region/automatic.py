@@ -8,6 +8,7 @@ _REFERENCE_REGIONS = {
     "rain_timer.hp_region": (240, 58, 20, 8),
     "map_detect.map_region": (1454, 228, 990, 990),
     "hp_marker.hpbar_region": (224, 56, 134, 15),
+    "debuff_timer.meter_region": (953, 471, 588, 419),
     "art_timer.art_region": (1206, 1260, 143, 140),
     "entertainment.self_down": (1208, 321, 150, 151),
     "entertainment.teammates": (65, 216, 457, 249),

@@ -44,6 +44,7 @@ QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m 
 | `core/`、`plugins/` | `test_images.py`、`test_debug_images.py`、`test_image_resources.py`、`test_unicode_installation.py` | Unicode 路径下图片/模板读写、异步诊断图片与元数据、损坏资源诊断，以及复制安装目录后的插件、字体、ONNX 和截图 DLL 加载 |
 | `plugins/` | `test_capture_backends.py`、`test_infrastructure_plugins.py`、`test_region_preview.py` | 截图后端、输入/HUD/区域服务、区域预览 |
 | `plugins/` | `test_capture_multiscreen.py`、`test_capture_diagnostic.py` | Windows/macOS 四方向副屏、负坐标、混合 DPI、DLL 客户区、标定/预览/地图叠加坐标一致性 |
+| `plugins/` | `test_debuff_timer.py`、`test_debuff_detector.py` | 异常量表固定周期、10 层上限、HUD、生命周期、标定与无损截图增强 |
 | `plugins/` | `test_art_timer.py`、`test_day_timer.py`、`test_rain_timer.py` | 计时插件识别、状态机、快捷键、HUD |
 | `plugins/` | `test_hp_marker.py`、`test_p2p_latency.py` | 血条标记、P2P 服务与窗口布局 |
 | `plugins/` | `test_hp_detection_accuracy.py`、`test_hp_detection_video.py` | 血条截图与增强、整段无损视频的 GT 误差、拒识比例与连续拒识时间、采样间隔及检测状态重置 |

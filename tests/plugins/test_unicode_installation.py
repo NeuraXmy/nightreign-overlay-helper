@@ -35,6 +35,7 @@ from nightreign_overlay.plugin import PluginManager, PluginState
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
 from nightreign_overlay.plugins.audio.defaults import BUNDLED_CUES
 from nightreign_overlay.plugins.day_timer.detector import LANGUAGES, DayDetector
+from nightreign_overlay.plugins.debuff_timer.detector import DebuffDetector
 from nightreign_overlay.plugins.hp_marker.material import MaterialModel
 from nightreign_overlay.plugins.map_detect.image_utils import get_font
 from nightreign_overlay.plugins.map_detect.poi_cnn import PoiCnn
@@ -60,6 +61,7 @@ expected = {
     "commendation",
     "steam_recovery",
     "entertainment",
+    "debuff_timer",
 }
 manager.load_all()
 assert {record.id for record in manager.records()} == expected
@@ -69,6 +71,7 @@ plugins = PACKAGE_DIR / "plugins"
 days = DayDetector(plugins / "day_timer/templates")
 assert all(days.available(language) for language in LANGUAGES)
 assert not ArtDetector(plugins / "art_timer/icons").missing()
+assert len(DebuffDetector(plugins / "debuff_timer/icons").templates) == 40
 font = get_font(20)
 assert font.getbbox("Nightreign")[2] > 0
 assert not app_icon().isNull()
