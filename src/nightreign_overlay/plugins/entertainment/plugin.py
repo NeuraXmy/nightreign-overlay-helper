@@ -74,10 +74,12 @@ class EntertainmentPlugin(Plugin):
         self._self_down: bool | None = None
         self._self_candidate: bool | None = None
         self._self_count = 0
+        self._self_revived_at: float | None = None
         self._stream_acquired = False
         self._single_peer_at: float | None = None
         self._detect_limit = 2
         self.config.self_down_stop.valueChanged.connect(self._self_enabled_changed)
+        self.config.self_recovery_delay.valueChanged.connect(lambda _: self._apply_playback())
         self.config.three_player_only.valueChanged.connect(lambda _: self._apply_playback())
         self._completed.connect(self._on_completed, Qt.ConnectionType.QueuedConnection)
         self.config.detect_enabled.valueChanged.connect(self._set_enabled)
@@ -108,6 +110,7 @@ class EntertainmentPlugin(Plugin):
             self._active = True
             self._self_down = self._self_candidate = None
             self._self_count = 0
+            self._self_revived_at = None
             self._last_states = None
             self._candidate_states = None
             self._candidate_count = 0
@@ -119,6 +122,7 @@ class EntertainmentPlugin(Plugin):
                 self._stream_acquired = True
         elif not enabled and self._active:
             self._active = False
+            self._self_revived_at = None
             self._generation += 1
             self._pending = False
             capture = self.ctx.services.get(CaptureApi)
@@ -241,6 +245,7 @@ class EntertainmentPlugin(Plugin):
         self._generation += 1
         self._self_down = self._self_candidate = None
         self._self_count = 0
+        self._self_revived_at = None
         if not enabled:
             self._apply_playback()
 
@@ -250,6 +255,10 @@ class EntertainmentPlugin(Plugin):
         else:
             self._self_candidate, self._self_count = down, 1
         if self._self_count >= self.config.stable_detections.value and down != self._self_down:
+            if down:
+                self._self_revived_at = None
+            elif self._self_down is True:
+                self._self_revived_at = time.monotonic()
             self._self_down = down
             self.ctx.log.info("Self status changed: %s", "down" if down else "upright")
 
@@ -260,6 +269,10 @@ class EntertainmentPlugin(Plugin):
             if self._playing:
                 self._stop_loop(immediate=True)
             return
+        if self.config.self_down_stop.value and self._self_revived_at is not None:
+            if time.monotonic() - self._self_revived_at < self.config.self_recovery_delay.value:
+                return
+            self._self_revived_at = None
         if self._confirmed_result is None:
             return
         if self.config.three_player_only.value and sum(m.present for m in self._confirmed_result) != 2:
@@ -318,6 +331,7 @@ class EntertainmentPlugin(Plugin):
 
     def _stop_worker(self) -> None:
         self._single_peer_at = None
+        self._self_revived_at = None
         self._generation += 1
         self._active = False
         self._stop_loop(immediate=True)
@@ -413,13 +427,20 @@ class EntertainmentPlugin(Plugin):
         )
         panel.addSection(section)
         advanced = SettingSection(tr("settings.advanced.title"))
-        advanced.addCard(
+        advanced.addCards(
             ConfigRangeCard(
                 self.config.stable_detections,
                 FluentIcon.SYNC,
                 tr("settings.advanced.stable_detections.title"),
                 tr("settings.advanced.stable_detections.content"),
-            )
+            ),
+            ConfigRangeCard(
+                self.config.self_recovery_delay,
+                FluentIcon.PLAY,
+                tr("settings.advanced.self_recovery_delay.title"),
+                tr("settings.advanced.self_recovery_delay.content"),
+                formatter=lambda value: f"{value} s",
+            ),
         )
         panel.addSection(advanced)
         return panel

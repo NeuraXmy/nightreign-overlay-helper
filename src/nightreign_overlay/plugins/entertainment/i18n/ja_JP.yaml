@@ -29,6 +29,9 @@ settings:
     title: 3人プレイ時のみ再生
   advanced:
     title: 詳細設定
+    self_recovery_delay:
+      title: 自分の復活後に再生を再開するまでの時間
+      content: 復活が確定してから再生を許可するまで待機します。初期値は7秒です。再びダウンすると待機をやり直します。0秒で即座に許可します。
     stable_detections:
       title: 状態の確認回数
       content: 自分と味方の状態変化は、同じ結果が連続して指定回数検出された後に確定します。初期値は3回です

@@ -69,6 +69,8 @@ QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m 
 
 自身倒地的蓝白特效误检、金色救援环漏检、连续进度及单次检测耗时见 [2026-10-23 验证记录](self-down-detection-2026-10-23.md)。
 
+自身起身后的播放等待由 `tests/plugins/test_entertainment_plugin.py` 使用可控单调时钟验证：默认 7 秒临界值、再次倒地后的重新计时、0 秒、等待中修改时长、队友播放条件、关闭自身检测以及停用/重启时的清理；设置界面同时检查默认值、双向绑定和重置。测试无需实际等待 7 秒。
+
 地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [地图识别测试](map-detection.md)，CNN 部署与验收见 [POI CNN](../../features/map/poi-cnn.md)。
 
 测试不依赖相邻旧项目或其配置文件。血条结构检测、已有截图准确率、历史状态重置和插件行为由 `plugins/test_hp_detection_accuracy.py` 与 `plugins/test_hp_marker.py` 覆盖。

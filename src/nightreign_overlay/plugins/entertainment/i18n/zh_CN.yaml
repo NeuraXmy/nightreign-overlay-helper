@@ -29,6 +29,9 @@ settings:
     title: 仅三人游戏时触发
   advanced:
     title: 高级选项
+    self_recovery_delay:
+      title: 自身倒地起身后恢复播放时间
+      content: 确认自身复活后等待指定秒数才允许播放，默认 7 秒；再次倒地后重新等待，设为 0 秒立即允许播放
     stable_detections:
       title: 状态确认次数
       content: 自身和队友状态变化均需连续检测到相同结果达到指定次数后才会确认，默认 3 次

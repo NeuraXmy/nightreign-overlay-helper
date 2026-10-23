@@ -1,5 +1,7 @@
 from pathlib import Path
+from types import SimpleNamespace
 
+import pytest
 from PyQt6.QtCore import QRect
 from PyQt6.QtWidgets import QWidget
 
@@ -49,6 +51,158 @@ class _Hotkeys(HotkeyApi):
         return default
 
 
+@pytest.fixture
+def recovery_playback(store, qapp, tmp_path, monkeypatch):
+    import nightreign_overlay.plugins.entertainment.plugin as module
+    from nightreign_overlay.plugins.entertainment.detector import Teammate
+    from tests.support.feature_fakes import FeatureServices
+
+    fakes = FeatureServices(store, tmp_path)
+    plugin = EntertainmentPlugin(
+        fakes.context("entertainment", Path("src/nightreign_overlay/plugins/entertainment"))
+    )
+    plugin.on_load()
+    plugin.config.stable_detections.set(1)
+    plugin.config.detect_enabled.set(True)
+    region, self_region = QRect(0, 0, 240, 120), QRect(250, 0, 115, 115)
+    fakes.region.regions.update({"entertainment.teammates": region, "entertainment.self_down": self_region})
+    clock, calls = [100.0], []
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+    down = Teammate(True, True, 3, 1, (0, 0))
+    absent = Teammate(False, False, 0, 0, (0, 0))
+    upright = Teammate(True, False, 0, 1, (0, 0))
+
+    def start():
+        plugin._playing = True
+        calls.append("start")
+
+    def stop(immediate=False):
+        plugin._playing = False
+        calls.append(("stop", immediate))
+
+    def frame(self_down=False, teammates=(down, down)):
+        plugin._on_completed((plugin._generation, teammates, self_down, self_region), region)
+
+    monkeypatch.setattr(plugin, "_start_loop", start)
+    monkeypatch.setattr(plugin, "_stop_loop", stop)
+    try:
+        yield SimpleNamespace(
+            plugin=plugin,
+            clock=clock,
+            calls=calls,
+            frame=frame,
+            down=down,
+            absent=absent,
+            upright=upright,
+        )
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+
+
+def test_repeated_down_restarts_wait_from_next_confirmed_revival(recovery_playback):
+    r = recovery_playback
+    r.frame(False)
+    r.frame(True)
+    r.clock[0] = 101
+    r.frame(False)
+    r.clock[0] = 107.9
+    r.frame(False)
+    assert not r.plugin._playing
+    r.frame(True)
+    r.clock[0] = 108
+    r.frame(False)
+    r.clock[0] = 108.1  # The first revival would already have allowed playback.
+    r.frame(False)
+    assert not r.plugin._playing
+    r.clock[0] = 114.999
+    r.frame(False)
+    assert not r.plugin._playing
+    r.clock[0] = 115
+    r.frame(False)
+    assert r.calls == ["start", ("stop", True), "start"]
+
+
+def test_zero_recovery_delay_allows_immediate_revival_playback(recovery_playback):
+    r = recovery_playback
+    r.plugin.config.self_recovery_delay.set(0)
+    r.frame(False)
+    r.frame(True)
+    r.frame(False)
+    assert r.calls == ["start", ("stop", True), "start"]
+
+
+@pytest.mark.parametrize("delay", (2, 10))
+def test_recovery_delay_changes_apply_to_current_wait(recovery_playback, delay):
+    r = recovery_playback
+    r.frame(False)
+    r.frame(True)
+    r.frame(False)
+    r.clock[0] = 103
+    r.plugin.config.self_recovery_delay.set(delay)
+    assert r.plugin._playing == (delay == 2)
+    if delay == 2:
+        r.plugin.config.self_recovery_delay.set(60)
+        assert r.plugin._playing  # An expired wait cannot be reactivated.
+    else:
+        r.clock[0] = 107
+        r.frame(False)
+        assert not r.plugin._playing
+        r.clock[0] = 110
+        r.frame(False)
+        assert r.plugin._playing
+
+
+@pytest.mark.parametrize("state", ("absent", "upright", "single_teammate"))
+def test_recovery_expiry_still_requires_teammate_start_conditions(recovery_playback, state):
+    r = recovery_playback
+    r.frame(False)
+    r.frame(True)
+    r.frame(False)
+    if state == "single_teammate":
+        r.plugin.config.three_player_only.set(True)
+        teammates = (r.down, r.absent)
+    else:
+        mate = getattr(r, state)
+        teammates = (mate, mate)
+    r.clock[0] = 107
+    r.frame(False, teammates)
+    assert not r.plugin._playing
+    r.clock[0] = 108
+    r.frame(False)
+    assert r.plugin._playing
+
+
+def test_disabling_self_detection_cancels_revival_wait(recovery_playback):
+    r = recovery_playback
+    r.frame(False)
+    r.frame(True)
+    r.frame(False)
+    assert not r.plugin._playing
+    r.plugin.config.self_down_stop.set(False)
+    assert r.plugin._playing
+    r.plugin.config.self_down_stop.set(True)
+    r.frame(False)
+    assert r.calls == ["start", ("stop", True), "start"]
+
+
+@pytest.mark.parametrize("shutdown", ("disable", "deactivate"))
+def test_detection_restart_clears_revival_wait(recovery_playback, shutdown):
+    r = recovery_playback
+    r.frame(False)
+    r.frame(True)
+    r.frame(False)
+    assert not r.plugin._playing
+    if shutdown == "disable":
+        r.plugin.config.detect_enabled.set(False)
+    else:
+        r.plugin.on_deactivate()
+        r.plugin.config.detect_enabled.set(False)
+    r.plugin.config.detect_enabled.set(True)
+    r.frame(False)
+    assert r.plugin._playing
+
+
 def test_plugin_registers_default_region_and_builds_settings(store, qapp, tmp_path):
     services = ServiceRegistry()
     region = _Region()
@@ -78,6 +232,17 @@ def test_plugin_registers_default_region_and_builds_settings(store, qapp, tmp_pa
         "仅三人游戏时触发",
     ]
     assert plugin.config.self_down_stop.value is True
+    advanced = panel.sectionLayout.itemAt(1).widget()
+    recovery = advanced.cardLayout.itemAt(1).widget()
+    assert recovery.titleLabel.text() == "自身倒地起身后恢复播放时间"
+    assert recovery.valueLabel.text() == "7 s"
+    assert recovery.slider.minimum() == 0 and recovery.slider.maximum() == 60
+    recovery.slider.setValue(12)
+    assert plugin.config.self_recovery_delay.value == 12
+    plugin.config.self_recovery_delay.set(15)
+    assert recovery.slider.value() == 15
+    plugin.reset_settings()
+    assert plugin.config.self_recovery_delay.value == 7
 
     plugin.on_deactivate()
     context.release()
@@ -116,11 +281,12 @@ def test_state_transition_requires_three_consecutive_matching_detections(store, 
     context.release()
 
 
-def test_self_down_debounce_stops_and_revival_resumes_without_log_spam(
+def test_self_down_debounce_stops_and_revival_waits_without_log_spam(
     store, qapp, tmp_path, monkeypatch, caplog
 ):
     import logging
 
+    import nightreign_overlay.plugins.entertainment.plugin as module
     from nightreign_overlay.plugins.entertainment.detector import Teammate
     from tests.support.feature_fakes import FeatureServices
 
@@ -137,6 +303,8 @@ def test_self_down_debounce_stops_and_revival_resumes_without_log_spam(
     down = Teammate(True, True, 3, 1.0, (0, 0))
     absent = Teammate(False, False, 0, 0, (0, 0))
     calls = []
+    clock = [100.0]
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
 
     def start():
         calls.append("start")
@@ -169,6 +337,12 @@ def test_self_down_debounce_stops_and_revival_resumes_without_log_spam(
         frame(False)
         frame(False)
         assert not plugin._playing
+        frame(False)
+        assert calls == ["start", ("stop", True)]
+        clock[0] = 106.999
+        frame(False)
+        assert not plugin._playing
+        clock[0] = 107.0
         frame(False)
         assert calls == ["start", ("stop", True), "start"]
         for _ in range(4):
