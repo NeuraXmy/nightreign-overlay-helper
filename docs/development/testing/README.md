@@ -15,10 +15,10 @@ tests/
 ├── ui/                      # 悬浮窗、FAQ 图文、设置重置、托盘退出
 ├── platforms/               # 原生平台行为（当前为 macOS 悬浮窗非激活）
 ├── support/                 # 共享 fake、Qt 工具、仓库/样本路径
-└── data/map_detect/         # Git 跟踪的地图截图，位置保持稳定
+└── data/                    # Git 跟踪的测试数据，按功能分目录（地图、血条、倒地、异常量表等）
 ```
 
-每个测试分类都是 Python 包。共享工具通过 `tests.support.*` 导入；测试之间不互相导入，也不导入 `conftest.py` 中的普通函数。全局 fixture 由 pytest 自动发现。
+每个测试分类都是 Python 包。共享工具通过 `tests.support.*` 导入；测试之间不互相导入，也不导入 `conftest.py` 中的普通函数。全局 fixture 由 pytest 自动发现。截图、录像、标注等静态测试数据统一放在 `tests/data/<功能>/` 下，不另建 `tests/fixtures/` 数据目录。
 
 ## 分类与覆盖
 

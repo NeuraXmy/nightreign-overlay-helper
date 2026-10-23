@@ -35,6 +35,6 @@ HUD 文本为 `异常量表提升攻击力 Lv.3 下次检测 15.2s`，进度条�
 - `plugins/debuff_timer/detector.py`：量表存在检测。
 - `tests/plugins/test_debuff_timer.py`：固定节点、上限、清零、异步回调失效与标定设置。
 - `tests/plugins/test_debuff_detector.py`：无损区域截图、图像增强、只有图标或横条的反例。
-- `tests/fixtures/debuff/`：从原始完整画面按参考区域裁剪的无损样本。
+- `tests/data/debuff/`：从原始完整画面按参考区域裁剪的无损样本。
 
 [返回功能索引](README.md)
