@@ -2,6 +2,7 @@ plugin:
   name: アーツタイマー
   description: アーツ発動後にアイコンを認識し、効果の残り時間を表示
 hud:
+  undertaker: 葬儀屋の追加アーツ時間
   text: '{name} {remaining}'
   duchess: フィナーレ 透明化
   recluse: 血魂の唄 標的効果
@@ -15,6 +16,12 @@ roles:
   scholar: 学者
   executor: 執行者
 settings:
+  undertaker_enabled:
+    title: 葬儀屋の追加アーツ時間を検出
+  undertaker_threshold:
+    title: 葬儀屋の追加アーツのピンク色占有率しきい値
+  undertaker_duration:
+    title: 葬儀屋の追加アーツ時間
   basic:
     title: 基本設定
   region:

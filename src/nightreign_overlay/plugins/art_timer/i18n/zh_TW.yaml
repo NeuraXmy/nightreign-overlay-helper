@@ -2,6 +2,7 @@ plugin:
   name: 絕招倒數
   description: 按下絕招鍵後辨識絕招圖示，顯示效果倒數
 hud:
+  undertaker: 送葬者額外絕招時間
   text: '{name} {remaining}'
   duchess: 落幕之章隱身時間
   recluse: 血魂歌標記時間
@@ -15,6 +16,12 @@ roles:
   scholar: 學者
   executor: 執行者
 settings:
+  undertaker_enabled:
+    title: 偵測送葬者額外絕招時間
+  undertaker_threshold:
+    title: 送葬者額外絕招粉色占比閾值
+  undertaker_duration:
+    title: 送葬者額外絕招時間
   basic:
     title: 基本設定
   region:
