@@ -348,6 +348,41 @@ def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
     assert fakes.capture.streams == set()
 
 
+@pytest.mark.parametrize("hdr", [False, True])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "inactive_scene_QQ20261024-005139.png",
+        "inactive_scene_QQ20261024-005228.png",
+        "inactive_scene_QQ20261024-005355.png",
+    ],
+)
+def test_undertaker_tinted_scenery_and_inactive_icons_do_not_start_timer(
+    store, qapp, tmp_path, monkeypatch, name, hdr
+):
+    from PyQt6.QtGui import QImage
+
+    from tests.support.paths import PROJECT_ROOT
+    from tests.support.qt import delete_qobjects
+
+    plugin, fakes, clock = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    hud = plugin._hud
+    image = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art" / name))
+    assert not image.isNull()
+    fakes.region.regions[_REGION] = image.rect()
+    try:
+        fakes.events.publish(FrameCaptured(image, clock[0], hdr))
+        assert not plugin._undertaker_active
+        assert plugin._undertaker_started is None
+        assert plugin._undertaker_audio_started is None
+        assert hud.isHidden()
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        delete_qobjects(hud)
+
+
 @pytest.mark.parametrize("delay", [2.0, 7.0])
 def test_undertaker_audio_delay_and_cancellation(store, qapp, tmp_path, monkeypatch, delay):
     from PyQt6.QtGui import QImage
