@@ -16,6 +16,7 @@ Fluent Widgets 固定提交的可编辑 Qt 资源，以及清单。项目未修�
 构建主程序：解压项目源码，在 Windows x64 安装 Git、uv 和 .NET 8 SDK，
 从干净 Git 工作区运行 `build.bat`。源码 ZIP 不含 `.git`，可先运行 `git init`、
 `git add .` 和 `git commit` 创建本地快照再构建；新提交 SHA 与原发布不同。
+Nuitka 构建使用 `scripts/build_nuitka.ps1`，另需 Visual Studio 2022 C++ 构建工具。
 脚本使用 Python 3.13 与锁定依赖。详情见源码中的 `docs/development/releases/README.md`。
 
 构建 PyQt6：按 sdist 内 README 和 `pyproject.toml` 的 SIP 配置准备匹配的 Qt 开发环境。
@@ -44,7 +45,8 @@ resources, and the manifest. These two dependencies are used without local modif
 To build the application, install Git, uv and .NET 8 SDK on Windows x64 and run `build.bat`
 from a clean Git worktree. The source snapshot has no `.git`; initialize and commit a local
 repository first when building from the ZIP. This creates a different commit SHA. The build
-uses Python 3.13 and locked dependencies. See `docs/development/releases/README.md`.
+uses Python 3.13 and locked dependencies. For Nuitka builds, run `scripts/build_nuitka.ps1`
+with Visual Studio 2022 C++ build tools installed. See `docs/development/releases/README.md`.
 
 To build PyQt6, follow its README and SIP configuration with a matching Qt development
 environment. Fluent Widgets 1.11.3 uses setuptools: `python -m pip wheel --no-deps .`.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import zipfile
 from pathlib import Path
@@ -36,9 +37,11 @@ def create_zip(directory: Path, destination: Path, *, include_directory: bool) -
                 archive.write(path, path.relative_to(base).as_posix())
 
 
-def package(root: Path, bundle: Path) -> tuple[Path, Path]:
+def package(root: Path, bundle: Path, *, resource_prefix: str = "_internal") -> tuple[Path, Path]:
     check_bundle(root, bundle)
     for name in REQUIRED_RUNTIME_FILES:
+        if name.startswith("_internal/"):
+            name = (Path(resource_prefix) / name.removeprefix("_internal/")).as_posix()
         if not (bundle / name).is_file():
             raise FileNotFoundError(f"Missing bundle file: {name}")
     label = release_label(root)
@@ -55,7 +58,17 @@ def package(root: Path, bundle: Path) -> tuple[Path, Path]:
 
 
 def main() -> None:
-    runtime, sources = package(ROOT, ROOT / "dist/nightreign-overlay-helper")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--resource-prefix",
+        choices=("_internal", "."),
+        default="_internal",
+        help="Resource directory inside the bundle: _internal (PyInstaller) or . (Nuitka)",
+    )
+    args = parser.parse_args()
+    runtime, sources = package(
+        ROOT, ROOT / "dist/nightreign-overlay-helper", resource_prefix=args.resource_prefix
+    )
     for path in (runtime, sources):
         print(f"Created {path.name}: {path.stat().st_size / 1024**2:.2f} MiB")
     if output := os.environ.get("GITHUB_OUTPUT"):

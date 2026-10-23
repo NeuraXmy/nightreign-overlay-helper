@@ -32,6 +32,9 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+nuitka = [
+    "nuitka>=2.8,<3",
+]
 
 [build-system]
 requires = ["hatchling"]

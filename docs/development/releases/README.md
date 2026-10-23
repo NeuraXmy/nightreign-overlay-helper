@@ -63,6 +63,30 @@ Windows EXE 必须在 Windows 上构建；macOS 开发环境不能直接生成�
 `build.bat`，使用 Python 3.13 与 .NET 8 SDK，构建完成后分别打包程序和源码 ZIP。
 该流程仅支持手动触发，不创建 GitHub Release。
 
+[`Build Windows ZIP (Nuitka)`](../../../.github/workflows/build-windows-nuitka.yml) 是独立的手动构建流程，
+使用 Nuitka standalone 编译主程序。进入 **Actions → Build Windows ZIP (Nuitka) → Run workflow**，
+选择分支或 tag 即可；完成后从该次运行的 **Artifacts** 下载程序和对应源码 ZIP，保留 30 天。
+该流程不创建 Release，使用 Python 3.13、Windows x64 MSVC 和 .NET 8，超时为 120 分钟。
+首次编译需要下载编译工具依赖，耗时通常比 PyInstaller 更长。
+
+Nuitka 流程复用相同的 Ruff、pytest、.NET 回归和运行资源检查，构建后还会运行编译后的
+`--check-runtime-resources` 入口，在 offscreen 模式加载插件并执行 ONNX 推理。
+编译报告作为独立的 `nuitka-compilation-report` artifact 保存，供排查依赖收集问题。
+程序仍是完整文件夹，资源与 Python／Qt 运行库直接位于程序目录及其子目录中，
+不使用 PyInstaller 的 `_internal/` 层；打包脚本通过 `--resource-prefix .` 检查这套布局。
+两个构建流程中的 ZIP 使用相同命名规则，可通过 Actions 运行记录区分构建器。
+
+本地在已安装 Visual Studio 2022 C++ 构建工具、uv 与 .NET 8 SDK 的 Windows x64 环境执行：
+
+```powershell
+./scripts/build_nuitka.ps1
+uv run --no-sync python -m scripts.package_release --resource-prefix .
+```
+
+Nuitka 使用 `uv.lock` 中的 `nuitka` 依赖组；构建脚本同时同步 `build` 组，
+复用许可证、对应源码与联机辅助程序检查。与 `build.bat` 一样，构建要求干净的 Git 工作区。
+最终 EXE 的 UAC、重启、截图、音频、Steam／ETW 和真实游戏行为仍需 Windows 实机验收。
+
 [`Release Windows ZIP`](../../../.github/workflows/release-windows.yml) 在推送版本 tag 时自动执行
 同样的检查与 Windows 构建，全部成功后创建对应的 GitHub Release，附加程序和源码两个 ZIP，并自动生成发布说明及源码获取提示。
 发布任务单独授予 `contents: write` 权限；构建任务只读仓库内容。

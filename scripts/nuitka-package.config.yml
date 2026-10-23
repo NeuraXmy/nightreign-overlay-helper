@@ -1,0 +1,8 @@
+# DLLs must be collected as binaries so Nuitka also scans their dependencies.
+- module-name: nightreign_overlay.plugins.capture
+  dlls:
+    - from_filenames:
+        relative_path: native
+        prefixes:
+          - MaaWin32Screencap
+      when: win32

@@ -1,0 +1,115 @@
+name: Build Windows ZIP (Nuitka)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 120
+    env:
+      CI: '1'
+      # Use the public index on GitHub-hosted runners.
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python and uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+            .python-version
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install locked dependencies
+        run: uv sync --locked --python 3.13 --group build --group nuitka
+
+      - name: Check release tag against application version
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: uv run --no-sync python scripts/validate_release_version.py "$env:GITHUB_REF_NAME"
+
+      - name: Lint source
+        run: uv run --no-sync ruff check .
+
+      - name: Check formatting
+        run: uv run --no-sync ruff format --check .
+
+      - name: Run P2P helper regression tests
+        run: dotnet run --project native/NightreignP2PHelper.Tests -c Release
+
+      - name: Run offline communication recovery tests
+        run: dotnet run --project native/NightreignP2PHelper.RecoveryTests -c Release
+
+      - name: Run regression suite (HP smoke tests; no benchmarks)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync pytest tests -m "not benchmark" -q --durations=20
+
+      - name: Load runtime resources and discover plugins
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: uv run --no-sync python scripts/check_runtime_resources.py
+
+      - name: Build application and P2P helper
+        shell: pwsh
+        run: ./scripts/build_nuitka.ps1
+
+      - name: Check compiled runtime resources and plugin discovery
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+        run: |
+          $process = Start-Process -FilePath ./dist/nightreign-overlay-helper/nightreign-overlay-helper.exe -ArgumentList '--check-runtime-resources' -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Compiled runtime resource check failed: $($process.ExitCode)"
+          }
+
+      - name: Upload Nuitka compilation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuitka-compilation-report
+          path: build/nuitka/compilation-report.xml
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Verify release licenses and corresponding source
+        run: uv run --no-sync python scripts/prepare_release_licenses.py --check
+
+      - name: Create runtime and source ZIPs
+        id: package
+        run: uv run --no-sync python -m scripts.package_release --resource-prefix .
+
+      - name: Upload Windows runtime ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          archive: false
+          retention-days: 30
+
+      - name: Upload corresponding source ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.package.outputs.sources-path }}
+          if-no-files-found: error
+          archive: false
+          retention-days: 30

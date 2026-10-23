@@ -25,7 +25,7 @@ Windows 是主要发布平台。macOS 用于开发调试，前台检测、透明
 - NumPy、OpenCV、Pillow、mss：图像处理与截图；Windows 另提供 Maa 截图 DLL。
 - ONNX Runtime CPU：地图 POI 与血条模型推理；训练工具不属于运行时依赖。
 - pynput、pygame：全局输入；QtMultimedia：音频播放。
-- pytest、Ruff、uv：回归、代码规范和锁定依赖；PyInstaller：文件夹打包。
+- pytest、Ruff、uv：回归、代码规范和锁定依赖；PyInstaller：默认文件夹打包；Nuitka：独立手动编译构建。
 - .NET 8：Windows Steam／ETW 辅助程序，发布版自带运行库。
 
 安装与运行见[项目 README](../README.md)，构建和验收见[发布指南](development/releases/README.md)。

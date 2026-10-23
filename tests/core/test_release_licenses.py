@@ -171,7 +171,10 @@ def test_incremental_build_removes_legacy_embedded_sources(release_checkout):
     release.check_bundle(root, bundle)
 
 
-def test_release_archives_separate_runtime_and_matching_sources(release_checkout, monkeypatch):
+@pytest.mark.parametrize("resource_prefix", ["_internal", "."])
+def test_release_archives_separate_runtime_and_matching_sources(
+    release_checkout, monkeypatch, resource_prefix
+):
     from scripts import package_release
 
     root, bundle = release_checkout
@@ -180,10 +183,12 @@ def test_release_archives_separate_runtime_and_matching_sources(release_checkout
     monkeypatch.setenv("GITHUB_REPOSITORY", "NeuraXmy/nightreign-overlay-helper")
     release.prepare(root, bundle)
     for filename in package_release.REQUIRED_RUNTIME_FILES:
+        if filename.startswith("_internal/"):
+            filename = str(Path(resource_prefix) / filename.removeprefix("_internal/"))
         path = bundle / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"runtime fixture")
-    runtime, sources = package_release.package(root, bundle)
+    runtime, sources = package_release.package(root, bundle, resource_prefix=resource_prefix)
     assert runtime.name == "nightreign-overlay-helper-v1.0.0-dev.2-windows-x64.zip"
     assert sources.name == "v1.0.0-dev.2-sources.zip"
     with zipfile.ZipFile(runtime) as archive:
@@ -192,18 +197,26 @@ def test_release_archives_separate_runtime_and_matching_sources(release_checkout
         assert "releases/download/v1.0.0-dev.2/v1.0.0-dev.2-sources.zip" in notice
         manifest = archive.read("app/licenses/source-manifest.json")
         for cue in (*package_release.BUNDLED_CUES.values(),):
-            assert archive.read(f"app/_internal/nightreign_overlay/plugins/audio/sounds/{cue.filename}")
+            assert archive.read(
+                (
+                    Path("app") / resource_prefix / "nightreign_overlay/plugins/audio/sounds" / cue.filename
+                ).as_posix()
+            )
         for filename in package_release.BUNDLED_LOOP_AUDIO.values():
-            assert archive.read(f"app/_internal/nightreign_overlay/plugins/audio/sounds/{filename}")
+            assert archive.read(
+                (
+                    Path("app") / resource_prefix / "nightreign_overlay/plugins/audio/sounds" / filename
+                ).as_posix()
+            )
     with zipfile.ZipFile(sources) as archive:
         assert archive.read("manifest.json") == manifest
         assert "nightreign-overlay-helper-source.zip" in archive.namelist()
         assert "pyqt6.tar.gz" in archive.namelist()
         assert archive.read("SOURCE.md").decode() == notice
-    missing_voice = bundle / "_internal/nightreign_overlay/plugins/audio/sounds/rain_warning.mp3"
+    missing_voice = bundle / resource_prefix / "nightreign_overlay/plugins/audio/sounds/rain_warning.mp3"
     missing_voice.unlink()
     with pytest.raises(FileNotFoundError, match=r"rain_warning\.mp3"):
-        package_release.package(root, bundle)
+        package_release.package(root, bundle, resource_prefix=resource_prefix)
 
 
 def test_runtime_manifest_cannot_point_at_unrelated_sources(release_checkout):
