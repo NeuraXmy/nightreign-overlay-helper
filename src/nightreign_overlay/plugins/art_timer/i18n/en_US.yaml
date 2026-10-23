@@ -2,6 +2,7 @@ plugin:
   name: Ultimate Art Timer
   description: Detect the Ultimate Art icon after activation and show its effect timer
 hud:
+  undertaker: Undertaker extra Ultimate time
   text: '{name} {remaining}'
   duchess: Finale invisibility
   recluse: Soulblood Song marks
@@ -15,6 +16,12 @@ roles:
   scholar: Scholar
   executor: Executor
 settings:
+  undertaker_enabled:
+    title: Detect Undertaker extra Ultimate time
+  undertaker_threshold:
+    title: Undertaker extra Ultimate pink coverage threshold
+  undertaker_duration:
+    title: Undertaker extra Ultimate duration
   basic:
     title: Basic
   region:

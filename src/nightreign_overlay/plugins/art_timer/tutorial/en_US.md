@@ -2,11 +2,13 @@
 
 When you press the art key in the game and the art icon lights up, the overlay displays a countdown for the art effect. Supported characters: Duchess, Recluse, Executor, Revenant, and Scholar.
 
+It also supports a countdown for the duration of Undertaker's additional art.
+
 ## Initial setup
 
 ### 1. Calibrate the art icon region.
 
-This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it only if the game is not full screen or the automatic region is incorrect.
+ℹ️ **Note: This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it using the steps below only if the game is not full screen or the automatic region is incorrect.**
 
 It is recommended to set a controller or keyboard shortcut. Then enter the training area or any scene where the art icon is visible, and press the shortcut to open the calibration screen.
 
@@ -21,6 +23,8 @@ Return to the main window. A green "Calibrated" status indicates success. Hover 
 ### 2. Set the in-game art shortcut.
 
 ![Set art shortcut](3.jpg)
+
+Undertaker's art can be detected without pressing this shortcut.
 
 ## Result
 

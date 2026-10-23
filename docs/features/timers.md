@@ -118,6 +118,7 @@ _detected_day(day)
 
 - [`src/nightreign_overlay/plugins/art_timer/plugin.py`](../../src/nightreign_overlay/plugins/art_timer/plugin.py)
 - [`src/nightreign_overlay/plugins/art_timer/detector.py`](../../src/nightreign_overlay/plugins/art_timer/detector.py)
+- [`src/nightreign_overlay/plugins/art_timer/undertaker_detector.py`](../../src/nightreign_overlay/plugins/art_timer/undertaker_detector.py)
 - [`src/nightreign_overlay/plugins/art_timer/config.py`](../../src/nightreign_overlay/plugins/art_timer/config.py)
 
 ### 职责
@@ -126,7 +127,7 @@ _detected_day(day)
 
 ### 依赖
 
-`requires=("capture", "hud", "input", "region")`
+`requires=("capture", "hud", "input", "region", "audio")`
 
 ### 检测逻辑
 
@@ -136,13 +137,19 @@ _detected_day(day)
 4. 最小分数低于阈值（默认 0.02）判为该绝招。
 5. HDR 时先 `hdr_to_sdr()`。
 
+送葬者额外绝招检测默认开启，独立于上述快捷键和模板匹配流程，持续读取同一个绝招区域。图标先缩小为 32×32，再按 HSV 粉色色调统计像素占比；达到默认 80% 阈值时立即开始默认 5 秒倒计时，开始后等待计时自然结束，变为 inactive 或暂时无法获取图标区域均不会提前取消。高级选项可调整占比阈值和持续时间。计时期间再次进入 active 不会重置计时；计时结束后需检测到新的 inactive → active 变化才会再次触发。关闭检测或停用插件仍会立即取消计时。
+
+送葬者复用现有绝招计时条，进度颜色为图标粉色 `#c28aba`。其计时期间优先显示，结束后恢复仍未到期的普通绝招计时；普通绝招的计时及音频继续独立运行。
+
+回归样本位于 `tests/data/undertaker_art/`，包含 1 张 active、6 张 inactive。测试覆盖饱和度 0.5–1.5 倍、对比度和亮度各 0.6–1.4 倍的组合，以及模糊、锐化、缩放和位置偏移；这些结果用于验证已有样本的容错，新增游戏截图仍应加入回归测试。
+
 ### 绝招数据
 
 女爵/隐士/复仇者：延迟 2s，持续 13s；学者 20s；执行者 15s；各有不同颜色文案。
 
 ### 必须保持的约束
 
-- 识别不保持帧流；无帧时本次按键放弃。
+- 普通模板识别不保持帧流；无帧时本次按键放弃。送葬者检测开启时保持共享帧流，关闭检测或停用插件时释放。
 - 识别截图通过统一调试图片服务保存，结果名为 `art_timer_ultimate`；日志记录识别分数。
 
 [返回功能索引](README.md)

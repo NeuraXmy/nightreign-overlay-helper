@@ -35,7 +35,7 @@ def _plugin(
     return plugin, fakes, clock
 
 
-def test_activation_loads_icons_and_registers_unbound_hotkeys_without_a_stream(
+def test_activation_loads_icons_and_registers_hotkeys_and_undertaker_stream(
     store: ConfigStore, qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plugin, fakes, _ = _plugin(store, tmp_path, monkeypatch)
@@ -44,8 +44,8 @@ def test_activation_loads_icons_and_registers_unbound_hotkeys_without_a_stream(
     hotkeys = fakes.services.require(HotkeyApi)
     for action in ("art_timer.use_art", "art_timer.calibrate_region"):
         assert hotkeys.binding(action, HotkeyBinding(None)) == HotkeyBinding(None)
-    # Art detection captures single frames on demand instead of keeping the periodic stream alive.
-    assert fakes.capture.streams == set()
+    # Only Undertaker color detection consumes the continuous stream.
+    assert fakes.capture.streams == {"art_timer"}
     [(owner, widget, order)] = fakes.hud.widgets.values()
     assert (owner, order) == ("art_timer", 20)
     assert isinstance(widget, HudTimerBar) and widget.isHidden()
@@ -199,7 +199,7 @@ def test_settings_page_builds_before_activation_with_advanced_options(
     panel = plugin.create_settings_widget(parent)
     parent.layout().addWidget(panel)
     labels = [card.valueLabel.text() for card in panel.findChildren(ConfigRangeCard)]
-    assert labels == ["500 ms", "0.020"]
+    assert labels == ["80%", "5 s", "500 ms", "0.020"]
     loop_cards = panel.findChildren(LoopAudioSettingCard)
     finite_cards = panel.findChildren(AudioSettingCard)
     assert len(loop_cards) == 5
@@ -251,3 +251,118 @@ def test_reset_or_region_change_discards_in_flight_art(store, tmp_path, monkeypa
     callbacks[0](FrameCaptured(solid_image(100, 100, (0, 0, 0)), 0.0))
     assert plugin._art_type is plugin._art_started is None
     plugin.ctx.release()
+
+
+@pytest.mark.parametrize("hdr", [False, True])
+def test_undertaker_continuous_detection_uses_shared_hud_and_does_not_restart(
+    store, qapp, tmp_path, monkeypatch, hdr
+):
+    from PyQt6.QtGui import QImage
+
+    from tests.support.paths import PROJECT_ROOT
+    from tests.support.qt import delete_qobjects
+
+    plugin, fakes, clock = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    hud = plugin._hud
+    assert hud is not None and len(fakes.hud.widgets) == 1
+    active = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/0.png"))
+    inactive = QImage(str(PROJECT_ROOT / "tests/data/undertaker_art/1.png"))
+    fakes.region.regions[_REGION] = active.rect()
+    try:
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert not plugin._detect_timer.isActive()
+        assert plugin._undertaker_started == clock[0]
+        assert hud.bar.value() == 10000
+        assert "送葬者额外绝招时间" in hud.label.text()
+        assert hud._color == "#c28aba"
+        clock[0] += 2
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.bar.value() == 6000
+        clock[0] += 3
+        plugin._update_timer()
+        assert hud.isHidden() and plugin._undertaker_started is None
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.isHidden()  # A held active icon cannot keep restarting the timer.
+        fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.bar.value() == 10000
+        fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
+        assert not hud.isHidden() and plugin._undertaker_started == clock[0]
+        clock[0] += 1
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.bar.value() == 8000  # A new active edge cannot reset a running timer.
+        fakes.region.regions.pop(_REGION)
+        fakes.events.publish(FrameCaptured(inactive, clock[0], hdr))
+        assert not hud.isHidden()  # Missing crops also leave the countdown running.
+        fakes.region.regions[_REGION] = active.rect()
+        plugin.config.undertaker_enabled.set(False)
+        assert fakes.capture.streams == set()
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.isHidden()
+        plugin.config.undertaker_enabled.set(True)
+        assert fakes.capture.streams == {plugin.id}
+        plugin.config.undertaker_duration.set(10)
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        clock[0] += 2
+        plugin._update_timer()
+        assert hud.bar.value() == 8000
+        plugin.config.undertaker_pink_percent.set(100)
+        fakes.events.publish(FrameCaptured(active, clock[0], hdr))
+        assert hud.bar.value() == 8000
+        clock[0] += 8
+        plugin._update_timer()
+        assert hud.isHidden()
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        delete_qobjects(hud)
+    assert fakes.capture.streams == set()
+
+
+def test_undertaker_cancel_restores_existing_art_countdown(store, qapp, tmp_path, monkeypatch):
+    from tests.support.qt import delete_qobjects
+
+    plugin, _, clock = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    hud = plugin._hud
+    try:
+        plugin._art_type = "duchess"
+        plugin._art_started = clock[0] - 3
+        plugin._undertaker_active = True
+        plugin._undertaker_started = clock[0]
+        plugin._update_timer()
+        assert hud._color == "#c28aba"
+        plugin.config.undertaker_enabled.set(False)
+        assert "落幕之章" in hud.label.text() and not hud.isHidden()
+        assert hud._color == "#cccccc"
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        delete_qobjects(hud)
+
+
+def test_normal_art_audio_expires_while_undertaker_uses_shared_bar(store, qapp, tmp_path, monkeypatch):
+    from tests.support.qt import delete_qobjects
+
+    plugin, _, clock = _plugin(store, tmp_path, monkeypatch)
+    plugin.on_activate()
+    hud = plugin._hud
+    stopped = []
+    monkeypatch.setattr(plugin, "_stop_loop", lambda **kwargs: stopped.append(kwargs))
+    try:
+        plugin._art_type = "duchess"
+        plugin._art_started = clock[0] - 14
+        plugin._undertaker_active = True
+        plugin._undertaker_started = clock[0]
+        clock[0] += 2
+        plugin._update_timer()
+        assert plugin._art_type is None and plugin._art_started is None
+        assert stopped == [{}]
+        assert hud._color == "#c28aba" and hud.bar.value() == 6000
+        plugin.config.undertaker_enabled.set(False)
+        assert hud.isHidden()
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+        delete_qobjects(hud)

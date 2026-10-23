@@ -13,14 +13,21 @@ from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.art_timer.config import ArtTimerConfig
 from nightreign_overlay.plugins.art_timer.detector import ArtDetector
+from nightreign_overlay.plugins.art_timer.undertaker_detector import pink_ratio
 from nightreign_overlay.plugins.audio.api import AudioApi, AudioNotifications
 from nightreign_overlay.plugins.audio.config import LoopAudioConfig
 from nightreign_overlay.plugins.audio.defaults import bundled_loop_path
-from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb
+from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb, hdr_to_sdr
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
-from nightreign_overlay.ui.components import ConfigRangeCard, HotkeySettingCard, SettingSection, SettingsPanel
+from nightreign_overlay.ui.components import (
+    ConfigRangeCard,
+    ConfigSwitchCard,
+    HotkeySettingCard,
+    SettingSection,
+    SettingsPanel,
+)
 from nightreign_overlay.ui.components.audio_settings import audio_section
 
 _REGION_KEY = "art_timer.art_region"
@@ -84,6 +91,10 @@ class ArtTimerPlugin(Plugin):
         self._art_started: float | None = None
         self._detector: ArtDetector | None = None
         self._hud: HudTimerBar | None = None
+        self._undertaker_started: float | None = None
+        self._undertaker_active = False
+        self._undertaker_stream = False
+        self.config.undertaker_enabled.valueChanged.connect(self._set_undertaker_enabled)
         self._calibrating = False
         self._detect_generation = 0
         self._clock = QTimer(self)
@@ -109,11 +120,15 @@ class ArtTimerPlugin(Plugin):
         self.ctx.log.info("Art region: %s", list(region.getRect()) if region else None)
         self._register_hotkeys(self.ctx.services.require(HotkeyApi))
         self._create_hud(self.ctx.services.require(HudApi))
+        self.ctx.subscribe(FrameCaptured, self._on_undertaker_frame)
+        self.ctx.on_cleanup(lambda: self._set_undertaker_enabled(False))
+        self._set_undertaker_enabled(self.config.undertaker_enabled.value)
         self._clock.start()
         self.ctx.on_cleanup(self._clock.stop)
         self.ctx.on_cleanup(self._detect_timer.stop)
 
     def on_deactivate(self) -> None:
+        self._set_undertaker_enabled(False)
         self._stop_loop(immediate=True)
         self._audio.reset()
         self._art_type = self._art_started = None
@@ -135,6 +150,56 @@ class ArtTimerPlugin(Plugin):
         # The HUD shows every new widget; an idle countdown hides itself again.
         self._update_timer()
 
+    def _set_undertaker_enabled(self, enabled: bool) -> None:
+        capture = self.ctx.services.get(CaptureApi)
+        if enabled and self._detector is not None and not self._undertaker_stream:
+            if capture is not None:
+                capture.acquire_stream(self.id)
+                self._undertaker_stream = True
+        elif not enabled:
+            if self._undertaker_stream and capture is not None:
+                capture.release_stream(self.id)
+            self._undertaker_stream = False
+            self._cancel_undertaker()
+
+    def _cancel_undertaker(self) -> None:
+        self._undertaker_active = False
+        self._undertaker_started = None
+        self._update_timer()
+
+    def _on_undertaker_frame(self, frame: FrameCaptured) -> None:
+        if not self._undertaker_stream or self._calibrating:
+            return
+        region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
+        image = crop_rgb(frame.image, region) if region is not None else None
+        if image is None:
+            return
+        if frame.hdr:
+            image = hdr_to_sdr(image)
+        active = pink_ratio(image) >= self.config.undertaker_pink_percent.value / 100
+        if active and not self._undertaker_active and self._undertaker_started is None:
+            self._undertaker_started = time.monotonic()
+            self.ctx.log.info("Undertaker extra art activated")
+        # Inactive rearms edge detection but never cancels a running countdown.
+        self._undertaker_active = active
+        self._update_timer()
+
+    def _update_undertaker_timer(self) -> bool:
+        if self._hud is None or self._undertaker_started is None:
+            return False
+        duration = self.config.undertaker_duration.value
+        elapsed = max(0.0, time.monotonic() - self._undertaker_started)
+        if elapsed >= duration:
+            self._undertaker_started = None
+            return False
+        text = self.ctx.tr(
+            "hud.text",
+            name=self.ctx.tr("hud.undertaker"),
+            remaining=_format_period(int(max(duration - elapsed, 0))),
+        )
+        self._hud.set_progress(1 - elapsed / duration, text, "#c28aba")
+        return True
+
     # -- detection ----------------------------------------------------------------------------
 
     def _use_art(self) -> None:
@@ -144,7 +209,7 @@ class ArtTimerPlugin(Plugin):
         self._detect_timer.start(delay)
 
     def _detect_art(self) -> None:
-        """Request one frame after the delay; there is no continuous stream for this feature."""
+        """Request a frame for the shortcut-triggered template matcher."""
         if self._calibrating or self._detector is None:
             return
         region = self.ctx.services.require(RegionApi).region(_REGION_KEY)
@@ -217,6 +282,13 @@ class ArtTimerPlugin(Plugin):
             )
             if elapsed <= info.delay + info.duration:
                 self._start_role_loop(self._art_type)
+            else:
+                # Audio lifetime follows its own countdown even while the
+                # shared HUD is displaying Undertaker's extra art.
+                self._stop_loop()
+                self._art_type = self._art_started = None
+        if self._update_undertaker_timer():
+            return
         if self._hud is None:
             return
         if self._art_type is None or self._art_started is None:
@@ -301,6 +373,9 @@ class ArtTimerPlugin(Plugin):
         hotkeys = self.ctx.services.require(HotkeyApi)
         basic = SettingSection(tr("settings.basic.title"))
         basic.addCards(
+            ConfigSwitchCard(
+                self.config.undertaker_enabled, FluentIcon.VIEW, tr("settings.undertaker_enabled.title")
+            ),
             HotkeySettingCard(
                 hotkeys,
                 _CALIBRATE_REGION,
@@ -322,6 +397,18 @@ class ArtTimerPlugin(Plugin):
         )
         advanced = SettingSection(tr("settings.advanced.title"))
         advanced.addCards(
+            ConfigRangeCard(
+                self.config.undertaker_pink_percent,
+                FluentIcon.PALETTE,
+                tr("settings.undertaker_threshold.title"),
+                formatter=lambda value: f"{value}%",
+            ),
+            ConfigRangeCard(
+                self.config.undertaker_duration,
+                FluentIcon.HISTORY,
+                tr("settings.undertaker_duration.title"),
+                formatter=lambda value: f"{value} s",
+            ),
             ConfigRangeCard(
                 self.config.detect_delay_ms,
                 FluentIcon.HISTORY,
@@ -355,6 +442,7 @@ class ArtTimerPlugin(Plugin):
         return panel
 
     def reset_settings(self) -> None:
+        self._cancel_undertaker()
         self._detect_timer.stop()
         self._detect_generation += 1
         self._art_type = self._art_started = None
