@@ -46,3 +46,24 @@ def test_all_sampled_down_states_match_filename() -> None:
             assert bgr is not None
             upper, lower = detect_rgb(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
             assert (upper.down, lower.down) == expected[stem], path
+
+
+def test_single_teammate_skips_lower_row_entirely(monkeypatch):
+    import numpy as np
+
+    from nightreign_overlay.plugins.entertainment import detector
+
+    rows = []
+    expected = detector.Teammate(True, True, 3, 1.0, (10, 10))
+
+    def detect_row(rgb, evidence, index):
+        rows.append(index)
+        return expected
+
+    monkeypatch.setattr(detector, "_detect_row", detect_row)
+    upper, lower = detector.detect_rgb(np.zeros((120, 240, 3), np.uint8), teammate_count=1)
+    assert rows == [0]
+    assert upper == expected and not lower.present and not lower.down
+    rows.clear()
+    detector.detect_rgb(np.zeros((120, 240, 3), np.uint8))
+    assert rows == [0, 1]

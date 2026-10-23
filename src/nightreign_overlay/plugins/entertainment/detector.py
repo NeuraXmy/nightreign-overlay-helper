@@ -151,7 +151,9 @@ def _templates(radius: int) -> tuple[tuple[np.ndarray, ...], np.ndarray]:
     return tuple(sectors), penalty
 
 
-def detect_rgb(rgb: np.ndarray) -> tuple[Teammate, Teammate]:
+def detect_rgb(rgb: np.ndarray, *, teammate_count: int = 2) -> tuple[Teammate, Teammate]:
+    if teammate_count not in (1, 2):
+        raise ValueError("teammate_count must be 1 or 2")
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV).astype(np.float32)
     hue, saturation, value = hsv.transpose(2, 0, 1)
     hue_score = np.clip(1 - np.abs(hue - 126) / 16, 0, 1)
@@ -159,4 +161,8 @@ def detect_rgb(rgb: np.ndarray) -> tuple[Teammate, Teammate]:
         np.float32
     )
     # Same detector for each slot; only the expected row position changes.
-    return _detect_row(rgb, evidence, 0), _detect_row(rgb, evidence, 1)
+    upper = _detect_row(rgb, evidence, 0)
+    lower = (
+        _detect_row(rgb, evidence, 1) if teammate_count == 2 else Teammate(False, False, 0, 0.0, (0.0, 0.0))
+    )
+    return upper, lower

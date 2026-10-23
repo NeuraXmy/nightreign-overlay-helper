@@ -36,6 +36,7 @@ _REGIONS = {
     "map_detect.map_region": (1454, 228, 990, 990),
     "hp_marker.hpbar_region": (224, 56, 134, 15),
     "art_timer.art_region": (1206, 1260, 143, 140),
+    "entertainment.self_down": (1208, 321, 150, 151),
     "entertainment.teammates": (65, 216, 457, 249),
 }
 _HD_REGIONS = {
@@ -44,6 +45,7 @@ _HD_REGIONS = {
     "map_detect.map_region": (1090, 171, 742, 742),
     "hp_marker.hpbar_region": (168, 42, 100, 11),
     "art_timer.art_region": (904, 945, 107, 105),
+    "entertainment.self_down": (906, 241, 112, 113),
     "entertainment.teammates": (49, 162, 343, 187),
 }
 
@@ -60,6 +62,7 @@ def test_default_regions_scale_once_in_physical_client_pixels(origin, size, expe
 
 def test_entertainment_default_matches_the_1960x1100_reference():
     assert automatic_region("entertainment.teammates", QRect(0, 0, 1960, 1100)) == QRect(50, 165, 350, 190)
+    assert automatic_region("entertainment.self_down", QRect(0, 0, 1960, 1100)) == QRect(925, 245, 115, 115)
 
 
 @pytest.mark.parametrize("size", [(640, 360), (1280, 720), (3840, 2160), (1921, 1080)])
@@ -280,6 +283,7 @@ def test_art_hotkey_can_request_first_frame_before_any_stream_exists(regions, st
     _, api, fakes, _ = regions
     plugin, _ = _feature(ArtTimerPlugin, fakes, store)
     try:
+        plugin.config.undertaker_enabled.set(False)
         assert fakes.capture.streams == set() and fakes.capture.latest_frame() is None
         _press(fakes, "art_timer.use_art")
         assert plugin._detect_timer.isActive()

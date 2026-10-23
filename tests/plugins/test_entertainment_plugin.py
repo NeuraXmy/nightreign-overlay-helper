@@ -68,6 +68,16 @@ def test_plugin_registers_default_region_and_builds_settings(store, qapp, tmp_pa
     # Migrate the old fake calibration so the region falls back to automatic 16:9 geometry.
     assert region.rect is None
     assert panel is not None
+    section = panel.sectionLayout.itemAt(0).widget()
+    titles = [section.cardLayout.itemAt(i).widget().titleLabel.text() for i in range(8)]
+    assert titles[3:8] == [
+        "播放结束条件",
+        "循环播放音频",
+        "自身倒地停止播放",
+        "自身倒地区域",
+        "仅三人游戏时触发",
+    ]
+    assert plugin.config.self_down_stop.value is True
 
     plugin.on_deactivate()
     context.release()
@@ -104,3 +114,239 @@ def test_state_transition_requires_three_consecutive_matching_detections(store, 
     plugin._on_completed((1, (down, upright)), region.rect)
     assert calls == ["start"]
     context.release()
+
+
+def test_self_down_debounce_stops_and_revival_resumes_without_log_spam(
+    store, qapp, tmp_path, monkeypatch, caplog
+):
+    import logging
+
+    from nightreign_overlay.plugins.entertainment.detector import Teammate
+    from tests.support.feature_fakes import FeatureServices
+
+    fakes = FeatureServices(store, tmp_path)
+    plugin = EntertainmentPlugin(
+        fakes.context("entertainment", Path("src/nightreign_overlay/plugins/entertainment"))
+    )
+    plugin.on_load()
+    plugin._active = True
+    fakes.region.regions["entertainment.teammates"] = QRect(0, 0, 240, 120)
+    fakes.region.regions["entertainment.self_down"] = QRect(250, 0, 115, 115)
+    region = fakes.region.regions["entertainment.teammates"]
+    self_region = fakes.region.regions["entertainment.self_down"]
+    down = Teammate(True, True, 3, 1.0, (0, 0))
+    absent = Teammate(False, False, 0, 0, (0, 0))
+    calls = []
+
+    def start():
+        calls.append("start")
+        plugin._playing = True
+
+    def stop(immediate=False):
+        calls.append(("stop", immediate))
+        plugin._playing = False
+
+    monkeypatch.setattr(plugin, "_start_loop", start)
+    monkeypatch.setattr(plugin, "_stop_loop", stop)
+
+    def frame(self_down, result=(down, down)):
+        plugin._on_completed((plugin._generation, result, self_down, self_region), region)
+
+    with caplog.at_level(logging.INFO):
+        for _ in range(3):
+            frame(False)
+        assert calls == ["start"]
+        frame(True)
+        frame(False)  # A noisy observation cannot change the confirmed state.
+        frame(True)
+        frame(True)
+        assert calls == ["start"]
+        frame(True)
+        assert calls[-1] == ("stop", True)
+        for _ in range(5):
+            frame(True)
+        assert len(calls) == 2
+        frame(False)
+        frame(False)
+        assert not plugin._playing
+        frame(False)
+        assert calls == ["start", ("stop", True), "start"]
+        for _ in range(4):
+            frame(False)
+        logs = [message for message in caplog.messages if message.startswith("Self status changed:")]
+        assert logs == [
+            "Self status changed: upright",
+            "Self status changed: down",
+            "Self status changed: upright",
+        ]
+        # Disabling self detection removes its blocking effect and ignores old jobs.
+        for _ in range(3):
+            frame(True)
+        stale_generation = plugin._generation
+        plugin.config.self_down_stop.set(False)
+        assert plugin._playing
+        plugin._on_completed((stale_generation, (down, down), True, self_region), region)
+        assert plugin._playing
+        for _ in range(3):
+            frame(True, (absent, absent))
+        assert not plugin._playing  # No teammates still takes precedence.
+    plugin._active = False
+    plugin.ctx.release()
+
+
+def test_capture_worker_detects_self_only_when_enabled_and_resets_regions(store, qapp, tmp_path, monkeypatch):
+    import time
+
+    import nightreign_overlay.plugins.entertainment.plugin as module
+    from nightreign_overlay.plugins.capture.api import FrameCaptured
+    from nightreign_overlay.plugins.entertainment.detector import Teammate
+    from tests.support.feature_fakes import FeatureServices, solid_image
+
+    fakes = FeatureServices(store, tmp_path)
+    plugin = EntertainmentPlugin(
+        fakes.context("entertainment", Path("src/nightreign_overlay/plugins/entertainment"))
+    )
+    plugin.on_load()
+    fakes.region.regions["entertainment.teammates"] = QRect(0, 0, 200, 100)
+    fakes.region.regions["entertainment.self_down"] = QRect(210, 0, 115, 115)
+    down = Teammate(True, True, 3, 1, (0, 0))
+    teammate_counts = []
+    monkeypatch.setattr(
+        module,
+        "detect_rgb",
+        lambda image, **kwargs: teammate_counts.append(kwargs.get("teammate_count", 2)) or (down, down),
+    )
+    self_calls = []
+    monkeypatch.setattr(module, "is_down", lambda image: self_calls.append(image.shape) or True)
+    plugin.config.detect_enabled.set(True)
+    plugin.config.stable_detections.set(1)
+    plugin.on_activate()
+    event = FrameCaptured(solid_image(400, 200, (90, 60, 120)), 0)
+
+    def frame():
+        plugin._on_frame(event)
+        deadline = time.monotonic() + 2
+        while plugin._pending and time.monotonic() < deadline:
+            qapp.processEvents()
+            time.sleep(0.001)
+        assert not plugin._pending
+
+    try:
+        frame()
+        assert self_calls == [(115, 115, 3)]
+        assert plugin._self_down is True
+        assert teammate_counts == [2]
+        from types import SimpleNamespace
+
+        from nightreign_overlay.plugins.p2p_latency.api import PeerSnapshot
+
+        fakes.events.publish(PeerSnapshot((SimpleNamespace(state="connected"),), ""))
+        frame()
+        assert teammate_counts[-1] == 1
+        plugin.config.self_down_stop.set(False)
+        frame()
+        assert len(self_calls) == 2 and plugin._self_down is None
+        plugin._calibrate_self()
+        assert fakes.region.requests[-1][0] == "entertainment.self_down"
+        plugin.reset_settings()
+        assert plugin.config.self_down_stop.value is True
+        assert fakes.region.regions == {}
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+    assert not fakes.capture.streams
+
+
+def test_three_player_only_blocks_single_teammate_and_rechecks_on_toggle(store, qapp, tmp_path, monkeypatch):
+    from nightreign_overlay.plugins.entertainment.detector import Teammate
+    from tests.support.feature_fakes import FeatureServices
+
+    fakes = FeatureServices(store, tmp_path)
+    plugin = EntertainmentPlugin(
+        fakes.context("entertainment", Path("src/nightreign_overlay/plugins/entertainment"))
+    )
+    plugin.on_load()
+    plugin._active = True
+    down = Teammate(True, True, 3, 1, (0, 0))
+    absent = Teammate(False, False, 0, 0, (0, 0))
+    calls = []
+
+    def start():
+        plugin._playing = True
+        calls.append("start")
+
+    def stop(immediate=False):
+        plugin._playing = False
+        calls.append("stop")
+
+    monkeypatch.setattr(plugin, "_start_loop", start)
+    monkeypatch.setattr(plugin, "_stop_loop", stop)
+    assert plugin.config.three_player_only.value is False
+    plugin._confirmed_result = (down, absent)
+    plugin._apply_playback()
+    assert calls == ["start"]
+    plugin.config.three_player_only.set(True)
+    assert calls == ["start", "stop"]
+    plugin._apply_playback()
+    assert not plugin._playing
+    plugin._confirmed_result = (down, down)
+    plugin._apply_playback()
+    assert plugin._playing
+    plugin._confirmed_result = (absent, absent)
+    plugin._apply_playback()
+    assert not plugin._playing
+    plugin._confirmed_result = (down, absent)
+    plugin._apply_playback()
+    assert not plugin._playing
+    plugin.config.three_player_only.set(False)
+    assert plugin._playing
+    plugin._active = False
+    plugin.ctx.release()
+
+
+def test_fresh_connected_p2p_roster_limits_detection_and_falls_back_on_failure(
+    store, qapp, tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    import nightreign_overlay.plugins.entertainment.plugin as module
+    from nightreign_overlay.plugins.p2p_latency.api import P2PStateChanged, PeerSnapshot
+    from tests.support.feature_fakes import FeatureServices
+
+    fakes = FeatureServices(store, tmp_path)
+    plugin = EntertainmentPlugin(
+        fakes.context("entertainment", Path("src/nightreign_overlay/plugins/entertainment"))
+    )
+    plugin.on_load()
+    plugin.on_activate()
+    clock = [100.0]
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock[0])
+    connected = SimpleNamespace(state="connected")
+    connecting = SimpleNamespace(state="connecting")
+
+    def snapshot(peers):
+        fakes.events.publish(PeerSnapshot(tuple(peers), ""))
+
+    try:
+        assert plugin._teammate_limit() == 2
+        snapshot([connected])
+        assert plugin._teammate_limit() == 1
+        snapshot([connected, connected])
+        assert plugin._teammate_limit() == 2
+        snapshot([connecting])
+        assert plugin._teammate_limit() == 2
+        snapshot([connected])
+        clock[0] += 6
+        assert plugin._teammate_limit() == 2
+        snapshot([connected])
+        assert plugin._teammate_limit() == 1
+        for state in ("disabled", "helper_error", "helper_restarting", "game_exited", "waiting_for_game"):
+            snapshot([connected])
+            fakes.events.publish(P2PStateChanged(SimpleNamespace(state=state)))
+            assert plugin._teammate_limit() == 2
+        snapshot([])
+        assert plugin._teammate_limit() == 2
+    finally:
+        plugin.on_deactivate()
+        plugin.ctx.release()
+    assert plugin._teammate_limit() == 2

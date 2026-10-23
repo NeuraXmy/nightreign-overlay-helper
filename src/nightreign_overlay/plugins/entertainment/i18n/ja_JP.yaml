@@ -19,10 +19,18 @@ settings:
   all_three: 味方全員が3回ダウン
   all_up: 味方全員が復活
   any_up: 味方の誰かが復活
+  self_stop:
+    title: 自分のダウン時に再生を停止
+  self_region:
+    title: 自分のダウンアイコン範囲
+    content: 自分がダウンしたときに表示される3分割のリングアイコンを選択
+    annotate: 自分のダウンアイコンの範囲を選択
+  three_player_only:
+    title: 3人プレイ時のみ再生
   advanced:
     title: 詳細設定
     stable_detections:
-      title: 味方の状態の確認回数
-      content: 同じ結果が連続して指定回数検出された後に味方の状態変化を確定します。初期値は3回です
+      title: 状態の確認回数
+      content: 自分と味方の状態変化は、同じ結果が連続して指定回数検出された後に確定します。初期値は3回です
 audio:
   loop_title: ループ再生音声
