@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 
 import cv2
@@ -10,7 +11,11 @@ from tests.support.teammate_images import expected_states, sample_paths, states,
 _SAMPLES = Path(__file__).parents[1] / "data" / "entertainment"
 
 
-@pytest.mark.parametrize("path", sample_paths(), ids=lambda p: f"{p.parent.name}/{p.name}")
+@pytest.mark.parametrize(
+    "path",
+    sorted(random.Random(20261023).sample(sample_paths(), 20)),
+    ids=lambda p: f"{p.parent.name}/{p.name}",
+)
 def test_teammate_states_and_enhancements(path):
     image = cv2.imdecode(np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR)
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

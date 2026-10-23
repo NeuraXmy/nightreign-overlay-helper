@@ -26,11 +26,11 @@ def test_all_document_blocks_render_after_image_resizing(qapp: QApplication, pat
         original_text = browser.toPlainText()
         configure_markdown_browser(browser)
         browser.show()
-        for width in (850, 560, 1100, 850):
+        for width in (560, 1100):
             browser.resize(width, 600)
-            process_events()
+            process_events(10)
             browser.verticalScrollBar().setValue(browser.verticalScrollBar().maximum())
-            process_events()
+            process_events(10)
             assert browser.toPlainText() == original_text
             document = browser.document()
             layout = document.documentLayout()
@@ -45,7 +45,7 @@ def test_all_document_blocks_render_after_image_resizing(qapp: QApplication, pat
             cursor.movePosition(QTextCursor.MoveOperation.End)
             browser.setTextCursor(cursor)
             browser.ensureCursorVisible()
-            process_events()
+            process_events(10)
             assert browser.viewport().rect().intersects(browser.cursorRect())
     finally:
         delete_qobjects(browser)

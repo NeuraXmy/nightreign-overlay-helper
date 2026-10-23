@@ -18,6 +18,7 @@ from nightreign_overlay.plugins.hp_marker.detector import HpDetector
 from nightreign_overlay.plugins.hp_marker.material import MaterialModel
 from tests.support.hp_scene_evaluation import scene_geometry
 from tests.support.hp_video import VIDEO_ROOT
+from tests.support.video_frames import video_frames
 
 
 def production_labels() -> list[dict]:
@@ -136,8 +137,12 @@ def evaluate_production(
     intervals: tuple[float, ...] = (0, 0.05, 0.25),
     cold_starts: bool = True,
     model: MaterialModel | None = None,
+    predecoded: bool = False,
+    cold_start_step: int = 1,
 ) -> dict:
-    """Decode once; each run owns a fresh detector, and ignored frames still feed continuous runs."""
+    """Read every frame; each run owns a fresh detector, optionally using saved decoded frames."""
+    if cold_start_step < 1:
+        raise ValueError("cold_start_step must be positive")
     path = VIDEO_ROOT / label["video"] if source is None else source
     expected_hash = label["video_sha256"] if source is None else label["source_sha256"]
     if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
@@ -153,23 +158,19 @@ def evaluate_production(
             for start in range(
                 math.ceil(segment["source_start_seconds"]),
                 math.floor(segment["source_end_seconds"] - 5) + 1,
+                cold_start_step,
             ):
                 starts.append(_Run(0.25, start, start + 5))
     model = model or MaterialModel()
     for run in continuous + starts:
         run.detector = HpDetector(material_model=model)
-    capture = cv2.VideoCapture(str(path))
-    if not capture.isOpened():
-        raise RuntimeError(f"Cannot open {path.name}")
+    frames = video_frames(
+        path, fps=label["fps"], frame_count=label["decoded_frame_count"], predecoded=predecoded
+    )
     settings = HpDetectionSettings()
     frame_index = 0
     try:
-        if capture.get(cv2.CAP_PROP_FPS) != label["fps"]:
-            raise ValueError("Video frame rate differs from annotation")
-        while True:
-            ok, bgr = capture.read()
-            if not ok:
-                break
+        for bgr in frames:
             timestamp = frame_index / label["fps"]
             selected = [
                 run
@@ -202,7 +203,7 @@ def evaluate_production(
                     )
             frame_index += 1
     finally:
-        capture.release()
+        frames.close()
     if frame_index != label["decoded_frame_count"]:
         raise AssertionError(f"Decoded {frame_index} frames, expected {label['decoded_frame_count']}")
     windows = [run.report() for run in starts]

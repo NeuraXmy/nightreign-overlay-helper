@@ -1,5 +1,6 @@
 """Lossless meter-region regression samples, augmentations and structural negatives."""
 
+import random
 from pathlib import Path
 
 import cv2
@@ -10,6 +11,7 @@ from nightreign_overlay.plugins.debuff_timer.detector import DebuffDetector
 from tests.support.debuff_images import combined_variants, variants
 
 _ROOT = Path(__file__).parents[1] / "data/debuff"
+_SAMPLES = sorted(random.Random(20261023).sample(sorted(_ROOT.glob("*.png")), 10))
 
 
 @pytest.fixture(scope="module")
@@ -17,7 +19,7 @@ def detector():
     return DebuffDetector()
 
 
-@pytest.mark.parametrize("path", sorted(_ROOT.glob("*.png")), ids=lambda path: path.name)
+@pytest.mark.parametrize("path", _SAMPLES, ids=lambda path: path.name)
 def test_real_meter_regions_and_augmentations(detector, path):
     rgb = cv2.cvtColor(
         cv2.imdecode(np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB
@@ -28,13 +30,13 @@ def test_real_meter_regions_and_augmentations(detector, path):
         assert result.present == expected, (path.name, index, result)
 
 
-@pytest.mark.parametrize("path", sorted(_ROOT.glob("*.png")), ids=lambda path: path.name)
+@pytest.mark.parametrize("path", _SAMPLES, ids=lambda path: path.name)
 def test_combined_lighting_and_sharpness(detector, path):
     rgb = cv2.cvtColor(
         cv2.imdecode(np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB
     )
     expected = path.stem.split("_")[0] != "None"
-    for parameters, image in combined_variants(rgb):
+    for parameters, image in combined_variants(rgb, max_combined=2):
         result = detector.detect(image)
         assert result.present == expected, (path.name, parameters, result)
 

@@ -14,6 +14,7 @@ from nightreign_overlay.plugins.hp_marker.detector import HpDetector
 from nightreign_overlay.plugins.hp_marker.structural import estimate_boundary
 from tests.support.hp_augmentations import Augmentation
 from tests.support.paths import PROJECT_ROOT
+from tests.support.video_frames import video_frames
 
 VIDEO_ROOT = PROJECT_ROOT / "tests/data/hp_detect/videos"
 
@@ -32,24 +33,29 @@ def evaluate_video(
     interval_seconds: float = 0,
     single_frame: bool = False,
     augmentation: Augmentation | None = None,
+    predecoded: bool = False,
+    sample_stride: int = 1,
 ) -> dict:
     """GT is used only after prediction; a new detector is created for each run.
 
     Rejected observations cover time until the next accepted observation, including
-    startup and the tail of the video. Sampling still decodes all original frames.
+    startup and the tail of the video. Sampling traverses all original frames;
+    predecoded=True reuses lossless saved frames across sampling rates and test runs.
+    sample_stride subsamples scheduled observations, restarting at each GT segment
+    so capacity-change boundaries keep their first observation.
     """
-    capture = cv2.VideoCapture(str(VIDEO_ROOT / label["video"]))
-    if not capture.isOpened():
-        raise RuntimeError(f"Cannot decode fixture: {label['video']}")
-    fps = capture.get(cv2.CAP_PROP_FPS)
-    if fps != label["fps"]:
-        capture.release()
-        raise AssertionError(f"Unexpected FPS: {fps}")
+    if sample_stride < 1:
+        raise ValueError("sample_stride must be positive")
+    fps = label["fps"]
+    frames = video_frames(
+        VIDEO_ROOT / label["video"], fps=fps, frame_count=label["decoded_frame_count"], predecoded=predecoded
+    )
     detector, settings = HpDetector(), HpDetectionSettings()
     tolerance = annotations()["tolerance_px"]
     frame_index = accepted = rejected = 0
     labelled_frames = 0
     next_sample = 0.0
+    sample_index = 0
     rejection_start = first_accepted = None
     longest_rejection = max_error = 0.0
     mistakes: list[dict] = []
@@ -81,10 +87,7 @@ def evaluate_video(
     gt_origin_x = float(label.get("gt_origin_x", 0.0))
     scale = 1.0
     try:
-        while True:
-            ok, bgr = capture.read()
-            if not ok:
-                break
+        for bgr in frames:
             timestamp = frame_index / fps
             source_timestamp = source_start + timestamp
             frame_index += 1
@@ -104,11 +107,15 @@ def evaluate_video(
                 active_segment_index = segment_index
                 rejection_start = None
                 next_sample = timestamp
+                sample_index = 0
             if segment_index is not None:
                 labelled_frames += 1
             if timestamp + 1e-9 < next_sample:
                 continue
             next_sample = timestamp + interval_seconds
+            sample_index += 1
+            if (sample_index - 1) % sample_stride:
+                continue
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
             if augmentation is not None:
                 transformed = augmentation.apply(Image.fromarray(rgb))
@@ -152,7 +159,7 @@ def evaluate_video(
                     }
                 )
     finally:
-        capture.release()
+        frames.close()
     if rejection_start is not None:
         active_end = gt_segments[active_segment_index]["source_end_seconds"]
         longest_rejection = max(longest_rejection, active_end - rejection_start)
@@ -165,6 +172,8 @@ def evaluate_video(
         "algorithm": "single_frame_baseline" if single_frame else "structural",
         "augmentation": augmentation.name if augmentation else "original",
         "interval_seconds": interval_seconds,
+        "sample_stride": sample_stride,
+        "detector_calls": len(detector_costs),
         "decoded_frames": frame_index,
         "evaluated_frames": len(labelled_costs),
         "gt_length_px": (label["gt_length_px"] * scale if not has_segments else label.get("gt_length_px")),

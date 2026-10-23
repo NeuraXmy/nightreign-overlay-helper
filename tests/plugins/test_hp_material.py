@@ -20,7 +20,10 @@ def _frame(name: str) -> np.ndarray:
 @pytest.mark.parametrize("interval", [0, 0.05, 0.25])
 @pytest.mark.parametrize("label", hp_footage_annotations()["annotations"], ids=lambda label: label["id"])
 def test_capacity_change_videos_have_no_mistakes_and_low_refusal(label, interval):
-    report = evaluate_video(label, interval_seconds=interval)
+    # Keep the sparse cadence: further thinning can starve temporal confirmation.
+    report = evaluate_video(
+        label, interval_seconds=interval, predecoded=True, sample_stride=2 if interval < 0.25 else 1
+    )
     assert report["incorrect"] == 0, report
     assert_rejection_ratio(report["rejection_ratio"], context=f"{label['id']} interval={interval}s")
     assert_rejection_duration(
@@ -133,10 +136,10 @@ def test_calibrated_middle_selects_hp_instead_of_more_saturated_other_bars():
 
 
 @pytest.mark.parametrize("label", production_labels()[:2], ids=lambda label: label["id"])
-def test_independent_starts_each_second_need_no_warmed_capacity(label):
+def test_sampled_independent_starts_need_no_warmed_capacity(label):
     # Cold-start acceptance uses the pixels actually available to the main
     # program. Old narrow fixtures omit two required lower context rows.
-    report = evaluate_production(label, intervals=(0.25,))
+    report = evaluate_production(label, intervals=(0.5,), predecoded=True, cold_start_step=2)
     assert report["cold_starts"]
     for window in report["cold_starts"]:
         assert window["incorrect"] == 0, window

@@ -2,11 +2,13 @@
 
 Runs the same one-second polling cadence as the Windows helper. The repeating 32-second
 scenario includes empty lists, unavailable metrics, all ping colours and a replacement peer.
+Tests can accelerate the cadence with NROH_P2P_MOCK_INTERVAL (seconds).
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 import threading
 
@@ -39,6 +41,9 @@ def snapshot(tick: int) -> list[dict]:
 
 
 def main() -> None:
+    interval = float(os.environ.get("NROH_P2P_MOCK_INTERVAL", "1"))
+    if interval <= 0:
+        raise ValueError("Mock polling interval must be positive")
     stopping = threading.Event()
 
     def read_commands() -> None:
@@ -56,7 +61,7 @@ def main() -> None:
             "etw_state": "waiting",
         }
     )
-    if stopping.wait(1):
+    if stopping.wait(interval):
         return
     emit(
         {
@@ -70,7 +75,7 @@ def main() -> None:
     while not stopping.is_set():
         emit({"type": "snapshot", "peers": snapshot(tick)})
         tick += 1
-        stopping.wait(1)
+        stopping.wait(interval)
 
 
 if __name__ == "__main__":
