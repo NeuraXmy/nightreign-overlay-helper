@@ -74,3 +74,42 @@ def test_augmentation_catalog_is_complete_and_names_are_unique():
         "bright_combination",
         "dark_combination",
     }
+
+
+@pytest.mark.parametrize(
+    "interval,segments,expected",
+    [
+        (0, None, [0, 2, 4, 6]),
+        (1, None, [0, 4]),
+        (0, [(0, 1.5), (1.5, 4)], [0, 2, 3, 5, 7]),
+    ],
+)
+def test_subsampling_preserves_timestamps_and_first_frame_after_capacity_changes(
+    monkeypatch, interval, segments, expected
+):
+    observed = []
+
+    class Detector:
+        def detect(self, image, settings):
+            observed.append(int(image[0, 0, 0]))
+            return None if len(observed) == 1 else 100
+
+    monkeypatch.setattr(hp_video, "HpDetector", Detector)
+    monkeypatch.setattr(
+        hp_video,
+        "video_frames",
+        lambda *args, **kwargs: (np.full((10, 120, 3), i, np.uint8) for i in range(8)),
+    )
+    label = {"id": "synthetic", "video": "unused", "fps": 2, "decoded_frame_count": 8, "gt_length_px": 100}
+    if segments:
+        label["gt_segments"] = [
+            {"source_start_seconds": start, "source_end_seconds": end, "gt_length_px": 100}
+            for start, end in segments
+        ]
+    report = hp_video.evaluate_video(label, interval_seconds=interval, sample_stride=2)
+    assert observed == expected
+    assert report["decoded_frames"] == 8
+    assert report["detector_calls"] == report["evaluated_frames"] == len(expected)
+    assert report["first_accepted_seconds"] == expected[1] / 2
+    assert report["longest_rejection_seconds"] == expected[1] / 2
+    assert report["incorrect"] == 0

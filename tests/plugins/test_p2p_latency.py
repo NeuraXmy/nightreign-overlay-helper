@@ -358,14 +358,14 @@ def test_mock_full_cycle_keeps_text_visible_and_fits_rows(plugin):
     window = _window(plugin)
     window.manager.foreground.set_ui_active("main_window", True)
     window.set_status(P2PStatus("steam_ready", "模拟", etw_state="simulated"))
-    process_events()
+    process_events(5)
     waiting_height = window.height()
     for tick in range(64):
         peers = parse_helper_message(json.dumps({"type": "snapshot", "peers": snapshot(tick)}))[1]
         window.set_peers(peers)
         # Service updates status immediately after updating the peer count.
         window.set_status(P2PStatus("steam_ready", "模拟", etw_state="simulated", peer_count=len(peers)))
-        process_events()
+        process_events(5)
         assert window.isVisible()
         for label in window.panel.findChildren(QLabel):
             if label.isVisible():
@@ -384,6 +384,7 @@ def test_mock_full_cycle_keeps_text_visible_and_fits_rows(plugin):
 def test_real_mock_subprocess_hot_toggle_and_shutdown(plugin, monkeypatch):
     import nightreign_overlay.plugins.p2p_latency.service as service_module
 
+    monkeypatch.setenv("NROH_P2P_MOCK_INTERVAL", "0.02")
     monkeypatch.setattr(service_module.sys, "platform", "darwin")
     parent = QWidget()
     panel = plugin.create_settings_widget(parent)

@@ -30,10 +30,12 @@ def variants(rgb):
         yield cv2.warpAffine(rgb, matrix, (rgb.shape[1], rgb.shape[0]), borderMode=cv2.BORDER_REFLECT)
 
 
-def combined_variants(rgb):
+def combined_variants(rgb, *, max_combined=4):
     for brightness, contrast, saturation, sharpness in product(
         (0.6, 1.0, 1.4), (0.6, 1.0, 1.4), (0.5, 1.0, 1.5), ("blur", "original", "sharpen")
     ):
+        if sum((brightness != 1, contrast != 1, saturation != 1, sharpness != "original")) > max_combined:
+            continue
         hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
         hsv[..., 1] = np.clip(hsv[..., 1].astype(float) * saturation, 0, 255)
         image = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB).astype(float)
