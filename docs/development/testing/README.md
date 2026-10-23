@@ -61,6 +61,8 @@ QT_QPA_PLATFORM=offscreen uv run pytest benchmark/benchmark_hp_production.py -m 
 
 通用悬浮窗和共享 HUD 的行为测试位于 `ui/test_overlay.py`，插件发现测试检查正式内置插件集合。
 
+异常量表的背景误检、组合增强和单次检测耗时见 [2026-10-23 验证记录](debuff-detection-2026-10-23.md)。
+
 地图识别通过标注截图、生产部署推理和状态机测试验证。样本规则与复测命令见 [地图识别测试](map-detection.md)，CNN 部署与验收见 [POI CNN](../../features/map/poi-cnn.md)。
 
 测试不依赖相邻旧项目或其配置文件。血条结构检测、已有截图准确率、历史状态重置和插件行为由 `plugins/test_hp_detection_accuracy.py` 与 `plugins/test_hp_marker.py` 覆盖。
@@ -77,6 +79,7 @@ FAQ 本地资源使用规范化后的 `Path` 比较，兼容 Qt 与操作系统�
 | [`tests/support/qt.py`](../../../tests/support/qt.py) | `process_events()`、`delete_qobjects()` |
 | [`tests/support/paths.py`](../../../tests/support/paths.py) | 仓库路径与地图截图路径，避免目录移动影响路径推导 |
 | [`tests/support/hp_video.py`](../../../tests/support/hp_video.py) | 血条视频逐帧评估及检测耗时统计，供视频回归测试使用 |
+| [`tests/support/debuff_images.py`](../../../tests/support/debuff_images.py) | 异常量表的单项与组合图像增强，供回归测试和性能测量共用 |
 
 ## 运行测试
 

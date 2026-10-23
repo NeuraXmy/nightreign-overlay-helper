@@ -32,6 +32,7 @@ class DebuffDetector:
         if not references:
             raise ValueError("No condition icon templates")
         self.templates = []
+        self._details = []
         self._geometry = []
         # Try the expected icon size across all types before less common scales.
         for size in (22, 24, 20, 26, 28):
@@ -43,7 +44,15 @@ class DebuffDetector:
                 self.templates.append(
                     cv2.resize(gray, (inner_size, inner_size), interpolation=cv2.INTER_AREA)
                 )
+                self._details.append(self._highpass(self.templates[-1])[2:-2, 2:-2].copy())
                 self._geometry.append((size, inset))
+
+    @staticmethod
+    def _highpass(gray: np.ndarray) -> np.ndarray:
+        # Background lighting gradients can correlate with the icon silhouette.
+        # Remove those gradients so acceptance requires the actual inner symbol.
+        floating = gray.astype(np.float32)
+        return floating - cv2.GaussianBlur(floating, (0, 0), 2)
 
     @staticmethod
     def _bar_score(gray: np.ndarray, x: int, y: int, size: int) -> float:
@@ -62,7 +71,9 @@ class DebuffDetector:
             # Scale the contrast requirement with the local luminance range.
             band = gray[max(0, yy - 8) : yy + 9, x0:x1]
             low, high = np.percentile(band, (10, 90))
-            threshold = max(1.0, float(high - low) * 0.025)
+            # The center minus the mean of two rows has half-level precision;
+            # retain that signal in dim, low-contrast captures as well.
+            threshold = max(0.5, float(high - low) * 0.025)
             coverage = max(float(np.mean(difference > threshold)), float(np.mean(difference < -threshold)))
             strength = min(1.0, float(np.mean(np.abs(difference))) / (threshold * 2))
             best = max(best, coverage * strength)
@@ -76,7 +87,9 @@ class DebuffDetector:
         floating = gray.astype(np.float32)
         best_bar = 0.0
         best_icon = 0.0
-        for template, (size, inset) in zip(self.templates, self._geometry, strict=True):
+        for template, reference_detail, (size, inset) in zip(
+            self.templates, self._details, self._geometry, strict=True
+        ):
             scores = cv2.matchTemplate(gray[:, :135], template, cv2.TM_CCOEFF_NORMED)
             _, score, _, (x, y) = cv2.minMaxLoc(scores)
             best_icon = max(best_icon, score)
@@ -88,6 +101,14 @@ class DebuffDetector:
                 interior = gray[y + 2 : y + inner_size - 2, x + 2 : x + inner_size - 2]
                 detail = float(cv2.matchTemplate(interior, template[2:-2, 2:-2], cv2.TM_CCOEFF_NORMED)[0, 0])
                 if detail < 0.70:
+                    continue
+                patch = gray[y : y + inner_size, x : x + inner_size]
+                detail_score = float(
+                    cv2.matchTemplate(
+                        self._highpass(patch)[2:-2, 2:-2], reference_detail, cv2.TM_CCOEFF_NORMED
+                    )[0, 0]
+                )
+                if detail_score < 0.70:
                     continue
                 x -= inset
                 y -= inset
