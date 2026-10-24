@@ -488,7 +488,7 @@ class _AutoCapture:
         self._process = process
         self._log = log
         self._maa: _MaaCapture | None = None
-        self._last_unavailable_log = 0.0
+        self._waiting_logged = False
 
     def grab(self) -> QImage | None:
         if sys.platform != "win32":
@@ -501,22 +501,21 @@ class _AutoCapture:
             except Exception as error:
                 if candidate is not None:
                     candidate.close()
-                now = time.monotonic()
-                if now - self._last_unavailable_log >= 60:
+                if not self._waiting_logged:
                     self._log.info("Automatic Maa capture is waiting for the game window: %s", error)
-                    self._last_unavailable_log = now
+                    self._waiting_logged = True
                 return None
             self._maa = candidate
+            self._waiting_logged = False
             self._log.info("Automatic capture candidate selected: Maa (%s)", candidate.selected_method)
         try:
             image = self._maa.grab()
         except Exception as error:
             self._maa.close()
             self._maa = None
-            now = time.monotonic()
-            if now - self._last_unavailable_log >= 60:
+            if not self._waiting_logged:
                 self._log.info("Automatic Maa capture is waiting for the game window: %s", error)
-                self._last_unavailable_log = now
+                self._waiting_logged = True
             return None
         if image is not None and not image.isNull():
             return image
