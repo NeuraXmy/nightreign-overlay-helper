@@ -25,9 +25,11 @@ home:
     game_unsupported: 此平台不支援偵測
     game_open: 遊戲視窗已開啟
     game_closed: 遊戲視窗未開啟
-    overlay: 懸浮窗顯示方式
-    overlay_transparent: 透明懸浮窗
-    overlay_window: 一般視窗
+    capture: 擷取狀態
+    capture_inactive: 未啟用
+    capture_waiting: 等待遊戲視窗
+    capture_running: 正常執行
+    capture_running_method: "正常執行（{method}）"
     plugins: 功能
     plugins_value: '{active} / {total} 個執行中'
   plugins:

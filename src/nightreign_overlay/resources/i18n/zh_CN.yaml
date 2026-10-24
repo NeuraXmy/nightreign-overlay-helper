@@ -25,9 +25,11 @@ home:
     game_unsupported: 当前平台不支持检测
     game_open: 游戏窗口已打开
     game_closed: 游戏窗口未打开
-    overlay: 悬浮窗显示方式
-    overlay_transparent: 透明悬浮窗
-    overlay_window: 普通窗口
+    capture: 截图状态
+    capture_inactive: 未开启
+    capture_waiting: 等待游戏窗口
+    capture_running: 正常运行
+    capture_running_method: "正常运行（{method}）"
     plugins: 功能
     plugins_value: "{active} / {total} 个运行中"
   plugins:

@@ -21,9 +21,11 @@ home:
     game_unsupported: この環境では検出非対応
     game_open: ゲームウィンドウが開いています
     game_closed: ゲームウィンドウが開いていません
-    overlay: オーバーレイ表示方式
-    overlay_transparent: 透明オーバーレイ
-    overlay_window: 通常ウィンドウ
+    capture: キャプチャ状態
+    capture_inactive: 未起動
+    capture_waiting: ゲームウィンドウ待機中
+    capture_running: 動作中
+    capture_running_method: "動作中（{method}）"
     plugins: 機能
     plugins_value: '{active} / {total} 個が動作中'
   plugins:

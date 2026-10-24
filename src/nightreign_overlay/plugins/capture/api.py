@@ -26,6 +26,7 @@ class FrameCaptured:
     image: QImage
     captured_at: float
     hdr: bool = False
+    capture_method: str | None = None
 
 
 class CaptureApi:
@@ -62,10 +63,18 @@ class CaptureApi:
         """
         return None
 
+    def capture_status(self) -> str:
+        """Return ``inactive``, ``waiting`` or ``running`` for the shared capture stream."""
+        return "inactive"
 
-def make_frame(image: QImage, *, hdr: bool = False) -> FrameCaptured:
+    def capture_method(self) -> str | None:
+        """Name of the selected capture method while a frame is being captured."""
+        return None
+
+
+def make_frame(image: QImage, *, hdr: bool = False, capture_method: str | None = None) -> FrameCaptured:
     """Detach the image from any native capture buffer before sharing it."""
-    return FrameCaptured(image.copy(), time.monotonic(), hdr)
+    return FrameCaptured(image.copy(), time.monotonic(), hdr, capture_method)
 
 
 def crop_rgb(frame: QImage, region: QRect | None = None) -> np.ndarray | None:

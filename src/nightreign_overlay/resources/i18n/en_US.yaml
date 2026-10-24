@@ -21,9 +21,11 @@ home:
     game_unsupported: Detection unavailable on this platform
     game_open: Game window open
     game_closed: Game window closed
-    overlay: Overlay mode
-    overlay_transparent: Transparent overlay
-    overlay_window: Standard window
+    capture: Capture status
+    capture_inactive: Not started
+    capture_waiting: Waiting for game window
+    capture_running: Running
+    capture_running_method: "Running ({method})"
     plugins: Features
     plugins_value: '{active} / {total} running'
   plugins:

@@ -49,7 +49,7 @@ class MainWindow(FluentWindow):
         self.resize(*DEFAULT_SIZE)
         self._center_on_screen()
 
-        self.homePage = HomePage(config, plugins, overlays, game_monitor, self)
+        self.homePage = HomePage(config, plugins, overlays, game_monitor, self, self._services)
         self.homePage.pluginRequested.connect(self.show_plugin)
         self.addSubInterface(self.homePage, FluentIcon.HOME, tr("nav.home"))
         self._init_plugin_pages(plugins)

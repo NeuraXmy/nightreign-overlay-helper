@@ -128,6 +128,37 @@ def test_selected_mss_mode_uses_mss_backend(plugin, monkeypatch):
     assert opened == [True]
 
 
+def test_capture_status_tracks_maa_success_and_stream_release(plugin, monkeypatch):
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+    image.fill(0xFF112233)
+    monkeypatch.setattr(capture, "_MaaCapture", _stub_backend(image, []))
+    plugin.on_activate()
+    plugin.config.mode.set("gdi")
+
+    loop = QEventLoop()
+    plugin.statusChanged.connect(lambda status: loop.quit() if status == "running" else None)
+    plugin.acquire_stream("test")
+    assert plugin.capture_status == "waiting"
+    QTimer.singleShot(1000, loop.quit)
+    loop.exec()
+    assert plugin.capture_status == "running"
+    assert plugin.capture_method == "test"
+
+    plugin.release_stream("test")
+    assert plugin.capture_status == "inactive"
+    assert plugin.capture_method is None
+
+
+def test_mss_capture_status_only_tracks_stream_enabled(plugin):
+    plugin.on_activate()
+    plugin.config.mode.set("mss")
+    plugin.acquire_stream("test")
+    assert plugin.capture_status == "running"
+    assert plugin.capture_method == "mss"
+    plugin.release_stream("test")
+    assert plugin.capture_status == "inactive"
+
+
 def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
     main_thread = threading.get_ident()
     calls = []

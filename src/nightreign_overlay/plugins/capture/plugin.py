@@ -114,8 +114,15 @@ class _CaptureService(CaptureApi):
     def game_client_rect(self) -> QRect | None:
         return self._plugin.game_client_rect()
 
+    def capture_status(self) -> str:
+        return self._plugin.capture_status
+
+    def capture_method(self) -> str | None:
+        return self._plugin.capture_method
+
 
 class CapturePlugin(Plugin):
+    statusChanged = pyqtSignal(str)
     manifest = PluginManifest(
         id="capture",
         kind=PluginKind.INFRASTRUCTURE,
@@ -151,6 +158,23 @@ class CapturePlugin(Plugin):
         self._stream_request: int | None = None
         self._callbacks: dict[int, FrameCallback] = {}
         self._game_window = None
+        self._capture_status = "inactive"
+        self._capture_method: str | None = None
+
+    @property
+    def capture_status(self) -> str:
+        return self._capture_status
+
+    def _set_capture_status(self, status: str, method: str | None = None) -> None:
+        changed = self._capture_status != status or self._capture_method != method
+        self._capture_method = method if status == "running" else None
+        if changed:
+            self._capture_status = status
+            self.statusChanged.emit(status)
+
+    @property
+    def capture_method(self) -> str | None:
+        return self._capture_method
 
     @property
     def latest_frame(self) -> FrameCaptured | None:
@@ -220,6 +244,11 @@ class CapturePlugin(Plugin):
         self._invalidate()
         if self._worker is not None:
             self._close_requested.emit()
+        if self._stream_owners:
+            self._set_capture_status(
+                "waiting" if self.config.mode.value != "mss" else "running",
+                "mss" if self.config.mode.value == "mss" else None,
+            )
         self.ctx.log.info(
             "Capture settings changed: mode=%s, process=%s",
             self.config.mode.value,
@@ -240,6 +269,10 @@ class CapturePlugin(Plugin):
         was_idle = not self._stream_owners
         self._stream_owners[owner] = self._stream_owners.get(owner, 0) + 1
         if was_idle:
+            self._set_capture_status(
+                "waiting" if self.config.mode.value != "mss" else "running",
+                "mss" if self.config.mode.value == "mss" else None,
+            )
             self._timer.start(self.config.interval_ms.value)
             # Queue the initial frame so callers can subscribe before it is published.
             QTimer.singleShot(0, self._capture_stream_tick)
@@ -255,6 +288,7 @@ class CapturePlugin(Plugin):
             self._stream_owners[owner] = count - 1
         if not self._stream_owners:
             self._timer.stop()
+            self._set_capture_status("inactive")
 
     def _capture_stream_tick(self) -> None:
         if self._stream_owners and self._stream_request is None:
@@ -263,6 +297,7 @@ class CapturePlugin(Plugin):
     def _stop_stream(self) -> None:
         self._timer.stop()
         self._stream_owners.clear()
+        self._set_capture_status("inactive")
 
     # -- requests -------------------------------------------------------------------------------
 
@@ -301,6 +336,11 @@ class CapturePlugin(Plugin):
             self._latest_frame = frame
             if frame is not None:
                 self.ctx.publish(frame)
+        if self._stream_owners:
+            if frame is not None:
+                self._set_capture_status("running", frame.capture_method)
+            elif self.config.mode.value == "auto":
+                self._set_capture_status("waiting")
         self._resolve(request_id, frame)
 
     def _resolve(self, request_id: int, frame: FrameCaptured | None) -> None:
@@ -415,6 +455,7 @@ class _CaptureWorker(QObject):
     @pyqtSlot(int, int, str, str, bool)
     def grab(self, request_id: int, generation: int, mode: str, process: str, hdr: bool) -> None:
         frame = None
+        method = ""
         try:
             image = self._grab(mode, process)
         except Exception as error:
@@ -435,8 +476,14 @@ class _CaptureWorker(QObject):
                     self._log.info("Capture recovered in %s mode", mode)
                     self._last_error = None
                 # Detached copy: nothing on this thread references the frame after it is emitted.
-                frame = make_frame(image, hdr=hdr)
+                method = self._selected_method(mode)
+                frame = make_frame(image, hdr=hdr, capture_method=method)
         self.grabbed.emit(request_id, generation, frame)
+
+    def _selected_method(self, mode: str) -> str:
+        if mode == "mss":
+            return "mss"
+        return getattr(self._backend, "selected_method", None) or ""
 
     def _grab(self, mode: str, process: str) -> QImage | None:
         key = (mode, process)
@@ -489,6 +536,10 @@ class _AutoCapture:
         self._log = log
         self._maa: _MaaCapture | None = None
         self._waiting_logged = False
+
+    @property
+    def selected_method(self) -> str | None:
+        return self._maa.selected_method if self._maa is not None else None
 
     def grab(self) -> QImage | None:
         if sys.platform != "win32":

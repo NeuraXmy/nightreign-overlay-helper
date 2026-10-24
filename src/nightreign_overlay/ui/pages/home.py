@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
+
 from PyQt6.QtCore import QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPaintEvent
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
@@ -21,6 +23,7 @@ from qfluentwidgets import (
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
+from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.meta import APP_NAME, APP_VERSION
 from nightreign_overlay.plugin import (
     PLUGIN_KIND_DISPLAY_ORDER,
@@ -29,6 +32,7 @@ from nightreign_overlay.plugin import (
     PluginState,
     SettingsScope,
 )
+from nightreign_overlay.plugins.capture.api import CaptureApi
 from nightreign_overlay.ui.components import ScrollPage, SettingSection
 from nightreign_overlay.ui.components.plugin_widgets import PluginSwitch
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -176,12 +180,14 @@ class HomePage(ScrollPage):
         overlays: OverlayManager,
         game_monitor: GameWindowMonitor,
         parent: QWidget | None = None,
+        services: ServiceRegistry | None = None,
     ) -> None:
         super().__init__("homePage", parent=parent)
         self._app_config = app_config
         self._plugins = plugins
         self._overlays = overlays
         self._game_monitor = game_monitor
+        self._services = services
 
         self.addWidget(Banner(self.view))
         self.hintLabel = BodyLabel(tr("home.first_use_hint"), self.view)
@@ -191,16 +197,18 @@ class HomePage(ScrollPage):
         self._init_plugins()
 
         self._update_game_status()
-        self._update_overlay_status()
+        self._update_capture_status()
         self._update_plugin_status()
         game_monitor.windowChanged.connect(self._update_game_status)
-        app_config.overlay_mode.valueChanged.connect(self._update_overlay_status)
+        if services is not None:
+            services.serviceChanged.connect(self._on_service_changed)
+            self._connect_capture_status()
         plugins.stateChanged.connect(self._update_plugin_status)
 
     def _init_status(self) -> None:
         section = SettingSection(tr("home.status.title"), self.view)
         self.gameCard = StatusCard(FluentIcon.GAME, tr("home.status.game"), section)
-        self.overlayCard = StatusCard(FluentIcon.FIT_PAGE, tr("home.status.overlay"), section)
+        self.overlayCard = StatusCard(FluentIcon.CAMERA, tr("home.status.capture"), section)
         self.pluginCard = StatusCard(FluentIcon.APPLICATION, tr("home.status.plugins"), section)
 
         grid = QGridLayout()
@@ -249,13 +257,29 @@ class HomePage(ScrollPage):
             text = tr("home.status.game_closed")
         self.gameCard.setValue(text)
 
-    def _update_overlay_status(self, _mode: str = "") -> None:
-        key = (
-            "home.status.overlay_transparent"
-            if self._overlays.transparent_mode
-            else "home.status.overlay_window"
-        )
-        self.overlayCard.setValue(tr(key))
+    def _on_service_changed(self, api: type) -> None:
+        if api is CaptureApi:
+            self._connect_capture_status()
+            self._update_capture_status()
+
+    def _connect_capture_status(self) -> None:
+        service = self._services.get(CaptureApi) if self._services is not None else None
+        if service is not None:
+            plugin = self._plugins.get("capture")
+            if plugin is not None and plugin.plugin is not None:
+                with suppress(TypeError):
+                    plugin.plugin.statusChanged.disconnect(self._update_capture_status)
+                plugin.plugin.statusChanged.connect(self._update_capture_status)
+
+    def _update_capture_status(self, _status: str = "") -> None:
+        service = self._services.get(CaptureApi) if self._services is not None else None
+        status = service.capture_status() if service is not None else "inactive"
+        key = f"home.status.capture_{status}"
+        text = tr(key)
+        method = service.capture_method() if service is not None and status == "running" else None
+        if method:
+            text = tr("home.status.capture_running_method", method=method)
+        self.overlayCard.setValue(text)
 
     def _update_plugin_status(self, _changed_id: str = "") -> None:
         records = [
