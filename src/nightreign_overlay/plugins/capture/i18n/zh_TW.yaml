@@ -5,10 +5,25 @@ settings:
   title: 畫面擷取設定
   mode:
     title: 擷取方式
-    content: 預設為舊版擷取；桌面歌詞等遮擋會影響辨識。僅前景／僅背景模式可能改變視窗大小
-    legacy: 舊版
+    content: 自動測速選擇最快方式；也可固定單一方式（如 GDI）排查相容性問題
+    auto: 自動
     foreground: 僅前景
     background: 僅背景
+    gdi: GDI
+    framepool: FramePool（WGC）
+    dxgi_desktop_dup: DXGI 桌面複製
+    dxgi_desktop_dup_window: DXGI 視窗複製
+    printwindow: PrintWindow
+    screendc: ScreenDC
+  process:
+    title: 擷取程序
+    content: 預設依視窗標題自動偵測遊戲視窗；使用 PS5 遠端遊玩等方式時，請手動選擇提供遊戲畫面的程序
+    auto: 自動偵測
+    current: "目前：{process}"
+    dialog_title: 選擇擷取程序
+    dialog_hint: 選擇提供遊戲畫面的視窗（例如 PS Remote Play）
+    confirm: 確定
+    cancel: 取消
   interval:
     title: 辨識間隔
     content: 所有辨識功能共用；間隔越短反應越快，但耗用更多效能

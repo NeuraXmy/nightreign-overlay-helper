@@ -22,7 +22,7 @@ Windows 是主要发布平台。macOS 用于开发调试，前台检测、透明
 
 - Python 3.11 及以上；Windows x64 发布构建使用 Python 3.13。
 - PyQt6、PyQt6-Fluent-Widgets：界面与悬浮窗。
-- NumPy、OpenCV、Pillow、mss：图像处理与截图；Windows 另提供 Maa 截图 DLL。
+- NumPy、OpenCV、Pillow：图像处理；截图由 MaaWin32Screencap DLL 提供（仅 Windows）。
 - ONNX Runtime CPU：地图 POI 与血条模型推理；训练工具不属于运行时依赖。
 - pynput、pygame：全局输入；QtMultimedia：音频播放。
 - pytest、Ruff、uv：回归、代码规范和锁定依赖；PyInstaller：文件夹打包。

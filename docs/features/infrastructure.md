@@ -17,13 +17,18 @@
 
 提供共享帧捕获，避免各检测插件各自截图。
 
-### 三种模式
+### 截图方式
 
-| 模式 | 后端 | 说明 |
+所有方式都由 MaaWin32Screencap DLL 实现（键值即方式位掩码，见 `win32.SCREENCAP_METHOD_MASKS`）；选定单一方式即固定该方式，不再自动测速。
+
+| 方式 | 位掩码 | 说明 |
 |------|------|------|
-| `legacy`（默认） | mss 虚拟桌面整帧 | 不加载 DLL，无 WGC 黄框 |
-| `foreground` | MaaWin32Screencap 前台掩码 | `DXGI_DESKTOP_DUP_WINDOW \| SCREENDC` |
-| `background` | MaaWin32Screencap 后台掩码 | `FRAMEPOOL \| PRINTWINDOW` |
+| `auto`（默认） | 全部位 | 测速选择最快方式 |
+| `foreground` | `DXGI_DESKTOP_DUP_WINDOW \| SCREENDC` | 前台方式集合 |
+| `background` | `FRAMEPOOL \| PRINTWINDOW` | 后台方式集合 |
+| `gdi` … `screendc` | 单一方式位 | 手动固定 GDI / FramePool / DXGI 桌面复制 / DXGI 窗口复制 / PrintWindow / ScreenDC |
+
+另可固定「截图进程」（默认按窗口标题自动检测游戏窗口）：PS5 串流等本机没有游戏窗口的场景，选择提供游戏画面的串流软件进程。
 
 ### API
 
@@ -49,7 +54,7 @@ CapturePlugin._timer 启动
 _capture_stream_tick() → 发出 queued 请求（忙时丢弃该 tick）
         │
         ▼
-_CaptureWorker._grab()（独立 QThread，mss / Maa）
+_CaptureWorker._grab()（独立 QThread，Maa DLL）
         │
         ▼
 make_frame(image, hdr=...) → queued 回传 GUI 线程 → 发布 FrameCaptured
@@ -69,11 +74,10 @@ make_frame(image, hdr=...) → queued 回传 GUI 线程 → 发布 FrameCaptured
 
 - 首个 `acquire_stream` 启动定时截图；最后一个 `release_stream` 停止。
 - `request_frame()` 提交与结果回传都检查 `ForegroundPolicy.detection_allowed`，回调始终在 GUI 线程执行。
-- mss/Maa 后端的创建、截图和关闭全部位于专用截图线程；GUI 线程只管理定时器和结果。
-- 帧流最多保留一个在途请求；切换模式以 generation 丢弃旧结果、释放旧后端并清空缓存。
-- Windows legacy mss 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
-- macOS 关闭 nominal-resolution 选项，逐屏抓取原生像素并合成共享帧；三个模式都使用这个跨平台 mss 后端。
-- macOS 的屏幕原点按桌面最大 DPR 放置，屏内坐标按本屏 DPR 缩放；`core/screens.py` 统一标定、预览和地图/血条悬浮窗的转换。
+- Maa 后端的创建、截图和关闭全部位于专用截图线程；GUI 线程只管理定时器和结果。
+- 帧流最多保留一个在途请求；切换模式或截图进程以 generation 丢弃旧结果、释放旧后端并清空缓存。
+- 截图仅在 Windows 上可用（DLL 是唯一后端）；其他平台请求以失败告警并按分钟限频重试。
+- 屏幕原点按桌面最大 DPR 放置，屏内坐标按本屏 DPR 缩放；`core/screens.py` 统一标定、预览和地图/血条悬浮窗的转换。
 - Windows DLL 图像使用当前客户区的物理桌面原点，抓取前后检查窗口位置/尺寸，变化时丢弃该帧并重试；DLL 尺寸与物理客户区不一致时按客户区尺寸归一化。
 - Windows 客户区几何查询临时启用线程 per-monitor DPI awareness，并在结束时恢复原上下文。
 - 多屏验证范围、实机诊断脚本及 macOS 副屏重新标定要求见 [多屏截图与 DPI](../guides/multiscreen-capture.md)。

@@ -68,8 +68,10 @@ def test_capture_frames_carry_the_shared_hdr_setting(
     source.fill(0xFF808080)
     monkeypatch.setattr(
         capture_plugin,
-        "_MssCapture",
-        lambda **_kwargs: SimpleNamespace(grab=lambda: source, close=lambda: None),
+        "_MaaCapture",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            connect=lambda: None, selected_method="test", grab=lambda: source, close=lambda: None
+        ),
     )
 
     assert _request_frame(plugin).hdr is False
@@ -94,8 +96,10 @@ def test_capture_and_hotkeys_follow_the_foreground_policy(
     source = QImage(4, 3, QImage.Format.Format_RGB32)
     monkeypatch.setattr(
         capture_plugin,
-        "_MssCapture",
-        lambda **_kwargs: SimpleNamespace(grab=lambda: source, close=lambda: None),
+        "_MaaCapture",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            connect=lambda: None, selected_method="test", grab=lambda: source, close=lambda: None
+        ),
     )
     assert _request_frame(capture) is None
     policy.detection_allowed = True

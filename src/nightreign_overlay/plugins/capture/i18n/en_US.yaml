@@ -5,11 +5,26 @@ settings:
   title: Capture settings
   mode:
     title: Capture method
-    content: Legacy is the default; desktop overlays can affect detection. Foreground/background modes may resize
-      the window
-    legacy: Legacy
+    content: Auto speed-tests all methods; pin a single method (e.g. GDI) to work around compatibility issues
+    auto: Auto
     foreground: Foreground only
     background: Background only
+    gdi: GDI
+    framepool: FramePool (WGC)
+    dxgi_desktop_dup: DXGI desktop duplication
+    dxgi_desktop_dup_window: DXGI window duplication
+    printwindow: PrintWindow
+    screendc: ScreenDC
+  process:
+    title: Capture process
+    content: The game window is auto-detected by title; when playing through PS5 remote play or another
+      streaming client, pin the process that provides the game image
+    auto: Auto-detect
+    current: "Current: {process}"
+    dialog_title: Choose capture process
+    dialog_hint: Pick the window that provides the game image (e.g. your PS5 remote-play app)
+    confirm: OK
+    cancel: Cancel
   interval:
     title: Detection interval
     content: Shared by all detectors; shorter intervals respond faster but use more resources
