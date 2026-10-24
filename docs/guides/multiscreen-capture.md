@@ -57,6 +57,15 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 测试替换原生取图和 Win32 API，运行生产后端的图像构造、坐标转换和裁剪代码。它们无法覆盖驱动、DLL 内部裁剪或操作系统录屏权限。
 
+## 固定画面截图验证
+
+在 Windows 桌面会话中运行以下工具，可用固定 Qt 画面验证各截图后端的像素准确性并统计耗时：
+
+```powershell
+.venv\Scripts\python.exe tools\test_capture_methods.py --layout all
+```
+
+工具依次测试普通窗口和无边框全屏，并覆盖 `mss`、`auto` 及各个 Maa 方法。详细结果写入 `.tmp/capture-methods/report.json`。该工具需要真实 Windows 桌面、Qt 显示会话和 `src/nightreign_overlay/plugins/native/MaaWin32Screencap.dll`，不适合在无头环境或普通 pytest 中运行。
 ## 实机诊断工具
 
 使用应用运行环境执行 `tools/diagnose_capture.py`。脚本经生产 `_CaptureWorker` 及 Qt queued 信号在独立线程抓取，不修改用户配置，不切换失败的截图模式。
