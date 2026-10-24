@@ -5,8 +5,8 @@ The "Settings" tab carries a page-level reset button that restores the plugin's 
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QColor, QTextDocument
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import (
     BodyLabel,
@@ -22,9 +22,9 @@ from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.plugin import PluginManager, PluginRecord
 from nightreign_overlay.ui.components import create_reset_button
 from nightreign_overlay.ui.components.plugin_widgets import PluginSwitch
-from nightreign_overlay.ui.markdown import MarkdownTextBrowser, configure_markdown_browser
 from nightreign_overlay.ui.plugin_actions import state_text
 from nightreign_overlay.ui.theme import fluent_icon
+from nightreign_overlay.ui.tutorial import create_tutorial_browser
 
 log = get_logger(__name__)
 
@@ -36,11 +36,14 @@ def plugin_page_name(plugin_id: str) -> str:
 
 
 class PluginPage(QWidget):
-    def __init__(self, manager: PluginManager, record: PluginRecord, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, manager: PluginManager, record: PluginRecord, parent: QWidget | None = None, services=None
+    ) -> None:
         super().__init__(parent)
         self.setObjectName(plugin_page_name(record.id))
         self._manager = manager
         self._record = record
+        self._services = services
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(PAGE_MARGIN, 24, PAGE_MARGIN, PAGE_MARGIN)
@@ -129,12 +132,9 @@ class PluginPage(QWidget):
         path = self._record.plugin.ctx.tutorial_file() if self._record.plugin is not None else None
         if path is None:
             return self._placeholder(tr("plugin_page.no_tutorial"), self)
-        browser = MarkdownTextBrowser(self)
-        browser.setOpenExternalLinks(True)
-        # Loading via ``setSource`` resolves relative image paths against the tutorial directory.
-        browser.setSource(QUrl.fromLocalFile(str(path)), QTextDocument.ResourceType.MarkdownResource)
-        configure_markdown_browser(browser)
-        return browser
+        from nightreign_overlay.core.services import ServiceRegistry
+
+        return create_tutorial_browser(self._services or ServiceRegistry(self), path, self)
 
     @staticmethod
     def _placeholder(text: str, parent: QWidget) -> QWidget:

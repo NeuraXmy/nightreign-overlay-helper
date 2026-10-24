@@ -6,7 +6,11 @@ The feature periodically captures screenshots and detects the HP bar color. When
 
 ### 1. Calibrate the inside of the HP bar.
 
-This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it only if the game is not full screen or the automatic region is incorrect.
+ℹ️ This step is **optional**. The program automatically calculates the detection region from a 16:9 full-screen game image.
+
+If the automatic region does not work correctly, the game is not full screen, or you want to detect a window other than the game, see the [Calibration Tutorial](app://tutorial/region-calibration).
+
+:::collapse Manual calibration steps
 
 It is recommended to set a controller or keyboard shortcut. Then enter the training area or any scene with an HP bar, and press the shortcut to open the calibration screen.
 
@@ -21,6 +25,8 @@ The calibrated region should be inside the HP bar and **as far to the left as po
 ![Selected region](3.jpg)
 
 Return to the main window. A green "Calibrated" status indicates success. Hover over the eye icon to view the calibrated region.
+
+:::
 
 ## Result
 

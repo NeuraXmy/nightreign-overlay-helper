@@ -8,7 +8,11 @@ It also supports a countdown for the duration of Undertaker's additional art.
 
 ### 1. Calibrate the art icon region.
 
-ℹ️ **Note: This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it using the steps below only if the game is not full screen or the automatic region is incorrect.**
+ℹ️ This step is **optional**. The program automatically calculates the detection region from a 16:9 full-screen game image.
+
+If the automatic region does not work correctly, the game is not full screen, or you want to detect a window other than the game, see the [Calibration Tutorial](app://tutorial/region-calibration).
+
+:::collapse Manual calibration steps
 
 It is recommended to set a controller or keyboard shortcut. Then enter the training area or any scene where the art icon is visible, and press the shortcut to open the calibration screen.
 
@@ -19,6 +23,8 @@ Click the button in the upper-right corner to start selecting (if the mouse cann
 ![Calibration screen](2.jpg)
 
 Return to the main window. A green "Calibrated" status indicates success. Hover over the eye icon to view the calibrated region.
+
+:::
 
 ### 2. Set the in-game art shortcut.
 

@@ -7,6 +7,9 @@ meta:
 common:
   'on': 開
   'off': 關
+tutorial:
+  click_expand: '點擊展開 - {title}'
+  click_collapse: '點擊摺疊 - {title}'
 nav:
   faq: 常見問題
   home: 首頁
