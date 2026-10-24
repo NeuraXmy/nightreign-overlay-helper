@@ -14,6 +14,7 @@ CAPTURE_MODES = (
     "dxgi_desktop_dup_window",
     "printwindow",
     "screendc",
+    "mss",
 )
 
 

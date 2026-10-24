@@ -15,6 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI window duplication
     printwindow: PrintWindow
     screendc: ScreenDC
+    mss: mss
   process:
     title: Capture process
     content: The game window is auto-detected by title; for remote play, pin the process that provides the game image

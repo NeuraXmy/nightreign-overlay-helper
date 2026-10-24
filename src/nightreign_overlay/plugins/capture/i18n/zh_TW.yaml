@@ -15,6 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI 視窗複製
     printwindow: PrintWindow
     screendc: ScreenDC
+    mss: mss
   process:
     title: 擷取程序
     content: 預設依視窗標題自動偵測；使用串流等方式時，可以指定提供遊戲畫面的程序

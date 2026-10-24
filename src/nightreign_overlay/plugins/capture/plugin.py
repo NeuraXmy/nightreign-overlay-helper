@@ -455,6 +455,9 @@ class _CaptureWorker(QObject):
             backend = _AutoCapture(self._root_dir, process, self._log)
             self._log.info("Capture backend: auto (mss + Maa methods)")
             return backend
+        if mode == "mss":
+            self._log.info("Capture backend: mss")
+            return _MssCapture()
         if sys.platform != "win32":
             raise RuntimeError("Capture mode requires Windows; automatic mode should use mss")
         backend = _MaaCapture(self._root_dir, mode, process)

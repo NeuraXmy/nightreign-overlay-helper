@@ -113,6 +113,24 @@ def test_selected_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch)
     assert plugin._worker is not None  # Switching does not run native connect until a frame is needed.
 
 
+def test_selected_mss_mode_uses_mss_backend(plugin, monkeypatch):
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+    image.fill(0xFF112233)
+    opened = []
+
+    def make_mss():
+        opened.append(True)
+        return SimpleNamespace(grab=lambda: image, close=lambda: None)
+
+    monkeypatch.setattr(capture, "_MssCapture", make_mss)
+    plugin.on_activate()
+    plugin.config.mode.set("mss")
+    frame = _request(plugin)
+    assert frame is not None
+    assert frame.image.pixelColor(0, 0).name() == "#112233"
+    assert opened == [True]
+
+
 def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
     main_thread = threading.get_ident()
     calls = []

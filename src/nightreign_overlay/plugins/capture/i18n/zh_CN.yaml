@@ -15,6 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI 窗口复制
     printwindow: PrintWindow
     screendc: ScreenDC
+    mss: mss
   process:
     title: 截图进程
     content: 默认按窗口标题自动检测；使用串流等方式时，可以指定提供游戏画面的进程

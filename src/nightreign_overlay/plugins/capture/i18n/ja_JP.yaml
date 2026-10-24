@@ -15,6 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGIウィンドウ複製
     printwindow: PrintWindow
     screendc: ScreenDC
+    mss: mss
   process:
     title: キャプチャ対象プロセス
     content: 通常はウィンドウタイトルから自動検出します。リモートプレイでは映像を提供するプロセスを指定できます
