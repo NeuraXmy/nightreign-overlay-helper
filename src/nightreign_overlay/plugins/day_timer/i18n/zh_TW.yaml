@@ -3,7 +3,7 @@ plugin:
   description: 自動辨識每天的開始，顯示縮圈倒數
 hud:
   map_ready: ' - 地圖辨識就緒'
-  waiting: 等待遊戲開始
+  waiting: 等待第一天開始
   phase: DAY {day} - {remaining} 後第{circle}圈{action}
   circle:
     first: 一

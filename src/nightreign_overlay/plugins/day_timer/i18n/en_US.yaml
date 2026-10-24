@@ -3,7 +3,7 @@ plugin:
   description: Detect each day's start and show the circle countdown
 hud:
   map_ready: ' - Map detection ready'
-  waiting: Waiting for the game
+  waiting: Waiting for the first day to begin
   phase: DAY {day} - Circle {circle} {action} in {remaining}
   circle:
     first: '1'

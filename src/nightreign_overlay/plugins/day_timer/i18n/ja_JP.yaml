@@ -3,7 +3,7 @@ plugin:
   description: 各日の開始を自動認識し、夜の雨の収縮までの時間を表示
 hud:
   map_ready: ' - マップ認識準備完了'
-  waiting: ゲーム開始待ち
+  waiting: 初日の開始待ち
   phase: DAY {day} - 第{circle}収縮{action}まで {remaining}
   circle:
     first: '1'

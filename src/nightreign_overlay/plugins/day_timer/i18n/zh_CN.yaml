@@ -3,7 +3,7 @@ plugin:
   description: 自动识别游戏中每天的开头，并显示缩圈倒计时
 hud:
   map_ready: " - 地图识别就绪"
-  waiting: 等待游戏开始
+  waiting: 等待第一天开始
   phase: "DAY {day} - {remaining} 后第{circle}圈{action}"
   circle:
     first: 一
