@@ -44,6 +44,7 @@ drawing:
   rooftop: 屋頂：{name}
   basement: 地下室：{name}
   flask: 聖杯瓶
+  merchant_village: 商人村
   floor_boss: '{floor}F：{name}'
   blessing: 庇佑
   hidden_nightlord: （隱藏黑夜王）

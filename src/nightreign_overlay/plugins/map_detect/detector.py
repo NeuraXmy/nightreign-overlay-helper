@@ -1148,6 +1148,19 @@ class MapDetector:
                         outline_color,
                     )
                 )
+            # 商人村
+            if match(379):
+                y += scale_size(15)
+                texts.append(
+                    (
+                        (x, y),
+                        process_underground_name(self._tr("drawing.merchant_village")),
+                        font_size_small,
+                        (235, 200, 140, 255),
+                        outline_w_small,
+                        outline_color,
+                    )
+                )
             # 神授塔BOSS
             if construct.pos_index in tgh_floor_boss_pos_index:
                 floor_pos, floor_num = tgh_floor_boss_pos_index[construct.pos_index]
