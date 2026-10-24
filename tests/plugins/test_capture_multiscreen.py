@@ -5,10 +5,9 @@ import logging
 from pathlib import Path
 from types import SimpleNamespace
 
-import mss
 import pytest
 from PyQt6.QtCore import QPoint, QRect
-from PyQt6.QtGui import QColor, QImage, QPainter
+from PyQt6.QtGui import QColor, QImage
 
 from nightreign_overlay.core import screens
 from nightreign_overlay.plugins.capture import plugin as capture
@@ -30,75 +29,7 @@ def _shot(image):
     )
 
 
-@pytest.mark.parametrize("platform", ["win32", "darwin"])
-@pytest.mark.parametrize("ratios", [(1, 1), (2, 1), (1, 2), (1.25, 1.5), (1.75, 2)])
-@pytest.mark.parametrize("direction", ["left", "right", "above", "below"])
-def test_mss_desktop_calibration_crop_and_preview(monkeypatch, platform, ratios, direction):
-    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform=platform))
-    monkeypatch.setattr(screens, "sys", SimpleNamespace(platform=platform))
-    first_ratio, second_ratio = ratios
-    # Qt Windows origins are native pixels; macOS origins are logical points.
-    x, y = {
-        "left": (-round(64 * second_ratio) if platform == "win32" else -64, 0),
-        "right": (round(80 * first_ratio) if platform == "win32" else 80, 0),
-        "above": (0, -round(48 * second_ratio) if platform == "win32" else -48),
-        "below": (0, round(60 * first_ratio) if platform == "win32" else 60),
-    }[direction]
-    displays = [_screen(QRect(0, 0, 80, 60), first_ratio), _screen(QRect(x, y, 64, 48), second_ratio)]
-    mappings = screens.screen_mappings(displays)
-    assert not mappings[0].pixels.intersects(mappings[1].pixels)
-    tiles = []
-    monitors = []
-    selected = QRect(8, 4, 16, 12)
-    colors = [0x124578, 0xAB6723]
-    bounds = QRect()
-    for mapping, color in zip(mappings, colors, strict=True):
-        image = QImage(mapping.pixels.size(), QImage.Format.Format_RGB32)
-        image.fill(0x060708)
-        painter = QPainter(image)
-        painter.fillRect(mapping.to_pixels(selected).translated(-mapping.origin), color)
-        painter.end()
-        tiles.append(image)
-        # mss uses logical desktop points on macOS and physical desktop pixels on Windows.
-        rect = mapping.logical if platform == "darwin" else mapping.pixels
-        monitors.append(dict(zip(("left", "top", "width", "height"), rect.getRect(), strict=True)))
-        bounds = bounds.united(mapping.pixels)
-
-    if platform == "win32":
-        desktop = QImage(bounds.size(), QImage.Format.Format_RGB32)
-        desktop.fill(0)
-        painter = QPainter(desktop)
-        for mapping, tile in zip(mappings, tiles, strict=True):
-            painter.drawImage(mapping.origin - bounds.topLeft(), tile)
-        painter.end()
-    aggregate = dict(zip(("left", "top", "width", "height"), bounds.getRect(), strict=True))
-    calls = []
-
-    def grab(monitor):
-        calls.append(monitor)
-        return _shot(tiles[monitors.index(monitor)] if platform == "darwin" else desktop)
-
-    monkeypatch.setattr(
-        mss, "MSS", lambda: SimpleNamespace(monitors=[aggregate, *monitors], grab=grab, close=lambda: None)
-    )
-    backend = capture._MssCapture()
-    try:
-        frame = make_frame(backend.grab())
-    finally:
-        backend.close()
-    assert len(calls) == (2 if platform == "darwin" else 1)
-    assert frame.image.offset() == bounds.topLeft()
-    for mapping, color in zip(mappings, colors, strict=True):
-        rect = mapping.to_pixels(selected)
-        crop = crop_rgb(frame.image, rect)
-        assert crop.shape == (rect.height(), rect.width(), 3)
-        expected = [(color >> 16) & 255, (color >> 8) & 255, color & 255]
-        assert (crop == expected).all()
-        assert screens.mapping_for_rect(rect, displays) == mapping
-        assert mapping.to_logical(rect) == selected.translated(mapping.logical.topLeft())
-
-
-@pytest.mark.parametrize("mode", ["foreground", "background"])
+@pytest.mark.parametrize("mode", ["foreground", "background", "gdi"])
 @pytest.mark.parametrize("ratio", [1, 1.25, 1.5, 1.75, 2])
 @pytest.mark.parametrize("origin", [(-320, -180), (320, 180)])
 def test_dll_window_pixels_map_to_global_calibration(tmp_path, monkeypatch, mode, ratio, origin):
@@ -174,20 +105,12 @@ def test_win32_geometry_restores_thread_dpi_context(monkeypatch, success):
     assert contexts[-1] == 99
 
 
-@pytest.mark.parametrize("mode", ["legacy", "foreground", "background"])
-def test_macos_modes_use_the_same_multiscreen_backend(monkeypatch, mode):
+def test_non_windows_platform_reports_capture_failure(monkeypatch):
     monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="darwin"))
-    calls = []
-    image = QImage(2, 2, QImage.Format.Format_RGB32)
-    monkeypatch.setattr(
-        capture,
-        "_MssCapture",
-        lambda: SimpleNamespace(grab=lambda: image, close=lambda: calls.append("closed")),
-    )
     worker = capture._CaptureWorker(Path(), SimpleNamespace(info=lambda *_args: None))
-    assert worker._grab(mode) is image
+    with pytest.raises(RuntimeError, match="requires Windows"):
+        worker._grab("auto", "")
     worker.close()
-    assert calls == ["closed"]
 
 
 @pytest.mark.parametrize("platform", ["win32", "darwin"])
@@ -219,14 +142,3 @@ def test_selector_preview_and_map_overlay_use_the_capture_mapping(qapp, monkeypa
         assert sizes == [expected.size()]
     finally:
         dialog.deleteLater()
-
-
-def test_macos_missing_displays_is_reported_as_capture_failure(monkeypatch):
-    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="darwin"))
-    monkeypatch.setattr(mss, "MSS", lambda: SimpleNamespace(monitors=[{}], close=lambda: None))
-    backend = capture._MssCapture()
-    try:
-        with pytest.raises(RuntimeError, match="No displays"):
-            backend.grab()
-    finally:
-        backend.close()

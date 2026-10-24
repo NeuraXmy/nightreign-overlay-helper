@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from PyQt6.QtCore import QEventLoop, QPoint, QRect, QThread, QTimer
+from PyQt6.QtCore import QEventLoop, QThread, QTimer
 from PyQt6.QtGui import QImage
 
 from nightreign_overlay.core.events import EventBus
@@ -14,7 +14,6 @@ from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.plugin.context import PluginContext
 from nightreign_overlay.plugins.capture import plugin as capture
-from nightreign_overlay.plugins.capture.api import crop_rgb, make_frame
 from nightreign_overlay.plugins.capture.win32 import Manager
 
 
@@ -46,20 +45,22 @@ def plugin(store, tmp_path, monkeypatch):
     plugin.on_deactivate()
 
 
-def test_default_mss_never_initializes_dll_and_switch_releases_backend(plugin, monkeypatch):
+def _stub_backend(image, closed):
+    return lambda *args, **kwargs: SimpleNamespace(
+        connect=lambda: None,
+        selected_method="test",
+        grab=lambda: image,
+        close=lambda: closed.append(True),
+    )
+
+
+def test_default_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch):
     closed = []
     image = QImage(2, 2, QImage.Format.Format_RGB32)
     image.fill(0xFF112233)
-    monkeypatch.setattr(
-        capture, "_MssCapture", lambda: SimpleNamespace(grab=lambda: image, close=lambda: closed.append(True))
-    )
-
-    def forbidden(*args):
-        pytest.fail("Default legacy mode must not initialize the DLL")
-
-    monkeypatch.setattr(capture, "_MaaCapture", forbidden)
+    monkeypatch.setattr(capture, "_MaaCapture", _stub_backend(image, closed))
     plugin.on_activate()
-    assert plugin.config.mode.value == "legacy"
+    assert plugin.config.mode.value == "auto"
     callback_thread = []
     result = []
     loop = QEventLoop()
@@ -90,6 +91,11 @@ def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
         def __init__(self):
             calls.append(("open", threading.get_ident()))
 
+        def connect(self):
+            pass
+
+        selected_method = "test"
+
         def grab(self):
             calls.append(("grab", threading.get_ident()))
             return image
@@ -97,7 +103,7 @@ def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
         def close(self):
             calls.append(("close", threading.get_ident()))
 
-    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
     assert _request(plugin) is not None
     plugin.on_deactivate()
     assert [name for name, _ident in calls] == ["open", "grab", "close"]
@@ -111,6 +117,11 @@ def test_mode_switch_discards_an_in_flight_old_generation(plugin, monkeypatch):
     image = QImage(2, 2, QImage.Format.Format_RGB32)
 
     class Backend:
+        def connect(self):
+            pass
+
+        selected_method = "test"
+
         def grab(self):
             started.set()
             assert release.wait(1)
@@ -119,7 +130,7 @@ def test_mode_switch_discards_an_in_flight_old_generation(plugin, monkeypatch):
         def close(self):
             pass
 
-    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
@@ -138,6 +149,11 @@ def test_result_is_discarded_if_detection_becomes_disallowed(plugin, monkeypatch
     image = QImage(2, 2, QImage.Format.Format_RGB32)
 
     class Backend:
+        def connect(self):
+            pass
+
+        selected_method = "test"
+
         def grab(self):
             started.set()
             assert release.wait(1)
@@ -146,7 +162,7 @@ def test_result_is_discarded_if_detection_becomes_disallowed(plugin, monkeypatch
         def close(self):
             pass
 
-    monkeypatch.setattr(capture, "_MssCapture", Backend)
+    monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
@@ -173,32 +189,9 @@ def test_failure_retries_selected_backend_without_desktop_fallback(plugin, monke
     assert len(attempts) == 2
 
 
-def test_mss_pixels_and_negative_desktop_origin(monkeypatch):
-    import mss
-
-    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
-
-    monitor = {"left": -2, "top": -1, "width": 2, "height": 1}
-    screenshot = SimpleNamespace(width=2, height=1, bgra=bytes([0x33, 0x22, 0x11, 0, 0x66, 0x55, 0x44, 0]))
-    closed = []
-    monkeypatch.setattr(
-        mss,
-        "MSS",
-        lambda: SimpleNamespace(
-            monitors=[monitor], grab=lambda region: screenshot, close=lambda: closed.append(True)
-        ),
-    )
-    backend = capture._MssCapture()
-    frame = make_frame(backend.grab())
-    backend.close()
-    assert closed == [True]
-    assert frame.image.offset() == QPoint(-2, -1)
-    assert frame.image.pixelColor(0, 0).alpha() == 255
-    assert crop_rgb(frame.image, QRect(-1, -1, 1, 1)).tolist() == [[[0x44, 0x55, 0x66]]]
-    assert crop_rgb(frame.image).shape == (1, 2, 3)
-
-
-@pytest.mark.parametrize("mode,mask", [("foreground", 40), ("background", 18)])
+@pytest.mark.parametrize(
+    "mode,mask", [("auto", 2**64 - 1), ("foreground", 40), ("background", 18), ("gdi", 1), ("screendc", 32)]
+)
 def test_dll_receives_only_requested_methods(tmp_path, monkeypatch, mode, mask):
     from nightreign_overlay.plugins.capture import win32
 
@@ -231,6 +224,39 @@ def test_dll_receives_only_requested_methods(tmp_path, monkeypatch, mode, mask):
     assert calls[-1] == "closed"
 
 
+def test_pinned_capture_process_resolves_hwnd_by_process(tmp_path, monkeypatch):
+    from nightreign_overlay.plugins.capture import win32
+
+    (tmp_path / "native").mkdir()
+    (tmp_path / "native" / "MaaWin32Screencap.dll").touch()
+    calls = []
+
+    class FakeManager:
+        def __init__(self, path, hwnd, methods):
+            calls.append((hwnd, methods))
+
+        def connect(self):
+            return True
+
+        def selected_unit_name(self):
+            return "gdi"
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(win32, "Manager", FakeManager)
+    monkeypatch.setattr(win32, "find_hwnd_by_process", lambda _name: 777)
+
+    def forbidden(title):
+        pytest.fail("A pinned capture process must not fall back to title lookup")
+
+    monkeypatch.setattr(win32, "find_window_by_title", forbidden)
+    backend = capture._MaaCapture(tmp_path, "gdi", process="RemotePlay.exe")
+    backend.connect()
+    assert calls == [(777, win32.SCREENCAP_METHOD_MASKS["gdi"])]
+    backend.close()
+
+
 def test_repeated_capture_failures_are_throttled_and_recovery_is_logged(qapp, monkeypatch, caplog):
     import logging
 
@@ -242,23 +268,23 @@ def test_repeated_capture_failures_are_throttled_and_recovery_is_logged(qapp, mo
     frames = []
     worker.grabbed.connect(lambda *_args: frames.append(_args[-1]))
 
-    def fail(mode):
+    def fail(mode, process):
         raise RuntimeError("game window not found")
 
     monkeypatch.setattr(worker, "_grab", fail)
     with caplog.at_level(logging.INFO):
         for index in range(100):
-            worker.grab(index, 0, "background", False)
+            worker.grab(index, 0, "background", "", False)
         assert sum("Capture failed" in message for message in caplog.messages) == 1
         clock[0] = 61
-        worker.grab(100, 0, "background", False)
+        worker.grab(100, 0, "background", "", False)
         assert sum("Capture failed" in message for message in caplog.messages) == 2
         image = QImage(2, 2, QImage.Format.Format_RGB32)
         image.fill(0)
-        monkeypatch.setattr(worker, "_grab", lambda mode: image)
-        worker.grab(101, 0, "background", False)
+        monkeypatch.setattr(worker, "_grab", lambda mode, process: image)
+        worker.grab(101, 0, "background", "", False)
         assert frames[-1] is not None
         assert "Capture recovered in background mode" in caplog.messages
         monkeypatch.setattr(worker, "_grab", fail)
-        worker.grab(102, 0, "background", False)
+        worker.grab(102, 0, "background", "", False)
         assert sum("Capture failed" in message for message in caplog.messages) == 3

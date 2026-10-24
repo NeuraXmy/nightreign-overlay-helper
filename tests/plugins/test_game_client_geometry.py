@@ -94,7 +94,7 @@ def test_locator_tracks_current_geometry_and_retries_missing_or_recreated_game(m
     assert locator.geometry() is None
 
 
-@pytest.mark.parametrize("mode", ["legacy", "foreground", "background"])
+@pytest.mark.parametrize("mode", ["auto", "foreground", "background", "gdi"])
 def test_capture_service_exposes_geometry_without_starting_capture(store, tmp_path, monkeypatch, mode):
     fakes = FeatureServices(store, tmp_path)
     fakes.services.unregister(CaptureApi)

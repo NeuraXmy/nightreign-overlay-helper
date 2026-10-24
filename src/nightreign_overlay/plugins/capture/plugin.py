@@ -1,14 +1,15 @@
-"""Shared capture on a dedicated thread: legacy mss, two DLL modes, and a cross-platform mss fallback.
+"""Shared capture on a dedicated thread: the MaaWin32Screencap DLL with selectable method masks.
 
 Threading model (the GUI thread never touches a backend, the capture thread never touches plugin state):
 
 * GUI thread — :class:`CapturePlugin`: stream leases, timer, foreground gating, config snapshots, request
   bookkeeping, ``latest_frame`` and publishing :class:`FrameCaptured`.
-* Capture thread — :class:`_CaptureWorker`: creates, uses and closes every backend (mss and the Maa DLL are
-  bound to the thread that created them) and detaches each image into an immutable frame.
+* Capture thread — :class:`_CaptureWorker`: creates, uses and closes the DLL backend (bound to the thread
+  that created it) and detaches each image into an immutable frame.
 
 The two sides only talk through queued signals carrying plain values or immutable frames. Every request
-carries the plugin's ``generation``; results from an older generation are discarded on mode switch or stop.
+carries the plugin's ``generation``; results from an older generation are discarded on mode/process switch
+or stop.
 """
 
 from __future__ import annotations
@@ -20,12 +21,11 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QPoint, QRect, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QImage, QPainter
+from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QApplication, QWidget
-from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition
+from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, SettingCard
 
 from nightreign_overlay.core.game_window import ForegroundPolicy
-from nightreign_overlay.core.screens import capture_origin
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
@@ -42,8 +42,6 @@ from nightreign_overlay.ui.components import (
 
 FrameCallback = Callable[[FrameCaptured | None], None]
 
-#: Backend key used off Windows, where the capture mode setting does not apply.
-_SCREEN = "screen"
 _GAME_WINDOW_REGION = "capture.game_window"
 _CALIBRATE_GAME_WINDOW = "capture.calibrate_game_window"
 _GAME_WINDOW_COLOR = "#686435"
@@ -67,6 +65,29 @@ def _crop_game_window_16_9(rect: QRect) -> QRect | None:
         return QRect(rect.x() + (rect.width() - width) // 2, rect.y(), width, rect.height())
     height = round(rect.width() / _GAME_WINDOW_ASPECT)
     return QRect(rect.x(), rect.y() + (rect.height() - height) // 2, rect.width(), height)
+
+
+class _ProcessSettingCard(SettingCard):
+    """Setting card with one button whose label shows the currently pinned capture process."""
+
+    def __init__(
+        self,
+        icon,
+        title: str,
+        content: str,
+        on_click: Callable[[], None],
+        label_for: Callable[[str], str],
+        parent=None,
+    ) -> None:
+        super().__init__(icon, title, content, parent)
+        self._label_for = label_for
+        self.button = PushButton(self)
+        self.button.clicked.connect(on_click)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+    def refresh(self, process: str) -> None:
+        self.button.setText(self._label_for(process))
 
 
 class _CaptureService(CaptureApi):
@@ -102,8 +123,8 @@ class CapturePlugin(Plugin):
         requires=("input", "region"),
     )
 
-    # GUI thread -> capture thread: (request id, generation, mode, hdr).
-    _grab_requested = pyqtSignal(int, int, str, bool)
+    # GUI thread -> capture thread: (request id, generation, mode, process, hdr).
+    _grab_requested = pyqtSignal(int, int, str, str, bool)
     # GUI thread -> capture thread: release the current backend.
     _close_requested = pyqtSignal()
 
@@ -116,7 +137,8 @@ class CapturePlugin(Plugin):
             lambda value: self.ctx.log.info("HDR image processing enabled: %s", value)
         )
         self._latest_frame: FrameCaptured | None = None
-        self.config.mode.valueChanged.connect(self._on_mode_changed)
+        self.config.mode.valueChanged.connect(self._on_capture_settings_changed)
+        self.config.process.valueChanged.connect(self._on_capture_settings_changed)
         self._stream_owners: dict[str, int] = {}
         # All of the following are GUI-thread state only.
         self._thread: QThread | None = None
@@ -180,11 +202,27 @@ class CapturePlugin(Plugin):
             return
         regions.save_region(_GAME_WINDOW_REGION, normalized)
 
-    def _on_mode_changed(self, mode: str) -> None:
+    def _pick_process(self) -> None:
+        from nightreign_overlay.plugins.capture.process_picker import ProcessPickerDialog
+
+        dialog = ProcessPickerDialog(
+            QApplication.activeWindow(), current=self.config.process.value, tr=self.ctx.tr
+        )
+        if not dialog.exec():
+            return
+        process = dialog.selected_process()
+        self.config.process.set(process)
+        self.ctx.log.info("Capture process set to %s", process or "(auto detect)")
+
+    def _on_capture_settings_changed(self, _value: object = None) -> None:
         self._invalidate()
         if self._worker is not None:
             self._close_requested.emit()
-        self.ctx.log.info("Capture mode changed to %s", mode)
+        self.ctx.log.info(
+            "Capture settings changed: mode=%s, process=%s",
+            self.config.mode.value,
+            self.config.process.value or "(auto detect)",
+        )
 
     def _invalidate(self) -> None:
         """Make every in-flight grab stale; their callbacks receive ``None``."""
@@ -242,7 +280,11 @@ class CapturePlugin(Plugin):
             return None
         self._ensure_worker()
         self._grab_requested.emit(
-            request_id, self._generation, self.config.mode.value, self.config.hdr_processing.value
+            request_id,
+            self._generation,
+            self.config.mode.value,
+            self.config.process.value,
+            self.config.hdr_processing.value,
         )
         return request_id
 
@@ -303,6 +345,19 @@ class CapturePlugin(Plugin):
     def create_settings_widget(self, parent: QWidget) -> QWidget:
         panel = SettingsPanel(parent)
         section = SettingSection(self.ctx.tr("settings.title"))
+        process_card = _ProcessSettingCard(
+            FluentIcon.APPLICATION,
+            self.ctx.tr("settings.process.title"),
+            self.ctx.tr("settings.process.content"),
+            self._pick_process,
+            lambda process: (
+                self.ctx.tr("settings.process.current", process=process)
+                if process
+                else self.ctx.tr("settings.process.auto")
+            ),
+        )
+        self.config.process.valueChanged.connect(process_card.refresh)
+        process_card.refresh(self.config.process.value)
         section.addCards(
             ConfigChoiceCard(
                 self.config.mode,
@@ -311,6 +366,7 @@ class CapturePlugin(Plugin):
                 self.ctx.tr("settings.mode.title"),
                 self.ctx.tr("settings.mode.content"),
             ),
+            process_card,
             ConfigRangeCard(
                 self.config.interval_ms,
                 FluentIcon.SPEED_HIGH,
@@ -349,22 +405,24 @@ class _CaptureWorker(QObject):
         super().__init__()
         self._root_dir = root_dir
         self._log = log
-        self._backend: _MaaCapture | _MssCapture | None = None
-        self._backend_key: str | None = None
+        self._backend: _MaaCapture | None = None
+        self._backend_key: tuple[str, str] | None = None
         self._last_error: tuple[str, type[Exception], str] | None = None
         self._last_error_time = 0.0
 
-    @pyqtSlot(int, int, str, bool)
-    def grab(self, request_id: int, generation: int, mode: str, hdr: bool) -> None:
+    @pyqtSlot(int, int, str, str, bool)
+    def grab(self, request_id: int, generation: int, mode: str, process: str, hdr: bool) -> None:
         frame = None
         try:
-            image = self._grab(mode)
+            image = self._grab(mode, process)
         except Exception as error:
-            signature = (mode, type(error), str(error))
+            signature = (mode, process, type(error), str(error))
             now = time.monotonic()
             if signature != self._last_error or now - self._last_error_time >= 60:
                 self._log.exception(
-                    "Capture failed in %s mode; will retry (repeats limited to once/minute)", mode
+                    "Capture failed in %s mode (process %s); will retry (repeats limited to once/minute)",
+                    mode,
+                    process or "(auto detect)",
                 )
                 self._last_error_time = now
             self._last_error = signature
@@ -378,31 +436,30 @@ class _CaptureWorker(QObject):
                 frame = make_frame(image, hdr=hdr)
         self.grabbed.emit(request_id, generation, frame)
 
-    def _grab(self, mode: str) -> QImage | None:
-        key = mode if sys.platform == "win32" else _SCREEN
+    def _grab(self, mode: str, process: str) -> QImage | None:
+        if sys.platform != "win32":
+            raise RuntimeError("Capture requires Windows; MaaWin32Screencap is the only backend")
+        key = (mode, process)
         if self._backend_key != key:
             self.close()
         if self._backend is None:
-            self._backend = self._open(key)
+            self._backend = self._open(mode, process)
             self._backend_key = key
         image = self._backend.grab()
         if image is None:
             self.close()
         return image
 
-    def _open(self, key: str) -> _MaaCapture | _MssCapture:
-        if key == _SCREEN:
-            backend = _MssCapture()
-            self._log.info("Capture backend: desktop (mss)")
-            return backend
-        if key == "legacy":
-            backend = _MssCapture()
-            self._log.info("Capture backend: legacy (mss)")
-            return backend
-        native = _MaaCapture(self._root_dir, key)
-        native.connect()
-        self._log.info("Capture backend: %s (%s)", key, native.selected_method)
-        return native
+    def _open(self, mode: str, process: str) -> _MaaCapture:
+        backend = _MaaCapture(self._root_dir, mode, process)
+        backend.connect()
+        self._log.info(
+            "Capture backend: %s (process %s, method %s)",
+            mode,
+            process or "(auto detect)",
+            backend.selected_method,
+        )
+        return backend
 
     @pyqtSlot()
     def close(self) -> None:
@@ -415,26 +472,41 @@ class _CaptureWorker(QObject):
 
 
 class _MaaCapture:
-    """Minimal ctypes bridge for the MaaWin32Screencap manager used by the legacy application."""
+    """Minimal ctypes bridge for the MaaWin32Screencap manager."""
 
-    def __init__(self, plugin_dir: Path, mode: str) -> None:
+    def __init__(self, plugin_dir: Path, mode: str, process: str = "") -> None:
         self._plugin_dir = plugin_dir
         self._mode = mode
+        self._process = process
         self.selected_method: str | None = None
         self._manager: object | None = None
         self._hwnd: int | None = None
 
     def connect(self) -> None:
         from nightreign_overlay.meta import GAME_WINDOW_TITLE
-        from nightreign_overlay.plugins.capture.win32 import Manager, find_window_by_title
+        from nightreign_overlay.plugins.capture.win32 import (
+            SCREENCAP_METHOD_MASKS,
+            Manager,
+            find_hwnd_by_process,
+            find_window_by_title,
+        )
 
         dll_dir = self._plugin_dir / "native"
         if not (dll_dir / "MaaWin32Screencap.dll").exists():
             raise RuntimeError(f"MaaWin32Screencap.dll not found in {dll_dir}")
-        hwnd = find_window_by_title(GAME_WINDOW_TITLE)
-        if hwnd is None:
-            raise RuntimeError(f"Game window '{GAME_WINDOW_TITLE}' not found")
-        methods = Manager.METHOD_FOREGROUND if self._mode == "foreground" else Manager.METHOD_BACKGROUND
+        if self._process:
+            # Manually pinned capture process (e.g. a PS5 remote-play app): the game itself
+            # does not run on this PC, so resolve the window through that process instead.
+            hwnd = find_hwnd_by_process(self._process)
+            if hwnd is None:
+                raise RuntimeError(f"Capture process '{self._process}' has no visible top-level window")
+        else:
+            hwnd = find_window_by_title(GAME_WINDOW_TITLE)
+            if hwnd is None:
+                raise RuntimeError(f"Game window '{GAME_WINDOW_TITLE}' not found")
+        methods = SCREENCAP_METHOD_MASKS.get(self._mode)
+        if methods is None:
+            raise RuntimeError(f"Unknown capture mode '{self._mode}'")
         manager = Manager(dll_dir, hwnd, methods)
         try:
             if not manager.connect():
@@ -474,80 +546,3 @@ class _MaaCapture:
             self._manager.close()  # type: ignore[union-attr]
             self._manager = None
         self._hwnd = None
-
-
-class _MssCapture:
-    """mss desktop capture, with no game-window operations or WGC sessions.
-
-    By default the virtual desktop is captured once for all consumers (Windows legacy mode). QImage.offset
-    stores its physical origin so calibrated global rectangles work on monitors left of or above the primary
-    monitor as well. macOS captures each display separately into a non-overlapping native-pixel atlas.
-    Creation, grabbing and closing all run on the capture thread (mss instances are thread-bound).
-    """
-
-    def __init__(self) -> None:
-        import mss
-
-        if sys.platform == "darwin":
-            import mss.darwin
-
-            # Physical (Retina) pixels like the calibrated regions; mss defaults to the nominal resolution.
-            mss.darwin.IMAGE_OPTIONS &= ~mss.darwin.kCGWindowImageNominalResolution
-        # ``MSS`` is the non-deprecated 10.2+ entry point; keep compatibility with mss 10.0/10.1.
-        factory = getattr(mss, "MSS", None)
-        self._sct = factory() if factory is not None else mss.mss()
-
-    def grab(self) -> QImage:
-        if sys.platform == "darwin":
-            return self._grab_macos()
-        monitor = self._sct.monitors[0]
-        return self._grab_monitor(monitor)
-
-    def _grab_monitor(self, monitor: dict) -> QImage:
-        screenshot = self._sct.grab(monitor)
-        # BGRX: desktop alpha is unused and must not make pixels transparent.
-        image = QImage(
-            screenshot.bgra,
-            screenshot.width,
-            screenshot.height,
-            screenshot.width * 4,
-            QImage.Format.Format_RGB32,
-        ).copy()
-        image.setOffset(QPoint(monitor["left"], monitor["top"]))
-        return image
-
-    def _grab_macos(self) -> QImage:
-        # A combined CoreGraphics grab uses one scale for the entire desktop. Grab each display
-        # separately instead: mixed Retina / non-Retina screens must keep their native pixels.
-        monitors = self._sct.monitors[1:]
-        if not monitors:
-            raise RuntimeError("No displays available for screen capture")
-        images = [(monitor, self._grab_monitor(monitor)) for monitor in monitors]
-        ratio = max(
-            max(image.width() / monitor["width"], image.height() / monitor["height"])
-            for monitor, image in images
-        )
-        tiles = [
-            (capture_origin(QPoint(monitor["left"], monitor["top"]), ratio), image)
-            for monitor, image in images
-        ]
-        if len(tiles) == 1:
-            origin, image = tiles[0]
-            image.setOffset(origin)
-            return image
-        bounds = QRect()
-        for origin, image in tiles:
-            bounds = bounds.united(QRect(origin, image.size()))
-        result = QImage(bounds.size(), QImage.Format.Format_RGB32)
-        result.fill(Qt.GlobalColor.black)
-        painter = QPainter(result)
-        try:
-            for origin, image in tiles:
-                painter.drawImage(origin - bounds.topLeft(), image)
-        finally:
-            painter.end()
-        result.setOffset(bounds.topLeft())
-        return result
-
-    def close(self) -> None:
-        self._sct.close()

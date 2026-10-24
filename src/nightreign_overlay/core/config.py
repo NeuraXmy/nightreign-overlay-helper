@@ -122,6 +122,15 @@ class ColorOption(Option[str]):
         return raw.lower()
 
 
+class StringOption(Option[str]):
+    """Plain non-empty-after-strip string; an empty string is the neutral default."""
+
+    def normalize(self, raw: Any) -> str:
+        if not isinstance(raw, str):
+            raise ValueError(f"{self.name!r} expects a string, got {raw!r}")
+        return raw.strip()
+
+
 # ---------------------------------------------------------------------------
 # Items and groups: live, observable values bound to a store
 # ---------------------------------------------------------------------------

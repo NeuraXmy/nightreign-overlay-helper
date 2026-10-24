@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import enum
+import os
 import time
 from collections.abc import Callable
 from ctypes import wintypes
@@ -29,11 +31,40 @@ class ImageInfo:
     data: bytes
 
 
+class ScreencapMethod(enum.IntFlag):
+    """Concrete capture methods, keyed by their MaaWin32Screencap bitmask values."""
+
+    GDI = 1 << 0
+    FRAMEPOOL = 1 << 1
+    DXGI_DESKTOP_DUP = 1 << 2
+    DXGI_DESKTOP_DUP_WINDOW = 1 << 3
+    PRINTWINDOW = 1 << 4
+    SCREENDC = 1 << 5
+
+
+#: All builtin methods, for automatic speed-test selection.
+METHOD_ALL = (1 << 64) - 1
+
+#: Capture mode key -> method bitmask. A single concrete method pins the capture
+#: method (the speed test has exactly one candidate); see ``CaptureConfig.mode``.
+SCREENCAP_METHOD_MASKS: dict[str, int] = {
+    "auto": METHOD_ALL,
+    "foreground": int(ScreencapMethod.DXGI_DESKTOP_DUP_WINDOW | ScreencapMethod.SCREENDC),
+    "background": int(ScreencapMethod.FRAMEPOOL | ScreencapMethod.PRINTWINDOW),
+    "gdi": int(ScreencapMethod.GDI),
+    "framepool": int(ScreencapMethod.FRAMEPOOL),
+    "dxgi_desktop_dup": int(ScreencapMethod.DXGI_DESKTOP_DUP),
+    "dxgi_desktop_dup_window": int(ScreencapMethod.DXGI_DESKTOP_DUP_WINDOW),
+    "printwindow": int(ScreencapMethod.PRINTWINDOW),
+    "screendc": int(ScreencapMethod.SCREENDC),
+}
+
+
 class Manager:
     """Owns a MaaWSManager handle and copies native pixels before the next capture."""
 
-    METHOD_FOREGROUND = (1 << 3) | (1 << 5)
-    METHOD_BACKGROUND = (1 << 1) | (1 << 4)
+    METHOD_FOREGROUND = SCREENCAP_METHOD_MASKS["foreground"]
+    METHOD_BACKGROUND = SCREENCAP_METHOD_MASKS["background"]
 
     def __init__(self, dll_dir: Path, hwnd: int, methods: int) -> None:
         dll_path = dll_dir / "MaaWin32Screencap.dll"
@@ -109,6 +140,50 @@ def find_window_by_title(title: str, accept: Callable[[int], bool] | None = None
     return matches[0] if matches else None
 
 
+def _configure_process_apis() -> tuple[ctypes.WinDLL, ctypes.WinDLL]:
+    """Declare process-query signatures (handles must be pointer-sized) and return the DLLs."""
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.LPWSTR,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    return user32, kernel32
+
+
+def _process_image_name(pid: int) -> str | None:
+    """Executable file name of ``pid`` (``None`` without permission or when it exited)."""
+    _user32, kernel32 = _configure_process_apis()
+    process = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not process:
+        return None
+    try:
+        size = wintypes.DWORD(32768)
+        path = ctypes.create_unicode_buffer(size.value)
+        if not kernel32.QueryFullProcessImageNameW(process, 0, path, ctypes.byref(size)):
+            return None
+        return path.value.replace("\\", "/").rsplit("/", 1)[-1]
+    finally:
+        kernel32.CloseHandle(process)
+
+
+def _window_pid(hwnd: int) -> int:
+    user32, _kernel32 = _configure_process_apis()
+    pid = wintypes.DWORD()
+    if not user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid)):
+        return 0
+    return int(pid.value)
+
+
 def _is_game_window(hwnd: int) -> bool:
     """Only accept a visible, non-minimized window owned by nightreign.exe.
 
@@ -122,34 +197,92 @@ def _is_game_window(hwnd: int) -> bool:
         function.restype = wintypes.BOOL
     if not user32.IsWindowVisible(hwnd) or user32.IsIconic(hwnd):
         return False
-    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
-    user32.GetWindowThreadProcessId.restype = wintypes.DWORD
-    pid = wintypes.DWORD()
-    if not user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid)) or not pid.value:
+    pid = _window_pid(hwnd)
+    if not pid:
         return False
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-    kernel32.OpenProcess.restype = wintypes.HANDLE
-    kernel32.QueryFullProcessImageNameW.argtypes = [
-        wintypes.HANDLE,
-        wintypes.DWORD,
-        wintypes.LPWSTR,
-        ctypes.POINTER(wintypes.DWORD),
-    ]
-    kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
-    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-    kernel32.CloseHandle.restype = wintypes.BOOL
-    process = kernel32.OpenProcess(0x1000, False, pid.value)  # PROCESS_QUERY_LIMITED_INFORMATION
-    if not process:
-        return False
-    try:
-        size = wintypes.DWORD(32768)
-        path = ctypes.create_unicode_buffer(size.value)
-        return bool(kernel32.QueryFullProcessImageNameW(process, 0, path, ctypes.byref(size))) and (
-            path.value.replace("\\", "/").rsplit("/", 1)[-1].casefold() == "nightreign.exe"
-        )
-    finally:
-        kernel32.CloseHandle(process)
+    image = _process_image_name(pid)
+    return image is not None and image.casefold() == "nightreign.exe"
+
+
+def list_window_processes() -> list[tuple[str, str]]:
+    """Enumerate processes owning a visible top-level window as ``(title, image name)``.
+
+    One window per process (the topmost one), skipping tool windows and this process, sorted by
+    image name — the source of the manual capture-process picker (e.g. PS Remote Play streaming).
+    """
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.IsWindowVisible.argtypes = [wintypes.HWND]
+    user32.IsWindowVisible.restype = wintypes.BOOL
+    user32.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.GetWindowLongW.restype = ctypes.c_long
+    user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+    user32.GetWindowTextLengthW.restype = ctypes.c_int
+    user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    user32.GetWindowTextW.restype = ctypes.c_int
+    current_pid = os.getpid()
+    windows: dict[int, tuple[str, str]] = {}
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def callback(hwnd: int, _lparam: int) -> bool:
+        pid = _window_pid(hwnd)
+        if not pid or pid == current_pid or pid in windows:
+            return True
+        if not user32.IsWindowVisible(hwnd) or user32.GetWindowLongW(hwnd, -20) & 0x00000080:
+            return True  # WS_EX_TOOLWINDOW
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length <= 0:
+            return True
+        buffer = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buffer, length + 1)
+        image = _process_image_name(pid) or ""
+        windows[pid] = (buffer.value, image)
+        return True
+
+    user32.EnumWindows.argtypes = [type(callback), wintypes.LPARAM]
+    user32.EnumWindows.restype = wintypes.BOOL
+    user32.EnumWindows(callback, 0)
+    return sorted(windows.values(), key=lambda entry: (entry[1].casefold(), entry[0].casefold()))
+
+
+def find_hwnd_by_process(image_name: str) -> int | None:
+    """Find the visible top-level window of ``image_name`` (case-insensitive).
+
+    EnumWindows returns windows in Z order, so the foreground window of the streaming app wins.
+    Used when the game itself does not run on this PC (e.g. PS5 remote play).
+    """
+    target = image_name.replace("\\", "/").rsplit("/", 1)[-1].casefold()
+    if not target:
+        return None
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.IsWindowVisible.argtypes = [wintypes.HWND]
+    user32.IsWindowVisible.restype = wintypes.BOOL
+    user32.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.GetWindowLongW.restype = ctypes.c_long
+    user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+    user32.GetWindowTextLengthW.restype = ctypes.c_int
+    current_pid = os.getpid()
+    matches: list[int] = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def callback(hwnd: int, _lparam: int) -> bool:
+        if matches:
+            return False
+        if not user32.IsWindowVisible(hwnd) or user32.GetWindowLongW(hwnd, -20) & 0x00000080:
+            return True  # hidden or WS_EX_TOOLWINDOW
+        if user32.GetWindowTextLengthW(hwnd) <= 0:
+            return True
+        pid = _window_pid(hwnd)
+        if not pid or pid == current_pid:
+            return True
+        name = _process_image_name(pid)
+        if name and name.casefold() == target:
+            matches.append(int(hwnd))
+        return True
+
+    user32.EnumWindows.argtypes = [type(callback), wintypes.LPARAM]
+    user32.EnumWindows.restype = wintypes.BOOL
+    user32.EnumWindows(callback, 0)
+    return matches[0] if matches else None
 
 
 class GameClientLocator:

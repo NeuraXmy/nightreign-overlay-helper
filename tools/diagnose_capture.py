@@ -15,8 +15,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-import mss
-import numpy as np
 from PyQt6.QtCore import QEventLoop, QObject, QRect, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication, QWidget
@@ -24,10 +22,11 @@ from PyQt6.QtWidgets import QApplication, QWidget
 from nightreign_overlay.core.screens import screen_mappings
 from nightreign_overlay.plugins.capture import plugin as capture
 from nightreign_overlay.plugins.capture.api import FrameCaptured, crop_rgb
+from nightreign_overlay.plugins.capture.config import CAPTURE_MODES
 
 
 class Requests(QObject):
-    grab = pyqtSignal(int, int, str, bool)
+    grab = pyqtSignal(int, int, str, str, bool)
 
 
 def capture_frame(mode: str, timeout_ms: int) -> tuple[FrameCaptured | None, bool]:
@@ -51,7 +50,7 @@ def capture_frame(mode: str, timeout_ms: int) -> tuple[FrameCaptured | None, boo
 
     worker.grabbed.connect(finished, Qt.ConnectionType.QueuedConnection)
     thread.start()
-    requests.grab.emit(1, 0, mode, False)
+    requests.grab.emit(1, 0, mode, "", False)
     timer.start(timeout_ms)
     loop.exec()
     timer.stop()
@@ -65,7 +64,7 @@ def capture_frame(mode: str, timeout_ms: int) -> tuple[FrameCaptured | None, boo
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("all", "legacy", "foreground", "background"), default="all")
+    parser.add_argument("--mode", choices=("all", *CAPTURE_MODES), default="all")
     parser.add_argument("--output", type=Path, default=Path(".tmp/capture-diagnostic"))
     parser.add_argument(
         "--markers",
@@ -96,11 +95,6 @@ def main() -> int:
     displays = app.screens()
     mappings = screen_mappings(displays)
     report = {"platform": sys.platform, "qt_platform": app.platformName(), "screens": [], "captures": []}
-    try:
-        with mss.MSS() as sct:
-            report["mss_monitors"] = sct.monitors
-    except Exception as error:
-        report["mss_error"] = str(error)
     markers = []
     probes = []
     for index, (screen, mapping) in enumerate(zip(displays, mappings, strict=True)):
@@ -134,11 +128,12 @@ def main() -> int:
         QTimer.singleShot(800, loop.quit)
         loop.exec()
 
-    modes = ("legacy", "foreground", "background") if args.mode == "all" else (args.mode,)
+    modes = CAPTURE_MODES if args.mode == "all" else (args.mode,)
     complete = bool(displays)
     try:
         for mode in modes:
-            entry = {"requested_mode": mode, "backend": mode if sys.platform == "win32" else "mss desktop"}
+            backend = "maa-win32" if sys.platform == "win32" else "unsupported"
+            entry = {"requested_mode": mode, "backend": backend}
             report["captures"].append(entry)
             frame, stopped = capture_frame(mode, args.timeout_ms)
             if frame is None:
@@ -164,25 +159,9 @@ def main() -> int:
                     local = rect.translated(-image.offset()).intersected(image.rect())
                     if not local.isEmpty():
                         image.copy(local).save(str(args.output / f"{mode}-region.png"))
-                if probes and (sys.platform != "win32" or mode == "legacy"):
-                    entry["probes"] = []
-                    for index, (rect, color) in enumerate(probes):
-                        crop = crop_rgb(image, rect)
-                        actual = np.median(crop, axis=(0, 1)).tolist() if crop is not None else None
-                        passed = actual is not None and bool(np.max(np.abs(np.array(actual) - color)) <= 12)
-                        entry["probes"].append(
-                            {
-                                "screen": index,
-                                "rect": rect.getRect(),
-                                "expected_rgb": color,
-                                "actual_rgb": actual,
-                                "passed": passed,
-                            }
-                        )
-                        complete &= passed
-                elif probes:
+                if probes:
                     entry["probe_note"] = (
-                        "DLL client capture may exclude probe windows; "
+                        "Client-area capture may exclude probe windows; "
                         "inspect the game image and --region crop instead."
                     )
             if not stopped:

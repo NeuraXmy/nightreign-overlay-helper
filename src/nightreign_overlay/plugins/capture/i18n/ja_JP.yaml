@@ -5,10 +5,25 @@ settings:
   title: キャプチャ設定
   mode:
     title: キャプチャ方式
-    content: 既定は従来方式。歌詞表示などの重なりは認識に影響します。前面／背面方式ではウィンドウサイズが変わる場合があります
-    legacy: 従来方式
+    content: 自動測定で最速の方式を選択します。互換性問題の切り分けには単一方式（例：GDI）へ固定できます
+    auto: 自動
     foreground: 前面のみ
     background: 背面のみ
+    gdi: GDI
+    framepool: FramePool（WGC）
+    dxgi_desktop_dup: DXGI デスクトップ複製
+    dxgi_desktop_dup_window: DXGI ウィンドウ複製
+    printwindow: PrintWindow
+    screendc: ScreenDC
+  process:
+    title: キャプチャプロセス
+    content: 既定ではゲームウィンドウを自動検出します。PS5 リモートプレイなどで遊ぶ場合は、ゲーム映像を提供するプロセスを手動で選択してください
+    auto: 自動検出
+    current: "現在：{process}"
+    dialog_title: キャプチャプロセスの選択
+    dialog_hint: ゲーム映像を提供するウィンドウを選択してください（例：PS リモートプレイ）
+    confirm: OK
+    cancel: キャンセル
   interval:
     title: 認識間隔
     content: 全認識機能で共有。短いほど反応が速くなりますが、負荷も増えます
