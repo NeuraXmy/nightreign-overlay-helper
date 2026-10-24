@@ -17,20 +17,24 @@ The current version is developed on [`main`](https://github.com/NeuraXmy/nightre
 - **Circle Timer**: Recognizes the DAY I / DAY II / DAY III banner at the start of each day and shows a circle countdown in the overlay. You can also start timing manually with shortcuts.
 - **Rain Exposure Timer**: Periodically checks the HP bar color in screenshots. When the rain exposure color appears, a countdown shows the time before heavy damage begins; it stops when the normal color returns.
 - **Ultimate Art Timer**: Shows the remaining active duration when you press the in-game Ultimate Art key and the Art icon lights up. Supports Duchess, Recluse, Executor, Revenant, and Scholar.
-- **Voice Notifications**: Ten bundled Chinese voice cues, enabled by default with individual switches, volume, previews, and custom files. Circle warnings play 30 seconds early, and the Art warning 3 seconds early. Rain start, 30-second warning, and end are separate cues. See [timers and audio](docs/features/timers.md).
+- **Status Buildup Timer**: Detects status buildup meters and displays the attack power stacks from the King of Wastes relic effect and the countdown to the next check.
 - **Map Information**: Recognizes Shifting Earth terrain, the Nightlord portrait, and point-of-interest types to narrow down the map seed and show detailed location information. Supports all maps, including DLC, and events that hide the Nightlord or map details. Some cases need manual filtering.
 - **HP Threshold Markers**: Periodically detects HP bar length in screenshots and shows reference lines for effects that activate below maximum HP or at low HP.
-- **Co-op Status**: Shows your Steam teammates' names, ping, connection quality, and optional public playtime without an API key. Click a name to open its profile in Steam.
-- **Post-game Commendations**: A separate settings page and expiring popup, with profile links, explicit comment buttons, and account-scoped seven-day duplicate protection. See [teammate features](docs/features/steam-social.md).
+- **Co-op Status**: Shows your Steam teammates' names, ping, connection stability, and public playtime. Click a name to open its profile in Steam.
+- **Post-game Commendations**: A separate page and time-limited window. Click a name to open its profile, or use the commendation button to send a custom comment. Includes seven-day duplicate protection and safeguards for uncertain results.
+- **Voice Notifications**: Voice notifications can be configured for several features.
+- The app also includes entertainment features, such as automatically playing audio when a teammate is downed. Download it to explore more!
 
 ## Usage
 
 1. Download and fully extract the [Windows release ZIP](https://github.com/NeuraXmy/nightreign-overlay-helper/releases). Keep `_internal/`, `bin/`, `third-party/`, and all other bundled files alongside the EXE. Do not move the EXE on its own. Python and .NET runtimes are included; no separate installation is needed.
 2. Run `nightreign-overlay-helper.exe` and approve the administrator prompt. Sign in to Steam before using Co-op Status.
-3. Set the game to windowed or borderless windowed mode. On Windows, regions without manual calibration use automatic defaults for a 16:9 game window; saved manual regions take priority. Follow each feature's **Guide** tab to select the game language, configure shortcuts, and adjust regions when needed.
+3. Set the game to windowed or borderless windowed mode. On Windows, regions without manual calibration use automatic defaults for a 16:9 game window; saved manual regions take priority. Follow each feature's **Tutorial** tab to select the game language, configure shortcuts, and adjust regions when needed.
 4. Right-click an overlay or the system tray icon to open the main window. Closing it hides the app to the tray; choose **Quit** from the context menu to exit completely.
 
 Move the overlays while the main window is open. Display mode, opacity, and other options are available in General Settings.
+
+Update checks: The About page provides release notes, an immediate update check, and automatic checks at startup. When a new version is available, you can download the complete ZIP. After extracting the new version and exiting the old app, you can delete the old app folder. Settings stored in your user directory will be preserved.
 
 ### Recognition and Issue Reports
 
