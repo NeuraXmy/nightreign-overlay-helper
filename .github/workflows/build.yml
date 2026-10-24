@@ -39,7 +39,7 @@ jobs:
       - name: Build teammate latency helper
         shell: pwsh
         run: |
-          dotnet restore native/NightreignP2PHelper/NightreignP2PHelper.csproj --locked-mode
+          dotnet restore native/NightreignP2PHelper/NightreignP2PHelper.csproj --locked-mode -r win-x64
           dotnet publish native/NightreignP2PHelper/NightreignP2PHelper.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -o build/NightreignP2PHelper --no-restore
 
       - name: Verify project version matches tag
