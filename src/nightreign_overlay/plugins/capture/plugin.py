@@ -596,6 +596,7 @@ class _MaaCapture:
         from nightreign_overlay.plugins.capture.win32 import (
             SCREENCAP_METHOD_MASKS,
             Manager,
+            _is_game_window,
             find_hwnd_by_process,
             find_window_by_title,
         )
@@ -610,7 +611,7 @@ class _MaaCapture:
             if hwnd is None:
                 raise RuntimeError(f"Capture process '{self._process}' has no visible top-level window")
         else:
-            hwnd = find_window_by_title(GAME_WINDOW_TITLE)
+            hwnd = find_window_by_title(GAME_WINDOW_TITLE, accept=_is_game_window)
             if hwnd is None:
                 raise RuntimeError(f"Game window '{GAME_WINDOW_TITLE}' not found")
         methods = SCREENCAP_METHOD_MASKS.get(self._mode)

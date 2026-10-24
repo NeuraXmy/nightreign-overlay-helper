@@ -296,7 +296,15 @@ def test_dll_receives_only_requested_methods(tmp_path, monkeypatch, mode, mask):
             calls.append("closed")
 
     monkeypatch.setattr(win32, "Manager", FakeManager)
-    monkeypatch.setattr(win32, "find_window_by_title", lambda title: 123)
+    monkeypatch.setattr(win32, "_is_game_window", lambda hwnd: hwnd == 123)
+
+    def find_game_window(title, accept):
+        assert title == "ELDEN RING NIGHTREIGN"
+        # A browser window can have the game name in its title, but the process check rejects it.
+        matching_windows = [122, 123]
+        return next((hwnd for hwnd in matching_windows if accept(hwnd)), None)
+
+    monkeypatch.setattr(win32, "find_window_by_title", find_game_window)
     backend = capture._MaaCapture(tmp_path, mode)
     backend.connect()
     assert calls == [(123, mask)] and backend.selected_method == "test-method"
