@@ -24,6 +24,7 @@ DEPENDENCIES = {
 LEGAL_FILES = (
     "AGPL-3.0.txt",
     *DEPENDENCIES.values(),
+    "MaaWin32Screencap-LICENSE.txt",
     "THIRD-PARTY-NOTICES.md",
     "source-origins.json",
 )

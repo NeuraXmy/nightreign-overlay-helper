@@ -41,6 +41,22 @@ continue to apply to those components.
   Qt itself is a separate dependency with its own licensing terms; this notice
   does not replace Qt's notices or constitute an audit of all bundled libraries.
 
+## MaaWin32Screencap
+
+- Win32 screen-capture library extracted from
+  [MaaFramework](https://github.com/MaaXYZ/MaaFramework); copyright the
+  MaaFramework authors and contributors. Licensed under the GNU LGPL
+  version 3; see `MaaWin32Screencap-LICENSE.txt`.
+- Bundled as the prebuilt `MaaWin32Screencap.dll` (Windows x64) that the
+  application loads at runtime. First distributed with the upstream PR #23
+  migration (`3c427af`); the DLL remains a separate LGPL work.
+- The distributed DLL carries changes ahead of upstream MaaFramework:
+  the `ensure_window_on_screen` fix (anchoring to the full monitor rect
+  and skipping borderless fullscreen windows), maintained in the
+  extraction repository
+  <https://codeberg.org/AbyssRei/MaaWin32Screencap> (commits `f9e7fae`,
+  `b0e45dd`). Corresponding source for the DLL is available there.
+
 ## SteamP2PInfo and P2P helper components
 
 - SteamP2PInfo — Copyright (c) 2022 William Tremblay.
