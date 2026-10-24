@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from nightreign_overlay.core.config import BoolOption, ChoiceOption, ColorOption, ConfigGroup, Option
+from nightreign_overlay.core.config import (
+    BoolOption,
+    ChoiceOption,
+    ColorOption,
+    ConfigGroup,
+    Option,
+    RangeOption,
+)
 from nightreign_overlay.core.i18n import available_languages
 from nightreign_overlay.core.log import LOG_LEVELS
 
@@ -23,6 +30,7 @@ class AppConfig(ConfigGroup):
     # Retained for existing config files; closing hides the window and explicit quit exits the app.
     close_to_tray = BoolOption(True)
     start_minimized = BoolOption(False)
+    master_volume = RangeOption(100, 0, 100)
     auto_check_updates = BoolOption(True)
     skipped_update_version = Option("", validator=lambda value: isinstance(value, str))
     debug_images_enabled = BoolOption(True)

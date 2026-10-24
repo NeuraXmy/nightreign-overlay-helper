@@ -76,6 +76,8 @@ settings:
   open: 開啟
   general:
     title: 一般
+  master_volume:
+    title: 主音量
   language:
     title: 語言
     auto: 跟隨系統

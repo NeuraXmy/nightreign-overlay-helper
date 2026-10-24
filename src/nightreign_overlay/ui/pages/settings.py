@@ -18,6 +18,7 @@ from nightreign_overlay.plugin import Plugin, PluginManager, SettingsScope
 from nightreign_overlay.ui.components import (
     ConfigChoiceCard,
     ConfigColorCard,
+    ConfigRangeCard,
     ConfigSwitchCard,
     MultiButtonSettingCard,
     ScrollPage,
@@ -91,6 +92,12 @@ class SettingsPage(ScrollPage):
                 FluentIcon.HIDE,
                 tr("settings.start_minimized.title"),
                 tr("settings.start_minimized.content"),
+            ),
+            ConfigRangeCard(
+                self._config.master_volume,
+                FluentIcon.VOLUME,
+                tr("settings.master_volume.title"),
+                formatter=lambda value: f"{value}%",
             ),
         )
         self.addWidget(section)

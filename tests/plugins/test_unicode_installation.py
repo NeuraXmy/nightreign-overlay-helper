@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import QApplication
 
 root = Path(sys.argv[1])
 sys.path.insert(0, str(root))
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
@@ -49,7 +50,9 @@ translator = Translator("zh_CN")
 translator.load_dir("core", resource_path("i18n"))
 assert translator.tr("core", "nav.home") != "nav.home"
 store = ConfigStore(root / "settings.yaml")
-manager = PluginManager(store, translator, ServiceRegistry(), EventBus())
+services = ServiceRegistry()
+services.register(AppConfig, store.bind(AppConfig, "app"))
+manager = PluginManager(store, translator, services, EventBus())
 manager.discover()
 expected = {
     "art_timer", "audio", "capture", "day_timer", "hp_marker", "hud",

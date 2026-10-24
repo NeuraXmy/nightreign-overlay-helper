@@ -72,6 +72,8 @@ settings:
   open: 開く
   general:
     title: 一般
+  master_volume:
+    title: マスター音量
   language:
     title: 言語
     auto: システムに従う

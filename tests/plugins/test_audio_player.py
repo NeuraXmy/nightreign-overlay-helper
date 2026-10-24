@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from PyQt6.QtCore import QEventLoop, QTimer
 
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
 from nightreign_overlay.core.services import ServiceRegistry
@@ -19,7 +20,9 @@ from nightreign_overlay.plugins.audio.plugin import AudioPlugin
 
 @pytest.fixture
 def player(store, tmp_path):
-    ctx = PluginContext("audio", tmp_path, store, Translator("zh_CN"), ServiceRegistry(), EventBus())
+    services = ServiceRegistry()
+    services.register(AppConfig, store.bind(AppConfig, "app"))
+    ctx = PluginContext("audio", tmp_path, store, Translator("zh_CN"), services, EventBus())
     plugin = AudioPlugin(ctx)
     plugin.on_load()
     yield plugin
@@ -47,6 +50,77 @@ def test_replacement_volume_and_owner_cleanup(player, tmp_path):
     assert len(calls) == before
     player.stop("rain_timer")
     assert calls[-2] == "stop"
+
+
+def test_master_volume_scales_finite_audio_and_updates_without_restart(player, tmp_path):
+    volumes, plays = [], []
+    player._player = SimpleNamespace(
+        stop=lambda: None,
+        setSource=lambda url: None,
+        play=lambda: plays.append(True),
+        deleteLater=lambda: None,
+    )
+    player._output = SimpleNamespace(setVolume=volumes.append, deleteLater=lambda: None)
+    master = player.ctx.services.require(AppConfig).master_volume
+    path = tmp_path / "audio.wav"
+    path.touch()
+    master.set(50)
+    assert player.play(str(path), 40)
+    assert volumes[-1] == pytest.approx(0.2)
+    master.set(0)
+    assert volumes[-1] == 0
+    master.set(100)
+    assert volumes[-1] == pytest.approx(0.4)
+    assert len(plays) == 1
+
+
+def test_master_volume_scales_loop_fades_and_restored_stack_entries(player, tmp_path, monkeypatch):
+    from PyQt6.QtMultimedia import QMediaPlayer
+
+    import nightreign_overlay.plugins.audio.plugin as module
+
+    now = [0.0]
+    monkeypatch.setattr(module.time, "monotonic", lambda: now[0])
+    volumes = []
+    player._loop_player = SimpleNamespace(
+        stop=lambda: None,
+        setSource=lambda url: None,
+        play=lambda: None,
+        playbackState=lambda: QMediaPlayer.PlaybackState.PlayingState,
+        position=lambda: 123,
+        deleteLater=lambda: None,
+    )
+    player._loop_output = SimpleNamespace(setVolume=volumes.append, deleteLater=lambda: None)
+    path = tmp_path / "loop.wav"
+    path.touch()
+    master = player.ctx.services.require(AppConfig).master_volume
+    master.set(50)
+    assert player.play_loop(str(path), 80, fade_in=2, owner="lower")
+    assert volumes[-1] == 0
+    now[0] = 1
+    player._fade_step()
+    assert volumes[-1] == pytest.approx(0.2)
+    master.set(0)
+    now[0] = 2
+    player._fade_step()
+    assert volumes[-1] == 0
+    master.set(25)
+    assert volumes[-1] == pytest.approx(0.2)
+    assert player.play_loop(str(path), 40, owner="upper")
+    assert volumes[-1] == pytest.approx(0.1)
+    player.stop_loop("upper", fade_out=2)
+    now[0] = 3
+    player._fade_step()
+    assert volumes[-1] == pytest.approx(0.05)
+    master.set(50)
+    assert volumes[-1] == pytest.approx(0.1)
+    now[0] = 4
+    player._fade_step()
+    assert player._loop_stack.top.owner == "lower"
+    assert volumes[-1] == 0
+    now[0] = 6
+    player._fade_step()
+    assert volumes[-1] == pytest.approx(0.4)
 
 
 def test_missing_audio_and_backend_failure_are_safe(player, tmp_path, monkeypatch):
