@@ -22,7 +22,7 @@
 | 非激活点击 | 依赖 Qt flags | Cocoa `NSWindowStyleMaskNonactivatingPanel` |
 | 管理员权限 | `IsUserAnAdmin` | 不适用 |
 | 屏幕录制权限 | 无限制 | `CGPreflightScreenCaptureAccess` / `CGRequestScreenCaptureAccess` |
-| `capture` 截图 | MaaWin32Screencap DLL | 不支持（请求失败并限频告警） |
+| `capture` 截图 | MaaWin32Screencap（默认）或 mss | mss 兼容模式（需要桌面录屏权限） |
 | 透明悬浮窗 | 支持 | 默认不支持，可切普通窗口 |
 
 ## create_backend()
@@ -44,7 +44,7 @@ def create_backend() -> PlatformBackend:
 
 - `supports_transparent_overlay = False` 默认，因为 macOS 合成器可能把透明 Tool 窗口置于后台。
 - `has_screen_capture_access()`：检测屏幕录制权限；缺失时 `region` 退化为半透明覆盖层。
-- `capture` 插件在独立 QThread 中创建和使用 MaaWin32Screencap DLL；非 Windows 平台请求直接失败并限频告警。
+- `capture` 插件在独立 QThread 中创建和使用截图后端；MaaWin32Screencap 仅适用于 Windows，macOS/Linux 可选择 mss 兼容模式。macOS 需获得屏幕录制权限。
 - 多屏坐标转换统一使用 `core/screens.py`。macOS 屏幕原点按桌面最大 DPR 放置，每个屏幕保留自己的原生像素，避免混合缩放时坐标重叠。
 - `configure_overlay_activation(window_id, non_activating)`：macOS 上设置 `NSWindowStyleMaskNonactivatingPanel`，防止点击透明悬浮窗激活整个应用。
 

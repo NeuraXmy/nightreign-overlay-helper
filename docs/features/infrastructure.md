@@ -39,7 +39,11 @@ class CaptureApi:
     def release_stream(self, owner: str) -> None: ...
     def hdr_enabled(self) -> bool: ...
     def game_client_rect(self) -> QRect | None: ...
+    def capture_status(self) -> str: ...  # inactive, waiting, running
+    def capture_method(self) -> str | None: ...  # 实际方法名，如 GDI、FRAMEPOOL 或 mss
 ```
+
+`capture_status()` 描述共享截图流是否启用及 Maa 是否成功取帧；`capture_method()` 返回正常运行时的实际方法名，自动模式返回 Maa 自动优选的结果。
 
 ### 数据流
 

@@ -11,6 +11,7 @@ import sys
 from collections.abc import Callable
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QListWidgetItem
 from qfluentwidgets import BodyLabel, ListWidget, MessageBoxBase, SubtitleLabel
 
 from nightreign_overlay.plugins.capture.win32 import list_window_processes
@@ -48,9 +49,7 @@ class ProcessPickerDialog(MessageBoxBase):
         self.widget.setMinimumSize(520, 420)
 
     def _add_row(self, label: str, process: str, selected: bool = False) -> None:
-        from qfluentwidgets import ListWidgetItem
-
-        item = ListWidgetItem(label)
+        item = QListWidgetItem(label)
         item.setData(Qt.ItemDataRole.UserRole, process)
         self.listWidget.addItem(item)
         if selected:
