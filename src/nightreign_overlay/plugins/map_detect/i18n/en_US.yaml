@@ -44,6 +44,7 @@ drawing:
   rooftop: 'Roof: {name}'
   basement: 'Basement: {name}'
   flask: Flask
+  merchant_village: Merchant Village
   floor_boss: '{floor}F: {name}'
   blessing: Blessing
   hidden_nightlord: ' (hidden Nightlord)'
