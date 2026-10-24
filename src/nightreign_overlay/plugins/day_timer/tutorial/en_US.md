@@ -10,7 +10,11 @@ By recognizing the DAY I / DAY II / DAY III icons that appear at the start of ea
 
 ### 2. Calibrate the DAY I icon region.
 
-This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it only if the game is not full screen or the automatic region is incorrect.
+ℹ️ This step is **optional**. The program automatically calculates the detection region from a 16:9 full-screen game image.
+
+If the automatic region does not work correctly, the game is not full screen, or you want to detect a window other than the game, see the [Calibration Tutorial](app://tutorial/region-calibration).
+
+:::collapse Manual calibration steps
 
 It is recommended to set a controller or keyboard shortcut. Start a single-player game and press the shortcut when the DAY I icon is fully visible to open the calibration screen.
 
@@ -21,6 +25,8 @@ Click the button in the upper-right corner to start selecting (if the mouse cann
 ![Calibration screen](3.jpg)
 
 Return to the main window. A green "Calibrated" status indicates success. Hover over the eye icon to view the calibrated region.
+
+:::
 
 ### 3. Set manual shortcuts.
 

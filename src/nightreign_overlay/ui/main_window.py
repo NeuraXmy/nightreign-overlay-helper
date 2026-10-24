@@ -9,6 +9,7 @@ from qfluentwidgets import FluentIcon, FluentWindow, NavigationItemPosition
 from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.game_window import GameWindowMonitor
 from nightreign_overlay.core.i18n import tr
+from nightreign_overlay.core.services import ServiceRegistry
 from nightreign_overlay.meta import APP_NAME
 from nightreign_overlay.plugin import PLUGIN_KIND_DISPLAY_ORDER, PluginManager, SettingsScope
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -33,11 +34,13 @@ class MainWindow(FluentWindow):
         plugins: PluginManager,
         overlays: OverlayManager,
         game_monitor: GameWindowMonitor,
+        services: ServiceRegistry | None = None,
     ) -> None:
         super().__init__()
         self._config = config
         self._quitting = False
         self._plugin_pages: dict[str, PluginPage] = {}
+        self._services = services or ServiceRegistry(self)
 
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(app_icon())
@@ -51,7 +54,7 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.homePage, FluentIcon.HOME, tr("nav.home"))
         self._init_plugin_pages(plugins)
 
-        self.faqPage = FaqPage(self)
+        self.faqPage = FaqPage(self, self._services)
         self.settingsPage = SettingsPage(config, plugins, self)
         self.aboutPage = AboutPage(config, self)
         self.addSubInterface(self.faqPage, FluentIcon.HELP, tr("nav.faq"), NavigationItemPosition.BOTTOM)
@@ -74,7 +77,7 @@ class MainWindow(FluentWindow):
                 tr(f"plugin.kind.{kind.value}"), NavigationItemPosition.SCROLL
             )
             for record in group:
-                page = PluginPage(plugins, record, self)
+                page = PluginPage(plugins, record, self, self._services)
                 self._plugin_pages[record.id] = page
                 self.addSubInterface(
                     page,

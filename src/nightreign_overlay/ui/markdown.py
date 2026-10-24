@@ -1,9 +1,18 @@
 """Shared presentation for Markdown rendered in the UI."""
 
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QImage, QMouseEvent, QResizeEvent, QTextBlockFormat, QTextCursor, QTextDocument
+from PyQt6.QtGui import (
+    QColor,
+    QImage,
+    QMouseEvent,
+    QPalette,
+    QResizeEvent,
+    QTextBlockFormat,
+    QTextCursor,
+    QTextDocument,
+)
 from PyQt6.QtWidgets import QDialog, QLabel, QVBoxLayout
-from qfluentwidgets import TextBrowser
+from qfluentwidgets import TextBrowser, isDarkTheme, qconfig
 
 MARKDOWN_STYLE_SHEET = """
 body {
@@ -142,7 +151,11 @@ class MarkdownTextBrowser(TextBrowser):
 def configure_markdown_browser(browser: TextBrowser) -> None:
     """Apply readable spacing to a Markdown-capable text browser."""
 
-    browser.document().setDefaultStyleSheet(MARKDOWN_STYLE_SHEET)
+    browser.document().setDefaultStyleSheet(_markdown_style_sheet())
+    _refresh_markdown_theme(browser)
+    if not getattr(browser, "_markdown_theme_connected", False):
+        qconfig.themeChangedFinished.connect(lambda: _refresh_markdown_theme(browser))
+        browser._markdown_theme_connected = True
     document = browser.document()
     block = document.begin()
     while block.isValid():
@@ -184,3 +197,17 @@ def configure_markdown_browser(browser: TextBrowser) -> None:
         block = block.next()
     if isinstance(browser, MarkdownTextBrowser):
         browser.resize_images()
+
+
+def _markdown_style_sheet() -> str:
+    link = "#b8ddff" if isDarkTheme() else "#0067c0"
+    visited = "#d3b3ff" if isDarkTheme() else "#6f42c1"
+    return MARKDOWN_STYLE_SHEET + (f"\na:link {{ color: {link}; }}\na:visited {{ color: {visited}; }}")
+
+
+def _refresh_markdown_theme(browser: TextBrowser) -> None:
+    palette = browser.palette()
+    palette.setColor(QPalette.ColorRole.Link, QColor("#b8ddff" if isDarkTheme() else "#0067c0"))
+    palette.setColor(QPalette.ColorRole.LinkVisited, QColor("#d3b3ff" if isDarkTheme() else "#6f42c1"))
+    browser.setPalette(palette)
+    browser.document().setDefaultStyleSheet(_markdown_style_sheet())

@@ -3,6 +3,9 @@ meta:
 common:
   'on': オン
   'off': オフ
+tutorial:
+  click_expand: 'クリックで展開 - {title}'
+  click_collapse: 'クリックで折りたたむ - {title}'
 nav:
   faq: よくある質問
   home: ホーム

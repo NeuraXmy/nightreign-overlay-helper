@@ -5,6 +5,10 @@ common:
   "on": 开
   "off": 关
 
+tutorial:
+  click_expand: "点击展开 - {title}"
+  click_collapse: "点击折叠 - {title}"
+
 nav:
   faq: 常见问题
   home: 主页

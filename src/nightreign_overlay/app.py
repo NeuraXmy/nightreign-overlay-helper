@@ -85,7 +85,7 @@ class Application(QObject):
         self.plugins.discover()
         self.plugins.load_all()
 
-        self.window = MainWindow(self.config, self.plugins, self.overlays, self.game_monitor)
+        self.window = MainWindow(self.config, self.plugins, self.overlays, self.game_monitor, self.services)
         self.updates = UpdateController(self.window, self, config=self.config)
         self.updates.busyChanged.connect(self.window.aboutPage.set_update_busy)
         self.window.aboutPage.checkUpdatesRequested.connect(self.updates.check)

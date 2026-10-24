@@ -19,7 +19,8 @@ from PyQt6.QtGui import (
     QPen,
     QPixmap,
 )
-from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QWidget
+from PyQt6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout, QWidget
+from qfluentwidgets import isDarkTheme, qconfig
 
 from nightreign_overlay.core.debug import DebugImageApi
 from nightreign_overlay.core.screens import mapping_for_rect, screen_mappings
@@ -30,6 +31,7 @@ from nightreign_overlay.plugins.region.api import RegionApi, RegionTarget
 from nightreign_overlay.plugins.region.automatic import automatic_region, supports_automatic_region
 from nightreign_overlay.plugins.region.config import RegionConfig
 from nightreign_overlay.ui.overlay import OverlayManager
+from nightreign_overlay.ui.tutorial import TutorialBrowser, TutorialWindowApi
 
 #: Time for the window server to remove the hidden main window before the screen is frozen.
 _HIDE_SETTLE_MS = 250
@@ -212,10 +214,13 @@ class RegionPlugin(Plugin):
     def on_load(self) -> None:
         self.config = self.ctx.config(RegionConfig)
         self._preview: _RegionPreview | None = None
+        self._tutorial: QDialog | None = None
 
     def on_activate(self) -> None:
         self.ctx.provide(RegionApi, _RegionService(self))
+        self.ctx.provide(TutorialWindowApi, _RegionTutorialService(self))
         self.ctx.on_cleanup(self._close_preview)
+        self.ctx.on_cleanup(self._close_tutorial)
 
     def preview(self) -> _RegionPreview:
         """The single preview window, created on first use and reused by every caller."""
@@ -232,6 +237,44 @@ class RegionPlugin(Plugin):
             self._preview.close()
             self._preview.deleteLater()
             self._preview = None
+
+    def _close_tutorial(self) -> None:
+        if self._tutorial is not None:
+            self._tutorial.close()
+            self._tutorial.deleteLater()
+            self._tutorial = None
+
+    def open_tutorial(self, parent: QWidget | None = None) -> bool:
+        path = self.ctx.tutorial_file()
+        if path is None:
+            return False
+        if self._tutorial is None:
+            self._tutorial = QDialog(parent)
+            self._tutorial.setObjectName("releaseDialog")
+            self._tutorial.setWindowTitle("区域标定教程")
+            self._tutorial.resize(760, 620)
+            self._apply_tutorial_theme()
+            qconfig.themeChangedFinished.connect(self._apply_tutorial_theme)
+            layout = QVBoxLayout(self._tutorial)
+            layout.addWidget(TutorialBrowser(self.ctx.services, self._tutorial))
+            layout.itemAt(0).widget().load(path)
+        self._tutorial.show()
+        self._tutorial.raise_()
+        self._tutorial.activateWindow()
+        return True
+
+    def _apply_tutorial_theme(self) -> None:
+        background = "#202020" if isDarkTheme() else "#f9f9f9"
+        if self._tutorial is not None:
+            self._tutorial.setStyleSheet(f"QDialog#releaseDialog {{ background-color: {background}; }}")
+
+
+class _RegionTutorialService(TutorialWindowApi):
+    def __init__(self, plugin: RegionPlugin) -> None:
+        self._plugin = plugin
+
+    def open(self, route: str, parent: QWidget | None = None) -> bool:
+        return route == "region-calibration" and self._plugin.open_tutorial(parent)
 
 
 class _RegionPreview(QWidget):

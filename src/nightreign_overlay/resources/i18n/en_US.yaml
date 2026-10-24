@@ -3,6 +3,9 @@ meta:
 common:
   'on': 'On'
   'off': 'Off'
+tutorial:
+  click_expand: 'Click to expand - {title}'
+  click_collapse: 'Click to collapse - {title}'
 nav:
   faq: FAQ
   home: Home
