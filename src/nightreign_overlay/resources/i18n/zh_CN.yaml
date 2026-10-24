@@ -80,6 +80,8 @@ settings:
   open: 打开
   general:
     title: 通用
+  master_volume:
+    title: 主音量
   language:
     title: 语言
     auto: 跟随系统

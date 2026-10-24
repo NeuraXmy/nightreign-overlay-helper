@@ -9,6 +9,7 @@ from typing import Any
 from PyQt6.QtCore import QTimer, QUrl
 from PyQt6.QtMultimedia import QMediaPlayer
 
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.audio.api import AudioApi
 from nightreign_overlay.plugins.audio.loop_stack import LoopAudioEntry, LoopAudioStack
@@ -20,6 +21,10 @@ class AudioPlugin(Plugin, AudioApi):
     )
 
     def on_load(self) -> None:
+        self._app_config = self.ctx.services.require(AppConfig)
+        self._app_config.master_volume.valueChanged.connect(self._apply_master_volume)
+        self._finite_volume = 0.0
+        self._loop_volume = 0.0
         self._player: Any = None
         self._output: Any = None
         self._owner = ""
@@ -36,6 +41,17 @@ class AudioPlugin(Plugin, AudioApi):
         self._fade_action = ""
         self._fade_owner = ""
         self.ctx.provide(AudioApi, self)
+
+    def _apply_master_volume(self, *_args: object) -> None:
+        gain = self._app_config.master_volume.value / 100
+        if self._output is not None:
+            self._output.setVolume(self._finite_volume * gain)
+        if self._loop_output is not None:
+            self._loop_output.setVolume(self._loop_volume * gain)
+
+    def _set_loop_volume(self, volume: float) -> None:
+        self._loop_volume = volume
+        self._loop_output.setVolume(volume * self._app_config.master_volume.value / 100)
 
     def on_activate(self) -> None:
         if self.ctx.services.get(AudioApi) is None:
@@ -95,7 +111,8 @@ class AudioPlugin(Plugin, AudioApi):
             self._ensure_player()
             self.stop()
             self._owner = owner
-            self._output.setVolume(max(0, min(volume, 100)) / 100)
+            self._finite_volume = max(0, min(volume, 100)) / 100
+            self._output.setVolume(self._finite_volume * self._app_config.master_volume.value / 100)
             self._player.setSource(QUrl.fromLocalFile(str(candidate.resolve())))
             self._player.play()
             return True
@@ -175,12 +192,12 @@ class AudioPlugin(Plugin, AudioApi):
             self._loop_player.setSource(QUrl())
             return
         self._loop_player.setSource(QUrl.fromLocalFile(entry.path))
-        self._loop_player.play()
         target = entry.volume / 100
         # A cue becomes audible only after the previous top has fully faded
         # out. Every newly audible top uses its own fade-in, including a cue
         # restored from below another owner in the stack.
-        self._loop_output.setVolume(0 if entry.fade_in > 0 else target)
+        self._set_loop_volume(0 if entry.fade_in > 0 else target)
+        self._loop_player.play()
         if entry.fade_in > 0:
             self._begin_fade(target, entry.fade_in, "")
 
@@ -194,7 +211,7 @@ class AudioPlugin(Plugin, AudioApi):
         self._play_loop_top()
 
     def _begin_fade(self, target: float, seconds: float, action: str) -> None:
-        self._fade_from = self._loop_output.volume()
+        self._fade_from = self._loop_volume
         self._fade_to = target
         self._fade_start = time.monotonic()
         self._fade_duration = seconds
@@ -203,7 +220,7 @@ class AudioPlugin(Plugin, AudioApi):
 
     def _fade_step(self) -> None:
         progress = min(1.0, (time.monotonic() - self._fade_start) / self._fade_duration)
-        self._loop_output.setVolume(self._fade_from + (self._fade_to - self._fade_from) * progress)
+        self._set_loop_volume(self._fade_from + (self._fade_to - self._fade_from) * progress)
         if progress >= 1:
             action = self._fade_action
             self._cancel_fade()

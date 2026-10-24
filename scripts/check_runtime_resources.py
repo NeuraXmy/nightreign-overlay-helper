@@ -9,6 +9,7 @@ import numpy as np
 import onnxruntime as ort
 from PyQt6.QtWidgets import QApplication
 
+from nightreign_overlay.core.app_config import AppConfig
 from nightreign_overlay.core.config import ConfigStore
 from nightreign_overlay.core.events import EventBus
 from nightreign_overlay.core.i18n import Translator
@@ -62,7 +63,9 @@ def main() -> None:
         session.run(None, feeds)
     with tempfile.TemporaryDirectory() as temporary:
         store = ConfigStore(Path(temporary) / "settings.yaml")
-        manager = PluginManager(store, Translator("zh_CN"), ServiceRegistry(), EventBus())
+        services = ServiceRegistry()
+        services.register(AppConfig, store.bind(AppConfig, "app"))
+        manager = PluginManager(store, Translator("zh_CN"), services, EventBus())
         manager.discover()
         manager.load_all()
         records = manager.records()

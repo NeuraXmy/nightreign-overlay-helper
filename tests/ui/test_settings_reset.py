@@ -22,6 +22,7 @@ from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding, Input
 from nightreign_overlay.plugins.rain_timer import plugin as rain_plugin
 from nightreign_overlay.plugins.rain_timer.plugin import RainTimerPlugin
 from nightreign_overlay.ui.components import (
+    ConfigRangeCard,
     ConfigSwitchCard,
     HotkeySettingCard,
     create_reset_button,
@@ -122,6 +123,7 @@ def test_general_settings_reset_keeps_internal_state_and_resets_embedded_plugins
     plugin = manager.get("sample").plugin
     page = SettingsPage(config, manager)
     config.theme.set("light")
+    config.master_volume.set(25)
     config.close_to_tray.set(False)
     config.tray_hint_shown.set(True)
     plugin.config.enabled.set(False)
@@ -129,8 +131,33 @@ def test_general_settings_reset_keeps_internal_state_and_resets_embedded_plugins
     _confirm(monkeypatch, True)
     page.resetButton.click()
     assert (config.theme.value, config.close_to_tray.value) == ("dark", True)
+    assert config.master_volume.value == 100
     assert config.tray_hint_shown.value is True
     assert plugin.config.enabled.value is True
+
+
+def test_master_volume_card_has_no_description_and_binds_both_ways(store, qapp):
+    config = store.bind(AppConfig, "app")
+    manager = _manager(store, _sample_plugin(SettingsScope.GENERAL))
+    page = SettingsPage(config, manager)
+    try:
+        card = next(card for card in page.findChildren(ConfigRangeCard) if card.item is config.master_volume)
+        assert card.slider.value() == 100
+        assert card.valueLabel.text() == "100%"
+        assert not card.contentLabel.text()
+        cards = card.parentWidget().cardLayout
+        assert cards.indexOf(card) == cards.count() - 1
+        card.slider.setValue(35)
+        assert config.master_volume.value == 35
+        config.master_volume.set(0)
+        assert card.slider.value() == 0
+        assert card.valueLabel.text() == "0%"
+        store.flush()
+        restored = ConfigStore(store.path)
+        assert restored.bind(AppConfig, "app").master_volume.value == 0
+        restored.deleteLater()
+    finally:
+        page.deleteLater()
 
 
 @pytest.mark.parametrize(

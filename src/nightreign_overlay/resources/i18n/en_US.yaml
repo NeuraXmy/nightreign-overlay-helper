@@ -73,6 +73,8 @@ settings:
   open: Open
   general:
     title: General
+  master_volume:
+    title: Master volume
   language:
     title: Language
     auto: System default
