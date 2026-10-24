@@ -51,7 +51,8 @@ def test_dll_window_pixels_map_to_global_calibration(tmp_path, monkeypatch, mode
     factory.METHOD_FOREGROUND = 40
     factory.METHOD_BACKGROUND = 18
     monkeypatch.setattr(win32, "Manager", factory)
-    monkeypatch.setattr(win32, "find_window_by_title", lambda _title: 123)
+    monkeypatch.setattr(win32, "_is_game_window", lambda hwnd: hwnd == 123)
+    monkeypatch.setattr(win32, "find_window_by_title", lambda _title, accept: 123 if accept(123) else None)
     geometry = (*origin, round(64 * ratio), round(48 * ratio))
     monkeypatch.setattr(win32, "client_geometry", lambda hwnd: geometry)
     backend = capture._MaaCapture(tmp_path, mode)
