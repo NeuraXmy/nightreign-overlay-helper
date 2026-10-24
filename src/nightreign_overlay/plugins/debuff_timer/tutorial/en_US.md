@@ -1,6 +1,6 @@
 ## Overview
 
-Detects status buildup meters and displays the attack power stacks from the King of Wastes relic effect and the countdown to the next check.
+Detects status buildup meters and displays the attack power stacks from the Dreglord relic effect and the countdown to the next check.
 
 ## Initial setup
 

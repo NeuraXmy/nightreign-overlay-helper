@@ -1,6 +1,6 @@
 plugin:
   name: Status Buildup Timer
-  description: Detects status buildup meters and displays attack power stacks from the King of Wastes relic effect and the countdown to the next check.
+  description: Detects status buildup meters and displays attack power stacks from the Dreglord relic effect and the countdown to the next check.
     check
 hud:
   text: Status buildup attack boost Lv.{level} Next check {remaining}s
