@@ -21,11 +21,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, QPoint, QRect, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QImage
+from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtWidgets import QApplication, QWidget
 from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, SettingCard
 
 from nightreign_overlay.core.game_window import ForegroundPolicy
+from nightreign_overlay.core.screens import capture_origin
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
@@ -41,6 +42,7 @@ from nightreign_overlay.ui.components import (
 )
 
 FrameCallback = Callable[[FrameCaptured | None], None]
+
 
 _GAME_WINDOW_REGION = "capture.game_window"
 _CALIBRATE_GAME_WINDOW = "capture.calibrate_game_window"
@@ -405,8 +407,8 @@ class _CaptureWorker(QObject):
         super().__init__()
         self._root_dir = root_dir
         self._log = log
-        self._backend: _MaaCapture | None = None
-        self._backend_key: tuple[str, str] | None = None
+        self._backend: _AutoCapture | _MaaCapture | _MssCapture | None = None
+        self._backend_key: tuple[str, str] | str | None = None
         self._last_error: tuple[str, type[Exception], str] | None = None
         self._last_error_time = 0.0
 
@@ -437,8 +439,6 @@ class _CaptureWorker(QObject):
         self.grabbed.emit(request_id, generation, frame)
 
     def _grab(self, mode: str, process: str) -> QImage | None:
-        if sys.platform != "win32":
-            raise RuntimeError("Capture requires Windows; MaaWin32Screencap is the only backend")
         key = (mode, process)
         if self._backend_key != key:
             self.close()
@@ -450,7 +450,13 @@ class _CaptureWorker(QObject):
             self.close()
         return image
 
-    def _open(self, mode: str, process: str) -> _MaaCapture:
+    def _open(self, mode: str, process: str) -> _AutoCapture | _MaaCapture | _MssCapture:
+        if mode == "auto":
+            backend = _AutoCapture(self._root_dir, process, self._log)
+            self._log.info("Capture backend: auto (mss + Maa methods)")
+            return backend
+        if sys.platform != "win32":
+            raise RuntimeError("Capture mode requires Windows; automatic mode should use mss")
         backend = _MaaCapture(self._root_dir, mode, process)
         backend.connect()
         self._log.info(
@@ -469,6 +475,83 @@ class _CaptureWorker(QObject):
                 backend.close()
             except Exception:
                 self._log.exception("Closing the capture backend failed")
+
+
+class _AutoCapture:
+    """Automatic backend selection with mss as the first desktop candidate and Maa as fallback."""
+
+    def __init__(self, plugin_dir: Path, process: str, log: logging.Logger) -> None:
+        self._plugin_dir = plugin_dir
+        self._process = process
+        self._log = log
+        self._mss: _MssCapture | None = None
+        self._maa: _MaaCapture | None = None
+        self._maa_attempted = False
+
+    def grab(self) -> QImage | None:
+        if sys.platform == "darwin":
+            if self._mss is None:
+                self._mss = _MssCapture()
+                self._log.info("Automatic capture candidate selected: mss (macOS)")
+            return self._mss.grab()
+
+        if sys.platform == "win32" and not self._maa_attempted:
+            self._maa_attempted = True
+            try:
+                self._maa = _MaaCapture(self._plugin_dir, "auto", self._process)
+                self._maa.connect()
+                self._log.info("Automatic capture candidate selected: Maa (%s)", self._maa.selected_method)
+            except Exception:
+                self._log.info("Automatic Maa candidate unavailable; falling back to mss", exc_info=True)
+                if self._maa is not None:
+                    self._maa.close()
+                self._maa = None
+
+        if self._maa is not None:
+            try:
+                image = self._maa.grab()
+            except Exception:
+                self._log.info("Automatic Maa candidate failed; falling back to mss", exc_info=True)
+                self._maa.close()
+                self._maa = None
+            else:
+                if image is not None and not image.isNull():
+                    return image
+
+        if self._mss is None and self._maa is None:
+            try:
+                self._mss = _MssCapture()
+                self._log.info("Automatic capture candidate selected: mss")
+            except Exception:
+                self._log.info("Automatic mss candidate unavailable; trying Maa methods")
+        if self._mss is not None:
+            try:
+                image = self._mss.grab()
+            except Exception:
+                self._log.info("Automatic mss candidate failed; trying Maa methods", exc_info=True)
+                self._mss.close()
+                self._mss = None
+            else:
+                if image is not None and not image.isNull():
+                    return image
+        if sys.platform != "win32":
+            return None
+        if self._maa is None and not self._maa_attempted:
+            self._maa_attempted = True
+            self._maa = _MaaCapture(self._plugin_dir, "auto", self._process)
+            self._maa.connect()
+            self._log.info("Automatic capture candidate selected: Maa (%s)", self._maa.selected_method)
+        if self._maa is None:
+            raise RuntimeError("Automatic capture candidates are unavailable")
+        return self._maa.grab()
+
+    def close(self) -> None:
+        if self._mss is not None:
+            self._mss.close()
+            self._mss = None
+        if self._maa is not None:
+            self._maa.close()
+            self._maa = None
 
 
 class _MaaCapture:
@@ -546,3 +629,80 @@ class _MaaCapture:
             self._manager.close()  # type: ignore[union-attr]
             self._manager = None
         self._hwnd = None
+
+
+class _MssCapture:
+    """mss desktop capture, with no game-window operations or WGC sessions.
+
+    By default the virtual desktop is captured once for all consumers (Windows legacy mode). QImage.offset
+    stores its physical origin so calibrated global rectangles work on monitors left of or above the primary
+    monitor as well. macOS captures each display separately into a non-overlapping native-pixel atlas.
+    Creation, grabbing and closing all run on the capture thread (mss instances are thread-bound).
+    """
+
+    def __init__(self) -> None:
+        import mss
+
+        if sys.platform == "darwin":
+            import mss.darwin
+
+            # Physical (Retina) pixels like the calibrated regions; mss defaults to the nominal resolution.
+            mss.darwin.IMAGE_OPTIONS &= ~mss.darwin.kCGWindowImageNominalResolution
+        # ``MSS`` is the non-deprecated 10.2+ entry point; keep compatibility with mss 10.0/10.1.
+        factory = getattr(mss, "MSS", None)
+        self._sct = factory() if factory is not None else mss.mss()
+
+    def grab(self) -> QImage:
+        if sys.platform == "darwin":
+            return self._grab_macos()
+        monitor = self._sct.monitors[0]
+        return self._grab_monitor(monitor)
+
+    def _grab_monitor(self, monitor: dict) -> QImage:
+        screenshot = self._sct.grab(monitor)
+        # BGRX: desktop alpha is unused and must not make pixels transparent.
+        image = QImage(
+            screenshot.bgra,
+            screenshot.width,
+            screenshot.height,
+            screenshot.width * 4,
+            QImage.Format.Format_RGB32,
+        ).copy()
+        image.setOffset(QPoint(monitor["left"], monitor["top"]))
+        return image
+
+    def _grab_macos(self) -> QImage:
+        # A combined CoreGraphics grab uses one scale for the entire desktop. Grab each display
+        # separately instead: mixed Retina / non-Retina screens must keep their native pixels.
+        monitors = self._sct.monitors[1:]
+        if not monitors:
+            raise RuntimeError("No displays available for screen capture")
+        images = [(monitor, self._grab_monitor(monitor)) for monitor in monitors]
+        ratio = max(
+            max(image.width() / monitor["width"], image.height() / monitor["height"])
+            for monitor, image in images
+        )
+        tiles = [
+            (capture_origin(QPoint(monitor["left"], monitor["top"]), ratio), image)
+            for monitor, image in images
+        ]
+        if len(tiles) == 1:
+            origin, image = tiles[0]
+            image.setOffset(origin)
+            return image
+        bounds = QRect()
+        for origin, image in tiles:
+            bounds = bounds.united(QRect(origin, image.size()))
+        result = QImage(bounds.size(), QImage.Format.Format_RGB32)
+        result.fill(Qt.GlobalColor.black)
+        painter = QPainter(result)
+        try:
+            for origin, image in tiles:
+                painter.drawImage(origin - bounds.topLeft(), image)
+        finally:
+            painter.end()
+        result.setOffset(bounds.topLeft())
+        return result
+
+    def close(self) -> None:
+        self._sct.close()

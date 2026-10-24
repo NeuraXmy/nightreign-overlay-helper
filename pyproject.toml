@@ -10,6 +10,7 @@ dependencies = [
     "PyQt6>=6.7",
     "PyQt6-Fluent-Widgets>=1.11,<1.12",
     "numpy>=2",
+    "mss>=10",
     "Pillow>=10",
     "opencv-python>=4.10",
     "onnxruntime>=1.20,<2",

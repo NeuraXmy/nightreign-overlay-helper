@@ -54,13 +54,44 @@ def _stub_backend(image, closed):
     )
 
 
-def test_default_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch):
+def test_auto_prefers_maa_on_windows(tmp_path, monkeypatch):
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+    image.fill(0xFF112233)
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(
+        capture,
+        "_MaaCapture",
+        lambda *_args: SimpleNamespace(
+            connect=lambda: None, selected_method="auto", grab=lambda: image, close=lambda: None
+        ),
+    )
+    monkeypatch.setattr(capture, "_MssCapture", lambda: pytest.fail("mss must be fallback on Windows"))
+    backend = capture._AutoCapture(tmp_path, "", SimpleNamespace(info=lambda *_args, **_kwargs: None))
+    assert backend.grab() is image
+    backend.close()
+
+
+def test_auto_falls_back_to_mss_when_maa_fails(tmp_path, monkeypatch):
+    image = QImage(2, 2, QImage.Format.Format_RGB32)
+    monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(
+        capture, "_MaaCapture", lambda *_args: (_ for _ in ()).throw(RuntimeError("unavailable"))
+    )
+    monkeypatch.setattr(
+        capture, "_MssCapture", lambda: SimpleNamespace(grab=lambda: image, close=lambda: None)
+    )
+    backend = capture._AutoCapture(tmp_path, "", SimpleNamespace(info=lambda *_args, **_kwargs: None))
+    assert backend.grab() is image
+    backend.close()
+
+
+def test_selected_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch):
     closed = []
     image = QImage(2, 2, QImage.Format.Format_RGB32)
     image.fill(0xFF112233)
     monkeypatch.setattr(capture, "_MaaCapture", _stub_backend(image, closed))
     plugin.on_activate()
-    assert plugin.config.mode.value == "auto"
+    plugin.config.mode.set("background")
     callback_thread = []
     result = []
     loop = QEventLoop()
@@ -104,6 +135,7 @@ def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
             calls.append(("close", threading.get_ident()))
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
+    plugin.config.mode.set("foreground")
     assert _request(plugin) is not None
     plugin.on_deactivate()
     assert [name for name, _ident in calls] == ["open", "grab", "close"]
@@ -131,11 +163,12 @@ def test_mode_switch_discards_an_in_flight_old_generation(plugin, monkeypatch):
             pass
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
+    plugin.config.mode.set("foreground")
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
     assert started.wait(1)
-    plugin.config.mode.set("foreground")
+    plugin.config.mode.set("background")
     release.set()
     QTimer.singleShot(1000, loop.quit)
     loop.exec()
@@ -163,6 +196,7 @@ def test_result_is_discarded_if_detection_becomes_disallowed(plugin, monkeypatch
             pass
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
+    plugin.config.mode.set("foreground")
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))

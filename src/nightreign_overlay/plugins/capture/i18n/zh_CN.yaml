@@ -4,24 +4,24 @@ plugin:
 settings:
   title: 截图设置
   mode:
+    content: 默认旧版截图，桌面歌词等画面遮挡会影响检测；仅前台/仅后台方式可能导致窗口大小变化
     title: 截图方式
-    content: 自动测速选择最快方式；也可固定单一方式（如 GDI）排查兼容性问题
     auto: 自动
     foreground: 仅前台
     background: 仅后台
     gdi: GDI
-    framepool: FramePool (WGC)
+    framepool: FramePool（WGC）
     dxgi_desktop_dup: DXGI 桌面复制
     dxgi_desktop_dup_window: DXGI 窗口复制
     printwindow: PrintWindow
     screendc: ScreenDC
   process:
     title: 截图进程
-    content: 默认按窗口标题自动检测游戏窗口；使用 PS5 串流等方式游玩时，请手动选择提供游戏画面的进程
+    content: 默认按窗口标题自动检测；使用串流等方式时，可以指定提供游戏画面的进程
     auto: 自动检测
     current: "当前：{process}"
     dialog_title: 选择截图进程
-    dialog_hint: 选择提供游戏画面的窗口（例如 PS5 串流软件）
+    dialog_hint: 选择提供游戏画面的窗口
     confirm: 确定
     cancel: 取消
   interval:

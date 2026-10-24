@@ -73,6 +73,7 @@ def test_capture_frames_carry_the_shared_hdr_setting(
             connect=lambda: None, selected_method="test", grab=lambda: source, close=lambda: None
         ),
     )
+    plugin.config.mode.set("auto")
 
     assert _request_frame(plugin).hdr is False
     plugin.config.hdr_processing.set(True)
@@ -101,6 +102,7 @@ def test_capture_and_hotkeys_follow_the_foreground_policy(
             connect=lambda: None, selected_method="test", grab=lambda: source, close=lambda: None
         ),
     )
+    capture.config.mode.set("auto")
     assert _request_frame(capture) is None
     policy.detection_allowed = True
     assert _request_frame(capture) is not None

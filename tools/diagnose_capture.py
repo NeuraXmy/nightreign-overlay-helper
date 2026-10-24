@@ -132,7 +132,11 @@ def main() -> int:
     complete = bool(displays)
     try:
         for mode in modes:
-            backend = "maa-win32" if sys.platform == "win32" else "unsupported"
+            backend = (
+                "auto (mss + Maa)"
+                if mode == "auto"
+                else ("maa-win32" if sys.platform == "win32" else "unsupported")
+            )
             entry = {"requested_mode": mode, "backend": backend}
             report["captures"].append(entry)
             frame, stopped = capture_frame(mode, args.timeout_ms)
