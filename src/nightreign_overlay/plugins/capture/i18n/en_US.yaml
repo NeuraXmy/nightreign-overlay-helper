@@ -4,7 +4,7 @@ plugin:
 settings:
   title: Capture settings
   mode:
-    content: Automatic mode uses Maa and waits when the game window is unavailable. Use Compatibility (mss) for macOS development or full-desktop capture. Foreground/background modes may resize
+    content: Auto speed-tests all methods; pin a single method (e.g. GDI) to work around compatibility issues
     title: Capture method
     auto: Auto (Maa)
     foreground: Foreground only

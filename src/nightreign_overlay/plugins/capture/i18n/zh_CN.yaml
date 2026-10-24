@@ -4,7 +4,7 @@ plugin:
 settings:
   title: 截图设置
   mode:
-    content: 自动使用 Maa 截图；游戏窗口未打开时等待。兼容 (mss) 适合 macOS 开发或需要桌面整帧时使用；仅前台/仅后台方式可能导致窗口大小变化
+    content: 自动测速选择最快方式；也可固定单一方式（如 GDI）排查兼容性问题
     title: 截图方式
     auto: 自动 (Maa)
     foreground: 仅前台

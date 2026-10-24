@@ -4,7 +4,7 @@ plugin:
 settings:
   title: 畫面擷取設定
   mode:
-    content: 自動模式使用 Maa；遊戲視窗未開啟時會等待。macOS 開發或需要桌面整幀時請使用相容 (mss)。僅前景／僅背景模式可能改變視窗大小
+    content: 自動測速選擇最快方式；也可固定單一方式（如 GDI）排查相容性問題
     title: 擷取方式
     auto: 自動 (Maa)
     foreground: 僅前景

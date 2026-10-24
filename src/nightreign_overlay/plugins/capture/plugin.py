@@ -446,14 +446,14 @@ class _CaptureWorker(QObject):
             self._backend = self._open(mode, process)
             self._backend_key = key
         image = self._backend.grab()
-        if image is None:
+        if image is None and mode != "auto":
             self.close()
         return image
 
     def _open(self, mode: str, process: str) -> _AutoCapture | _MaaCapture | _MssCapture:
         if mode == "auto":
             backend = _AutoCapture(self._root_dir, process, self._log)
-            self._log.info("Capture backend: auto (mss + Maa methods)")
+            self._log.info("Capture backend: auto (Maa)")
             return backend
         if mode == "mss":
             self._log.info("Capture backend: mss")
