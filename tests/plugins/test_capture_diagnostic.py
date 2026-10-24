@@ -52,7 +52,7 @@ def test_diagnostic_records_all_windows_modes_and_backend_failures(qapp, tmp_pat
     from nightreign_overlay.plugins.capture.config import CAPTURE_MODES
 
     assert [entry["requested_mode"] for entry in report["captures"]] == list(CAPTURE_MODES)
-    expected_backends = len(CAPTURE_MODES) + (1 if fail else 0)
+    expected_backends = len(CAPTURE_MODES)
     assert len(calls) == 2 * expected_backends
     assert calls.count("closed") == expected_backends
     assert exit_code == (1 if fail else 0)

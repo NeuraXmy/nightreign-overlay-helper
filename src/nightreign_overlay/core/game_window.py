@@ -1,4 +1,4 @@
-"""Tracks whether the game window is in the foreground."""
+"""Tracks game-window presence and foreground state."""
 
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ class GameWindowMonitor(QObject):
     """
 
     foregroundChanged = pyqtSignal(bool)
+    windowChanged = pyqtSignal(bool)
 
     POLL_INTERVAL_MS = 500
 
@@ -45,6 +46,7 @@ class GameWindowMonitor(QObject):
         self._events = events
         self._title = window_title.lower()
         self._foreground = not backend.supports_foreground_detection
+        self._window_open = False
         self._timer = QTimer(self)
         self._timer.setInterval(self.POLL_INTERVAL_MS)
         self._timer.timeout.connect(self._poll)
@@ -57,6 +59,10 @@ class GameWindowMonitor(QObject):
     def is_foreground(self) -> bool:
         return self._foreground
 
+    @property
+    def is_window_open(self) -> bool:
+        return self._window_open
+
     def start(self) -> None:
         if self.supported:
             self._poll()
@@ -66,6 +72,10 @@ class GameWindowMonitor(QObject):
         self._timer.stop()
 
     def _poll(self) -> None:
+        window_open = self._backend.game_window_exists(self._title)
+        if window_open != self._window_open:
+            self._window_open = window_open
+            self.windowChanged.emit(window_open)
         title = self._backend.foreground_window_title()
         foreground = title is not None and self._title in title.lower()
         if foreground != self._foreground:

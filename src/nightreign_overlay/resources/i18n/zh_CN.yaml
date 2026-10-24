@@ -23,8 +23,8 @@ home:
     title: 运行状态
     game: 游戏窗口
     game_unsupported: 当前平台不支持检测
-    game_foreground: 位于前台
-    game_background: 未在前台
+    game_open: 游戏窗口已打开
+    game_closed: 游戏窗口未打开
     overlay: 悬浮窗显示方式
     overlay_transparent: 透明悬浮窗
     overlay_window: 普通窗口

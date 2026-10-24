@@ -133,9 +133,9 @@ def main() -> int:
     try:
         for mode in modes:
             backend = (
-                "auto (mss + Maa)"
+                "auto (Maa)"
                 if mode == "auto"
-                else ("maa-win32" if sys.platform == "win32" else "unsupported")
+                else ("mss" if mode == "mss" else ("maa-win32" if sys.platform == "win32" else "unsupported"))
             )
             entry = {"requested_mode": mode, "backend": backend}
             report["captures"].append(entry)

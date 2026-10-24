@@ -193,7 +193,7 @@ class HomePage(ScrollPage):
         self._update_game_status()
         self._update_overlay_status()
         self._update_plugin_status()
-        game_monitor.foregroundChanged.connect(self._update_game_status)
+        game_monitor.windowChanged.connect(self._update_game_status)
         app_config.overlay_mode.valueChanged.connect(self._update_overlay_status)
         plugins.stateChanged.connect(self._update_plugin_status)
 
@@ -240,13 +240,13 @@ class HomePage(ScrollPage):
                 section.addCard(card)
             self.addWidget(section)
 
-    def _update_game_status(self, _foreground: bool = False) -> None:
+    def _update_game_status(self, _window_open: bool = False) -> None:
         if not self._game_monitor.supported:
             text = tr("home.status.game_unsupported")
-        elif self._game_monitor.is_foreground:
-            text = tr("home.status.game_foreground")
+        elif self._game_monitor.is_window_open:
+            text = tr("home.status.game_open")
         else:
-            text = tr("home.status.game_background")
+            text = tr("home.status.game_closed")
         self.gameCard.setValue(text)
 
     def _update_overlay_status(self, _mode: str = "") -> None:

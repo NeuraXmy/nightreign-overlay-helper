@@ -4,9 +4,9 @@ plugin:
 settings:
   title: 畫面擷取設定
   mode:
-    content: 預設為舊版擷取；桌面歌詞等遮擋會影響辨識。僅前景／僅背景模式可能改變視窗大小
+    content: 自動模式使用 Maa；遊戲視窗未開啟時會等待。macOS 開發或需要桌面整幀時請使用相容 (mss)。僅前景／僅背景模式可能改變視窗大小
     title: 擷取方式
-    auto: 自動
+    auto: 自動 (Maa)
     foreground: 僅前景
     background: 僅背景
     gdi: GDI
@@ -15,7 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI 視窗複製
     printwindow: PrintWindow
     screendc: ScreenDC
-    mss: mss
+    mss: 相容 (mss)
   process:
     title: 擷取程序
     content: 預設依視窗標題自動偵測；使用串流等方式時，可以指定提供遊戲畫面的程序

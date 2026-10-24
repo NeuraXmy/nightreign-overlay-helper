@@ -23,8 +23,8 @@ home:
     title: 執行狀態
     game: 遊戲視窗
     game_unsupported: 此平台不支援偵測
-    game_foreground: 位於前景
-    game_background: 不在前景
+    game_open: 遊戲視窗已開啟
+    game_closed: 遊戲視窗未開啟
     overlay: 懸浮窗顯示方式
     overlay_transparent: 透明懸浮窗
     overlay_window: 一般視窗

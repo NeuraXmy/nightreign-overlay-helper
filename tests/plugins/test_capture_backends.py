@@ -71,17 +71,14 @@ def test_auto_prefers_maa_on_windows(tmp_path, monkeypatch):
     backend.close()
 
 
-def test_auto_falls_back_to_mss_when_maa_fails(tmp_path, monkeypatch):
-    image = QImage(2, 2, QImage.Format.Format_RGB32)
+def test_auto_waits_when_maa_is_unavailable(tmp_path, monkeypatch):
     monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setattr(
         capture, "_MaaCapture", lambda *_args: (_ for _ in ()).throw(RuntimeError("unavailable"))
     )
-    monkeypatch.setattr(
-        capture, "_MssCapture", lambda: SimpleNamespace(grab=lambda: image, close=lambda: None)
-    )
+    monkeypatch.setattr(capture, "_MssCapture", lambda: pytest.fail("auto must not use mss"))
     backend = capture._AutoCapture(tmp_path, "", SimpleNamespace(info=lambda *_args, **_kwargs: None))
-    assert backend.grab() is image
+    assert backend.grab() is None
     backend.close()
 
 

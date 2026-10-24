@@ -2,16 +2,16 @@
 
 ## 平台支持与验证范围
 
-The default `auto` mode uses mss for desktop capture on Windows and macOS. Pinned methods and capture-process selection apply only to the Windows Maa path.
+默认“自动 (Maa)”始终使用 MaaWin32Screencap。Windows 游戏窗口未打开或句柄失效时，自动模式只等待后续连接，不回退到 mss；macOS 开发应显式选择“兼容 (mss)”。固定 Maa 方法和截图进程选择仅适用于 Windows。
 
 截图、标定、预览与悬浮窗共享设备像素坐标约定。Windows 使用物理桌面原点或客户区原点；macOS 逐屏抓取原生像素后合成共享帧。
 
 | 平台／模式 | 当前行为 | 已完成验证 | 尚需实机确认 |
 |---|---|---|---|
-| Windows 旧版 | mss 虚拟桌面整帧，按物理桌面原点裁剪 | 合成多屏、负坐标、混合 DPI、像素内容 | Windows 显卡／桌面实际输出 |
+| Windows 兼容 (mss) | mss 虚拟桌面整帧，按物理桌面原点裁剪 | 合成多屏、负坐标、混合 DPI、像素内容 | Windows 显卡／桌面实际输出 |
 | Windows 仅前台 | DLL 前台掩码，客户区图像转换到物理桌面坐标 | 方法掩码、客户区偏移、尺寸归一化、窗口移动／缩放、线程 DPI 上下文恢复 | DXGI／SCREENDC 实际客户区内容及不同显卡行为 |
 | Windows 仅后台 | DLL 后台掩码，同样使用物理客户区坐标 | 与前台相同的坐标测试 | FRAMEPOOL／PRINTWINDOW 实际输出、窗口被遮挡／最小化行为 |
-| macOS 三种设置 | 均使用逐屏 mss 原生像素合成；模式设置不调用 Windows DLL | 合成多屏、Retina 混合缩放、标定／预览／地图叠加 | 实际显示器与录屏权限下的截图 |
+| macOS 兼容 (mss) | 逐屏 mss 原生像素合成 | 合成多屏、Retina 混合缩放、标定／预览／地图叠加 | 实际显示器与录屏权限下的截图 |
 
 目前完成的是合成数据自动回归，尚未完成 macOS 和 Windows 多显示器实机验收。合成测试通过不代表实际桌面、录屏权限和显卡组合均已验证；实机验证步骤见下文。
 
@@ -49,7 +49,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 - 40 项 mss 多屏像素测试：Windows／macOS × 副屏四个方向 × 五组主副屏 DPR `(1,1)`、`(2,1)`、`(1,2)`、`(1.25,1.5)`、`(1.75,2)`。校验图像原点、裁剪内容、尺寸、屏幕选择和预览坐标。
 - 20 项 DLL 测试：两种模式 × 100%、125%、150%、175%、200% × 正负窗口位置；同时验证连续帧窗口移动、抓取期间移动的丢帧重试。
 - 2 项原生客户区查询测试：成功和失败都恢复线程 DPI 上下文。
-- 3 项 macOS 模式路由测试：三种配置都使用多屏 mss。
+- 1 项 macOS 兼容模式路由测试：显式选择 mss 后使用多屏 mss。
 - 4 项选择器测试：Windows／macOS 上从选择器保存到预览及地图叠加的坐标一致性。
 - 1 项无显示器测试：明确报告失败。
 
@@ -90,17 +90,17 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 `--markers` 会在每块屏幕中心短暂显示一个色块，并检查截图对应区域的颜色。此测试先在普通桌面／窗口模式下执行；独占全屏、其他置顶窗口、HDR／颜色管理及录屏权限可能影响色块可见性或颜色，色块失败需结合截图判断原因。
 
-请至少覆盖主屏与副屏分别为游戏所在屏幕，以及 Retina 主屏 + 普通副屏、普通主屏 + Retina 副屏。三个模式在 macOS 上应都覆盖所有显示器。
+请至少覆盖主屏与副屏分别为游戏所在屏幕，以及 Retina 主屏 + 普通副屏、普通主屏 + Retina 副屏。macOS 的“兼容 (mss)”模式应覆盖所有显示器。
 
 ### Windows
 
-先验证整个桌面的 mss 多屏定位：
+如需验证兼容模式的整个桌面多屏定位，显式指定 `mss`：
 
 ```powershell
-.venv\Scripts\python.exe tools\diagnose_capture.py --mode auto --markers --output .tmp\capture-windows-desktop
+.venv\Scripts\python.exe tools\diagnose_capture.py --mode mss --markers --output .tmp\capture-windows-desktop
 ```
 
-启动游戏后，在每块屏幕上分别运行三种模式：
+启动游戏后，在每块屏幕上分别运行 Maa 模式：
 
 ```powershell
 .venv\Scripts\python.exe tools\diagnose_capture.py --mode all --output .tmp\capture-windows-game
@@ -108,7 +108,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 也可以从程序的已标定区域状态中读取 `X Y W H`，追加 `--region X Y W H`，检查三种截图方式裁出的游戏内容是否一致。DLL 抓客户区，整帧尺寸小于桌面是正常行为，比较的是相同全局区域的内容。
 
-Windows DLL 客户区截图可能不包含独立色块窗口，因此脚本仅对 Windows 旧版模式自动校验色块。DLL 的验收依据为游戏截图、区域裁剪以及日志中的实际方法。
+Windows DLL 客户区截图可能不包含独立色块窗口，因此脚本仅对 Windows 兼容 (mss) 模式自动校验色块。DLL 的验收依据为游戏截图、区域裁剪以及日志中的实际方法。
 
 推荐实机矩阵：
 

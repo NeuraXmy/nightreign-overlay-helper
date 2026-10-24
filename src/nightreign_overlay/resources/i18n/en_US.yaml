@@ -19,8 +19,8 @@ home:
     title: Status
     game: Game window
     game_unsupported: Detection unavailable on this platform
-    game_foreground: In foreground
-    game_background: In background
+    game_open: Game window open
+    game_closed: Game window closed
     overlay: Overlay mode
     overlay_transparent: Transparent overlay
     overlay_window: Standard window

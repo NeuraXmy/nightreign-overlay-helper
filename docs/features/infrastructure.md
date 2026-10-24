@@ -21,13 +21,14 @@
 
 | 模式 | 后端 | 说明 |
 |------|------|------|
-| `auto`（默认） | mss 虚拟桌面整帧 | 不加载 DLL，无 WGC 黄框 |
+| `auto`（默认） | MaaWin32Screencap 自动优选 | 游戏窗口未打开时等待，不回退到 mss |
 | `foreground` | MaaWin32Screencap 前台掩码 | `DXGI_DESKTOP_DUP_WINDOW \| SCREENDC` |
 | `background` | MaaWin32Screencap 后台掩码 | `FRAMEPOOL \| PRINTWINDOW` |
 | `gdi`, `framepool`, `dxgi_desktop_dup`, `dxgi_desktop_dup_window`, `printwindow`, `screendc` | MaaWin32Screencap pinned method | Fixed single method; no automatic speed test |
+| `mss` | mss 虚拟桌面整帧 | 兼容模式，适合 macOS 开发或 Windows 回退验证 |
 
 
-The default `auto` mode uses mss for full-desktop capture. Windows Maa modes add automatic, foreground, background, and pinned single-method capture; the process setting applies only to Maa modes.
+默认 `auto`（界面显示为“自动 (Maa)”）始终使用 MaaWin32Screencap；游戏窗口暂时不存在时只等待下一次连接，不切换到 mss。`mss`（界面显示为“兼容 (mss)”）是独立的手动模式，macOS 开发时应显式选择它；截图进程设置只对 Maa 模式生效。
 ### API
 
 ```python
@@ -74,8 +75,8 @@ make_frame(image, hdr=...) → queued 回传 GUI 线程 → 发布 FrameCaptured
 - `request_frame()` 提交与结果回传都检查 `ForegroundPolicy.detection_allowed`，回调始终在 GUI 线程执行。
 - mss/Maa 后端的创建、截图和关闭全部位于专用截图线程；GUI 线程只管理定时器和结果。
 - 帧流最多保留一个在途请求；切换模式以 generation 丢弃旧结果、释放旧后端并清空缓存。
-- Windows auto mss 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
-- macOS 关闭 nominal-resolution 选项，逐屏抓取原生像素并合成共享帧；三个模式都使用这个跨平台 mss 后端。
+- Windows `mss` 整帧使用 `QImage.offset()` 记录物理桌面原点，兼容负坐标副屏。
+- macOS 关闭 nominal-resolution 选项，逐屏抓取原生像素并合成共享帧；需要显式选择“兼容 (mss)”模式。
 - macOS 的屏幕原点按桌面最大 DPR 放置，屏内坐标按本屏 DPR 缩放；`core/screens.py` 统一标定、预览和地图/血条悬浮窗的转换。
 - Windows DLL 图像使用当前客户区的物理桌面原点，抓取前后检查窗口位置/尺寸，变化时丢弃该帧并重试；DLL 尺寸与物理客户区不一致时按客户区尺寸归一化。
 - Windows 客户区几何查询临时启用线程 per-monitor DPI awareness，并在结束时恢复原上下文。

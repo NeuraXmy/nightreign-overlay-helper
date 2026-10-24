@@ -23,6 +23,7 @@ _user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
 _user32.GetWindowTextLengthW.restype = ctypes.c_int
 _user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
 _user32.GetWindowTextW.restype = ctypes.c_int
+_user32.EnumWindows.restype = wintypes.BOOL
 _user32.SetWindowPos.argtypes = [
     wintypes.HWND,
     wintypes.HWND,
@@ -49,6 +50,26 @@ class WindowsBackend(PlatformBackend):
         buffer = ctypes.create_unicode_buffer(length + 1)
         _user32.GetWindowTextW(hwnd, buffer, length + 1)
         return buffer.value
+
+    def game_window_exists(self, title: str) -> bool:
+        needle = title.casefold()
+        found = False
+
+        @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        def callback(hwnd: int, _lparam: int) -> bool:
+            nonlocal found
+            length = _user32.GetWindowTextLengthW(hwnd)
+            if length:
+                buffer = ctypes.create_unicode_buffer(length + 1)
+                _user32.GetWindowTextW(hwnd, buffer, length + 1)
+                if needle in buffer.value.casefold():
+                    found = True
+                    return False
+            return True
+
+        _user32.EnumWindows.argtypes = [type(callback), wintypes.LPARAM]
+        _user32.EnumWindows(callback, 0)
+        return found
 
     def ensure_topmost(self, window_id: int) -> None:
         flags = _SWP_NOSIZE | _SWP_NOMOVE | _SWP_NOACTIVATE

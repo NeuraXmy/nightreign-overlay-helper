@@ -105,15 +105,10 @@ def test_win32_geometry_restores_thread_dpi_context(monkeypatch, success):
     assert contexts[-1] == 99
 
 
-def test_non_windows_auto_mode_uses_mss(monkeypatch):
+def test_non_windows_auto_mode_waits_for_maa(monkeypatch):
     monkeypatch.setattr(capture, "sys", SimpleNamespace(platform="darwin"))
     worker = capture._CaptureWorker(Path(), SimpleNamespace(info=lambda *_args: None))
-    image = QImage(2, 2, QImage.Format.Format_RGB32)
-    image.fill(0x112233)
-    monkeypatch.setattr(
-        capture, "_MssCapture", lambda: SimpleNamespace(grab=lambda: image, close=lambda: None)
-    )
-    assert worker._grab("auto", "") is image
+    assert worker._grab("auto", "") is None
     worker.close()
 
 

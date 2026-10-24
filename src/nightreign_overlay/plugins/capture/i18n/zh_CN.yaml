@@ -4,9 +4,9 @@ plugin:
 settings:
   title: 截图设置
   mode:
-    content: 默认旧版截图，桌面歌词等画面遮挡会影响检测；仅前台/仅后台方式可能导致窗口大小变化
+    content: 自动使用 Maa 截图；游戏窗口未打开时等待。兼容 (mss) 适合 macOS 开发或需要桌面整帧时使用；仅前台/仅后台方式可能导致窗口大小变化
     title: 截图方式
-    auto: 自动
+    auto: 自动 (Maa)
     foreground: 仅前台
     background: 仅后台
     gdi: GDI
@@ -15,7 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI 窗口复制
     printwindow: PrintWindow
     screendc: ScreenDC
-    mss: mss
+    mss: 兼容 (mss)
   process:
     title: 截图进程
     content: 默认按窗口标题自动检测；使用串流等方式时，可以指定提供游戏画面的进程

@@ -459,7 +459,7 @@ class _CaptureWorker(QObject):
             self._log.info("Capture backend: mss")
             return _MssCapture()
         if sys.platform != "win32":
-            raise RuntimeError("Capture mode requires Windows; automatic mode should use mss")
+            raise RuntimeError("Capture mode requires Windows; choose the mss compatibility mode")
         backend = _MaaCapture(self._root_dir, mode, process)
         backend.connect()
         self._log.info(
@@ -481,77 +481,50 @@ class _CaptureWorker(QObject):
 
 
 class _AutoCapture:
-    """Automatic backend selection with mss as the first desktop candidate and Maa as fallback."""
+    """Automatic Maa capture that waits for the game window to become available."""
 
     def __init__(self, plugin_dir: Path, process: str, log: logging.Logger) -> None:
         self._plugin_dir = plugin_dir
         self._process = process
         self._log = log
-        self._mss: _MssCapture | None = None
         self._maa: _MaaCapture | None = None
-        self._maa_attempted = False
+        self._last_unavailable_log = 0.0
 
     def grab(self) -> QImage | None:
-        if sys.platform == "darwin":
-            if self._mss is None:
-                self._mss = _MssCapture()
-                self._log.info("Automatic capture candidate selected: mss (macOS)")
-            return self._mss.grab()
-
-        if sys.platform == "win32" and not self._maa_attempted:
-            self._maa_attempted = True
-            try:
-                self._maa = _MaaCapture(self._plugin_dir, "auto", self._process)
-                self._maa.connect()
-                self._log.info("Automatic capture candidate selected: Maa (%s)", self._maa.selected_method)
-            except Exception:
-                self._log.info("Automatic Maa candidate unavailable; falling back to mss", exc_info=True)
-                if self._maa is not None:
-                    self._maa.close()
-                self._maa = None
-
-        if self._maa is not None:
-            try:
-                image = self._maa.grab()
-            except Exception:
-                self._log.info("Automatic Maa candidate failed; falling back to mss", exc_info=True)
-                self._maa.close()
-                self._maa = None
-            else:
-                if image is not None and not image.isNull():
-                    return image
-
-        if self._mss is None and self._maa is None:
-            try:
-                self._mss = _MssCapture()
-                self._log.info("Automatic capture candidate selected: mss")
-            except Exception:
-                self._log.info("Automatic mss candidate unavailable; trying Maa methods")
-        if self._mss is not None:
-            try:
-                image = self._mss.grab()
-            except Exception:
-                self._log.info("Automatic mss candidate failed; trying Maa methods", exc_info=True)
-                self._mss.close()
-                self._mss = None
-            else:
-                if image is not None and not image.isNull():
-                    return image
         if sys.platform != "win32":
             return None
-        if self._maa is None and not self._maa_attempted:
-            self._maa_attempted = True
-            self._maa = _MaaCapture(self._plugin_dir, "auto", self._process)
-            self._maa.connect()
-            self._log.info("Automatic capture candidate selected: Maa (%s)", self._maa.selected_method)
         if self._maa is None:
-            raise RuntimeError("Automatic capture candidates are unavailable")
-        return self._maa.grab()
+            candidate = None
+            try:
+                candidate = _MaaCapture(self._plugin_dir, "auto", self._process)
+                candidate.connect()
+            except Exception as error:
+                if candidate is not None:
+                    candidate.close()
+                now = time.monotonic()
+                if now - self._last_unavailable_log >= 60:
+                    self._log.info("Automatic Maa capture is waiting for the game window: %s", error)
+                    self._last_unavailable_log = now
+                return None
+            self._maa = candidate
+            self._log.info("Automatic capture candidate selected: Maa (%s)", candidate.selected_method)
+        try:
+            image = self._maa.grab()
+        except Exception as error:
+            self._maa.close()
+            self._maa = None
+            now = time.monotonic()
+            if now - self._last_unavailable_log >= 60:
+                self._log.info("Automatic Maa capture is waiting for the game window: %s", error)
+                self._last_unavailable_log = now
+            return None
+        if image is not None and not image.isNull():
+            return image
+        self._maa.close()
+        self._maa = None
+        return None
 
     def close(self) -> None:
-        if self._mss is not None:
-            self._mss.close()
-            self._mss = None
         if self._maa is not None:
             self._maa.close()
             self._maa = None
@@ -619,8 +592,7 @@ class _MaaCapture:
             return None
         # Desktop/window buffers use BGRX; an unused zero alpha byte must not hide captured pixels.
         image_format = QImage.Format.Format_BGR888 if info.channels == 3 else QImage.Format.Format_RGB32
-        image = QImage(info.data, info.width, info.height, info.step, image_format)
-        image = image.copy()
+        image = QImage(info.data, info.width, info.height, info.step, image_format).copy()
         # The DLL captures the client area. Normalize any backend/DPI scaling to native desktop pixels.
         if image.size().width() != after[2] or image.size().height() != after[3]:
             image = image.scaled(after[2], after[3], Qt.AspectRatioMode.IgnoreAspectRatio)

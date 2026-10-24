@@ -19,8 +19,8 @@ home:
     title: 動作状況
     game: ゲームウィンドウ
     game_unsupported: この環境では検出非対応
-    game_foreground: 前面に表示中
-    game_background: 背面に表示中
+    game_open: ゲームウィンドウが開いています
+    game_closed: ゲームウィンドウが開いていません
     overlay: オーバーレイ表示方式
     overlay_transparent: 透明オーバーレイ
     overlay_window: 通常ウィンドウ

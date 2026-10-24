@@ -4,9 +4,9 @@ plugin:
 settings:
   title: Capture settings
   mode:
-    content: Legacy is the default; desktop overlays can affect detection. Foreground/background modes may resize
+    content: Automatic mode uses Maa and waits when the game window is unavailable. Use Compatibility (mss) for macOS development or full-desktop capture. Foreground/background modes may resize
     title: Capture method
-    auto: Auto
+    auto: Auto (Maa)
     foreground: Foreground only
     background: Background only
     gdi: GDI
@@ -15,7 +15,7 @@ settings:
     dxgi_desktop_dup_window: DXGI window duplication
     printwindow: PrintWindow
     screendc: ScreenDC
-    mss: mss
+    mss: Compatibility (mss)
   process:
     title: Capture process
     content: The game window is auto-detected by title; for remote play, pin the process that provides the game image

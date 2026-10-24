@@ -17,6 +17,10 @@ class PlatformBackend:
         """Title of the window that currently has keyboard focus, or None if unknown."""
         return None
 
+    def game_window_exists(self, title: str) -> bool:
+        """Whether a top-level game window with ``title`` currently exists."""
+        return False
+
     def ensure_topmost(self, window_id: int) -> None:
         """Re-assert always-on-top for a native window (games in borderless mode may cover overlays)."""
 
