@@ -1,23 +1,23 @@
 ## Overview
 
-Tracks the effect that increases attack power when a status buildup meter appears and checks again every 20 seconds. The first detected meter starts a 20-second countdown at Lv.1.
-
-At the end of each countdown, a meter adds one level, up to Lv.10. No meter clears all levels, hides the timer, and resumes waiting. Checks continue at Lv.10 to maintain the effect. Meters disappearing, reappearing, or being covered by the inventory between checks do not affect the countdown. Covering the meter at a check clears the levels.
-
-The chocolate-colored bar shows time until the next check. Position, scale, and text visibility follow the shared HUD settings.
+Detects status buildup meters and displays the attack power stacks from the King of Wastes relic effect and the countdown to the next check.
 
 ## Initial setup
 
 ### 1. Calibrate the meter area
 
-Uncalibrated areas automatically adapt to a 16:9 game window. Try the feature first; if detection does not work, follow the selection steps below.
+ℹ️ **Note: This step is optional. The program automatically calculates the detection region from a 16:9 full-screen game image. Manually calibrate it only if the game is not full screen or the automatic region is incorrect.**
 
-Make a meter appear in the game, then select Calibrate or use your assigned calibration shortcut. Select the full area where all status icons and their meters can appear, including vertically stacked meters.
+Set a controller or keyboard shortcut, then enter a scene where a status buildup meter appears and press the shortcut to open the calibration screen.
 
-After confirmation, the selection is cropped to the largest 45:32 region that fits inside it, aligned to the left and centered vertically. Excess width is removed from the right; excess height is removed from the top and bottom. Leave enough room to keep all icons and meters inside the adjusted region.
+![Set calibration shortcut](1.jpg)
 
-### 2. Enable the plugin
+Click the upper-right button to start selecting. Select the **area where status buildup meters may appear**, then press Enter or Save to confirm.
 
-Enable Status Buildup Timer on its feature page. Waiting for the first meter uses the general detection interval. Once running, detection occurs only at each 20-second check.
+![Calibration screen](2.jpg)
 
-Levels gained before enabling the plugin cannot be reconstructed. Enable it before the first meter appears. Disabling the plugin or resetting its settings clears the countdown and levels.
+Return to the main window. A green "Calibrated" status indicates success; hover over the eye icon to view the calibrated region.
+
+## Notes
+
+For other recognition failures or inaccurate detection, see the FAQ page.

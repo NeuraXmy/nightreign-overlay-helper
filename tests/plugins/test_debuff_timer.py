@@ -64,30 +64,30 @@ def test_waiting_uses_shared_stream_and_hud_has_requested_text_and_color(feature
     assert len(calls) == 1 and plugin._level == 0
     present[0] = True
     fakes.events.publish(fakes.capture.frame)
-    assert plugin._level == 1 and plugin._deadline == 120
+    assert plugin._level == 1 and plugin._deadline == pytest.approx(119.8)
     assert not fakes.capture.streams
-    assert plugin._hud.label.text() == "异常量表提升攻击力 Lv.1 下次检测 20.0s"
+    assert plugin._hud.label.text() == "异常量表提升攻击力 Lv.1 下次检测 19.8s"
     assert module._COLOR in plugin._hud.bar.styleSheet()
     clock[0] += 4.8
     plugin._tick()
-    assert plugin._hud.label.text() == "异常量表提升攻击力 Lv.1 下次检测 15.2s"
-    assert plugin._hud.bar.value() == 7600
+    assert plugin._hud.label.text() == "异常量表提升攻击力 Lv.1 下次检测 15.0s"
+    assert plugin._hud.bar.value() == 7575
 
 
 def test_disappear_and_reappear_between_checkpoints_do_not_change_cycle(feature):
     plugin, fakes, clock, present, calls = start(feature)
-    for elapsed, visible in [(8, False), (17, True), (19.9, False)]:
+    for elapsed, visible in [(8, False), (17, True), (19.7, False)]:
         clock[0] = 100 + elapsed
         present[0] = visible
         fakes.events.publish(fakes.capture.frame)
         plugin._tick()
-        assert plugin._level == 1 and plugin._deadline == 120
+        assert plugin._level == 1 and plugin._deadline == pytest.approx(119.8)
     assert len(calls) == 1 and fakes.capture.captures == 0
     present[0] = True
-    clock[0] = 120
+    clock[0] = 119.8
     plugin._tick()
     assert len(calls) == 2 and fakes.capture.captures == 1
-    assert plugin._level == 2 and plugin._deadline == 140
+    assert plugin._level == 2 and plugin._deadline == pytest.approx(139.8)
 
 
 def test_caps_at_ten_and_missing_meter_clears_then_restarts(feature, caplog):
@@ -105,7 +105,7 @@ def test_caps_at_ten_and_missing_meter_clears_then_restarts(feature, caplog):
     assert fakes.capture.streams == {plugin.id}
     present[0] = True
     fakes.events.publish(fakes.capture.frame)
-    assert plugin._level == 1 and plugin._deadline == clock[0] + 20
+    assert plugin._level == 1 and plugin._deadline == pytest.approx(clock[0] + 19.8)
 
 
 def test_one_pending_request_and_late_callback_cannot_restart_disabled_plugin(feature):
@@ -218,7 +218,7 @@ def test_manual_hotkeys_start_restart_stop_and_invalidate_pending_checks(feature
 
     # Manual start does not require a detected meter.
     trigger("f8")
-    assert plugin._level == 1 and plugin._deadline == 120
+    assert plugin._level == 1 and plugin._deadline == pytest.approx(119.8)
     assert not calls and not fakes.capture.streams
     callbacks = []
     fakes.capture.request_frame = callbacks.append
@@ -227,10 +227,10 @@ def test_manual_hotkeys_start_restart_stop_and_invalidate_pending_checks(feature
     assert plugin._pending
     clock[0] = 125
     trigger("f8")
-    assert plugin._level == 1 and plugin._deadline == 145 and not plugin._pending
+    assert plugin._level == 1 and plugin._deadline == pytest.approx(144.8) and not plugin._pending
     present[0] = True
     callbacks[0](fakes.capture.frame)
-    assert not calls and plugin._level == 1 and plugin._deadline == 145
+    assert not calls and plugin._level == 1 and plugin._deadline == pytest.approx(144.8)
 
     clock[0] = 145
     plugin._tick()
@@ -241,14 +241,14 @@ def test_manual_hotkeys_start_restart_stop_and_invalidate_pending_checks(feature
     assert not calls and plugin._deadline is None
     # Automatic detection resumes after manually clearing the current cycle.
     fakes.events.publish(fakes.capture.frame)
-    assert plugin._level == 1 and plugin._deadline == 165
+    assert plugin._level == 1 and plugin._deadline == pytest.approx(164.8)
     plugin.on_deactivate()
     plugin.ctx.release()
     trigger("f8")
     assert plugin._level == 0 and plugin._deadline is None
 
 
-@pytest.mark.parametrize("advance,trigger_at", [(0.0, 120.0), (3.0, 117.0), (25.0, 100.0)])
+@pytest.mark.parametrize("advance,trigger_at", [(0.0, 119.8), (3.0, 116.8), (25.0, 100.0)])
 def test_checkpoint_audio_advance_once_per_cycle_and_repeats_at_level_ten(
     feature, monkeypatch, advance, trigger_at
 ):
