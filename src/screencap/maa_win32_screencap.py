@@ -339,3 +339,113 @@ def find_window_by_title(title: str) -> Optional[int]:
 def foreground_window() -> Optional[int]:
     hwnd = ctypes.windll.user32.GetForegroundWindow()
     return int(hwnd) if hwnd else None
+
+
+# ---------------------------------------------------------------------------
+# 工具：按进程选择截图目标（Windows）
+# ---------------------------------------------------------------------------
+
+_WS_EX_TOOLWINDOW = 0x00000080
+_PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+
+
+def _configure_process_apis() -> None:
+    """为进程查询相关 API 声明签名（64 位下句柄必须按指针处理）。"""
+    user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
+
+    user32.IsWindowVisible.argtypes = [wt.HWND]
+    user32.IsWindowVisible.restype = wt.BOOL
+    user32.GetWindowLongW.argtypes = [wt.HWND, ctypes.c_int]
+    user32.GetWindowLongW.restype = ctypes.c_long
+    user32.GetWindowTextLengthW.argtypes = [wt.HWND]
+    user32.GetWindowTextLengthW.restype = ctypes.c_int
+    user32.GetWindowTextW.argtypes = [wt.HWND, wt.LPWSTR, ctypes.c_int]
+    user32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
+    kernel32.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
+    kernel32.OpenProcess.restype = wt.HANDLE
+    kernel32.QueryFullProcessImageNameW.argtypes = [
+        wt.HANDLE, wt.DWORD, wt.LPWSTR, ctypes.POINTER(wt.DWORD)
+    ]
+    kernel32.QueryFullProcessImageNameW.restype = wt.BOOL
+    kernel32.CloseHandle.argtypes = [wt.HANDLE]
+    kernel32.CloseHandle.restype = wt.BOOL
+
+
+def query_process_image(pid: int) -> Optional[str]:
+    """查询进程可执行文件完整路径；失败（权限/已退出）返回 None。"""
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        return None
+    try:
+        size = wt.DWORD(1024)
+        buf = ctypes.create_unicode_buffer(size.value)
+        if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
+            return buf.value
+        return None
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _iter_visible_windows():
+    """枚举可见、有标题、非工具窗口的 (hwnd, title, pid)，跳过当前进程。"""
+    import os
+
+    user32 = ctypes.windll.user32
+    current_pid = os.getpid()
+    windows: list[tuple[int, str, int]] = []
+
+    @ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    def enum_proc(hwnd, lparam):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        if user32.GetWindowLongW(hwnd, -20) & _WS_EX_TOOLWINDOW:
+            return True
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length <= 0:
+            return True
+        pid = wt.DWORD(0)
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if pid.value == 0 or pid.value == current_pid:
+            return True
+        buf = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buf, length + 1)
+        windows.append((int(hwnd), buf.value, pid.value))
+        return True
+
+    user32.EnumWindows(enum_proc, 0)
+    return windows
+
+
+def list_window_processes() -> list[tuple[str, str]]:
+    """枚举带可见顶层窗口的进程，返回 (窗口标题, 进程映像名) 列表。
+
+    每个进程只保留一个（Z 序最前的）窗口，按进程名排序，用于手动选择
+    截图进程（如 PS5 串流软件）。
+    """
+    _configure_process_apis()
+    seen: dict[int, tuple[str, str]] = {}
+    for _hwnd, title, pid in _iter_visible_windows():
+        if pid in seen:
+            continue
+        image = query_process_image(pid) or ""
+        seen[pid] = (title, image.rsplit("\\", 1)[-1] or image)
+    return sorted(seen.values(), key=lambda entry: (entry[1].lower(), entry[0].lower()))
+
+
+def find_hwnd_by_process(image_name: str) -> Optional[int]:
+    """按进程映像名（不区分大小写）查找其可见顶层窗口句柄。
+
+    EnumWindows 按 Z 序返回，前台窗口优先，因此命中串流软件的主窗口。
+    """
+    target = image_name.rsplit("\\", 1)[-1].rsplit("/", 1)[-1].lower()
+    if not target:
+        return None
+    _configure_process_apis()
+    for hwnd, _title, pid in _iter_visible_windows():
+        image = query_process_image(pid) or ""
+        name = image.rsplit("\\", 1)[-1]
+        if name.lower() == target:
+            return hwnd
+    return None

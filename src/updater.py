@@ -23,6 +23,7 @@ from src.detector.map_info import MapPattern
 from src.ui.utils import is_window_in_foreground
 from src.screencap import (
     get_engine,
+    ScreencapMethod,
     ScreencapMode,
     ScreencapInitError,
     ScreencapRuntimeError,
@@ -71,7 +72,8 @@ class Updater(QObject):
         self.is_menu_opened = False
 
         self.detector = DetectorManager(get_engine())
-        self.screencap_mode: ScreencapMode = ScreencapMode.AUTO
+        self.screencap_mode: ScreencapMode | ScreencapMethod = ScreencapMode.AUTO
+        self.screencap_process: str = ""
         self.only_detect_when_game_foreground: bool = False
         self.detect_interval = 0.2
 
@@ -544,7 +546,7 @@ class Updater(QObject):
                 engine = get_engine()
                 if engine.status != EngineStatus.CONNECTED:
                     try:
-                        engine.initialize(self.screencap_mode)
+                        engine.initialize(self.screencap_mode, process=self.screencap_process)
                     except ScreencapInitError as e:
                         warning(f"ScreencapEngine init failed: {e}. Skipping this cycle.")
                         time.sleep(Config.get().update_interval)

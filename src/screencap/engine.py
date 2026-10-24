@@ -9,7 +9,7 @@ from src.logger import info, warning, error
 from src.screencap.errors import ScreencapInitError, ScreencapRuntimeError
 from src.screencap.hwnd_resolver import find_game_hwnd
 from src.screencap.native_loader import get_native_dll_dir, get_native_dll_path
-from src.screencap.types import EngineStatus, ScreencapMode
+from src.screencap.types import EngineStatus, ScreencapMethod, ScreencapMode
 
 
 class ScreencapEngine:
@@ -28,7 +28,28 @@ class ScreencapEngine:
     def selected_method_name(self) -> str | None:
         return self._selected_method_name
 
-    def initialize(self, mode: ScreencapMode = ScreencapMode.AUTO) -> None:
+    @staticmethod
+    def _methods_mask(mode: ScreencapMode | ScreencapMethod) -> int:
+        """把模式/具体方式换算为 MaaWin32Screencap 的方式位掩码。
+
+        具体方式 (ScreencapMethod) 的键值即位掩码，单一候选等于固定
+        该截图方式，不再参与自动测速选择。
+        """
+        from src.screencap.maa_win32_screencap import Manager
+
+        if isinstance(mode, ScreencapMethod):
+            return mode.value
+        if mode == ScreencapMode.FOREGROUND:
+            return Manager.METHOD_FOREGROUND
+        if mode == ScreencapMode.BACKGROUND:
+            return Manager.METHOD_BACKGROUND
+        return Manager.METHOD_ALL
+
+    def initialize(
+        self,
+        mode: ScreencapMode | ScreencapMethod = ScreencapMode.AUTO,
+        process: str = "",
+    ) -> None:
         try:
             self._status = EngineStatus.INITIALIZING
 
@@ -43,19 +64,15 @@ class ScreencapEngine:
 
             set_dll_path(str(get_native_dll_dir()))
 
-            hwnd = find_game_hwnd(GAME_WINDOW_TITLE)
+            hwnd = find_game_hwnd(GAME_WINDOW_TITLE, process_name=process or None)
             if hwnd is None:
+                target = process or f"window '{GAME_WINDOW_TITLE}'"
                 raise ScreencapInitError(
                     "connect_failed",
-                    f"Game window '{GAME_WINDOW_TITLE}' not found.",
+                    f"Capture target {target} not found.",
                 )
 
-            if mode == ScreencapMode.FOREGROUND:
-                methods = Manager.METHOD_FOREGROUND
-            elif mode == ScreencapMode.BACKGROUND:
-                methods = Manager.METHOD_BACKGROUND
-            else:
-                methods = Manager.METHOD_ALL
+            methods = self._methods_mask(mode)
 
             self._mgr = Manager(hwnd=hwnd, methods=methods)
 
