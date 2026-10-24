@@ -1,10 +1,11 @@
 from src.screencap.engine import ScreencapEngine
 from src.screencap.errors import ScreencapError, ScreencapInitError, ScreencapRuntimeError
-from src.screencap.types import EngineStatus, ScreencapMode
+from src.screencap.types import EngineStatus, ScreencapMethod, ScreencapMode
 
 __all__ = [
     "ScreencapEngine",
     "ScreencapMode",
+    "ScreencapMethod",
     "EngineStatus",
     "ScreencapError",
     "ScreencapInitError",

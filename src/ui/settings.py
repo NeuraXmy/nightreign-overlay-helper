@@ -27,6 +27,7 @@ from src.ui.p2p_overlay import P2POverlayWidget, P2POverlayUIState
 from src.p2p import P2PService, P2PStatus
 from src.ui.input import InputWorker, InputSettingWidget, InputSetting
 from src.ui.capture_region import CaptureRegionWindow
+from src.ui.process_picker import AUTO_DETECT_LABEL, pick_capture_process
 from src.detector.rain_detector import RainDetector
 from src.detector.utils import hls_to_rgb
 from src.ui.bug_report import BugReportWindow
@@ -37,6 +38,16 @@ BUTTON_STYLE = "padding: 4px; min-height: 20px;"
 
 SETTINGS_SAVE_PATH = get_appdata_path("settings.yaml")
 PRESET_SETTINGS_DIR = get_appdata_path("preset_settings")
+
+# 具体截图方式选项：显示文本 -> ScreencapMethod 成员名（见 src/screencap/types.py）
+SCREENCAP_METHOD_LABELS: dict[str, str] = {
+    "GDI": "GDI",
+    "FramePool": "FRAMEPOOL",
+    "DXGI 桌面复制": "DXGI_DESKTOP_DUP",
+    "DXGI 窗口复制": "DXGI_DESKTOP_DUP_WINDOW",
+    "PrintWindow": "PRINTWINDOW",
+    "ScreenDC": "SCREENDC",
+}
 
 DETECT_REGION_TUTORIAL_IMG_PATH = get_asset_path("detect_region_tutorial/{i}.jpg")
 COLOR_ALIGN_TUTORIAL_IMG_PATH = get_asset_path("color_align_tutorial/{i}.jpg")
@@ -307,11 +318,23 @@ class SettingsWindow(QWidget):
         screencap_mode_layout = QHBoxLayout()
         screencap_mode_layout.addWidget(QLabel("截图方式"))
         self.screencap_mode_combobox = QComboBox()
-        self.screencap_mode_combobox.addItems(["自动", "仅前台", "仅后台"])
+        self.screencap_mode_combobox.addItems(
+            ["自动", "仅前台", "仅后台"] + list(SCREENCAP_METHOD_LABELS.keys())
+        )
         self.screencap_mode_combobox.setCurrentText("自动")
         self.screencap_mode_combobox.currentTextChanged.connect(self.update_screencap_mode)
         screencap_mode_layout.addWidget(self.screencap_mode_combobox)
         self.performance_layout.addLayout(screencap_mode_layout)
+
+        screencap_process_layout = QHBoxLayout()
+        screencap_process_layout.addWidget(QLabel("截图进程"))
+        self.screencap_process_button = QPushButton(AUTO_DETECT_LABEL)
+        self.screencap_process_button.setToolTip(
+            "默认按游戏窗口标题自动检测；使用 PS5 串流等游玩方式时，请手动选择提供游戏画面的串流软件进程"
+        )
+        self.screencap_process_button.clicked.connect(self.choose_screencap_process)
+        screencap_process_layout.addWidget(self.screencap_process_button)
+        self.performance_layout.addLayout(screencap_process_layout)
 
         only_show_when_game_foreground_layout = QHBoxLayout()
         self.only_show_when_game_foreground_checkbox = QCheckBox("仅在游戏时显示和检测")
@@ -765,6 +788,7 @@ class SettingsWindow(QWidget):
             load_checkbox_state(self.only_show_when_game_foreground_checkbox, data.get("only_show_when_game_foreground", False))
             load_combobox_value(self.detect_interval_combobox, data.get("detect_interval", "高"))
             load_combobox_value(self.screencap_mode_combobox, data.get("screencap_mode", "自动"))
+            self.set_screencap_process(data.get("screencap_process", ""))
             # 队友延迟
             self.p2p_enabled_checkbox.blockSignals(True)
             self.p2p_enabled_checkbox.setChecked(data.get("p2p_enabled", True))
@@ -850,6 +874,7 @@ class SettingsWindow(QWidget):
                 "only_show_when_game_foreground": self.only_show_when_game_foreground_checkbox.isChecked(),
                 "detect_interval": self.detect_interval_combobox.currentText(),
                 "screencap_mode": self.screencap_mode_combobox.currentText(),
+                "screencap_process": self.updater.screencap_process,
                 # 队友延迟
                 "p2p_enabled": self.p2p_enabled_checkbox.isChecked(),
                 "p2p_size": self.p2p_size_slider.value(),
@@ -1440,11 +1465,27 @@ class SettingsWindow(QWidget):
         info(f"Detect interval changed to {detect_interval} seconds ({text})")
 
     def update_screencap_mode(self, text: str):
-        from src.screencap import ScreencapMode
+        from src.screencap import ScreencapMethod, ScreencapMode
         mode_map = {"自动": ScreencapMode.AUTO, "仅前台": ScreencapMode.FOREGROUND, "仅后台": ScreencapMode.BACKGROUND}
-        mode = mode_map.get(text, ScreencapMode.AUTO)
+        if text in SCREENCAP_METHOD_LABELS:
+            mode = ScreencapMethod[SCREENCAP_METHOD_LABELS[text]]
+        else:
+            mode = mode_map.get(text, ScreencapMode.AUTO)
         self.updater.screencap_mode = mode
         info(f"Screencap mode changed to {text}")
+
+    def set_screencap_process(self, process: str):
+        """设置截图目标进程（空串恢复自动检测）。"""
+        self.updater.screencap_process = process
+        self.screencap_process_button.setText(process or AUTO_DETECT_LABEL)
+        info(f"Screencap process changed to: {process or '(auto detect)'}")
+
+    def choose_screencap_process(self):
+        process = pick_capture_process(self, current=self.updater.screencap_process)
+        if process is None:
+            return
+        self.set_screencap_process(process)
+        self.save_settings()
 
     def update_only_show_when_game_foreground(self, state):
         enabled = self.only_show_when_game_foreground_checkbox.isChecked()
