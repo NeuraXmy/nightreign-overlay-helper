@@ -1,6 +1,6 @@
 plugin:
   name: 状態異常ゲージタイマー
-  description: 状態異常ゲージを検出し、攻撃力上昇効果の段階と次回判定までの時間を表示
+  description: 状態異常ゲージを検出し、廃棄物の王の遺物効果による攻撃力上昇の段階と次回判定までのカウントダウンを表示します
 hud:
   text: 状態異常ゲージで攻撃力上昇 Lv.{level} 次回判定 {remaining}s
 settings:
@@ -12,5 +12,10 @@ settings:
     content: 状態異常アイコンと右側のゲージが表示される範囲全体を選択
     button: 範囲指定
     annotate: ここをクリックし、状態異常アイコンとゲージの表示範囲を選択
+  advanced:
+    title: 詳細設定
+    first_check_advance:
+      title: 初回判定の前倒し時間
+      content: 検出遅延を補正するため、初回判定をこの秒数だけ早めます
 audio:
   check: 各カウントダウン終了時の通知

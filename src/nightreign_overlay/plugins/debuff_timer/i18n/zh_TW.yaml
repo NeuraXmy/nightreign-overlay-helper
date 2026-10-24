@@ -1,6 +1,6 @@
 plugin:
   name: 異常量表計時
-  description: 偵測異常量表，顯示提升攻擊力詞條的層數與下次偵測倒數
+  description: 偵測異常量表，顯示廢棄物之王遺物詞條提升攻擊力的層數與下次偵測倒數
 hud:
   text: 異常量表提升攻擊力 Lv.{level} 下次偵測 {remaining}s
 settings:
@@ -12,5 +12,10 @@ settings:
     content: 框選所有異常狀態圖示及其右側量表可能出現的完整區域
     button: 標定
     annotate: 點擊此處，框選異常圖示及量表可能出現的區域
+  advanced:
+    title: 進階選項
+    first_check_advance:
+      title: 首次檢測提前時間
+      content: 為補償偵測延遲，首次檢測提前指定秒數
 audio:
   check: 每輪倒數計時結束提醒

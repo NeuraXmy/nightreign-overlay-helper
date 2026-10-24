@@ -1,6 +1,6 @@
 plugin:
   name: 异常量表计时
-  description: 检测异常量表，显示提升攻击力词条的层数与下次检测倒计时
+  description: 检测异常量表，显示废弃物之王遗物词条提升攻击力的层数与下次检测倒计时
 hud:
   text: 异常量表提升攻击力 Lv.{level} 下次检测 {remaining}s
 settings:
@@ -12,5 +12,10 @@ settings:
     content: 框选所有异常状态图标及其右侧量表可能出现的完整区域
     button: 标定
     annotate: 点击此处，框选异常图标及量表可能出现的区域
+  advanced:
+    title: 高级选项
+    first_check_advance:
+      title: 首次检测提前时间
+      content: 首次开始计时后提前进行第一次检测，默认 0.2 秒；用于补偿检测延迟
 audio:
   check: 每轮倒计时结束提醒

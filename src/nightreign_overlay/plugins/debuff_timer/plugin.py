@@ -11,11 +11,17 @@ from qfluentwidgets import FluentIcon
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest
 from nightreign_overlay.plugins.audio.api import AudioNotifications
 from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, crop_rgb, hdr_to_sdr
+from nightreign_overlay.plugins.debuff_timer.config import DebuffTimerConfig
 from nightreign_overlay.plugins.debuff_timer.detector import DebuffDetector
 from nightreign_overlay.plugins.hud.api import HudApi, HudTimerBar
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
-from nightreign_overlay.ui.components import HotkeySettingCard, SettingSection, SettingsPanel
+from nightreign_overlay.ui.components import (
+    ConfigDoubleSpinCard,
+    HotkeySettingCard,
+    SettingSection,
+    SettingsPanel,
+)
 from nightreign_overlay.ui.components.audio_settings import audio_section
 
 _REGION_KEY = "debuff_timer.meter_region"
@@ -48,6 +54,7 @@ class DebuffTimerPlugin(Plugin):
     )
 
     def on_load(self) -> None:
+        self.config = self.ctx.config(DebuffTimerConfig)
         self._audio = AudioNotifications(self.ctx, ("check",))
         self._active = False
         self._streaming = False
@@ -56,6 +63,7 @@ class DebuffTimerPlugin(Plugin):
         self._generation = 0
         self._level = 0
         self._deadline: float | None = None
+        self._cycle_period = _PERIOD
         self._retry_at = 0.0
         self._detector: DebuffDetector | None = None
         self._hud: HudTimerBar | None = None
@@ -115,6 +123,7 @@ class DebuffTimerPlugin(Plugin):
         self._retry_at = 0.0
         self._level = 0
         self._deadline = None
+        self._cycle_period = _PERIOD
         self._set_stream(self._active)
         self._update_hud()
 
@@ -145,10 +154,11 @@ class DebuffTimerPlugin(Plugin):
         self._pending = False
         self._retry_at = 0.0
         self._level = 1
-        self._deadline = time.monotonic() + _PERIOD
+        self._cycle_period = max(0.0, _PERIOD - self.config.first_check_advance.value)
+        self._deadline = time.monotonic() + self._cycle_period
         self._set_stream(False)
         self._update_audio(time.monotonic())
-        self.ctx.log.info("Status meter attack buff started: Lv.1; next check in 20s")
+        self.ctx.log.info("Status meter attack buff started: Lv.1; next check in %.1fs", self._cycle_period)
         self._update_hud()
 
     def _manual_start(self) -> None:
@@ -178,8 +188,8 @@ class DebuffTimerPlugin(Plugin):
     def _update_audio(self, now: float) -> None:
         if self._deadline is not None:
             self._audio.update(
-                _PERIOD - (self._deadline - now),
-                {"check": _PERIOD - self._audio.cues["check"].seconds.value},
+                self._cycle_period - (self._deadline - now),
+                {"check": self._cycle_period - self._audio.cues["check"].seconds.value},
             )
 
     def _on_check(self, frame: FrameCaptured | None, region: QRect, generation: int) -> None:
@@ -202,6 +212,7 @@ class DebuffTimerPlugin(Plugin):
             return
         if present:
             self._level = min(_MAX_LEVEL, self._level + 1)
+            self._cycle_period = _PERIOD
             self._deadline = time.monotonic() + _PERIOD
             self._audio.timeline.reset()
             self._update_audio(time.monotonic())
@@ -220,7 +231,7 @@ class DebuffTimerPlugin(Plugin):
             return
         remaining = max(0.0, self._deadline - time.monotonic())
         text = self.ctx.tr("hud.text", level=self._level, remaining=f"{remaining:.1f}")
-        self._hud.set_progress(remaining / _PERIOD, text)
+        self._hud.set_progress(remaining / self._cycle_period if self._cycle_period else 0, text)
 
     def _calibrate_region(self) -> None:
         if self._calibrating:
@@ -268,7 +279,20 @@ class DebuffTimerPlugin(Plugin):
                 )
             )
         panel.addSection(basic)
+        advanced = SettingSection(tr("settings.advanced.title"))
+        advanced.addCard(
+            ConfigDoubleSpinCard(
+                self.config.first_check_advance,
+                FluentIcon.HISTORY,
+                tr("settings.advanced.first_check_advance.title"),
+                tr("settings.advanced.first_check_advance.content"),
+                decimals=1,
+                step=0.1,
+                formatter=lambda value: f"{value:.1f}s",
+            )
+        )
         panel.addSection(audio_section(self._audio, ("check",)))
+        panel.addSection(advanced)
         return panel
 
     def reset_settings(self) -> None:
