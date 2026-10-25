@@ -1,3 +1,3 @@
 """Nightreign Overlay Helper — an overlay toolkit for ELDEN RING NIGHTREIGN."""
 
-__version__ = "1.0.3.dev2"
+__version__ = "1.0.3"
