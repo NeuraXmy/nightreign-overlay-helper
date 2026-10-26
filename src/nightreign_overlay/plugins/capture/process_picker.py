@@ -14,7 +14,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QListWidgetItem
 from qfluentwidgets import BodyLabel, ListWidget, MessageBoxBase, SubtitleLabel
 
-from nightreign_overlay.plugins.capture.win32 import list_window_processes
+from nightreign_overlay.plugins.capture.win32 import list_window_processes as list_windows_win32
 
 #: Translations come from the capture plugin namespace via the injected ``tr`` callable.
 Tr = Callable[[str], str]
@@ -31,11 +31,17 @@ class ProcessPickerDialog(MessageBoxBase):
         self.viewLayout.addWidget(BodyLabel(tr("settings.process.dialog_hint")))
 
         self.listWidget = ListWidget(self)
+        self.listWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.listWidget.setTextElideMode(Qt.TextElideMode.ElideRight)
         auto = tr("settings.process.auto")
         self._add_row(auto, "", selected=not current)
         if sys.platform == "win32":
+            entries = list_windows_win32()
+        elif sys.platform == "darwin":
+            from nightreign_overlay.plugins.capture.macos import list_window_processes
+
             entries = list_window_processes()
-        else:  # pragma: no cover - the picker is only reachable on Windows
+        else:
             entries = []
         for title, image in entries:
             self._add_row(f"{title}    [{image}]", image, selected=image.casefold() == current.casefold())
