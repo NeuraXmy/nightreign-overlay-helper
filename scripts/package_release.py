@@ -17,6 +17,7 @@ REQUIRED_RUNTIME_FILES = (
     "_internal/nightreign_overlay/plugins/hp_marker/data/material_v1.onnx",
     "_internal/nightreign_overlay/plugins/hp_marker/data/cap_v1.onnx",
     "bin/NightreignP2PHelper.exe",
+    "bin/NightreignCaptureProbe.exe",
     "bin/amd64/KernelTraceControl.dll",
     "bin/amd64/msdia140.dll",
     "README.md",

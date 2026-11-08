@@ -4,7 +4,7 @@ plugin:
 settings:
   title: キャプチャ設定
   mode:
-    content: 自動測定で最速の方式を選択します。互換性問題の切り分けには単一方式（例：GDI）へ固定できます
+    content: 選択した方式を固定で使用します。「自動検出」で有効な最速方式を選択できます
     title: キャプチャ方式
     auto: 自動 (Maa)
     foreground: 前面のみ
@@ -39,3 +39,25 @@ settings:
     annotate: 実際のゲーム画面範囲を選択
     failed_title: ゲーム画面の範囲指定に失敗
     failed_content: 選択範囲は16:9に近い必要があります。自動範囲設定は16:9のゲーム画面のみ対応するため、今回の設定を解除しました。
+
+detection:
+  title: キャプチャ方式のテスト
+  description: 有効な最速のキャプチャ方式をテストして保存します。詳細な結果はログに記録します。ゲームは不要です。失敗時は mss を使用します。
+  ready: テストを実行すると現在の固定方式を更新できます。
+  display: テストする画面
+  testing: テスト中…
+  confirm: この端末に適したキャプチャ方式を自動検出しますか？（約5秒かかります）
+  start: 自動検出
+  cancel: テスト中止
+  running: テスト中です。画面を隠さないでください。Esc で終了すると mss に切り替わります。
+  success: テストが完了し、最適なキャプチャ方式を保存しました。
+  failed: 'テスト失敗。mss に切り替えました。理由：{reason}'
+  cancelled: テストを中止し、元の設定を保持しました。
+  failure:
+    platform: この環境では DirectX テストを利用できません
+    component: テスト用コンポーネントがありません
+    start: テスト画面を起動できません
+    process: テストプログラムが異常終了しました
+    timeout: テストがタイムアウトしました
+    validation: テストが未完了か、画像検証に成功した方式がありません
+    display: テスト画面を取得できません

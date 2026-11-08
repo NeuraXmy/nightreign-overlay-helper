@@ -28,7 +28,7 @@ from qfluentwidgets import FluentIcon, InfoBar, InfoBarPosition, PushButton, Set
 from nightreign_overlay.core.game_window import ForegroundPolicy
 from nightreign_overlay.core.screens import capture_origin
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
-from nightreign_overlay.plugins.capture.api import CaptureApi, FrameCaptured, make_frame
+from nightreign_overlay.plugins.capture.api import CaptureApi, CaptureSetupApi, FrameCaptured, make_frame
 from nightreign_overlay.plugins.capture.config import CaptureConfig
 from nightreign_overlay.plugins.input.api import HotkeyApi, HotkeyBinding
 from nightreign_overlay.plugins.region.api import RegionApi, RegionStatus
@@ -160,6 +160,13 @@ class CapturePlugin(Plugin):
         self._game_window = None
         self._capture_status = "inactive"
         self._capture_method: str | None = None
+        self._capture_testing = False
+        from nightreign_overlay.plugins.capture.detection import CaptureSetupController
+
+        self._setup = CaptureSetupController(
+            self.config, self.ctx.root_dir, self.ctx.tr, self._set_capture_testing, self
+        )
+        self.ctx.provide(CaptureSetupApi, self._setup)
 
     @property
     def capture_status(self) -> str:
@@ -181,6 +188,8 @@ class CapturePlugin(Plugin):
         return self._latest_frame
 
     def on_activate(self) -> None:
+        if self.ctx.services.get(CaptureSetupApi) is None:
+            self.ctx.provide(CaptureSetupApi, self._setup)
         self.ctx.provide(CaptureApi, _CaptureService(self))
         self.ctx.on_cleanup(self._stop_stream)
         hotkeys = self.ctx.services.get(HotkeyApi)
@@ -189,6 +198,7 @@ class CapturePlugin(Plugin):
             self.ctx.on_cleanup(lambda: hotkeys.unregister(_CALIBRATE_GAME_WINDOW))
 
     def on_deactivate(self) -> None:
+        self._setup.shutdown()
         self._stop_stream()
         self._stop_worker()
         self._game_window = None
@@ -255,6 +265,14 @@ class CapturePlugin(Plugin):
             self.config.process.value or "(auto detect)",
         )
 
+    def _set_capture_testing(self, active: bool) -> None:
+        if self._capture_testing == active:
+            return
+        self._capture_testing = active
+        self._invalidate()
+        if self._worker is not None:
+            self._close_requested.emit()
+
     def _invalidate(self) -> None:
         """Make every in-flight grab stale; their callbacks receive ``None``."""
         self._generation += 1
@@ -311,7 +329,7 @@ class CapturePlugin(Plugin):
         if callback is not None:
             self._callbacks[request_id] = callback
         # Legacy "仅在游戏时显示和检测": no detection while the game is in the background.
-        if not self.ctx.services.require(ForegroundPolicy).detection_allowed:
+        if self._capture_testing or not self.ctx.services.require(ForegroundPolicy).detection_allowed:
             if callback is not None:
                 QTimer.singleShot(0, lambda: self._resolve(request_id, None))
             return None
@@ -339,7 +357,7 @@ class CapturePlugin(Plugin):
         if self._stream_owners:
             if frame is not None:
                 self._set_capture_status("running", frame.capture_method)
-            elif self.config.mode.value == "auto":
+            elif self.config.mode.value != "mss":
                 self._set_capture_status("waiting")
         self._resolve(request_id, frame)
 
@@ -400,14 +418,20 @@ class CapturePlugin(Plugin):
         )
         self.config.process.valueChanged.connect(process_card.refresh)
         process_card.refresh(self.config.process.value)
+        mode_card = ConfigChoiceCard(
+            self.config.mode,
+            [(mode, self.ctx.tr(f"settings.mode.{mode}")) for mode in self.config.mode.option.choices],
+            FluentIcon.CAMERA,
+            self.ctx.tr("settings.mode.title"),
+            self.ctx.tr("settings.mode.content"),
+        )
+        mode_card.setObjectName("captureModeCard")
+        mode_card.hBoxLayout.insertSpacing(mode_card.hBoxLayout.count() - 1, 8)
+        mode_card.hBoxLayout.insertWidget(
+            mode_card.hBoxLayout.count() - 1, self._setup.create_button(mode_card)
+        )
         section.addCards(
-            ConfigChoiceCard(
-                self.config.mode,
-                [(mode, self.ctx.tr(f"settings.mode.{mode}")) for mode in self.config.mode.option.choices],
-                FluentIcon.CAMERA,
-                self.ctx.tr("settings.mode.title"),
-                self.ctx.tr("settings.mode.content"),
-            ),
+            mode_card,
             process_card,
             ConfigRangeCard(
                 self.config.interval_ms,
@@ -437,6 +461,10 @@ class CapturePlugin(Plugin):
         return panel
 
 
+class _CaptureWindowUnavailableError(RuntimeError):
+    """Expected while the target application is closed or its window is being recreated."""
+
+
 class _CaptureWorker(QObject):
     """Owns the capture backend. Constructed on the GUI thread; every slot then runs on the capture thread."""
 
@@ -449,15 +477,35 @@ class _CaptureWorker(QObject):
         self._log = log
         self._backend: _AutoCapture | _MaaCapture | _MssCapture | None = None
         self._backend_key: tuple[str, str] | str | None = None
-        self._last_error: tuple[str, type[Exception], str] | None = None
+        self._last_error: tuple[str, str, type[Exception], str] | None = None
         self._last_error_time = 0.0
+        self._request_key: tuple[str, str] | None = None
+        self._waiting = False
+        self._retry_at = 0.0
+        self._retry_delay = 1.0
 
     @pyqtSlot(int, int, str, str, bool)
     def grab(self, request_id: int, generation: int, mode: str, process: str, hdr: bool) -> None:
         frame = None
         method = ""
+        key = (mode, process)
+        if self._request_key != key:
+            self.close()
+            self._request_key = key
+        if time.monotonic() < self._retry_at:
+            self.grabbed.emit(request_id, generation, None)
+            return
         try:
             image = self._grab(mode, process)
+        except _CaptureWindowUnavailableError as error:
+            if not self._waiting:
+                self._log.warning(
+                    "Capture is waiting for the target window: %s; retrying with backoff", error
+                )
+            self._waiting = True
+            self._retry_at = time.monotonic() + self._retry_delay
+            self._retry_delay = min(self._retry_delay * 2, 2.0)
+            self._close_backend()
         except Exception as error:
             signature = (mode, process, type(error), str(error))
             now = time.monotonic()
@@ -469,12 +517,15 @@ class _CaptureWorker(QObject):
                 )
                 self._last_error_time = now
             self._last_error = signature
-            self.close()
+            self._close_backend()
         else:
             if image is not None and not image.isNull():
-                if self._last_error is not None:
+                if self._last_error is not None or self._waiting:
                     self._log.info("Capture recovered in %s mode", mode)
                     self._last_error = None
+                self._waiting = False
+                self._retry_at = 0.0
+                self._retry_delay = 1.0
                 # Detached copy: nothing on this thread references the frame after it is emitted.
                 method = self._selected_method(mode)
                 frame = make_frame(image, hdr=hdr, capture_method=method)
@@ -488,13 +539,13 @@ class _CaptureWorker(QObject):
     def _grab(self, mode: str, process: str) -> QImage | None:
         key = (mode, process)
         if self._backend_key != key:
-            self.close()
+            self._close_backend()
         if self._backend is None:
             self._backend = self._open(mode, process)
             self._backend_key = key
         image = self._backend.grab()
         if image is None and mode != "auto":
-            self.close()
+            self._close_backend()
         return image
 
     def _open(self, mode: str, process: str) -> _AutoCapture | _MaaCapture | _MssCapture:
@@ -519,6 +570,14 @@ class _CaptureWorker(QObject):
 
     @pyqtSlot()
     def close(self) -> None:
+        self._close_backend()
+        self._request_key = None
+        self._waiting = False
+        self._retry_at = 0.0
+        self._retry_delay = 1.0
+        self._last_error = None
+
+    def _close_backend(self) -> None:
         backend, self._backend, self._backend_key = self._backend, None, None
         if backend is not None:
             try:
@@ -528,7 +587,7 @@ class _CaptureWorker(QObject):
 
 
 class _AutoCapture:
-    """Automatic Maa capture that waits for the game window to become available."""
+    """Legacy automatic backend for standalone diagnostics; not a user-selectable capture mode."""
 
     def __init__(self, plugin_dir: Path, process: str, log: logging.Logger) -> None:
         self._plugin_dir = plugin_dir
@@ -609,11 +668,13 @@ class _MaaCapture:
             # does not run on this PC, so resolve the window through that process instead.
             hwnd = find_hwnd_by_process(self._process)
             if hwnd is None:
-                raise RuntimeError(f"Capture process '{self._process}' has no visible top-level window")
+                raise _CaptureWindowUnavailableError(
+                    f"Capture process '{self._process}' has no visible top-level window"
+                )
         else:
             hwnd = find_window_by_title(GAME_WINDOW_TITLE, accept=_is_game_window)
             if hwnd is None:
-                raise RuntimeError(f"Game window '{GAME_WINDOW_TITLE}' not found")
+                raise _CaptureWindowUnavailableError(f"Game window '{GAME_WINDOW_TITLE}' not found")
         methods = SCREENCAP_METHOD_MASKS.get(self._mode)
         if methods is None:
             raise RuntimeError(f"Unknown capture mode '{self._mode}'")
@@ -631,13 +692,11 @@ class _MaaCapture:
     def grab(self) -> QImage | None:
         if self._manager is None:
             return None
-        from nightreign_overlay.plugins.capture.win32 import client_geometry
-
-        before = client_geometry(self._hwnd)
+        before = self._geometry()
         info = self._manager.screencap()  # type: ignore[union-attr]
         if info is None or info.channels not in (3, 4):
             return None
-        after = client_geometry(self._hwnd)
+        after = self._geometry()
         # A window moving/resizing during a grab has no reliable desktop origin; retry next tick.
         if before != after or after[2] <= 0 or after[3] <= 0:
             return None
@@ -649,6 +708,19 @@ class _MaaCapture:
             image = image.scaled(after[2], after[3], Qt.AspectRatioMode.IgnoreAspectRatio)
         image.setOffset(QPoint(after[0], after[1]))
         return image
+
+    def _geometry(self) -> tuple[int, int, int, int]:
+        from nightreign_overlay.plugins.capture.win32 import client_geometry
+
+        try:
+            return client_geometry(self._hwnd)
+        except OSError as error:
+            # A normal window teardown must enter the same waiting path as startup.
+            from nightreign_overlay.plugins.capture.win32 import window_exists
+
+            if not window_exists(self._hwnd):
+                raise _CaptureWindowUnavailableError("Capture window closed") from error
+            raise
 
     def close(self) -> None:
         if self._manager is not None:

@@ -314,6 +314,13 @@ class GameClientLocator:
         return None
 
 
+def window_exists(hwnd: int | None) -> bool:
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.IsWindow.argtypes = [wintypes.HWND]
+    user32.IsWindow.restype = wintypes.BOOL
+    return bool(user32.IsWindow(hwnd))
+
+
 def client_geometry(hwnd: int | None) -> tuple[int, int, int, int]:
     """Client bounds in native desktop pixels, including negative multi-monitor origins.
 

@@ -88,7 +88,7 @@ def test_selected_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch)
     image.fill(0xFF112233)
     monkeypatch.setattr(capture, "_MaaCapture", _stub_backend(image, closed))
     plugin.on_activate()
-    plugin.config.mode.set("background")
+    plugin.config.mode.set("framepool")
     callback_thread = []
     result = []
     loop = QEventLoop()
@@ -103,7 +103,7 @@ def test_selected_mode_uses_dll_and_switch_releases_backend(plugin, monkeypatch)
     loop.exec()
     assert result[0].image.pixelColor(0, 0).name() == "#112233"
     assert callback_thread == [QThread.currentThread()]  # Results are delivered on the GUI thread.
-    plugin.config.mode.set("foreground")
+    plugin.config.mode.set("dxgi_desktop_dup_window")
     QTimer.singleShot(100, loop.quit)
     loop.exec()
     assert closed == [True] and plugin.latest_frame is None
@@ -126,6 +126,14 @@ def test_selected_mss_mode_uses_mss_backend(plugin, monkeypatch):
     assert frame is not None
     assert frame.image.pixelColor(0, 0).name() == "#112233"
     assert opened == [True]
+
+
+def test_capture_test_pauses_requests_without_publishing_test_frames(plugin, monkeypatch):
+    monkeypatch.setattr(plugin, "_ensure_worker", lambda: pytest.fail("test must pause production capture"))
+    plugin._set_capture_testing(True)
+    assert _request(plugin) is None
+    assert plugin.latest_frame is None
+    plugin._set_capture_testing(False)
 
 
 def test_capture_status_tracks_maa_success_and_stream_release(plugin, monkeypatch):
@@ -159,6 +167,15 @@ def test_mss_capture_status_only_tracks_stream_enabled(plugin):
     assert plugin.capture_status == "inactive"
 
 
+def test_fixed_method_returns_to_waiting_when_game_frames_stop(plugin):
+    plugin.config.mode.set("gdi")
+    plugin._stream_owners["test"] = 1
+    plugin._set_capture_status("running", "GDI")
+    plugin._on_grabbed(0, plugin._generation, None)
+    assert plugin.capture_status == "waiting"
+    assert plugin.capture_method is None
+
+
 def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
     main_thread = threading.get_ident()
     calls = []
@@ -181,7 +198,7 @@ def test_backend_lifecycle_is_confined_to_capture_thread(plugin, monkeypatch):
             calls.append(("close", threading.get_ident()))
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
-    plugin.config.mode.set("foreground")
+    plugin.config.mode.set("dxgi_desktop_dup_window")
     assert _request(plugin) is not None
     plugin.on_deactivate()
     assert [name for name, _ident in calls] == ["open", "grab", "close"]
@@ -209,12 +226,12 @@ def test_mode_switch_discards_an_in_flight_old_generation(plugin, monkeypatch):
             pass
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
-    plugin.config.mode.set("foreground")
+    plugin.config.mode.set("dxgi_desktop_dup_window")
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
     assert started.wait(1)
-    plugin.config.mode.set("background")
+    plugin.config.mode.set("framepool")
     release.set()
     QTimer.singleShot(1000, loop.quit)
     loop.exec()
@@ -242,7 +259,7 @@ def test_result_is_discarded_if_detection_becomes_disallowed(plugin, monkeypatch
             pass
 
     monkeypatch.setattr(capture, "_MaaCapture", lambda *args, **kwargs: Backend())
-    plugin.config.mode.set("foreground")
+    plugin.config.mode.set("dxgi_desktop_dup_window")
     result = []
     loop = QEventLoop()
     plugin.request_frame(lambda frame: (result.append(frame), loop.quit()))
@@ -263,7 +280,7 @@ def test_failure_retries_selected_backend_without_desktop_fallback(plugin, monke
         raise RuntimeError("Game not started")
 
     monkeypatch.setattr(capture, "_MaaCapture", unavailable)
-    plugin.config.mode.set("background")
+    plugin.config.mode.set("framepool")
     assert _request(plugin) is None
     assert _request(plugin) is None
     assert len(attempts) == 2
@@ -376,3 +393,95 @@ def test_repeated_capture_failures_are_throttled_and_recovery_is_logged(qapp, mo
         monkeypatch.setattr(worker, "_grab", fail)
         worker.grab(102, 0, "background", "", False)
         assert sum("Capture failed" in message for message in caplog.messages) == 3
+
+
+def test_missing_window_warns_once_and_backs_off_until_recovery(qapp, monkeypatch, caplog):
+    import logging
+
+    clock = [0.0]
+    monkeypatch.setattr(capture.time, "monotonic", lambda: clock[0])
+    worker = capture._CaptureWorker(Path(), logging.getLogger("test.capture.waiting"))
+    attempts, frames = [], []
+    worker.grabbed.connect(lambda *_args: frames.append(_args[-1]))
+
+    def unavailable(mode, process):
+        attempts.append(clock[0])
+        raise capture._CaptureWindowUnavailableError("Game window not found")
+
+    monkeypatch.setattr(worker, "_grab", unavailable)
+    with caplog.at_level(logging.INFO):
+        for tick in range(241):
+            clock[0] = tick / 4
+            worker.grab(tick, 0, "dxgi_desktop_dup", "", False)
+        assert attempts == [0, *range(1, 60, 2)]
+        assert len(frames) == 241 and all(frame is None for frame in frames)
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.WARNING
+        assert caplog.records[0].exc_info is None
+        image = QImage(2, 2, QImage.Format.Format_RGB32)
+        image.fill(0)
+        monkeypatch.setattr(worker, "_grab", lambda *_args: image)
+        clock[0] = 62
+        worker.grab(241, 0, "dxgi_desktop_dup", "", False)
+        assert frames[-1] is not None
+        assert "Capture recovered in dxgi_desktop_dup mode" in caplog.messages
+        monkeypatch.setattr(worker, "_grab", unavailable)
+        worker.grab(242, 0, "dxgi_desktop_dup", "", False)
+        assert worker._retry_at == 63  # A new waiting episode starts at one second again.
+        assert sum(record.levelno == logging.WARNING for record in caplog.records) == 2
+    worker.close()
+
+
+@pytest.mark.parametrize("change", ["mode", "process", "close"])
+def test_capture_retry_wait_is_reset_when_target_changes(qapp, monkeypatch, change):
+    import logging
+
+    monkeypatch.setattr(capture.time, "monotonic", lambda: 0.0)
+    worker = capture._CaptureWorker(Path(), logging.getLogger("test.capture.reset"))
+    attempts = []
+
+    def unavailable(mode, process):
+        attempts.append((mode, process))
+        raise capture._CaptureWindowUnavailableError("No window")
+
+    monkeypatch.setattr(worker, "_grab", unavailable)
+    worker.grab(0, 0, "framepool", "", False)
+    worker.grab(1, 0, "framepool", "", False)
+    assert len(attempts) == 1
+    if change == "close":
+        worker.close()
+    worker.grab(
+        2, 0, "mss" if change == "mode" else "framepool", "other.exe" if change == "process" else "", False
+    )
+    assert len(attempts) == 2
+    worker.close()
+
+
+@pytest.mark.parametrize("process", ["", "RemotePlay.exe"])
+def test_absent_game_or_pinned_process_is_expected_waiting(tmp_path, monkeypatch, process):
+    from nightreign_overlay.plugins.capture import win32
+
+    (tmp_path / "native").mkdir()
+    (tmp_path / "native" / "MaaWin32Screencap.dll").touch()
+    monkeypatch.setattr(win32, "find_window_by_title", lambda *args, **kwargs: None)
+    monkeypatch.setattr(win32, "find_hwnd_by_process", lambda *args: None)
+    backend = capture._MaaCapture(tmp_path, "dxgi_desktop_dup", process)
+    with pytest.raises(capture._CaptureWindowUnavailableError):
+        backend.connect()
+    backend.close()
+
+
+@pytest.mark.parametrize("exists", [False, True])
+def test_window_teardown_enters_waiting_but_other_geometry_errors_propagate(tmp_path, monkeypatch, exists):
+    from nightreign_overlay.plugins.capture import win32
+
+    def invalid_geometry(hwnd):
+        raise OSError("GetClientRect failed")
+
+    backend = capture._MaaCapture(tmp_path, "dxgi_desktop_dup")
+    backend._hwnd = 123
+    monkeypatch.setattr(win32, "client_geometry", invalid_geometry)
+    monkeypatch.setattr(win32, "window_exists", lambda hwnd: exists)
+    expected = OSError if exists else capture._CaptureWindowUnavailableError
+    with pytest.raises(expected):
+        backend._geometry()

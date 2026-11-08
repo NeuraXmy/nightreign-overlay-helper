@@ -64,6 +64,8 @@ start()
   └─ window.show()             # 未最小化时显示主界面
 ```
 
+主窗口首次可见时，通过 `CaptureSetupApi` 提示一次截图方法检测；托盘最小化启动时延后到打开主窗口。用户确认后执行独立 D3D12 检测并保存固定截图方法；未检测的默认方法及检测失败回退均为 mss。记录提示状态后不再每次启动弹出。详见[基础截图能力](../features/infrastructure.md#capture截图引擎)。
+
 ## Application.quit() / restart()
 
 ```

@@ -87,7 +87,7 @@ uv run ruff format --check .
 
 ### Windows 构建
 
-在 Windows x64 上安装 `uv` 和 .NET 8 SDK，然后运行 `build.bat`。脚本使用 Python 3.13 和锁定依赖生成完整发布文件夹。
+在 Windows x64 上安装 `uv`、.NET 8 SDK 和 Visual Studio 2022 C++ Build Tools（含 Windows SDK），然后运行 `build.bat`。脚本使用 Python 3.13 和锁定依赖生成完整发布文件夹，包含 DirectX 截图检测组件。
 
 构建流程、GitHub Actions ZIP 下载方式及发布验收要求见[发布指南](docs/development/releases/README.md)。
 

@@ -16,14 +16,14 @@ Release 更新日志只记录用户关心的功能变化、使用体验改进和
 
 ## Windows 文件夹构建
 
-在 Windows x64 上安装 `uv` 与 .NET 8 SDK，并确保它们已加入 `PATH`，然后运行项目根目录的：
+在 Windows x64 上安装 `uv`、.NET 8 SDK，以及 Visual Studio 2022 C++ Build Tools（含 Windows SDK）。确保 `uv` 和 `dotnet` 已加入 `PATH`，然后运行项目根目录的：
 
 ```bat
 build.bat
 ```
 
 脚本从自身所在目录执行，使用 Python 3.13（由 `uv` 管理），按纳入版本管理的 `uv.lock` 锁定同步 `build` 依赖组，
-构建 Steam/ETW 辅助程序，再通过 `nightreign-overlay-helper.spec` 构建主程序。
+构建 D3D12 截图测试程序（并执行无 GPU 的原生校验回归）及 Steam/ETW 辅助程序，再通过 `nightreign-overlay-helper.spec` 构建主程序。
 构建前需要提交所有源码变更，脚本拒绝存在未提交修改或未忽略的新文件的工作区，
 保证源码快照与二进制对应。构建需要联网下载 Python、Python 依赖、NuGet 包，以及
 锁定版本的 PyQt6 和 Fluent Widgets 源码归档。自动化环境设置 `CI=1` 时跳过结束暂停，并由 workflow 的独立步骤执行 `python -m scripts.package_release` 生成 ZIP，避免重复压缩。
@@ -39,7 +39,7 @@ build.bat
 dist/nightreign-overlay-helper/
 ├── nightreign-overlay-helper.exe
 ├── _internal/                 # Python、Qt、第三方库、核心与插件资源、截图 DLL
-├── bin/                       # 联机辅助 EXE、.NET 运行库、Steam/ETW 依赖
+├── bin/                       # DirectX 截图测试 EXE、联机辅助 EXE、.NET 运行库、Steam/ETW 依赖
 ├── third-party/               # 联机组件的第三方声明与许可证
 ├── licenses/                  # 项目 AGPL、PyQt6 / Fluent Widgets GPL 及版权声明
 ├── SOURCE.md                  # 对应源码附件下载入口与构建说明

@@ -24,6 +24,8 @@ uv run --no-sync python scripts\prepare_release_licenses.py --check-tree
 if errorlevel 1 goto build_failed
 
 :: Keep the helper and its .NET/native dependencies unpacked too.
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_capture_probe.ps1 -OutputDirectory "%cd%\build\capture\bin"
+if errorlevel 1 goto build_failed
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_p2p_helper.ps1 -OutputDirectory "%cd%\build\p2p\bin" -NoSingleFile
 if errorlevel 1 goto build_failed
 set "NROH_TEST_NATIVE_HELPER=%cd%\build\p2p\bin\NightreignP2PHelper.exe"
@@ -35,6 +37,8 @@ uv run --no-sync pyinstaller --noconfirm --clean --distpath dist --workpath buil
 if errorlevel 1 goto build_failed
 
 xcopy /E /I /Y "build\p2p\bin" "dist\nightreign-overlay-helper\bin" >nul
+if errorlevel 1 goto build_failed
+copy /Y "build\capture\bin\NightreignCaptureProbe.exe" "dist\nightreign-overlay-helper\bin" >nul
 if errorlevel 1 goto build_failed
 xcopy /E /I /Y "build\p2p\third-party" "dist\nightreign-overlay-helper\third-party" >nul
 if errorlevel 1 goto build_failed

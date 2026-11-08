@@ -4,7 +4,7 @@ plugin:
 settings:
   title: 畫面擷取設定
   mode:
-    content: 自動測速選擇最快方式；也可固定單一方式（如 GDI）排查相容性問題
+    content: 固定使用所選截圖方法；點擊「自動檢測」可選擇最快的有效方法
     title: 擷取方式
     auto: 自動 (Maa)
     foreground: 僅前景
@@ -39,3 +39,25 @@ settings:
     annotate: 框選實際遊戲畫面區域
     failed_title: 遊戲畫面標定失敗
     failed_content: 標定區域需接近 16:9。自動標定區域僅支援 16:9 遊戲畫面，已清除本次標定。
+
+detection:
+  title: 截圖方法檢測
+  description: 自動檢測並儲存最快的有效截圖方法，詳細結果寫入日誌。無需啟動遊戲；檢測失敗時使用 mss。
+  ready: 可重新檢測並更新目前固定截圖方法。
+  display: 測試顯示器
+  testing: 正在檢測…
+  confirm: 是否自動檢測適合目前裝置的截圖方法？（大約需要5秒時間）
+  start: 自動檢測
+  cancel: 取消檢測
+  running: 正在檢測，請保持測試視窗可見。按 Esc 結束測試會退回 mss。
+  success: 檢測完成，已儲存最優截圖方法。
+  failed: '檢測失敗，已切換至 mss。原因：{reason}'
+  cancelled: 已取消檢測，保留原截圖設定。
+  failure:
+    platform: 目前平台不支援 DirectX 測試
+    component: 缺少截圖檢測元件
+    start: 測試視窗無法啟動
+    process: 測試程式異常結束
+    timeout: 檢測逾時
+    validation: 檢測未完成或沒有方法通過畫面驗證
+    display: 無法取得測試顯示器

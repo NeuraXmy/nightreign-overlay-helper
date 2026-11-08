@@ -4,7 +4,7 @@ plugin:
 settings:
   title: Capture settings
   mode:
-    content: Auto speed-tests all methods; pin a single method (e.g. GDI) to work around compatibility issues
+    content: Use a fixed method; select Auto detect to find the fastest valid method
     title: Capture method
     auto: Auto (Maa)
     foreground: Foreground only
@@ -39,3 +39,25 @@ settings:
     annotate: Select the actual game area
     failed_title: Game area calibration failed
     failed_content: The selected area must be close to 16:9. Automatic regions support only 16:9 game areas; the calibration has been cleared.
+
+detection:
+  title: Capture method test
+  description: Test and save the fastest valid capture method. Detailed results are logged. No game is required; failures use mss.
+  ready: Run a test to update the current fixed capture method.
+  display: Test display
+  testing: Testing…
+  confirm: Automatically detect the best capture method for this device? (Takes about 5 seconds.)
+  start: Auto detect
+  cancel: Cancel test
+  running: Testing. Keep the window visible. Esc ends the test and falls back to mss.
+  success: Test complete. The optimal capture method has been saved.
+  failed: 'Test failed; switched to mss. Reason: {reason}'
+  cancelled: Test cancelled; previous capture setting retained.
+  failure:
+    platform: DirectX tests are unavailable on this platform
+    component: Capture test component is missing
+    start: The test window could not start
+    process: The test process exited unexpectedly
+    timeout: The test timed out
+    validation: The test was incomplete or no method passed image validation
+    display: The test display is unavailable

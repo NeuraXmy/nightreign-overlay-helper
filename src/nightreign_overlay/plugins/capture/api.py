@@ -5,11 +5,23 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QImage
+
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QWidget
+
+
+class CaptureSetupApi:
+    """Explicit, user-initiated capture setup, available before capture streams start."""
+
+    def prompt_initial_setup(self, parent: QWidget) -> None:
+        raise NotImplementedError
+
 
 _HDR_GAMMA = 2.2
 

@@ -3,11 +3,8 @@ from __future__ import annotations
 from nightreign_overlay.core.config import BoolOption, ChoiceOption, ConfigGroup, RangeOption, StringOption
 
 #: Mode keys map to MaaWin32Screencap method bitmasks (see win32.SCREENCAP_METHOD_MASKS).
-#: A single concrete method (gdi … screendc) pins the capture method; auto speed-tests all of them.
+#: User-facing modes always pin a concrete method. Detection is an explicit one-shot operation.
 CAPTURE_MODES = (
-    "auto",
-    "foreground",
-    "background",
     "gdi",
     "framepool",
     "dxgi_desktop_dup",
@@ -18,8 +15,17 @@ CAPTURE_MODES = (
 )
 
 
+class _CaptureModeOption(ChoiceOption[str]):
+    def normalize(self, raw: object) -> str:
+        # Legacy speed-test modes migrate to the safe default, without running a benchmark at capture time.
+        if isinstance(raw, str) and raw in {"auto", "foreground", "background"}:
+            return "mss"
+        return super().normalize(raw)
+
+
 class CaptureConfig(ConfigGroup):
-    mode = ChoiceOption("auto", CAPTURE_MODES)
+    mode = _CaptureModeOption("mss", CAPTURE_MODES)
+    detection_prompted = BoolOption(False)
     #: Process image name owning the capture window (e.g. a PS5 remote-play app); empty = auto-detect
     #: the game window by title.
     process = StringOption("")

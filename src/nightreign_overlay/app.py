@@ -7,7 +7,7 @@ import os
 import sys
 from collections.abc import Sequence
 
-from PyQt6.QtCore import QLocale, QObject, QProcess, Qt
+from PyQt6.QtCore import QLocale, QObject, QProcess, Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 from qfluentwidgets import FluentTranslator, InfoBar
@@ -26,6 +26,7 @@ from nightreign_overlay.meta import APP_AUTHOR, APP_ID, APP_NAME, APP_VERSION
 from nightreign_overlay.platforms import PlatformBackend, create_backend
 from nightreign_overlay.platforms.shell import configure_taskbar_identity
 from nightreign_overlay.plugin import PluginManager
+from nightreign_overlay.plugins.capture.api import CaptureSetupApi
 from nightreign_overlay.ui.components.updates import UpdateController
 from nightreign_overlay.ui.main_window import MainWindow
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -115,6 +116,7 @@ class Application(QObject):
         self.window.settingsPage.restartRequested.connect(self.restart)
         foreground = self.overlays.foreground
         self.window.presenceChanged.connect(lambda present: foreground.set_ui_active("main_window", present))
+        self.window.presenceChanged.connect(self._schedule_capture_setup)
         if self.tray is not None:
             self.tray.showRequested.connect(self.window.bring_to_front)
             self.tray.toggleRequested.connect(self.window.toggle_visibility)
@@ -122,6 +124,18 @@ class Application(QObject):
             self.tray.menu.aboutToShow.connect(lambda: foreground.set_ui_active("tray_menu", True))
             self.tray.menu.aboutToHide.connect(lambda: foreground.set_ui_active("tray_menu", False))
         self._qt_app.aboutToQuit.connect(self._shutdown)
+
+    def _schedule_capture_setup(self, present: bool) -> None:
+        setup = self.services.get(CaptureSetupApi)
+        if present and setup is not None:
+            QTimer.singleShot(
+                0,
+                lambda: (
+                    setup.prompt_initial_setup(self.window)
+                    if not self._shut_down and self.window.is_present
+                    else None
+                ),
+            )
 
     def _on_settings_save_failed(self, error: str) -> None:
         self.window.bring_to_front()

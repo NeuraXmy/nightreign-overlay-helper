@@ -11,19 +11,22 @@ def list_window_processes() -> list[tuple[str, str]]:
     from Quartz import (  # type: ignore[import-not-found]
         CGWindowListCopyWindowInfo,
         kCGNullWindowID,
-        kCGWindowListOptionOnScreenOnly,
-        kCGWindowListExcludeDesktopElements,
         kCGWindowLayer,
-        kCGWindowOwnerPID,
+        kCGWindowListExcludeDesktopElements,
+        kCGWindowListOptionOnScreenOnly,
         kCGWindowName,
+        kCGWindowOwnerPID,
     )
 
     current_pid = os.getpid()
     windows: dict[int, tuple[str, str]] = {}
-    for window in CGWindowListCopyWindowInfo(
-        kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
-        kCGNullWindowID,
-    ) or ():
+    for window in (
+        CGWindowListCopyWindowInfo(
+            kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+            kCGNullWindowID,
+        )
+        or ()
+    ):
         pid = int(window.get(kCGWindowOwnerPID, 0))
         if not pid or pid == current_pid or pid in windows or int(window.get(kCGWindowLayer, 0)) != 0:
             continue

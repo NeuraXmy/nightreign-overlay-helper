@@ -12,6 +12,8 @@
 - [`src/nightreign_overlay/plugins/capture/api.py`](../../src/nightreign_overlay/plugins/capture/api.py)
 - [`src/nightreign_overlay/plugins/capture/config.py`](../../src/nightreign_overlay/plugins/capture/config.py)
 - [`src/nightreign_overlay/plugins/capture/win32.py`](../../src/nightreign_overlay/plugins/capture/win32.py)
+- [`src/nightreign_overlay/plugins/capture/detection.py`](../../src/nightreign_overlay/plugins/capture/detection.py)
+- [`native/CaptureProbe/main.cpp`](../../native/CaptureProbe/main.cpp)
 
 ### 职责
 
@@ -21,14 +23,17 @@
 
 | 模式 | 后端 | 说明 |
 |------|------|------|
-| `auto`（默认） | MaaWin32Screencap 自动优选 | 游戏窗口未打开时等待，不回退到 mss |
-| `foreground` | MaaWin32Screencap 前台掩码 | `DXGI_DESKTOP_DUP_WINDOW \| SCREENDC` |
-| `background` | MaaWin32Screencap 后台掩码 | `FRAMEPOOL \| PRINTWINDOW` |
 | `gdi`, `framepool`, `dxgi_desktop_dup`, `dxgi_desktop_dup_window`, `printwindow`, `screendc` | MaaWin32Screencap pinned method | Fixed single method; no automatic speed test |
-| `mss` | mss 虚拟桌面整帧 | 兼容模式，适合 macOS 开发或 Windows 回退验证 |
+| `mss`（默认） | mss 虚拟桌面整帧 | 未检测及检测失败时使用；也用于 macOS 开发 |
 
 
-默认 `auto`（界面显示为“自动 (Maa)”）始终使用 MaaWin32Screencap；游戏窗口暂时不存在时只等待下一次连接，不切换到 mss。`mss`（界面显示为“兼容 (mss)”）是独立的手动模式，macOS 开发时应显式选择它；截图进程设置只对 Maa 模式生效。
+截图方式仅提供固定方法，旧配置的 `auto`、`foreground`、`background` 迁移为 `mss`。Windows 首次显示主窗口时提示执行一次截图方法检测，确认后在主显示器原生分辨率下打开 D3D12 Flip Discard 无边框全屏窗口，无需启动游戏。画面为低对比度深色山景，仅月亮小面积柔和变色。检测六种 Maa 方法的画面及更新情况，每种方法在变色前后各验证三帧；按六次有效截图耗时的中位数选出最快方法并保存，连接、等待和像素校验不计入测速。下次启动直接使用固定结果，不再自动测速。
+
+固定 Maa 方法在游戏或指定进程窗口尚未出现、已关闭时进入等待状态，每次等待仅记录一次 warning，不输出异常堆栈；首次等待 1 秒重试，之后维持 2 秒的重试退避上限。成功出图后重置退避并记录恢复；切换方法、目标进程或停用插件会清除等待状态。此时保留所选方法，检测流程失败时的 mss 回退不影响运行中的等待逻辑。
+
+通用设置的“截图方式”卡片在方法下拉框旁提供“自动检测”按钮，点击后可在确认弹窗中选择显示器并重新执行。首次提示与手动检测共用同一确认弹窗和说明文本。界面仅提示完成或失败，日志记录每种方法的验证结果、耗时样本和最终选择，不展示详细结果表。检测期间暂停生产取图并丢弃旧帧，测试程序在独立进程中运行；每种原生连接在下一种开始前关闭，避免同进程 DXGI 重复捕获冲突。组件缺失、启动失败、超时（90 秒）、异常退出、无有效方法或报告损坏均保存 `mss` 并说明原因；确认弹窗取消时保留原设置，测试窗口 Esc 关闭按失败处理。手动修改截图方式会取消仍在进行的检测。
+
+首次提示取消后不再自动提示，可随时从通用设置执行。macOS 不运行 DirectX 检测。指定截图进程只对 Maa 固定方法生效；模拟窗口结果不能保证其他游戏呈现方式、独占全屏、HDR 或远程串流窗口的兼容性。更换显示器、显卡或显示设置后可手动重测。操作及源码构建见[多屏截图与 DPI](../guides/multiscreen-capture.md)。
 ### API
 
 ```python
@@ -43,7 +48,7 @@ class CaptureApi:
     def capture_method(self) -> str | None: ...  # 实际方法名，如 GDI、FRAMEPOOL 或 mss
 ```
 
-`capture_status()` 描述共享截图流是否启用及 Maa 是否成功取帧；`capture_method()` 返回正常运行时的实际方法名，自动模式返回 Maa 自动优选的结果。
+`capture_status()` 描述共享截图流是否启用及 Maa 是否成功取帧；`capture_method()` 返回正常运行时的实际方法名。`CaptureSetupApi` 在插件加载时提供首次提示入口，由应用启动层调用；通用设置中的检测卡片由截图插件创建。
 
 ### 数据流
 

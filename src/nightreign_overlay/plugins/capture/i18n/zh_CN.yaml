@@ -4,7 +4,7 @@ plugin:
 settings:
   title: 截图设置
   mode:
-    content: 自动测速选择最快方式；也可固定单一方式（如 GDI）排查兼容性问题
+    content: 固定使用所选截图方法；点击“自动检测”可选择最快的有效方法
     title: 截图方式
     auto: 自动 (Maa)
     foreground: 仅前台
@@ -39,3 +39,25 @@ settings:
     annotate: 框选实际游戏画面区域
     failed_title: 游戏画面标定失败
     failed_content: 标定区域需接近 16:9。自动标定区域仅支持 16:9 游戏画面，已清空本次标定。
+
+detection:
+  title: 截图方法检测
+  description: 自动检测并保存最快的有效截图方法，详细结果写入日志。无需启动游戏；检测失败时使用 mss。
+  ready: 可重新检测并更新当前固定截图方法。
+  display: 测试显示器
+  testing: 正在检测…
+  confirm: 是否自动检测适合当前设备的截图方法？（大约需要5秒时间）
+  start: 自动检测
+  cancel: 取消检测
+  running: 正在检测，请保持测试窗口可见。按 Esc 结束测试会回退到 mss。
+  success: 检测完成，已保存最优截图方法。
+  failed: '检测失败，已切换至 mss。原因：{reason}'
+  cancelled: 已取消检测，保留原截图设置。
+  failure:
+    platform: 当前平台不支持 DirectX 测试
+    component: 缺少截图检测组件
+    start: 测试窗口无法启动
+    process: 测试程序异常退出
+    timeout: 检测超时
+    validation: 检测未完成或没有方法通过画面验证
+    display: 无法获取测试显示器

@@ -2,15 +2,15 @@
 
 ## 平台支持与验证范围
 
-默认“自动 (Maa)”始终使用 MaaWin32Screencap。Windows 游戏窗口未打开或句柄失效时，自动模式只等待后续连接，不回退到 mss；macOS 开发应显式选择“兼容 (mss)”。固定 Maa 方法和截图进程选择仅适用于 Windows。
+默认使用“兼容 (mss)”。Windows 首次启动可执行一次 DirectX 截图方法检测，保存最快的有效具体方法，之后不再运行自动优选；也可从通用设置的“截图方式”卡片点击“自动检测”重新执行。检测失败时回退至 mss。固定 Maa 方法和截图进程选择仅适用于 Windows。
 
 截图、标定、预览与悬浮窗共享设备像素坐标约定。Windows 使用物理桌面原点或客户区原点；macOS 逐屏抓取原生像素后合成共享帧。
 
 | 平台／模式 | 当前行为 | 已完成验证 | 尚需实机确认 |
 |---|---|---|---|
 | Windows 兼容 (mss) | mss 虚拟桌面整帧，按物理桌面原点裁剪 | 合成多屏、负坐标、混合 DPI、像素内容 | Windows 显卡／桌面实际输出 |
-| Windows 仅前台 | DLL 前台掩码，客户区图像转换到物理桌面坐标 | 方法掩码、客户区偏移、尺寸归一化、窗口移动／缩放、线程 DPI 上下文恢复 | DXGI／SCREENDC 实际客户区内容及不同显卡行为 |
-| Windows 仅后台 | DLL 后台掩码，同样使用物理客户区坐标 | 与前台相同的坐标测试 | FRAMEPOOL／PRINTWINDOW 实际输出、窗口被遮挡／最小化行为 |
+| Windows DXGI／ScreenDC | 固定具体方法，客户区图像转换到物理桌面坐标 | 方法掩码、客户区偏移、尺寸归一化、窗口移动／缩放、线程 DPI 上下文恢复 | 实际客户区内容及不同显卡行为 |
+| Windows FramePool／PrintWindow | 固定具体方法，同样使用物理客户区坐标 | 与前台方法相同的坐标测试 | 实际输出、窗口被遮挡／最小化行为 |
 | macOS 兼容 (mss) | 逐屏 mss 原生像素合成 | 合成多屏、Retina 混合缩放、标定／预览／地图叠加 | 实际显示器与录屏权限下的截图 |
 
 目前完成的是合成数据自动回归，尚未完成 macOS 和 Windows 多显示器实机验收。合成测试通过不代表实际桌面、录屏权限和显卡组合均已验证；实机验证步骤见下文。
@@ -57,16 +57,45 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 测试替换原生取图和 Win32 API，运行生产后端的图像构造、坐标转换和裁剪代码。它们无法覆盖驱动、DLL 内部裁剪或操作系统录屏权限。
 
-## 固定画面截图验证
+## DirectX 截图方法检测
 
-在 Windows 桌面会话中运行以下工具，可用固定 Qt 画面验证各截图后端的像素准确性并统计耗时：
+Windows 首次显示主窗口时会询问是否检测。也可进入通用设置的“截图方式”卡片，点击方法下拉框旁的“自动检测”按钮。两者共用确认弹窗，说明为“是否自动检测适合当前设备的截图方法？（大约需要5秒时间）”，并可选择游戏使用的显示器。确认后短暂显示全屏深色山景，无需打开游戏。背景静止，仅月亮柔和变色，避免整屏颜色闪烁。左上角同时显示简体中文“自动测试截图中，请稍后”、繁体中文、英文和日文提示。保持窗口可见，完成后立即保存最快的有效方法并显示简短提示；每种方法的验证结果、截图耗时和最终选择写入应用日志，不展示详细结果表。失败会切换至 mss 并显示原因。确认弹窗取消时保留原设置；按测试窗口的 Esc 则关闭测试并回退 mss。
+
+源码运行需要先编译测试组件（Visual Studio 2022 C++ Build Tools，含 Windows SDK）：
 
 ```powershell
-.venv\Scripts\python.exe tools\test_capture_methods.py --layout all
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\build_capture_probe.ps1
 ```
 
-工具依次测试普通窗口和无边框全屏，并覆盖 `mss`、`auto` 及各个 Maa 方法。详细结果写入 `.tmp/capture-methods/report.json`。该工具需要真实 Windows 桌面、Qt 显示会话和 `src/nightreign_overlay/plugins/native/MaaWin32Screencap.dll`，不适合在无头环境或普通 pytest 中运行。
+组件输出为 `bin/NightreignCaptureProbe.exe`，发布构建自动包含它。检测使用真实 D3D12 Flip Discard 交换链，按所选显示器的物理矩形及原生分辨率测试六种 Maa 方法。画面为低对比度深色山景，月亮约占 1% 面积；稳定状态至少保持 250 ms，再用 220 ms 平滑变色，其余画面静止。每种方法利用连接预热，在变色前后各验证三帧，首个通过验证的帧直接计入测速，避免重复采样。验证山景及月亮多个采样点的 BGR 内容，允许单通道误差 12，拒绝黑图、白图、截错区域和不更新的旧帧；只按通过验证的六次截图耗时中位数排名。mss 是失败时的回退，不参加 Maa 测速。普通 Qt 色块窗口不能代表 DirectX 截图能力。
+
+每次检测的 `report.json` 和原生 `native.log` 保存在用户数据目录的 `capture-tests/<时间>-<编号>/`。独立进程最多运行 90 秒，失败／取消／退出应用时清理；组件未构建或无法运行不会阻止应用启动。模拟检测不能替代实际游戏、HDR、独占全屏和不同显卡／多屏配置验收。
+
+四语提示下方还有一行 `5...`、`4...`、`3...` 形式的预计剩余秒数，从窗口显示起每秒递减，最低为 `0...`，检测完成即关闭窗口。提示及数字使用系统 DirectWrite 字体回退预先进行软件栅格化，数字更新时仅切换预先上传的图像，不在测速期间重新排字；四语文字保持静止。图像校验避开文字区域，并保留独立的月亮更新校验。构建脚本同时执行不需要桌面或 GPU 的原生校验器回归（四语及倒计时绘制、计时边界、正确山景、黑图、白图、旧帧、尺寸、3／4 通道与行填充）。`tests/plugins/test_capture_detection.py` 用模拟子进程验证筛选、保存、日志、按钮确认流程、失败回退和取消清理；不能据此宣称 DirectX 实机通过。
+
 ## 实机诊断工具
+
+### 游戏重启与启动窗口变化
+
+`tools/watch_capture_restart.py` 用于排查游戏重启后的截图与窗口变化；其中保留的 `_AutoCapture` 是诊断用旧自动后端，当前设置不再提供此模式。它每 100 ms 枚举同名游戏窗口和 EAC 窗口，记录 HWND、PID、进程名、窗口类、可见／最小化状态、客户区、前台切换及生产截图过滤器是否接受该窗口；窗口销毁和属性变化写入 `events.jsonl`。进程路径查询失败时也会记录错误码。
+
+先启动监听，再打开游戏；保持辅助程序开启，退出游戏后重新启动：
+
+```powershell
+.venv\Scripts\python.exe tools\watch_capture_restart.py --duration 600
+```
+
+需要同时验证空白图或连接时机时，可启用截图，并在每次连接成功后延迟比较新连接：
+
+```powershell
+.venv\Scripts\python.exe tools\watch_capture_restart.py --capture --probe-after 15 45 90 --duration 600
+```
+
+`--capture` 在独立线程保留一个生产 `_AutoCapture`，持续记录方法名、绑定 HWND／PID、帧尺寸、亮度统计和缩略图哈希；首次成功、方法／几何变化及每隔 15 秒保存 PNG。`--probe-after` 在指定秒数启动独立子进程，依次新建并关闭 GDI、DXGI 和 auto 连接，保留父进程原自动连接以对比结果。DXGI 不允许同一进程重复捕获同一输出，因此探针必须与持续连接分开进程。探针截图与事件保存在 `probe-*` 子目录，原生日志在旁边的 `probe-*-stderr.log`；每次探针最多运行 45 秒，停止监听时也会终止仍在运行的子进程。新连接会执行 DLL 的原生探测，可能影响截图时序；建议先记录纯窗口过程，再按需进行截图对比。亮度、黑色比例和哈希仅供诊断，静止或纯色游戏场景本身也可能产生这些结果。
+
+输出保存在 `.tmp/capture-restart-<时间>/`，包含游戏截图（启用时）、`events.jsonl` 和 `capture.log`。工具不修改辅助程序设置。Ctrl+C 可提前停止；原生抓取阻塞时窗口监听仍继续，退出等待超过 3 秒则以退出码 2 结束独立诊断进程。
+
+### 单次截图与多屏验证
 
 使用应用运行环境执行 `tools/diagnose_capture.py`。脚本经生产 `_CaptureWorker` 及 Qt queued 信号在独立线程抓取，不修改用户配置，不切换失败的截图模式。
 
@@ -74,7 +103,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 
 - `report.json`：Qt／mss 显示器布局、DPR、每种模式的成败、帧尺寸和原点、可选色块校验及区域裁剪尺寸。
 - `capture.log`：后端选择日志和失败堆栈，包括 DLL 实际选择的方法。
-- `auto.png`、`foreground.png`、`background.png`：各模式截图。
+- `gdi.png`、`framepool.png`、`dxgi_desktop_dup.png` 等：各具体方法及 mss 截图。
 - 指定 `--region X Y W H` 时，额外保存各模式的 `*-region.png`。
 
 退出码 0 表示请求的截图、保存和可选校验成功，1 表示存在失败。原生抓取超时且线程不能退出时，会先保存报告，再以退出码 2 终止独立诊断进程。
@@ -106,7 +135,7 @@ QT_QPA_PLATFORM=offscreen .venv/bin/python -m pytest -p no:capture \
 .venv\Scripts\python.exe tools\diagnose_capture.py --mode all --output .tmp\capture-windows-game
 ```
 
-也可以从程序的已标定区域状态中读取 `X Y W H`，追加 `--region X Y W H`，检查三种截图方式裁出的游戏内容是否一致。DLL 抓客户区，整帧尺寸小于桌面是正常行为，比较的是相同全局区域的内容。
+也可以从程序的已标定区域状态中读取 `X Y W H`，追加 `--region X Y W H`，检查各截图方式裁出的游戏内容是否一致。DLL 抓客户区，整帧尺寸小于桌面是正常行为，比较的是相同全局区域的内容。
 
 Windows DLL 客户区截图可能不包含独立色块窗口，因此脚本仅对 Windows 兼容 (mss) 模式自动校验色块。DLL 的验收依据为游戏截图、区域裁剪以及日志中的实际方法。
 
