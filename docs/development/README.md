@@ -8,6 +8,7 @@
 | [测试策略](testing/README.md) | 分类、fixture、Qt 清理、验收阈值与运行方法 |
 | [地图测试](testing/map-detection.md) | 固定截图、全图压力评测、稳定窗口与部署回归 |
 | [发布指南与记录](releases/README.md) | Windows 构建、CI 门禁、实机验收、审计与修复 |
+| [手动发布与三站同步](releases/manual-release.md) | 本地构建、GitHub 发布、Gitee/CNB 镜像及凭据查找规则 |
 | [实验记录](experiments/README.md) | 血条算法历史方案、固定数据集评估与优化依据 |
 
 建议修改流程：确认当前行为和相关约束，修改最小范围，运行对应验证，同步更新主题文档。发布记录中的既有成绩只证明当时的验证，不能替代新变更的检查。

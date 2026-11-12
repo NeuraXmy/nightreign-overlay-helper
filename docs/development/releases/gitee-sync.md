@@ -13,6 +13,9 @@ Gitee 仓库面向国内下载与更新检查，只维护 Release、更新日志
 
 ## 自动发布和补同步
 
+手动发布默认也同步开发版，保留上游预发布标记；tag 自动发布仍仅同步正式版。Actions 不可用时，
+按 [手动发布与三站同步](manual-release.md) 读取本地凭据并执行相同脚本。
+
 推送版本 tag 后，`Release Windows ZIP` 完成验证、构建和 GitHub Release 发布，再调用 [`Sync Release to Gitee`](../../../.github/workflows/sync-gitee.yml)。同步读取已发布的 GitHub Release 标题、正文、预发布状态，只下载并核对程序 ZIP。程序不超过 50 MiB 时直接上传；超过时按原始字节拆成最多 50 MiB 的 `.zip.001`、`.zip.002` 等分卷，生成 `.zip.manifest.json`（完整文件名、总大小、完整 ZIP 及各分卷 SHA-256），再上传并核对附件大小。清单最后上传，避免客户端提前下载不完整的分卷集合。
 
 GitHub 发布成功但镜像失败时，GitHub Release 保留可用，Actions 会明确显示镜像任务失败。配置好凭据、权限或配额后，手动运行同步 workflow，填写原 tag 即可重试，无需重建程序。相同名称和大小的附件跳过；同名而大小不符的附件会被替换。手动修改 GitHub Release 正文后，也通过此入口重新同步。

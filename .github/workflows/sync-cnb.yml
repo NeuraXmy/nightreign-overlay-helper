@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing stable GitHub release tag (e.g. v1.0.2)
+        description: Existing public GitHub release tag (e.g. v1.0.5-dev1)
         required: true
         type: string
 

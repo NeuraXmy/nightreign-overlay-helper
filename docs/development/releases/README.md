@@ -3,6 +3,8 @@
 本页说明当前 Windows x64 构建流程与验收要求。历史审计放在独立文件中，避免将已修复问题当作当前缺陷。
 
 Gitee 国内 Release 镜像的凭据、仓库和历史版本补同步见 [Gitee 镜像配置](gitee-sync.md)。
+GitHub Actions 不可用时的构建、GitHub 发布与三站补同步见 [手动发布与三站同步](manual-release.md)。
+手动发布默认包含开发版的 Gitee/CNB 镜像，除非用户明确跳过；开发版保持预发布标记，不进入正式版更新检查。
 
 ## Release 更新日志
 

@@ -4,6 +4,9 @@ CNB 镜像地址为 <https://cnb.cool/NeuraXmy/nightreign-overlay-helper>。GitH
 
 ## 配置和自动触发
 
+手动发布默认也同步开发版，除非用户明确跳过；脚本保留上游预发布标记并阻止其成为 Latest。
+tag 自动发布仍仅同步正式版。Actions 不可用时，见 [手动发布与三站同步](manual-release.md)。
+
 1. CNB 创建公开仓库，默认分支为 `main`，至少包含一个初始提交。镜像仓库可只维护说明和同步配置，不必镜像项目全部源码。
 2. GitHub Actions Secret `CNB_TOKEN` 保存 CNB 访问令牌，需要 `repo-release:rw`、`repo-code:r`、`repo-cnb-trigger:rw`；查看历史使用 `repo-cnb-history:r`。访问令牌只用于服务端触发和管理，不写入客户端。构建中的发布由 CNB 自动注入的 `CNB_TOKEN` 完成。
 3. [`release-windows.yml`](../../../.github/workflows/release-windows.yml) 正式版 GitHub Release 发布成功后调用 [`sync-cnb.yml`](../../../.github/workflows/sync-cnb.yml)，与 Gitee 同步任务独立。预发布版本不触发此镜像。

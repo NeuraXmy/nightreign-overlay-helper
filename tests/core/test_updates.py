@@ -89,14 +89,22 @@ class Response(io.BytesIO):
         self.headers = {}
 
 
-def test_filter_and_sort_releases(monkeypatch):
+@pytest.mark.parametrize("source", ["github", "gitee"])
+def test_filter_and_sort_releases(monkeypatch, source):
     items = [
         {"tag_name": tag, "body": tag}
-        for tag in ["v1.0.0", "v1.0.1", "v1.10.0", "v1.2.0", "v2.0.0rc1", "legacy"]
+        for tag in ["v1.0.0", "v1.0.1", "v1.10.0", "v1.2.0", "v2.0.0rc1", "v1.0.5-dev1", "legacy"]
     ]
     items.extend([{"tag_name": "v3.0.0", "prerelease": True}, {"tag_name": "v4.0.0", "draft": True}])
     monkeypatch.setattr(updates, "urlopen", lambda *a, **k: Response(json.dumps(items).encode()))
-    assert [r.tag for r in updates.fetch_releases("github", time.monotonic() + 10)] == [
+    if source == "gitee":
+        items[2]["assets"] = [
+            {
+                "name": "nightreign-overlay-helper-v1.10.0-windows-x64.zip",
+                "browser_download_url": "https://gitee.com/runtime.zip",
+            }
+        ]
+    assert [r.tag for r in updates.fetch_releases(source, time.monotonic() + 10)] == [
         "v1.10.0",
         "v1.2.0",
         "v1.0.1",
@@ -395,6 +403,8 @@ def test_cnb_public_metadata_filters_versions_and_download_paths(monkeypatch):
         {"tag_ref": "refs/tags/v1.0.3", "body": "CNB notes", "assets": [{"name": filename, "path": path}]},
         {"tag_ref": "refs/tags/v1.0.4", "is_prerelease": True},
         {"tag_ref": "refs/tags/v1.0.5", "is_draft": True},
+        {"tag_ref": "refs/tags/v1.0.5-dev1", "is_prerelease": True},
+        {"tag_ref": "refs/tags/v1.0.5-dev2"},
         {"tag_ref": "refs/tags/v0.9.0"},
     ]
     requests = []

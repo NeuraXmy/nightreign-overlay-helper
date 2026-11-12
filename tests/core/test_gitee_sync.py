@@ -8,8 +8,9 @@ from scripts import sync_gitee_release as sync
 
 @pytest.mark.parametrize("exists", [False, True, None])
 @pytest.mark.parametrize("diagnostic", [False, True])
+@pytest.mark.parametrize("prerelease", [False, True])
 def test_mirror_creates_or_updates_release_and_preserves_matching_attachments(
-    tmp_path, monkeypatch, exists, diagnostic
+    tmp_path, monkeypatch, exists, diagnostic, prerelease
 ):
     monkeypatch.chdir(tmp_path)
     for key, value in {
@@ -33,7 +34,7 @@ def test_mirror_creates_or_updates_release_and_preserves_matching_attachments(
     def api(method, url, data=None, token=""):
         calls.append((method, url, data))
         if "api.github.com" in url:
-            return {"name": "Release", "body": "Notes", "prerelease": False, "assets": attachments}
+            return {"name": "Release", "body": "Notes", "prerelease": prerelease, "assets": attachments}
         if method == "GET":
             assert token == "secret"
         if "/releases/tags/" in url:
@@ -46,7 +47,7 @@ def test_mirror_creates_or_updates_release_and_preserves_matching_attachments(
             return attachments
         if method in ("POST", "PATCH"):
             assert data["tag_name"] == ("v1.0.1-uploadcheck-123" if diagnostic else "v1.0.1")
-            assert data["prerelease"] == diagnostic
+            assert data["prerelease"] == (diagnostic or prerelease)
             assert data["body"].startswith("Notes")
             assert (
                 "https://github.com/upstream/repo/releases/download/v1.0.1/v1.0.1-sources.zip" in data["body"]

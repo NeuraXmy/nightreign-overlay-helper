@@ -18,6 +18,22 @@ def log(message: str) -> None:
     print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())} UTC {message}", flush=True)
 
 
+def validate_release(github: dict, tag: str) -> bool:
+    """Accept public version tags and require development releases to stay prereleases."""
+    match = re.fullmatch(
+        r"v?\d+\.\d+\.\d+([.-]?(?:dev|alpha|beta|preview|pre|rc|a|b)[.-]?\d+)?",
+        tag,
+    )
+    if match is None:
+        raise ValueError("Expected a release version tag")
+    if github.get("tag_name") != tag or github.get("draft"):
+        raise ValueError("Expected the matching public GitHub release")
+    prerelease = bool(github.get("prerelease"))
+    if match.group(1) and not prerelease:
+        raise ValueError("Development version tags must be marked as prereleases")
+    return prerelease
+
+
 def api(method: str, url: str, token: str = "", data: dict | None = None):
     accept = (
         "application/vnd.github+json"
@@ -75,8 +91,6 @@ def transfer(url: str, path: Path, *, upload: bool = False) -> None:
 
 def sync() -> None:
     tag = os.environ["RELEASE_TAG"]
-    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
-        raise ValueError("Expected a stable version tag")
     repo = os.environ.get("CNB_REPO", "NeuraXmy/nightreign-overlay-helper")
     upstream = os.environ.get("GITHUB_REPOSITORY", "NeuraXmy/nightreign-overlay-helper")
     token = os.environ["CNB_TOKEN"]
@@ -85,8 +99,7 @@ def sync() -> None:
         github = json.loads(os.environ["UPSTREAM_RELEASE_JSON"])
     else:
         github = api("GET", f"https://api.github.com/repos/{upstream}/releases/tags/{tag}")
-    if github["tag_name"] != tag or github.get("draft") or github.get("prerelease"):
-        raise ValueError("Expected the matching public stable GitHub release")
+    prerelease = validate_release(github, tag)
     filename = f"nightreign-overlay-helper-{tag}-windows-x64.zip"
     asset = next(a for a in github["assets"] if a["name"] == filename)
     digest = asset.get("digest", "")
@@ -115,8 +128,8 @@ def sync() -> None:
         "name": github.get("name") or tag,
         "body": github.get("body") or tag,
         "draft": False,
-        "prerelease": False,
-        "make_latest": "legacy",
+        "prerelease": prerelease,
+        "make_latest": "false" if prerelease else "legacy",
     }
     if release is None:
         release = api("POST", base, token, metadata)

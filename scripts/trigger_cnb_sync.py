@@ -4,24 +4,20 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import time
 from pathlib import Path
 
-from scripts.sync_cnb_release import api, log
+from scripts.sync_cnb_release import api, log, validate_release
 
 
 def trigger() -> None:
     tag = os.environ["RELEASE_TAG"]
-    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
-        raise ValueError("CNB mirror currently accepts stable release tags only")
     repo = os.environ.get("CNB_REPO", "NeuraXmy/nightreign-overlay-helper")
     upstream = os.environ["GITHUB_REPOSITORY"]
     github = api(
         "GET", f"https://api.github.com/repos/{upstream}/releases/tags/{tag}", os.environ["GH_TOKEN"]
     )
-    if github.get("draft") or github.get("prerelease"):
-        raise ValueError("CNB mirror currently accepts public stable releases only")
+    validate_release(github, tag)
     script = Path(__file__).with_name("sync_cnb_release.py").read_text(encoding="utf-8")
     # Pass the checked-out synchronization code as build configuration so the
     # mirror does not need a second, manually maintained copy of this script.

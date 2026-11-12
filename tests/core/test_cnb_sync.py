@@ -8,25 +8,29 @@ from scripts import sync_cnb_release as sync
 
 
 @pytest.mark.parametrize("failure", [None, "digest", "published_hash"])
-def test_cloud_sync_verifies_upstream_before_upload_and_verifies_publication(tmp_path, monkeypatch, failure):
+@pytest.mark.parametrize("tag,prerelease", [("v1.0.2", False), ("v1.0.5-dev1", True)])
+def test_cloud_sync_verifies_upstream_before_upload_and_verifies_publication(
+    tmp_path, monkeypatch, failure, tag, prerelease
+):
     monkeypatch.chdir(tmp_path)
     payload = b"upstream runtime"
     digest = hashlib.sha256(payload).hexdigest()
-    filename = "nightreign-overlay-helper-v1.0.2-windows-x64.zip"
+    filename = f"nightreign-overlay-helper-{tag}-windows-x64.zip"
     upstream = {
-        "tag_name": "v1.0.2",
+        "tag_name": tag,
+        "prerelease": prerelease,
         "body": "User-facing release notes",
         "assets": [
             {
                 "name": filename,
                 "size": len(payload),
                 "digest": "sha256:" + digest,
-                "browser_download_url": f"https://github.com/owner/repo/releases/download/v1.0.2/{filename}",
+                "browser_download_url": f"https://github.com/owner/repo/releases/download/{tag}/{filename}",
             }
         ],
     }
     for key, value in {
-        "RELEASE_TAG": "v1.0.2",
+        "RELEASE_TAG": tag,
         "CNB_TOKEN": "private-token",
         "CNB_REPO": "mirror/repo",
         "GITHUB_REPOSITORY": "owner/repo",
@@ -39,7 +43,7 @@ def test_cloud_sync_verifies_upstream_before_upload_and_verifies_publication(tmp
     def api(method, url, token="", data=None):
         assert token == "private-token"
         calls.append((method, url))
-        if url.endswith("/tags/v1.0.2"):
+        if url.endswith(f"/tags/{tag}"):
             if len(calls) == 1:
                 return {"id": "123", "assets": None}
             return {
@@ -59,6 +63,8 @@ def test_cloud_sync_verifies_upstream_before_upload_and_verifies_publication(tmp
             }
         if method == "PATCH":
             assert data["body"] == upstream["body"]
+            assert data["prerelease"] == prerelease
+            assert data["make_latest"] == ("false" if prerelease else "legacy")
         return None
 
     transfers = []
@@ -98,11 +104,12 @@ def test_transfer_logs_numeric_metrics_without_signed_url(tmp_path, monkeypatch,
     assert "signature" not in output
 
 
-def test_trigger_supplies_current_script_and_waits_for_completion(monkeypatch):
+@pytest.mark.parametrize("tag,prerelease", [("v1.0.2", False), ("v1.0.5-dev1", True)])
+def test_trigger_supplies_current_script_and_waits_for_completion(monkeypatch, tag, prerelease):
     from scripts import trigger_cnb_sync as trigger
 
     for key, value in {
-        "RELEASE_TAG": "v1.0.2",
+        "RELEASE_TAG": tag,
         "GITHUB_REPOSITORY": "owner/repo",
         "GH_TOKEN": "github-secret",
         "CNB_TOKEN": "cnb-secret",
@@ -115,7 +122,7 @@ def test_trigger_supplies_current_script_and_waits_for_completion(monkeypatch):
         calls.append(url)
         if "api.github.com" in url:
             assert token == "github-secret"
-            return {"tag_name": "v1.0.2", "body": "notes", "assets": []}
+            return {"tag_name": tag, "prerelease": prerelease, "body": "notes", "assets": []}
         assert token == "cnb-secret"
         if url.endswith("/start"):
             config = json.loads(data["config"])
@@ -123,7 +130,8 @@ def test_trigger_supplies_current_script_and_waits_for_completion(monkeypatch):
             assert "hashlib.file_digest" in script
             assert "secret" not in data["config"]
             metadata = json.loads(data["env"]["UPSTREAM_RELEASE_JSON"])
-            assert metadata["tag_name"] == "v1.0.2"
+            assert metadata["tag_name"] == tag
+            assert metadata["prerelease"] == prerelease
             return {"success": True, "sn": "test-build"}
         return {"status": next(statuses)}
 
@@ -131,3 +139,17 @@ def test_trigger_supplies_current_script_and_waits_for_completion(monkeypatch):
     monkeypatch.setattr(trigger.time, "sleep", lambda _: None)
     trigger.trigger()
     assert len(calls) == 4
+
+
+@pytest.mark.parametrize(
+    "tag,metadata",
+    [
+        ("v1.0.5-dev1", {"tag_name": "v1.0.5-dev1", "prerelease": False}),
+        ("v1.0.5", {"tag_name": "v1.0.5", "draft": True}),
+        ("v1.0.5", {"tag_name": "v1.0.4"}),
+        ("../invalid", {"tag_name": "../invalid"}),
+    ],
+)
+def test_invalid_or_unpublished_release_is_rejected(tag, metadata):
+    with pytest.raises(ValueError):
+        sync.validate_release(metadata, tag)
