@@ -67,7 +67,17 @@ internal static class IdentitySupervisor
                             while (true)
                             {
                                 using var dispatch = IdentityRecoveryHandoff.TakeWorkerLock(root);
-                                if (dispatch is not null) { task = taskFactory(); break; }
+                                if (dispatch is not null)
+                                {
+                                    // Count dispatch failures and killed/crashed children as attempts.
+                                    foreach (var path in Directory.EnumerateFiles(root, "journal-*.json"))
+                                    {
+                                        var journal = IdentityFiles.Read<IdentityJournal>(path)!;
+                                        if (journal.RecoveryNeeded && !journal.RecoveryStopped)
+                                            IdentityRecoveryBudget.Reserve(path, journal);
+                                    }
+                                    task = taskFactory(); break;
+                                }
                                 if (stop?.Invoke() == true) return 0;
                                 pause(150);
                             }
@@ -144,7 +154,7 @@ internal static class IdentitySupervisor
                     || journal.Account == journal.Target || !Guid.TryParseExact(journal.Transaction, "N", out _)
                     || journal.OriginalRelationship is not (0 or 3)
                     || Path.GetFileName(path) != "journal-" + journal.Account + ".json") throw new InvalidDataException();
-                pending |= journal.RecoveryNeeded;
+                pending |= journal.RecoveryNeeded && !IdentityRecoveryBudget.StopExhausted(path, journal);
             }
             catch { unreadable = true; }
         }

@@ -260,3 +260,7 @@ updates:
   saved: 已保存到 {path}
   checking: 正在检查…
   history_limited: 当前更新源仅提供近期版本。完整历史请通过 GitHub / Gitee / CNB 链接查看。
+
+recovery_stopped:
+  title: 通信恢复已停止
+  content: 无法正常恢复，请手动查看并解除屏蔽

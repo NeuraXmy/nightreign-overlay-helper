@@ -74,6 +74,11 @@ class MatchPolicyTests(unittest.TestCase):
         for _ in range(seconds):
             self.feed(players)
 
+    def test_permanently_stopped_legacy_transaction_does_not_gate_new_matches(self):
+        self.legacy.status.update(state="error", diagnostic_code="recovery_stopped", accepts_begin=False)
+        self.feed([peer()])
+        self.assertEqual(self.bridges[0].begins, [peer().steam_id])
+
     def test_ping_ready_peer_starts_without_day1(self):
         self.feed([peer()])
         self.assertEqual(self.bridges[0].begins, [peer().steam_id])

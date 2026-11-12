@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from PyQt6.QtCore import QLocale, QObject, QProcess, Qt, QTimer
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
-from qfluentwidgets import FluentTranslator, InfoBar
+from qfluentwidgets import FluentTranslator, InfoBar, InfoBarPosition
 
 from nightreign_overlay.core import i18n
 from nightreign_overlay.core.app_config import APP_CONFIG_NAMESPACE, AppConfig
@@ -27,6 +27,7 @@ from nightreign_overlay.platforms import PlatformBackend, create_backend
 from nightreign_overlay.platforms.shell import configure_taskbar_identity
 from nightreign_overlay.plugin import PluginManager
 from nightreign_overlay.plugins.capture.api import CaptureSetupApi
+from nightreign_overlay.plugins.steam_recovery.api import RecoveryStopped
 from nightreign_overlay.ui.components.updates import UpdateController
 from nightreign_overlay.ui.main_window import MainWindow
 from nightreign_overlay.ui.overlay import OverlayManager
@@ -87,6 +88,9 @@ class Application(QObject):
         self.plugins.load_all()
 
         self.window = MainWindow(self.config, self.plugins, self.overlays, self.game_monitor, self.services)
+        self._recovery_stop_notifications = set()
+        self._recovery_stop_seen = set()
+        self.events.subscribe(RecoveryStopped, self._on_recovery_stopped)
         self.updates = UpdateController(self.window, self, config=self.config)
         self.updates.busyChanged.connect(self.window.aboutPage.set_update_busy)
         self.window.aboutPage.checkUpdatesRequested.connect(self.updates.check)
@@ -117,6 +121,7 @@ class Application(QObject):
         foreground = self.overlays.foreground
         self.window.presenceChanged.connect(lambda present: foreground.set_ui_active("main_window", present))
         self.window.presenceChanged.connect(self._schedule_capture_setup)
+        self.window.presenceChanged.connect(self._show_recovery_stopped)
         if self.tray is not None:
             self.tray.showRequested.connect(self.window.bring_to_front)
             self.tray.toggleRequested.connect(self.window.toggle_visibility)
@@ -124,6 +129,25 @@ class Application(QObject):
             self.tray.menu.aboutToShow.connect(lambda: foreground.set_ui_active("tray_menu", True))
             self.tray.menu.aboutToHide.connect(lambda: foreground.set_ui_active("tray_menu", False))
         self._qt_app.aboutToQuit.connect(self._shutdown)
+
+    def _on_recovery_stopped(self, event: RecoveryStopped) -> None:
+        if event.transaction in self._recovery_stop_seen:
+            return
+        self._recovery_stop_seen.add(event.transaction)
+        self._recovery_stop_notifications.add(event.transaction)
+        self._show_recovery_stopped(self.window.is_present)
+
+    def _show_recovery_stopped(self, present: bool) -> None:
+        if not present or not self._recovery_stop_notifications or self._shut_down:
+            return
+        self._recovery_stop_notifications.clear()
+        InfoBar.error(
+            title=i18n.tr("recovery_stopped.title"),
+            content=i18n.tr("recovery_stopped.content"),
+            position=InfoBarPosition.TOP_RIGHT,
+            duration=-1,
+            parent=self.window,
+        )
 
     def _schedule_capture_setup(self, present: bool) -> None:
         setup = self.services.get(CaptureSetupApi)

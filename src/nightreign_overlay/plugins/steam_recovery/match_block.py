@@ -235,9 +235,10 @@ class MatchBlockController(QObject):
         # Do not start anything while older recovery is unresolved. Other slots
         # can stay blocked normally; their independent owners cannot starve one
         # another's recovery during a network outage.
-        recovering = self.legacy.status.get("state") not in {"idle", "restored"} or any(
-            b.status.get("state") in {"restoring", "recovery_pending"} for b in self.bridges
-        )
+        recovering = (
+            self.legacy.status.get("state") not in {"idle", "restored"}
+            and self.legacy.status.get("diagnostic_code") != "recovery_stopped"
+        ) or any(b.status.get("state") in {"restoring", "recovery_pending"} for b in self.bridges)
         reason = (
             "disabled"
             if not self.enabled

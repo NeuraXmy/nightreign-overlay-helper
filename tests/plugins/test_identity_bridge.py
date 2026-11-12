@@ -70,6 +70,51 @@ class IdentityBridgeTests(unittest.TestCase):
         self.assertTrue(self.bridge.begin("76561198049468923"))
         return self.bridge.status["transaction"]
 
+    def test_stopped_transaction_survives_restart_without_launch_or_restore(self):
+        self.bridge.set_requests_enabled(False)
+        transaction = "a" * 32
+        record = dict(
+            transaction=transaction,
+            target="76561198049468923",
+            recovery_needed=True,
+            recovery_stopped=True,
+            recovery_attempts=3,
+        )
+        ipc._write_json(self.root / f"recovery-stopped-{transaction}.json", record)
+        ipc._write_json(self.root / f"journal-{ACCOUNT}.json", record)
+        notifications = []
+        self.bridge.recoveryStopped.connect(notifications.append)
+        self.bridge._pending = transaction
+        self.bridge.start()
+        self.bridge._poll()
+        self.assertEqual(notifications, [transaction])
+        self.assertFalse(self.bridge.pending)
+        self.assertFalse(self.bridge._has_work())
+        self.assertEqual(self.bridge.status["diagnostic_code"], "recovery_stopped")
+        self.bridge.restore()
+        self.assertFalse((self.root / f"restore-{transaction}.json").exists())
+        self.launch.assert_not_called()
+        restarted = ipc.IdentityBridge(slot=0)
+        try:
+            restarted.recoveryStopped.connect(notifications.append)
+            restarted.start()
+            self.assertEqual(notifications, [transaction, transaction])
+            self.launch.assert_not_called()
+        finally:
+            restarted.stop()
+
+    def test_stopped_transaction_overrides_stale_restoring_heartbeat(self):
+        transaction = "b" * 32
+        record = dict(transaction=transaction, target="76561198049468923", recovery_stopped=True)
+        ipc._write_json(self.root / f"recovery-stopped-{transaction}.json", record)
+        self.status("restoring", transaction=transaction)
+        self.bridge.start()
+        self.bridge._poll()
+        self.assertEqual(self.bridge.status["state"], "error")
+        self.assertEqual(self.bridge.status["diagnostic_code"], "recovery_stopped")
+        self.assertFalse(self.bridge.pending)
+        self.launch.assert_not_called()
+
     def test_start_reconnects_without_relaunching_fresh_worker(self):
         self.status()
         self.bridge.start()

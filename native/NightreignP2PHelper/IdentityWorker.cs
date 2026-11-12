@@ -56,6 +56,17 @@ internal static class IdentityWorker
                     RecoverAbandonedClaim(journals);
                     if (journals.Count > 0)
                     {
+                        if (supervisorPid is null)
+                        {
+                            foreach (var pendingJournal in journals)
+                            {
+                                var path = JournalPath(pendingJournal.Account);
+                                if (!IdentityRecoveryBudget.StopExhausted(path, pendingJournal))
+                                    IdentityRecoveryBudget.Reserve(path, pendingJournal);
+                            }
+                            journals = ReadPending(out _);
+                            if (journals.Count == 0) return FinishWorker();
+                        }
                         target = journals[0].Target; transaction = journals[0].Transaction;
                         var result = IdentitySessionCoordinator.RunRecoveryAttempt(Connect, () =>
                         {
@@ -169,7 +180,7 @@ internal static class IdentityWorker
                     || item.Account == item.Target || !Guid.TryParseExact(item.Transaction, "N", out _)
                     || item.OriginalRelationship is not (0 or 3)
                     || Path.GetFileName(path) != "journal-" + item.Account + ".json") throw new InvalidDataException();
-                if (item.RecoveryNeeded) pending.Add(item);
+                if (item.RecoveryNeeded && !item.RecoveryStopped) pending.Add(item);
             }
             catch { unreadable = true; }
         }
@@ -358,7 +369,17 @@ internal static class IdentityWorker
                 // Even a failed/ambiguous block gets compensation; only our recorded
                 // originally-unblocked target is eligible for restoration.
                 if (html?.BlockSettled == true) { journal = journal with { BlockSettled = true }; TrySave(journal); }
-                Recover(journal, html);
+                try
+                {
+                    journal = IdentityRecoveryBudget.Reserve(JournalPath(journal.Account), journal);
+                    Recover(journal, html);
+                }
+                catch
+                {
+                    // No durable reservation means no automatic recovery operation.
+                    // The supervisor owns subsequent bounded dispatches.
+                    html?.Dispose();
+                }
                 html = null;
             }
             html?.Dispose();

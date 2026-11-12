@@ -46,6 +46,7 @@ _DIAGNOSTIC_CODES = {
     "prepare_unknown",
     "steam_connect",
     "block_unconfirmed",
+    "recovery_stopped",
 }
 
 
@@ -95,6 +96,7 @@ def _launch_worker(path: Path, slot=None):
 
 class IdentityBridge(QObject):
     changed = pyqtSignal(object)
+    recoveryStopped = pyqtSignal(str)
 
     def __init__(self, parent=None, *, slot=None):
         super().__init__(parent)
@@ -107,6 +109,7 @@ class IdentityBridge(QObject):
         self._root = identity_directory() if slot is None else identity_directory() / f"match-{slot}"
         self._lifecycle = _STEAM_LIFECYCLE if slot is None else _MATCH_LIFECYCLE
         self._client = uuid.uuid4().hex
+        self._reported_stops = set()
         self._pending: str | None = None
         self._pending_since = 0.0
         self._started = False
@@ -150,7 +153,9 @@ class IdentityBridge(QObject):
             return True
         for path in self._root.glob("journal-*.json"):
             record = _read_json(path)
-            if record is None or record.get("recovery_needed") is not False:
+            if record is None or (
+                record.get("recovery_needed") is not False and not record.get("recovery_stopped")
+            ):
                 return True
         return False
 
@@ -306,6 +311,32 @@ class IdentityBridge(QObject):
 
     def _poll_worker(self):
         now = time.monotonic()
+        for path in self._root.glob("recovery-stopped-*.json"):
+            record = _read_json(path)
+            if not record or record.get("recovery_stopped") is not True:
+                continue
+            transaction = record.get("transaction", "")
+            if not isinstance(transaction, str) or len(transaction) != 32:
+                continue
+            if (
+                self._pending == transaction
+                or self.status.get("transaction") == transaction
+                or (transaction not in self._reported_stops and not self._has_work())
+            ):
+                if self._pending == transaction:
+                    self._pending = None
+                self._apply(
+                    dict(
+                        state="error",
+                        target=record.get("target", ""),
+                        transaction=transaction,
+                        diagnostic_code="recovery_stopped",
+                        message="无法正常恢复，请手动查看并解除屏蔽",
+                    )
+                )
+            if transaction not in self._reported_stops:
+                self._reported_stops.add(transaction)
+                self.recoveryStopped.emit(transaction)
         self._poll_reason = "status_missing"
         if self._worker is not None:
             exitcode = self._worker.poll()
@@ -325,6 +356,15 @@ class IdentityBridge(QObject):
         # particular, stale status may still belong to a live legacy owner;
         # starting another process does not mean we won its singleton lock.
         value = _read_json(self._root / "status.json")
+        if value and value.get("transaction") in self._reported_stops:
+            # A final task heartbeat may outlive its supervisor's stop decision.
+            value = dict(
+                value,
+                state="error",
+                accepts_begin=False,
+                diagnostic_code="recovery_stopped",
+                message="无法正常恢复，请手动查看并解除屏蔽",
+            )
         fresh = False
         if value and value.get("state") in _STATES:
             self._poll_reason = "status_expired"
@@ -490,7 +530,9 @@ class IdentityBridge(QObject):
         for path in self._root.glob("journal-*.json"):
             journal = _read_json(path)
             if journal is None or (
-                journal.get("transaction") == self._pending and journal.get("recovery_needed")
+                journal.get("transaction") == self._pending
+                and journal.get("recovery_needed")
+                and not journal.get("recovery_stopped")
             ):
                 return True
         return False

@@ -8,7 +8,39 @@ internal sealed record IdentityPage(bool CorrectAccount, bool CanBlock, bool Can
 internal sealed record IdentityJournal(
     string Account, string Target, string Transaction, int OriginalRelationship,
     bool BlockSettled, bool BlockObserved, bool RecoveryNeeded, DateTimeOffset CreatedAt,
-    bool RetryBlockAfterRestore = false);
+    bool RetryBlockAfterRestore = false, int RecoveryAttempts = 0, bool RecoveryStopped = false);
+
+// Reserve attempts durably before Steam initialization or dispatch. A crash consumes
+// the reserved attempt too; stopped journals remain evidence, never completion.
+internal static class IdentityRecoveryBudget
+{
+    internal const int Limit = 3;
+    internal static IdentityJournal Reserve(string path, IdentityJournal journal)
+    {
+        if (journal.RecoveryStopped || journal.RecoveryAttempts >= Limit)
+            throw new InvalidOperationException("Recovery limit reached");
+        var reserved = journal with { RecoveryAttempts = journal.RecoveryAttempts + 1 };
+        IdentityFiles.Write(path, reserved);
+        return reserved;
+    }
+
+    internal static bool StopExhausted(string path, IdentityJournal journal)
+    {
+        if (!journal.RecoveryNeeded || journal.RecoveryAttempts < Limit) return journal.RecoveryStopped;
+        var stopped = journal with { RecoveryStopped = true };
+        var root = Path.GetDirectoryName(path)!;
+        // Keep a transaction-specific tombstone even when this account's journal
+        // is later replaced by a new match. It also carries offline notifications.
+        var tombstone = Path.Combine(root, "recovery-stopped-" + journal.Transaction + ".json");
+        if (!File.Exists(tombstone)) IdentityFiles.Write(tombstone, stopped);
+        if (!journal.RecoveryStopped) IdentityFiles.Write(path, stopped);
+        var claimPath = Path.Combine(root, "active-request.json");
+        var claim = IdentityFiles.Read<IdentityRequest>(claimPath);
+        if (claim?.Transaction == journal.Transaction) File.Delete(claimPath);
+        File.Delete(Path.Combine(root, "requests", journal.Transaction + ".json"));
+        return true;
+    }
+}
 
 internal static class IdentityRules
 {

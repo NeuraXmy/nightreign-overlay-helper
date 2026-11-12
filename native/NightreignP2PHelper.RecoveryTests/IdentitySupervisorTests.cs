@@ -40,6 +40,45 @@ internal static class IdentitySupervisorTests
 
     internal static void Run(Action<string, Action> test)
     {
+        test("three failed dispatches permanently stop recovery across supervisor restarts", () => InTemporaryDirectory(root => {
+            var now = DateTimeOffset.UtcNow;
+            var journal = new IdentityJournal("76561198049468922", "76561198049468923",
+                Guid.NewGuid().ToString("N"), 0, false, false, true, now);
+            var path = Path.Combine(root, "journal-" + journal.Account + ".json");
+            IdentityFiles.Write(path, journal);
+            Directory.CreateDirectory(Path.Combine(root, "requests"));
+            IdentityFiles.Write(Path.Combine(root, "active-request.json"),
+                new IdentityRequest(journal.Transaction, journal.Target, Guid.NewGuid().ToString("N"), now, journal.Account));
+            var starts = 0;
+            IdentitySupervisor.Run(testRoot: root, utcNow: () => now,
+                pause: ms => now = now.AddMilliseconds(ms), taskFactory: () => {
+                    starts++;
+                    Assert(IdentityFiles.Read<IdentityJournal>(path)!.RecoveryAttempts == starts,
+                        "attempt not durable before dispatch");
+                    throw new IOException("simulated crash/start failure");
+                });
+            var stopped = IdentityFiles.Read<IdentityJournal>(path)!;
+            Assert(starts == 3 && stopped.RecoveryStopped && stopped.RecoveryNeeded,
+                "budget exceeded or stop mistaken for restoration");
+            Assert(File.Exists(Path.Combine(root, "recovery-stopped-" + journal.Transaction + ".json")),
+                "missing persistent manual recovery notice");
+            Assert(!File.Exists(Path.Combine(root, "active-request.json")), "stopped claim restarts task");
+            IdentitySupervisor.Run(testRoot: root, utcNow: () => now,
+                pause: ms => now = now.AddMilliseconds(ms),
+                taskFactory: () => throw new Exception("restart resumed permanently stopped transaction"));
+        }));
+        test("old journal starts at zero and successful third attempt remains completed", () => InTemporaryDirectory(root => {
+            var path = Path.Combine(root, "journal-76561198049468922.json");
+            var journal = new IdentityJournal("76561198049468922", "76561198049468923",
+                Guid.NewGuid().ToString("N"), 0, true, true, true, DateTimeOffset.UtcNow);
+            IdentityFiles.Write(path, journal);
+            for (int i = 0; i < 3; i++) journal = IdentityRecoveryBudget.Reserve(path, journal);
+            IdentityFiles.Write(path, journal with { RecoveryNeeded = false });
+            Assert(!IdentitySupervisor.HasPending(root, out var unreadable) && !unreadable,
+                "successful third attempt left pending");
+            Assert(!IdentityFiles.Read<IdentityJournal>(path)!.RecoveryStopped,
+                "successful recovery declared stopped");
+        }));
         test("unregistered supervisor retries exited task without UI and preserves child heartbeat", () => InTemporaryDirectory(root => {
             var now = DateTimeOffset.UtcNow; var journal = new IdentityJournal("76561198049468922", "76561198049468923",
                 Guid.NewGuid().ToString("N"), 0, true, true, true, now);

@@ -5,7 +5,7 @@ import sys
 from nightreign_overlay.plugin import Plugin, PluginKind, PluginManifest, SettingsScope
 from nightreign_overlay.plugins.p2p_latency.api import P2PStateChanged, PeerSnapshot
 
-from .api import RecoveryApi, RecoveryChanged, RecoveryStatus
+from .api import RecoveryApi, RecoveryChanged, RecoveryStatus, RecoveryStopped
 from .identity_bridge import _read_json
 from .match_block import MatchBlockController
 
@@ -34,6 +34,8 @@ class SteamRecoveryPlugin(Plugin, RecoveryApi):
         self.ctx.subscribe(PeerSnapshot, self._snapshot)
         self.ctx.subscribe(P2PStateChanged, self._connection)
         self.ctx.on_cleanup(self._stop)
+        for bridge in [controller.legacy, *controller.bridges]:
+            bridge.recoveryStopped.connect(lambda transaction: self.ctx.publish(RecoveryStopped(transaction)))
         controller.start()
         self._update()
 
@@ -76,6 +78,7 @@ class SteamRecoveryPlugin(Plugin, RecoveryApi):
                     record.get("account") == account
                     and record.get("target") == target
                     and record.get("recovery_needed") is not False
+                    and not record.get("recovery_stopped")
                 ):
                     return True
         return False

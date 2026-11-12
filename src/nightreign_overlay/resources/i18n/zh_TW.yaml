@@ -254,3 +254,7 @@ updates:
   saved: 已儲存至 {path}
   checking: 正在檢查…
   history_limited: 目前更新來源僅提供近期版本。完整歷史請透過 GitHub / Gitee / CNB 連結查看。
+
+recovery_stopped:
+  title: 通訊恢復已停止
+  content: 無法正常恢復，請手動查看並解除封鎖

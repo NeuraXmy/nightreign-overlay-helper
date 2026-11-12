@@ -90,7 +90,9 @@ class BlockStatusTracker:
                 else ("restored", "已解除", False)
             )
         elif state == "error":
-            if code == "page_preblocked":
+            if code == "recovery_stopped":
+                value = ("failed", "自动恢复已停止 · 请手动解除", False)
+            elif code == "page_preblocked":
                 value = ("preblocked", "原有屏蔽 · 不解除", False)
             elif code == "relationship_excluded":
                 value = ("relationship_skipped", "关系不符 · 已跳过", False)

@@ -250,3 +250,7 @@ updates:
   saved: '保存先: {path}'
   checking: 確認中…
   history_limited: この更新元では最近のリリースのみを表示しています。全履歴は GitHub / Gitee / CNB リンクで確認できます。
+
+recovery_stopped:
+  title: 通信の復元を停止しました
+  content: 正常に復元できません。手動で確認し、ブロックを解除してください。

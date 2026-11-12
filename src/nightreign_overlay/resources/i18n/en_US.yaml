@@ -256,3 +256,7 @@ updates:
   saved: Saved to {path}
   checking: Checking…
   history_limited: Only recent releases are available from this source; use the GitHub / Gitee / CNB links for the full history.
+
+recovery_stopped:
+  title: Communication recovery stopped
+  content: Unable to restore communication. Please check and unblock the player manually.
