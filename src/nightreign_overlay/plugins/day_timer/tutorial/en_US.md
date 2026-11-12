@@ -14,6 +14,8 @@ By recognizing the DAY I / DAY II / DAY III icons that appear at the start of ea
 
 If the automatic region does not work correctly, the game is not full screen, or you want to detect a window other than the game, see the [Calibration Tutorial](app://tutorial/region-calibration).
 
+**⚠️ The automatic DAY I region only supports Simplified Chinese game text. If your game uses another language, follow the manual calibration steps below.**
+
 :::collapse Manual calibration steps
 
 It is recommended to set a controller or keyboard shortcut. Start a single-player game and press the shortcut when the DAY I icon is fully visible to open the calibration screen.
