@@ -131,9 +131,10 @@ class Application(QObject):
         self._qt_app.aboutToQuit.connect(self._shutdown)
 
     def _on_recovery_stopped(self, event: RecoveryStopped) -> None:
-        if event.transaction in self._recovery_stop_seen:
+        key = event.target or event.transaction
+        if key in self._recovery_stop_seen:
             return
-        self._recovery_stop_seen.add(event.transaction)
+        self._recovery_stop_seen.add(key)
         self._recovery_stop_notifications.add(event.transaction)
         self._show_recovery_stopped(self.window.is_present)
 

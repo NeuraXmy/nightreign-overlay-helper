@@ -76,6 +76,7 @@ block:
     account_missing: Waiting for the network helper to confirm the Steam account.
     unsupported: Automatic block and restore is available on Windows only.
   state:
+    recovery_stopped: Automatic recovery failed · Unblock manually
     preparing: Preparing
     blocked: Blocked
     restoring: Restoring

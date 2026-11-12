@@ -206,6 +206,19 @@ class BlockStatusTests(unittest.TestCase):
             finally:
                 bridge.stop()
 
+    def test_stopped_recovery_remains_visible_for_current_session_without_blocking_new_holds(self):
+        self.controller.set_peers([peer()])
+        self.report(0, "error", diagnostic_code="recovery_stopped")
+        self.assertEqual(self.state().state, "recovery_stopped")
+        self.assertFalse(self.state().pending)
+        self.controller.set_peers([])
+        self.report(0, "idle", target="", transaction="", diagnostic_code="", accepts_begin=True)
+        self.now += HISTORY_SECONDS + 1
+        self.controller.tick()
+        self.assertEqual(self.state().state, "recovery_stopped")
+        self.controller.set_peers([peer(2)])
+        self.assertEqual(self.state(2).state, "preparing")
+
     def test_recent_completed_history_is_bounded_but_pending_is_retained(self):
         self.legacy.status.update(state="recovery_pending", target=peer(10).steam_id, transaction="a" * 32)
         self.controller.tick()

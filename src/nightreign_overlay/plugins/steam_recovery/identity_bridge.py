@@ -96,7 +96,7 @@ def _launch_worker(path: Path, slot=None):
 
 class IdentityBridge(QObject):
     changed = pyqtSignal(object)
-    recoveryStopped = pyqtSignal(str)
+    recoveryStopped = pyqtSignal(str, str)
 
     def __init__(self, parent=None, *, slot=None):
         super().__init__(parent)
@@ -109,7 +109,16 @@ class IdentityBridge(QObject):
         self._root = identity_directory() if slot is None else identity_directory() / f"match-{slot}"
         self._lifecycle = _STEAM_LIFECYCLE if slot is None else _MATCH_LIFECYCLE
         self._client = uuid.uuid4().hex
+        # Stops that predate this application session remain diagnostic evidence only.
+        self._historical_stops = {
+            record.get("transaction")
+            for path in (*self._root.glob("recovery-stopped-*.json"), *self._root.glob("journal-*.json"))
+            if (record := _read_json(path))
+            and record.get("recovery_stopped") is True
+            and isinstance(record.get("transaction"), str)
+        }
         self._reported_stops = set()
+        self._notified_targets = set()
         self._pending: str | None = None
         self._pending_since = 0.0
         self._started = False
@@ -212,7 +221,7 @@ class IdentityBridge(QObject):
         if self._pending is None and self.status.get("state") in {"idle", "restored", "error"}:
             return
         transaction = self._pending or self.status.get("transaction", "")
-        if not transaction or len(transaction) != 32:
+        if not transaction or len(transaction) != 32 or transaction in self._historical_stops:
             return
         try:
             _write_json(self._root / ("restore-" + transaction + ".json"), {"transaction": transaction})
@@ -316,7 +325,11 @@ class IdentityBridge(QObject):
             if not record or record.get("recovery_stopped") is not True:
                 continue
             transaction = record.get("transaction", "")
-            if not isinstance(transaction, str) or len(transaction) != 32:
+            if (
+                not isinstance(transaction, str)
+                or len(transaction) != 32
+                or transaction in self._historical_stops
+            ):
                 continue
             if (
                 self._pending == transaction
@@ -336,7 +349,10 @@ class IdentityBridge(QObject):
                 )
             if transaction not in self._reported_stops:
                 self._reported_stops.add(transaction)
-                self.recoveryStopped.emit(transaction)
+                target = record.get("target", "")
+                if target not in self._notified_targets:
+                    self._notified_targets.add(target)
+                    self.recoveryStopped.emit(transaction, target)
         self._poll_reason = "status_missing"
         if self._worker is not None:
             exitcode = self._worker.poll()
@@ -356,6 +372,18 @@ class IdentityBridge(QObject):
         # particular, stale status may still belong to a live legacy owner;
         # starting another process does not mean we won its singleton lock.
         value = _read_json(self._root / "status.json")
+        if value and value.get("transaction") in self._historical_stops:
+            # A terminal task heartbeat can outlive its stopped journal. Do not
+            # replay its error/restoring state or accept its old capability.
+            value = dict(
+                value,
+                state="idle",
+                target="",
+                transaction="",
+                diagnostic_code="",
+                accepts_begin=False,
+                message="历史恢复事务已停止；等待组件就绪",
+            )
         if value and value.get("transaction") in self._reported_stops:
             # A final task heartbeat may outlive its supervisor's stop decision.
             value = dict(

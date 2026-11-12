@@ -70,7 +70,7 @@ class IdentityBridgeTests(unittest.TestCase):
         self.assertTrue(self.bridge.begin("76561198049468923"))
         return self.bridge.status["transaction"]
 
-    def test_stopped_transaction_survives_restart_without_launch_or_restore(self):
+    def test_new_stop_notifies_once_and_restart_ignores_preserved_evidence(self):
         self.bridge.set_requests_enabled(False)
         transaction = "a" * 32
         record = dict(
@@ -83,7 +83,7 @@ class IdentityBridgeTests(unittest.TestCase):
         ipc._write_json(self.root / f"recovery-stopped-{transaction}.json", record)
         ipc._write_json(self.root / f"journal-{ACCOUNT}.json", record)
         notifications = []
-        self.bridge.recoveryStopped.connect(notifications.append)
+        self.bridge.recoveryStopped.connect(lambda transaction, target: notifications.append(transaction))
         self.bridge._pending = transaction
         self.bridge.start()
         self.bridge._poll()
@@ -96,24 +96,52 @@ class IdentityBridgeTests(unittest.TestCase):
         self.launch.assert_not_called()
         restarted = ipc.IdentityBridge(slot=0)
         try:
-            restarted.recoveryStopped.connect(notifications.append)
+            restarted.recoveryStopped.connect(lambda transaction, target: notifications.append(transaction))
             restarted.start()
-            self.assertEqual(notifications, [transaction, transaction])
+            self.assertEqual(notifications, [transaction])
+            self.assertEqual(restarted.status["state"], "idle")
+            self.assertFalse(restarted._has_work())
+            self.assertTrue((self.root / f"recovery-stopped-{transaction}.json").exists())
             self.launch.assert_not_called()
         finally:
             restarted.stop()
 
-    def test_stopped_transaction_overrides_stale_restoring_heartbeat(self):
+    def test_old_stop_and_stale_restoring_heartbeat_do_not_poison_new_session(self):
         transaction = "b" * 32
         record = dict(transaction=transaction, target="76561198049468923", recovery_stopped=True)
         ipc._write_json(self.root / f"recovery-stopped-{transaction}.json", record)
         self.status("restoring", transaction=transaction)
+        restarted = ipc.IdentityBridge(slot=0)
+        notifications = []
+        try:
+            restarted.recoveryStopped.connect(lambda transaction, target: notifications.append(transaction))
+            restarted.set_requests_enabled(True)
+            restarted.start()
+            self.assertEqual(restarted.status["state"], "idle")
+            self.assertEqual(restarted.status["target"], "")
+            self.assertFalse(notifications)
+            self.assertFalse(restarted.status["accepts_begin"])
+            self.status()
+            restarted._poll()
+            self.assertTrue(restarted.status["accepts_begin"])
+            restarted.expected_account = ACCOUNT
+            self.assertTrue(restarted.begin("76561198049468924"))
+            self.launch.assert_not_called()
+        finally:
+            restarted.stop()
+
+    def test_current_stop_overrides_stale_restoring_and_deduplicates_same_id(self):
+        notifications = []
+        self.bridge.recoveryStopped.connect(lambda transaction, target: notifications.append(transaction))
         self.bridge.start()
-        self.bridge._poll()
-        self.assertEqual(self.bridge.status["state"], "error")
-        self.assertEqual(self.bridge.status["diagnostic_code"], "recovery_stopped")
-        self.assertFalse(self.bridge.pending)
-        self.launch.assert_not_called()
+        for transaction in ("b" * 32, "c" * 32):
+            record = dict(transaction=transaction, target="76561198049468923", recovery_stopped=True)
+            ipc._write_json(self.root / f"recovery-stopped-{transaction}.json", record)
+            self.status("restoring", transaction=transaction)
+            self.bridge._poll()
+            self.assertEqual(self.bridge.status["diagnostic_code"], "recovery_stopped")
+            self.assertFalse(self.bridge.pending)
+        self.assertEqual(notifications, ["b" * 32])
 
     def test_start_reconnects_without_relaunching_fresh_worker(self):
         self.status()

@@ -21,7 +21,7 @@ class PeerBlockStatus:
 def block_status_color(state):
     if state in {"blocked", "restored"}:
         return "#78cf91"
-    if state in {"failed", "retry_wait", "recovery_pending", "unconfirmed"}:
+    if state in {"failed", "recovery_stopped", "retry_wait", "recovery_pending", "unconfirmed"}:
         return "#f3ca72"
     return "#aebec9"
 
@@ -91,7 +91,7 @@ class BlockStatusTracker:
             )
         elif state == "error":
             if code == "recovery_stopped":
-                value = ("failed", "自动恢复已停止 · 请手动解除", False)
+                value = ("recovery_stopped", "自动恢复失败 · 请手动解除", False)
             elif code == "page_preblocked":
                 value = ("preblocked", "原有屏蔽 · 不解除", False)
             elif code == "relationship_excluded":
@@ -148,7 +148,11 @@ class BlockStatusTracker:
         )
         retained = 0
         for record in absent:
-            if record.pending or (now - record.updated_at < HISTORY_SECONDS and retained < HISTORY_LIMIT):
+            if (
+                record.pending
+                or record.state == "recovery_stopped"
+                or (now - record.updated_at < HISTORY_SECONDS and retained < HISTORY_LIMIT)
+            ):
                 result[record.steam_id] = replace(record, active=False)
                 if not record.pending:
                     retained += 1

@@ -14,6 +14,7 @@ from nightreign_overlay.core.diagnostics import DiagnosticArchive, create_diagno
 from nightreign_overlay.core.i18n import tr
 from nightreign_overlay.core.log import get_logger
 from nightreign_overlay.core.paths import user_data_dir
+from nightreign_overlay.plugins.steam_recovery.api import recovery_directory
 
 log = get_logger(__name__)
 
@@ -26,7 +27,7 @@ class _ExportTask(QRunnable):
     def __init__(self, directory: Path, destination: Path, description: str, attachments: tuple[Path, ...]):
         super().__init__()
         self.signals = _ExportSignals()
-        self._arguments = directory, destination, description, attachments
+        self._arguments = directory, destination, description, attachments, recovery_directory()
 
     def run(self) -> None:
         try:

@@ -75,6 +75,7 @@ block:
     account_missing: Steam アカウントの確認を待っています。
     unsupported: 自動ブロックと復元は Windows のみ対応しています。
   state:
+    recovery_stopped: 自動復元失敗 · 手動でブロック解除してください
     preparing: 準備中
     blocked: ブロック済み
     restoring: 解除中

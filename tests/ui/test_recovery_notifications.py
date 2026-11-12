@@ -31,6 +31,20 @@ def test_recovery_alert_waits_for_window_and_deduplicates(qapp):
         show.assert_called_once()
 
 
+def test_same_target_in_different_transactions_only_alerts_once(qapp):
+    owner = SimpleNamespace(
+        _recovery_stop_seen=set(),
+        _recovery_stop_notifications=set(),
+        _shut_down=False,
+        window=SimpleNamespace(is_present=True),
+    )
+    owner._show_recovery_stopped = lambda present: Application._show_recovery_stopped(owner, present)
+    with patch("nightreign_overlay.app.InfoBar.error") as show:
+        Application._on_recovery_stopped(owner, RecoveryStopped("a" * 32, "76561198049468923"))
+        Application._on_recovery_stopped(owner, RecoveryStopped("b" * 32, "76561198049468923"))
+        show.assert_called_once()
+
+
 def test_recovery_alert_not_shown_during_shutdown(qapp):
     owner = SimpleNamespace(_recovery_stop_notifications={"a" * 32}, _shut_down=True, window=Mock())
     with patch("nightreign_overlay.app.InfoBar.error") as show:

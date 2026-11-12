@@ -75,6 +75,7 @@ block:
     account_missing: 等待联机组件确认当前 Steam 账号。
     unsupported: 自动屏蔽与恢复仅支持 Windows。
   state:
+    recovery_stopped: 自动恢复失败 · 请手动解除
     preparing: 准备屏蔽
     blocked: 已屏蔽
     restoring: 解除中

@@ -130,3 +130,47 @@ def test_destination_cannot_overwrite_a_collected_source(tmp_path: Path) -> None
     with pytest.raises(ValueError, match="overwrite"):
         create_diagnostic_archive(tmp_path, source, "description")
     assert source.read_bytes() == b"keep"
+
+
+def test_helper_export_reads_separate_local_directory_and_preserves_evidence(tmp_path):
+    helper = tmp_path / "local" / "identity"
+    files = {
+        "journal-account.json": '{"recovery_attempts": 3, "recovery_stopped": true}',
+        "match-0/status.json": '{"worker_pid": 123, "task_pid": 456}',
+        "match-1/recovery-stopped-transaction.json": '{"transaction": "stopped"}',
+        "match-1/results/transaction.json": '{"state": "error"}',
+        "match-1/requests/transaction.json": '{"transaction": "queued"}',
+    }
+    for name, content in files.items():
+        path = helper / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    (helper / "supervisor.lock").write_bytes(b"locked")
+    (helper / "journal.json.tmp").write_bytes(b"partial")
+    destination = tmp_path / "report.zip"
+    result = create_diagnostic_archive(tmp_path / "roaming", destination, "", helper_directory=helper)
+    assert result.file_count == len(files)
+    with ZipFile(destination) as archive:
+        assert set(archive.namelist()) == {"problem.txt", "manifest.json"} | {
+            "p2p_helper/identity/" + name for name in files
+        }
+        for name, content in files.items():
+            assert archive.read("p2p_helper/identity/" + name).decode() == content
+            assert (helper / name).read_text(encoding="utf-8") == content
+
+
+def test_helper_file_disappearing_during_export_is_listed_as_skipped(tmp_path, monkeypatch):
+    helper = tmp_path / "identity"
+    helper.mkdir()
+    status = helper / "status.json"
+    status.write_text("{}", encoding="utf-8")
+    original_write = ZipFile.write
+
+    def write(archive, filename, *args, **kwargs):
+        if filename == status:
+            status.unlink()
+        return original_write(archive, filename, *args, **kwargs)
+
+    monkeypatch.setattr(ZipFile, "write", write)
+    result = create_diagnostic_archive(tmp_path, tmp_path / "report.zip", "")
+    assert result.skipped == ("p2p_helper/identity/status.json",)

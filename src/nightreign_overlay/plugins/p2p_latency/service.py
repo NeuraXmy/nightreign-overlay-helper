@@ -153,6 +153,7 @@ class P2PService(QObject):
             self._set_status("disabled", "联机信息已关闭")
 
     def _on_started(self) -> None:
+        log.info("P2P helper started: pid=%d mode=etw", self.process.processId())
         self._set_status("helper_started", "联机组件已启动")
 
     def _on_finished(self, exit_code: int, _exit_status: QProcess.ExitStatus) -> None:
@@ -209,6 +210,8 @@ class P2PService(QObject):
         )
         if status == self.status:
             return
+        if status.state != self.status.state or status.etw_state != self.status.etw_state:
+            log.info("P2P helper status: state=%s etw=%s", status.state, status.etw_state)
         self.status = status
         self.status_changed.emit(status)
 

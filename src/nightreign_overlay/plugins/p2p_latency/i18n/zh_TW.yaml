@@ -75,6 +75,7 @@ block:
     account_missing: 等待連線元件確認目前 Steam 帳號。
     unsupported: 自動封鎖與恢復僅支援 Windows。
   state:
+    recovery_stopped: 自動恢復失敗 · 請手動解除
     preparing: 準備封鎖
     blocked: 已封鎖
     restoring: 解除中

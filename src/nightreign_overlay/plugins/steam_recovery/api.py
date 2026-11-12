@@ -36,3 +36,4 @@ class RecoveryApi:
 @dataclass(frozen=True)
 class RecoveryStopped:
     transaction: str
+    target: str = ""

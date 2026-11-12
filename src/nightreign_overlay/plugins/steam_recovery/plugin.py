@@ -35,7 +35,9 @@ class SteamRecoveryPlugin(Plugin, RecoveryApi):
         self.ctx.subscribe(P2PStateChanged, self._connection)
         self.ctx.on_cleanup(self._stop)
         for bridge in [controller.legacy, *controller.bridges]:
-            bridge.recoveryStopped.connect(lambda transaction: self.ctx.publish(RecoveryStopped(transaction)))
+            bridge.recoveryStopped.connect(
+                lambda transaction, target: self.ctx.publish(RecoveryStopped(transaction, target))
+            )
         controller.start()
         self._update()
 

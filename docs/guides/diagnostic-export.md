@@ -11,6 +11,7 @@
 | `problem.txt` | UTF-8 问题描述，未填写时为空 |
 | `logs/` | 用户数据目录中的现有日志，包括轮转日志 |
 | `debug/` | 当前保留的调试图片与对应 JSON，保留原有子目录结构 |
+| `p2p_helper/identity/` | 联机辅助程序的恢复事务、停止记录、状态、客户端租约、请求与结果 JSON，包含根目录及两个匹配槽；跳过锁和临时文件 |
 | `attachments/001_{filename}` | 用户主动选择的图片，原文件内容保持不变，序号避免同名覆盖 |
 | `manifest.json` | 应用版本、操作系统、Python 版本、导出时间、文件清单及打包时已被清理的文件清单 |
 
@@ -23,6 +24,8 @@
 「保存调试图片」开关仅控制后续截图保存，不影响导出已有图片。各检测结果的保留策略见 [调试图片](debug-images.md)。导出包不会自动清理，用户可自行删除 `reports/` 下已发送的 ZIP。
 
 ## 实现与验证
+
+联机记录从实际恢复目录读取，默认位于 `%LOCALAPPDATA%/NightreignOverlayHelper/identity/`，与漫游目录中的应用日志分开。隔离运行时使用 `NROH_DATA_DIR` 下的 `identity/`。这些 JSON 可能包含 Steam ID 和事务信息；不收集 Steam 登录缓存、Cookie 或辅助程序二进制。普通 P2P 辅助程序的 PID、状态变化与 ETW 状态也写入应用日志。导出期间不停止辅助程序，文件可能来自不同的状态更新时间。
 
 - [`core/diagnostics.py`](../../src/nightreign_overlay/core/diagnostics.py)：不依赖 UI 的 ZIP 生成逻辑。
 - [`ui/components/diagnostic_export.py`](../../src/nightreign_overlay/ui/components/diagnostic_export.py)：描述、附件选择及线程池后台导出。

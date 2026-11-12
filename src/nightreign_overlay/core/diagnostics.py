@@ -26,7 +26,11 @@ class DiagnosticArchive:
 
 
 def create_diagnostic_archive(
-    data_directory: Path, destination: Path, description: str, attachments: tuple[Path, ...] = ()
+    data_directory: Path,
+    destination: Path,
+    description: str,
+    attachments: tuple[Path, ...] = (),
+    helper_directory: Path | None = None,
 ) -> DiagnosticArchive:
     """Export logs/debug and explicitly selected images; publish only a complete ZIP.
 
@@ -58,6 +62,32 @@ def create_diagnostic_archive(
                 if source.resolve() == destination:
                     raise ValueError("The archive destination would overwrite a diagnostic source file")
                 sources.append((source, source.relative_to(root).as_posix(), False))
+    # Native IPC lives in LocalAppData, separate from the roaming application logs.
+    # Include JSON evidence only; live lock files and temporary writes are excluded.
+    helper_source = helper_directory if helper_directory is not None else root / "identity"
+    helper_root = helper_source.resolve()
+    if helper_root.is_dir() and not helper_source.is_symlink():
+        for current, directories, files in os.walk(helper_root, followlinks=False, onerror=_raise_walk_error):
+            current_path = Path(current)
+            directories[:] = sorted(
+                name
+                for name in directories
+                if not (current_path / name).is_symlink()
+                and (current_path / name).resolve().is_relative_to(helper_root)
+            )
+            for name in sorted(files):
+                source = current_path / name
+                if (
+                    source.suffix.lower() != ".json"
+                    or source.is_symlink()
+                    or not source.resolve().is_relative_to(helper_root)
+                ):
+                    continue
+                if source.resolve() == destination:
+                    raise ValueError("The archive destination would overwrite a diagnostic source file")
+                sources.append(
+                    (source, "p2p_helper/identity/" + source.relative_to(helper_root).as_posix(), False)
+                )
     for index, source in enumerate(attachments, start=1):
         if source.resolve() == destination:
             raise ValueError("The archive destination would overwrite an attachment")
