@@ -1,4 +1,4 @@
-"""Pure stronghold-constraint matching for manual map filtering (no Qt)."""
+"""Pure POI, boss and castle constraints for manual map filtering (no Qt)."""
 
 from __future__ import annotations
 
@@ -32,6 +32,26 @@ class Unset(Enum):
 
 
 UNSET = Unset.UNSET  # Badge not chosen: any badge (or none) matches the base.
+
+
+@dataclass(frozen=True)
+class NamedPoint:
+    kind: str  # "boss" or "castle"; independent of a POI at the same coordinate.
+    pos: Position
+
+
+def is_boss_type(ctype: int) -> bool:
+    text = str(ctype)
+    return (
+        text.startswith(("45", "46"))
+        and not text.startswith("460")
+        and (ctype == 45510 or ctype // 1000 != 45)
+        and ctype != 46780
+    )
+
+
+def is_castle_type(ctype: int) -> bool:
+    return str(ctype).startswith("494") and ctype != 49400
 
 
 @dataclass(frozen=True)
@@ -87,7 +107,12 @@ class ManualFilterCatalog:
     def subicon_image(subicon: Attribute | Condition) -> Image.Image:
         return SUBICON_IMAGES[subicon]
 
-    def value(self, pattern: MapPattern, pos: Position) -> tuple[int, Subicon]:
+    def value(self, pattern: MapPattern, pos: Position | NamedPoint) -> tuple[int, Subicon]:
+        if isinstance(pos, NamedPoint):
+            construct = pattern.pos_constructions.get(pos.pos)
+            predicate = is_boss_type if pos.kind == "boss" else is_castle_type
+            ctype = construct.type if construct and predicate(construct.type) else EMPTY
+            return ctype, None
         construct = pattern.pos_constructions.get(pos)
         ctype = construct.type if construct is not None else 0
         if ctype not in self._poi_types:
@@ -126,12 +151,38 @@ class ManualFilterCatalog:
     def all_positions(self) -> list[Position]:
         return sorted({pos for positions in self.info.all_poi_pos.values() for pos in positions})
 
+    def named_positions(
+        self, earth_shifting: int | None = None, nightlord: int | None = None
+    ) -> list[NamedPoint]:
+        patterns = self.info.patterns if earth_shifting is None else self._pool(earth_shifting, nightlord)
+        points = set()
+        for pattern in patterns:
+            for pos, construct in pattern.pos_constructions.items():
+                if is_boss_type(construct.type):
+                    points.add(NamedPoint("boss", pos))
+                elif is_castle_type(construct.type):
+                    points.add(NamedPoint("castle", pos))
+        return sorted(points, key=lambda point: (point.kind, point.pos))
+
+    def filter_positions(self, earth_shifting: int, nightlord: int | None) -> list[Position | NamedPoint]:
+        return [*self.positions(earth_shifting, nightlord), *self.named_positions(earth_shifting, nightlord)]
+
+    def named_options(
+        self,
+        earth_shifting: int,
+        nightlord: int | None,
+        explicit: Mapping[Position | NamedPoint, PoiChoice],
+        point: NamedPoint,
+    ) -> list[int]:
+        values = self.base_options(earth_shifting, nightlord, explicit, point)
+        return sorted(values, key=lambda value: (self.info.get_name(value) or "", value))
+
     def candidates(
         self,
         earth_shifting: int,
         nightlord: int | None,
-        explicit: Mapping[Position, PoiChoice],
-        exclude: Position | None = None,
+        explicit: Mapping[Position | NamedPoint, PoiChoice],
+        exclude: Position | NamedPoint | None = None,
     ) -> list[MapPattern]:
         constraints = [(pos, choice) for pos, choice in explicit.items() if pos != exclude]
         return [
@@ -144,8 +195,8 @@ class ManualFilterCatalog:
         self,
         earth_shifting: int,
         nightlord: int | None,
-        explicit: Mapping[Position, PoiChoice],
-        pos: Position,
+        explicit: Mapping[Position | NamedPoint, PoiChoice],
+        pos: Position | NamedPoint,
     ) -> list[int]:
         """Bases still possible at ``pos`` ignoring its own choice; EMPTY first when possible."""
         bases = {
@@ -158,8 +209,8 @@ class ManualFilterCatalog:
         self,
         earth_shifting: int,
         nightlord: int | None,
-        explicit: Mapping[Position, PoiChoice],
-        pos: Position,
+        explicit: Mapping[Position | NamedPoint, PoiChoice],
+        pos: Position | NamedPoint,
         base: int,
     ) -> list[Subicon]:
         """Badges still possible for ``base`` at ``pos``; ``None`` (no badge) first when possible."""
@@ -174,9 +225,9 @@ class ManualFilterCatalog:
     def inferred(
         self,
         candidates: Iterable[MapPattern],
-        positions: Iterable[Position],
-        explicit: Mapping[Position, PoiChoice],
-    ) -> dict[Position, PoiChoice]:
+        positions: Iterable[Position | NamedPoint],
+        explicit: Mapping[Position | NamedPoint, PoiChoice],
+    ) -> dict[Position | NamedPoint, PoiChoice]:
         """Display-only values every candidate agrees on; never feed these back as constraints.
 
         Unset positions get a unique base (and its badge when that is unique too); explicit positions
@@ -185,7 +236,7 @@ class ManualFilterCatalog:
         candidates = list(candidates)
         if not candidates:
             return {}
-        result: dict[Position, PoiChoice] = {}
+        result: dict[Position | NamedPoint, PoiChoice] = {}
         for pos in positions:
             choice = explicit.get(pos)
             if choice is not None and choice.subicon is not UNSET:

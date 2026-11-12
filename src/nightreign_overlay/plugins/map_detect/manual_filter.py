@@ -5,15 +5,30 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 
 from PIL import Image
-from PyQt6.QtCore import QPoint, QRect, QSignalBlocker, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QGuiApplication, QIcon, QImage, QPaintEvent, QPixmap
+from PyQt6.QtCore import QEvent, QPoint, QRect, QSignalBlocker, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import (
+    QColor,
+    QGuiApplication,
+    QIcon,
+    QImage,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPixmap,
+    QPolygon,
+    QRegion,
+)
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QMenu,
     QPushButton,
+    QStyle,
+    QStyleOptionButton,
+    QStylePainter,
     QVBoxLayout,
     QWidget,
 )
@@ -22,11 +37,60 @@ from nightreign_overlay.plugins.map_detect.manual_catalog import (
     EMPTY,
     UNSET,
     ManualFilterCatalog,
+    NamedPoint,
     PoiChoice,
     Subicon,
 )
 from nightreign_overlay.plugins.map_detect.map_info import Position
 from nightreign_overlay.ui.overlay import OverlayConfig, OverlayManager, OverlayWindow
+
+
+class _PointButton(QPushButton):
+    """Offset only the content, leaving the border and hit area in place."""
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        painter = QStylePainter(self)
+        painter.drawControl(QStyle.ControlElement.CE_PushButtonBevel, option)
+        option.rect.translate(0, -1)
+        painter.drawControl(QStyle.ControlElement.CE_PushButtonLabel, option)
+
+
+class _DiamondButton(QPushButton):
+    """Use the POI colors with an actual diamond border and hit region."""
+
+    unset = True
+    _hovered = False
+
+    def enterEvent(self, event) -> None:
+        self._hovered = True
+        self.update()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        self._hovered = False
+        self.update()
+        super().leaveEvent(event)
+
+    def clear_hover_visual(self) -> None:
+        self._hovered = False
+        self.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QColor(255, 255, 255, 80) if self.unset else QColor(100, 100, 100, 85))
+        painter.setPen(
+            QPen(QColor("white") if self._hovered else QColor(0, 0, 0, 210), 2 if self._hovered else 1)
+        )
+        w, h = self.width() - 1, self.height() - 1
+        painter.drawPolygon(
+            QPolygon([QPoint(w // 2, 1), QPoint(w - 1, h // 2), QPoint(w // 2, h - 1), QPoint(1, h // 2)])
+        )
+        painter.setPen(QColor("black") if self.unset else QColor("white"))
+        painter.drawText(self.rect().translated(0, -1), Qt.AlignmentFlag.AlignCenter, self.text())
 
 
 class ManualFilterOverlay(OverlayWindow):
@@ -55,13 +119,15 @@ class ManualFilterOverlay(OverlayWindow):
         self.catalog: ManualFilterCatalog | None = None
         self.earth_shifting: int | None = None
         self.nightlord: int | None = None
-        self.explicit_choices: dict[Position, PoiChoice] = {}
-        self.inferred_choices: dict[Position, PoiChoice] = {}
+        self.explicit_choices: dict[Position | NamedPoint, PoiChoice] = {}
+        self.inferred_choices: dict[Position | NamedPoint, PoiChoice] = {}
         self.position_buttons: dict[Position, QPushButton] = {}
+        self.named_buttons: dict[NamedPoint, QPushButton] = {}
         self.badge_buttons: dict[Position, QPushButton] = {}
-        self._visible_positions: set[Position] = set()
+        self._visible_positions: set[Position | NamedPoint] = set()
         self._recognizing_pos: Position | None = None
         self._popup: QWidget | None = None
+        self._popup_anchor: QPushButton | None = None
 
         self.earth_shifting_combo = QComboBox(self)
         self.earth_shifting_combo.setPlaceholderText(tr("manual_filter.unselected"))
@@ -122,19 +188,26 @@ class ManualFilterOverlay(OverlayWindow):
             return
         self.catalog = catalog
         for pos in catalog.all_positions():
-            position = QPushButton("+", self)
+            position = _PointButton("+", self)
             position.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             position.setCursor(Qt.CursorShape.PointingHandCursor)
             position.clicked.connect(lambda _checked=False, p=pos: self._show_base_popup(p))
             position.hide()
             self.position_buttons[pos] = position
 
-            badge = QPushButton("+", self)
+            badge = _PointButton("+", self)
             badge.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             badge.setCursor(Qt.CursorShape.PointingHandCursor)
             badge.clicked.connect(lambda _checked=False, p=pos: self._show_badge_popup(p))
             badge.hide()
             self.badge_buttons[pos] = badge
+        for point in catalog.named_positions():
+            button = (_DiamondButton if point.kind == "boss" else _PointButton)("+", self)
+            button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.clicked.connect(lambda _checked=False, p=point: self._show_named_popup(p))
+            button.hide()
+            self.named_buttons[point] = button
         self._layout_position_buttons()
 
     def reset_selection(self) -> None:
@@ -175,8 +248,8 @@ class ManualFilterOverlay(OverlayWindow):
 
     def set_filter_state(
         self,
-        explicit: dict[Position, PoiChoice],
-        inferred: dict[Position, PoiChoice],
+        explicit: dict[Position | NamedPoint, PoiChoice],
+        inferred: dict[Position | NamedPoint, PoiChoice],
     ) -> None:
         self.explicit_choices = dict(explicit)
         self.inferred_choices = dict(inferred)
@@ -187,7 +260,7 @@ class ManualFilterOverlay(OverlayWindow):
         if self.catalog is None or self.earth_shifting is None:
             self._visible_positions = set()
         else:
-            self._visible_positions = set(self.catalog.positions(self.earth_shifting, self.nightlord))
+            self._visible_positions = set(self.catalog.filter_positions(self.earth_shifting, self.nightlord))
         self._refresh_buttons()
 
     def set_auto_recognizing(self, pos: Position | None) -> None:
@@ -246,6 +319,33 @@ class ManualFilterOverlay(OverlayWindow):
         return self._map_open and not self._capture_hidden and super().should_be_visible()
 
     # Choices and popup --------------------------------------------------------------------------
+
+    def _show_named_popup(self, point: NamedPoint) -> None:
+        if self.catalog is None or self.earth_shifting is None:
+            return
+        self.close_popup()
+        menu = QMenu(self)
+        menu.setStyleSheet(
+            "QMenu { color: white; background: #263442; border: 1px solid #74899f;"
+            " font-size: 12px; padding: 3px; }"
+            "QMenu::item { padding: 3px 12px; }"
+            "QMenu::item:selected { background: #54728e; }"
+        )
+        for ctype in self.catalog.named_options(
+            self.earth_shifting, self.nightlord, self.explicit_choices, point
+        ):
+            name = self.catalog.info.get_name(ctype) if ctype else self._tr("manual_filter.empty")
+            action = menu.addAction(name or str(ctype))
+            action.triggered.connect(
+                lambda _checked=False, value=ctype: self._popup_choice(
+                    lambda: self.poiChoiceChanged.emit(point, PoiChoice(value, None))
+                )
+            )
+        self._popup = menu
+        self._popup_anchor = self.named_buttons[point]
+        menu.aboutToHide.connect(self._clear_popup_hover)
+        anchor = self._popup_anchor
+        menu.popup(anchor.mapToGlobal(QPoint(0, anchor.height())))
 
     def _show_base_popup(self, pos: Position) -> None:
         if self.catalog is None or self.earth_shifting is None or pos == self._recognizing_pos:
@@ -328,13 +428,33 @@ class ManualFilterOverlay(OverlayWindow):
         popup.adjustSize()
         popup.move(anchor.mapToGlobal(QPoint(0, anchor.height())))
         self._popup = popup
+        self._popup_anchor = anchor
+        popup.installEventFilter(self)
         popup.show()
 
     def _popup_choice(self, callback: Callable[[], None]) -> None:
         self.close_popup()
         callback()
 
+    def eventFilter(self, watched, event) -> bool:
+        if watched is self._popup and event.type() == QEvent.Type.Hide:
+            self._clear_popup_hover()
+        return super().eventFilter(watched, event)
+
+    def _clear_popup_hover(self) -> None:
+        anchor = self._popup_anchor
+        if isinstance(anchor, _DiamondButton):
+            anchor.clear_hover_visual()
+        if anchor is not None:
+            anchor.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
+            anchor.setDown(False)
+            anchor.style().unpolish(anchor)
+            anchor.style().polish(anchor)
+            anchor.update()
+        self._popup_anchor = None
+
     def close_popup(self) -> None:
+        self._clear_popup_hover()
         if self._popup is not None:
             self._popup.close()
             self._popup.deleteLater()
@@ -342,7 +462,7 @@ class ManualFilterOverlay(OverlayWindow):
 
     # Rendering and geometry --------------------------------------------------------------------
 
-    def _display_choice(self, pos: Position) -> PoiChoice | None:
+    def _display_choice(self, pos: Position | NamedPoint) -> PoiChoice | None:
         return self.inferred_choices.get(pos, self.explicit_choices.get(pos))
 
     def _refresh_buttons(self) -> None:
@@ -383,6 +503,17 @@ class ManualFilterOverlay(OverlayWindow):
                     badge.setIcon(QIcon(_pil_pixmap(self.catalog.subicon_image(choice.subicon))))
                     badge.setIconSize(badge.size() - QSize(2, 2))
                 badge.raise_()
+        for point, button in self.named_buttons.items():
+            button.setVisible(point in self._visible_positions)
+            choice = self._display_choice(point)
+            button.setText("+" if choice is None else "✓")
+            button.setStyleSheet(_choice_style(choice is None))
+            if isinstance(button, _DiamondButton):
+                button.unset = choice is None
+                button.update()
+            name = self.catalog.info.get_name(choice.base) if choice and choice.base else ""
+            button.setToolTip(name or "")
+            button.raise_()
         self.status_label.raise_()
         self.apply_button.raise_()
 
@@ -419,6 +550,42 @@ class ManualFilterOverlay(OverlayWindow):
                 badge_size,
                 badge_size,
             )
+
+        for point, button in self.named_buttons.items():
+            size = max(1, round(diameter * (1.0 if point.kind == "boss" else 1.2)))
+            x, y = (round(value * scale) for value in point.pos)
+            left = x - size // 2
+            if point.kind == "castle":
+                left -= round(size / 2)
+            button.setGeometry(left, y - size // 2, size, size)
+            if point.kind == "boss":
+                button.setMask(
+                    QRegion(
+                        QPolygon(
+                            [
+                                QPoint(size // 2, 0),
+                                QPoint(size - 1, size // 2),
+                                QPoint(size // 2, size - 1),
+                                QPoint(0, size // 2),
+                            ]
+                        )
+                    )
+                )
+
+        # The rooftop/basement points share the castle's neighborhood. Stack
+        # their controls against the relocated castle instead of the map labels.
+        for point, castle in self.named_buttons.items():
+            if point.kind != "castle":
+                continue
+            rect = castle.geometry()
+            for pos, above in (((328, 409), True), ((355, 409), False)):
+                boss = self.named_buttons.get(NamedPoint("boss", pos))
+                if boss is None:
+                    continue
+                boss.move(
+                    rect.x() + (rect.width() - boss.width()) // 2,
+                    rect.y() - boss.height() if above else rect.y() + rect.height(),
+                )
 
     def _layout_status(self) -> None:
         self.status_label.adjustSize()

@@ -26,7 +26,7 @@ from nightreign_overlay.plugins.map_detect.config import MapDetectConfig, MapDet
 from nightreign_overlay.plugins.map_detect.controls import MapControlsOverlay
 from nightreign_overlay.plugins.map_detect.detector import MapDetector, MapDetectParam, MapDetectResult
 from nightreign_overlay.plugins.map_detect.localization import load_names
-from nightreign_overlay.plugins.map_detect.manual_catalog import ManualFilterCatalog, PoiChoice
+from nightreign_overlay.plugins.map_detect.manual_catalog import ManualFilterCatalog, NamedPoint, PoiChoice
 from nightreign_overlay.plugins.map_detect.manual_filter import ManualFilterOverlay
 from nightreign_overlay.plugins.map_detect.map_info import MapPattern, Position
 from nightreign_overlay.plugins.map_detect.overlay import MapInfoOverlay, MapOverlayState
@@ -414,7 +414,7 @@ class MapDetectPlugin(Plugin):
         else:
             self._rematch_manual_filter()
 
-    def _on_manual_poi_choice(self, pos: Position, choice: PoiChoice) -> None:
+    def _on_manual_poi_choice(self, pos: Position | NamedPoint, choice: PoiChoice) -> None:
         if not self._manual_filtering or self._manual_overlay is None:
             return
         explicit = dict(self._manual_overlay.explicit_choices)
@@ -445,7 +445,7 @@ class MapDetectPlugin(Plugin):
             return
         inferred = catalog.inferred(
             candidates,
-            catalog.positions(earth_shifting, overlay.nightlord),
+            catalog.filter_positions(earth_shifting, overlay.nightlord),
             overlay.explicit_choices,
         )
         overlay.set_filter_state(overlay.explicit_choices, inferred)

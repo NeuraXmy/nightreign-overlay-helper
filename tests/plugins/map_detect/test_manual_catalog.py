@@ -71,3 +71,58 @@ def test_inference_is_display_only_and_options_ignore_the_positions_own_constrai
         )
         == possible
     )
+
+
+def test_named_points_follow_drawn_boss_and_castle_rules_and_filter_exact_types():
+    from nightreign_overlay.plugins.map_detect.manual_catalog import NamedPoint
+
+    catalog = _catalog()
+    for earth in sorted(catalog.info.all_earth_shiftings):
+        pool = catalog.candidates(earth, None, {})
+        expected = set()
+        for pattern in pool:
+            for pos, construct in pattern.pos_constructions.items():
+                ctype = construct.type
+                text = str(ctype)
+                if (
+                    text.startswith(("45", "46"))
+                    and not text.startswith("460")
+                    and (ctype == 45510 or ctype // 1000 != 45)
+                    and ctype != 46780
+                ):
+                    expected.add(NamedPoint("boss", pos))
+                elif text.startswith("494") and ctype != 49400:
+                    expected.add(NamedPoint("castle", pos))
+        points = catalog.named_positions(earth)
+        assert set(points) == expected
+        assert sum(point.kind == "castle" for point in points) <= 1
+        for point in points:
+            values = catalog.named_options(earth, None, {}, point)
+            assert values == sorted(values, key=lambda value: (catalog.info.get_name(value) or "", value))
+            for value in values:
+                matches = catalog.candidates(earth, None, {point: PoiChoice(value, None)})
+                assert {p.id for p in matches} == {p.id for p in pool if catalog.value(p, point)[0] == value}
+                assert catalog.named_options(earth, None, {point: PoiChoice(999999)}, point) == values
+    assert not any(p.kind == "castle" for p in catalog.named_positions(4))
+    assert not any(p.kind == "castle" for p in catalog.named_positions(5))
+
+
+def test_named_and_poi_constraints_combine_without_inference_becoming_explicit():
+    catalog = _catalog()
+    pattern = catalog.info.patterns[0]
+    earth, nightlord = pattern.earth_shifting, pattern.nightlord
+    points = catalog.named_positions(earth, nightlord)
+    point = next(p for p in points if catalog.value(pattern, p)[0])
+    poi = catalog.positions(earth, nightlord)[0]
+    constraints = {
+        point: PoiChoice(*catalog.value(pattern, point)),
+        poi: PoiChoice(*catalog.value(pattern, poi)),
+    }
+    candidates = catalog.candidates(earth, nightlord, constraints)
+    assert pattern in candidates
+    assert all(
+        all(choice.accepts(catalog.value(p, pos)) for pos, choice in constraints.items()) for p in candidates
+    )
+    inferred = catalog.inferred([pattern], catalog.filter_positions(earth, nightlord), {})
+    assert point in inferred
+    assert catalog.value(pattern, point)[0] == inferred[point].base

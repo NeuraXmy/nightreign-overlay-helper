@@ -902,3 +902,100 @@ def test_force_display_requires_region_and_clears_on_reset_and_deactivation(maps
     assert plugin._force_display
     plugin.on_deactivate()
     assert not plugin._force_display
+
+
+def test_manual_boss_castle_geometry_name_menu_and_selection(maps, monkeypatch):
+    plugin, _, _ = _ready(maps, monkeypatch)
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    catalog = plugin._manual_catalog
+    manual.set_map_region(QRect(0, 0, 750, 750))
+    manual.set_recognized_parameters(0, None)
+    manual.clear_poi_choices()
+    selected = QSignalSpy(manual.poiChoiceChanged)
+    # Keep the menu test separate from automatic application of a unique result.
+    manual.poiChoiceChanged.disconnect(plugin._on_manual_poi_choice)
+    poi_size = next(iter(manual.position_buttons.values())).width()
+    for kind, factor in (("boss", 1.0), ("castle", 1.2)):
+        point = next(p for p in catalog.named_positions(0) if p.kind == kind)
+        button = manual.named_buttons[point]
+        assert not button.isHidden()
+        assert button.width() == round(poi_size * factor)
+        assert button.geometry().center().manhattanLength() > 0
+        if kind == "boss":
+            assert button.mask().contains(QPoint(button.width() // 2, button.height() // 2))
+            assert not button.mask().contains(QPoint(0, 0))
+        else:
+            assert button.mask().isEmpty()
+        button.click()
+        menu = manual._popup
+        values = catalog.named_options(0, None, {}, point)
+        assert [action.text() for action in menu.actions()] == [
+            catalog.info.get_name(value) if value else manual._tr("manual_filter.empty") for value in values
+        ]
+        menu.actions()[0].trigger()
+        assert selected[-1] == [point, PoiChoice(values[0], None)]
+        assert manual._popup is None
+        manual.set_filter_state({point: PoiChoice(values[0], None)}, {})
+        assert button.text() == "✓"
+        assert button.icon().isNull()
+        manual.clear_poi_choices()
+        assert button.text() == "+"
+    manual.set_recognized_parameters(4, None)
+    assert all(button.isHidden() for point, button in manual.named_buttons.items() if point.kind == "castle")
+
+
+@pytest.mark.parametrize("map_size", [375, 750, 1125])
+def test_manual_castle_controls_stack_without_overlap(maps, monkeypatch, map_size):
+    from nightreign_overlay.plugins.map_detect.manual_catalog import NamedPoint
+
+    plugin, _, _ = _ready(maps, monkeypatch)
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    manual.set_map_region(QRect(0, 0, map_size, map_size))
+    manual.set_recognized_parameters(0, None)
+    castle_point = next(p for p in manual.named_buttons if p.kind == "castle")
+    castle = manual.named_buttons[castle_point].geometry()
+    scale = manual.width() / 750
+    assert castle.x() == round(castle_point.pos[0] * scale) - castle.width() // 2 - round(castle.width() / 2)
+    upper = manual.named_buttons[NamedPoint("boss", (328, 409))].geometry()
+    lower = manual.named_buttons[NamedPoint("boss", (355, 409))].geometry()
+    poi_size = next(iter(manual.position_buttons.values())).width()
+    for boss in (upper, lower):
+        assert boss.width() == poi_size
+        assert abs(boss.center().x() - castle.center().x()) <= 1
+        assert not boss.intersects(castle)
+    assert upper.y() + upper.height() == castle.y()
+    assert lower.y() == castle.y() + castle.height()
+
+
+@pytest.mark.parametrize("kind", ["boss", "castle", "poi"])
+def test_cancel_manual_point_popup_clears_hover_without_changing_choices(maps, monkeypatch, kind):
+    from PyQt6.QtCore import QEvent
+    from PyQt6.QtWidgets import QApplication
+
+    plugin, _, _ = _ready(maps, monkeypatch)
+    plugin._toggle_manual_filter()
+    manual = plugin._manual_overlay
+    manual.set_map_region(QRect(0, 0, 750, 750))
+    manual.set_recognized_parameters(0, None)
+    manual.clear_poi_choices()
+    if kind == "poi":
+        pos = manual.catalog.positions(0, None)[0]
+        button = manual.position_buttons[pos]
+    else:
+        point = next(p for p in manual.catalog.named_positions(0) if p.kind == kind)
+        button = manual.named_buttons[point]
+    QApplication.sendEvent(button, QEvent(QEvent.Type.Enter))
+    button.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, True)
+    button.click()
+    popup = manual._popup
+    assert popup.isVisible()
+    # Popup mouse capture can leave the anchor with no matching leave event.
+    popup.hide()
+    assert not button.underMouse()
+    assert not button.isDown()
+    if kind == "boss":
+        assert not button._hovered
+    assert not manual.explicit_choices
+    manual.close_popup()
